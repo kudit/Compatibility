@@ -7,7 +7,7 @@
 
 import PackageDescription
 
-let version = "1.0.0"
+let version = "1.0.1"
 let packageLibraryName = "Compatibility"
 
 // Products define the executables and libraries a package produces, making them visible to other packages.
@@ -56,7 +56,7 @@ products += [
 		displayVersion: version,
 		bundleVersion: "1",
 		appIcon: .asset("AppIcon"),
-        accentColor: .presetColor(.green),
+        accentColor: .presetColor(.orange),
 		supportedDeviceFamilies: [
 			.pad,
 			.phone
@@ -75,7 +75,7 @@ targets += [
 	.executableTarget(
 		name: "\(packageLibraryName)TestAppModule",
 		dependencies: [
-			.init(stringLiteral: packageLibraryName), // have to use init since normally would be assignable by string literal
+			.init(stringLiteral: packageLibraryName), // have to use init since normally would be assignable by string literal but we're not using a string literal
 		],
 		path: "Development",
 		resources: [

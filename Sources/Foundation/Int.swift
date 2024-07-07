@@ -16,6 +16,7 @@ import Darwin.C
 public postfix func ++(x: inout Int) {
     x += 1
 }
+@MainActor
 internal let testPlusPlus: TestClosure = {
     var value = 3
     value++
@@ -27,6 +28,7 @@ internal let testPlusPlus: TestClosure = {
 public postfix func --(x: inout Int) {
     x -= 1
 }
+@MainActor
 internal let testMinusMinus: TestClosure = {
     var value = 3
     value--
@@ -85,6 +87,7 @@ public extension Int {
         22: "nd",
     ]
 }
+@MainActor
 internal let ordinalTests: TestClosure = {
     var failedMessages = [String]()
     var allPass = true
@@ -129,6 +132,7 @@ public extension BinaryInteger {
         return Double(byteParts(countStyle).count) ?? 0
     }
 }
+@MainActor
 internal let byteTests: TestClosure = {
     let fileTests = [
         12334: "12 KB",
@@ -164,6 +168,7 @@ internal let byteTests: TestClosure = {
 // MARK: - Tests
 
 extension Int: Testable {
+    @MainActor
     public static let tests: [Test] = [
         Test("plusplus", testPlusPlus),
         Test("minusminus", testMinusMinus),

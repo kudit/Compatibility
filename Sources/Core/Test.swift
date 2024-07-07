@@ -18,7 +18,7 @@ public func expect(_ condition: Bool, _ debugString: String? = nil, file: String
         } else {
             let context = debugContext(isMainThread: Thread.isMainThread, file: file, function: function, line: line, column: column)
             throw CustomError(context)
-        }   
+        }
     }
 }
 

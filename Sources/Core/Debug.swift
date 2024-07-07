@@ -23,7 +23,7 @@ import Foundation
 // Formerly KuError but this seems more applicable and memorable and less specific.
 public enum CustomError: Error, Sendable, CustomStringConvertible {
     case custom(String)
-    public init(_ message: String, level: DebugLevel = DebugLevel.defaultLevel, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) {
+    public init(_ message: String, level: DebugLevel = .SILENT /* Do not warn by default.  Can't be DebugLevel.defaultLevel because that needs to be on the main thread */, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) {
         debug(message, level: level, file: file, function: function, line: line, column: column)
         self = .custom(message)
     }
@@ -55,9 +55,9 @@ public class ObservableDebugLevel: ObservableObject {
 }
 
 public extension Set<DebugLevel> {
-    static var all: Self = [.ERROR, .WARNING, .NOTICE, .DEBUG]
-    static var important: Self = [.ERROR, .WARNING]
-    static var informational: Self = [.NOTICE, .WARNING]
+    static let all: Self = [.ERROR, .WARNING, .NOTICE, .DEBUG]
+    static let important: Self = [.ERROR, .WARNING]
+    static let informational: Self = [.NOTICE, .WARNING]
 }
 
 public enum DebugLevel: Comparable, CustomStringConvertible, CaseIterable, Sendable {
@@ -81,15 +81,19 @@ public enum DebugLevel: Comparable, CustomStringConvertible, CaseIterable, Senda
     }
     
     /// Set to change the level of debug statments without a level parameter.
+    @MainActor
     public static var defaultLevel = DebugLevel.ERROR
     
     /// Set this to a set of levels where we should include the context info.  Defaults to `.important` so that Notices and Debug messages are less noisy and easier to see.
+    @MainActor
     public static var levelsToIncludeContext: Set<DebugLevel> = .important
     
     /// Set this to `true` to log failed color parsing notices when returning `nil`
+    @MainActor
     public static var colorLogging = false
     
     /// setting this to false will make debug() act exactly like print()
+    @MainActor
     public static var includeContext = true
     public var emoji: String {
         switch self {
@@ -171,24 +175,25 @@ public func debugContext(isMainThread: Bool, file: String, function: String, lin
  - Parameter line: For bubbling down the #line number from a call site.
  - Parameter column: For bubbling down the #column number from a call site. (Not used currently but here for completeness).
  */
-public func debug(_ message: Any, level: DebugLevel = DebugLevel.defaultLevel, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) {
-    // Enable setting breakpoints for various debug levels.
-    switch level {
-    case .OFF:
-        break // for breakpoint
-    case .ERROR:
-        break // for breakpoint
-    case .WARNING:
-        break // for breakpoint
-    case .NOTICE:
-        break // for breakpoint
-    case .DEBUG:
-        break // for breakpoint
-    case .SILENT:
-        break // for breakpoint
-    }
+public func debug(_ message: Any, level: DebugLevel? = nil, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) {
     let isMainThread = Thread.isMainThread // capture before we switch to main thread for printing
     main { // to ensure that the current debug level (which must be called on the main actor with new concurrency) is thread-safe.  Should be okay since print is effectively UI anyways...
+        let level = level ?? DebugLevel.defaultLevel
+        // Enable setting breakpoints for various debug levels.
+        switch level {
+        case .OFF:
+            break // for breakpoint
+        case .ERROR:
+            break // for breakpoint
+        case .WARNING:
+            break // for breakpoint
+        case .NOTICE:
+            break // for breakpoint
+        case .DEBUG:
+            break // for breakpoint
+        case .SILENT:
+            break // for breakpoint
+        }
         guard DebugLevel.isAtLeast(level) else {
             return
         }

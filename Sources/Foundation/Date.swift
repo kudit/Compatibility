@@ -78,6 +78,7 @@ public extension Date {
             self = .init(timeIntervalSinceReferenceDate: 0)
         }
     }
+    @MainActor
     internal static let testInit: TestClosure = {
         let date = Date(from: "2023-01-02 17:12:00", format: .mysqlDateTimeFormat)
         //        let date = Date(from: "January 2, 2023 5:12pm", format: "F j, Y g:ia")
@@ -114,6 +115,7 @@ public extension Date {
     }
     
     @available(macOS 12.0, *)
+    @MainActor
     internal static let testFormatted: TestClosure = {
         let date = Date(from: "2023-01-02 17:12:00", format: .mysqlDateTimeFormat)
         let formatted = date?.formatted(withFormat: "Y-M-d h:m")
@@ -124,6 +126,7 @@ public extension Date {
     var mysqlDateTime: String {
         self.formatted(withFormat: .mysqlDateTimeFormat)
     }
+    @MainActor
     internal static let testMysql: TestClosure = {
         try expect(String.mysqlDateTimeFormat == "yyyy-MM-dd HH:mm:ss", String.mysqlDateTimeFormat)
     }
@@ -136,6 +139,7 @@ public extension Date {
             self.formatted(withFormat: .mysqlDateTimeFormat)
         }
     }
+    @MainActor
     internal static let testPretty: TestClosure = {
         let date = Date(from: "2023-01-02 17:12:00", format: .mysqlDateTimeFormat)
         let pretty = date?.pretty ?? "FAILED"
@@ -228,6 +232,7 @@ public extension Date {
     static var unixTimestamp: Int {
         return Int(NSDate().timeIntervalSince1970)
     }
+    @MainActor
     internal static let testTime: TestClosure = {
         //debug("Interval: \(NSDate().timeIntervalSince1970)")
         //debug("Time(): \(PHP.time())")
@@ -239,7 +244,7 @@ public extension Date {
 @available(macOS 12.0, *)
 public extension Date {
     @MainActor
-    static var tests = [
+    static let tests = [
         Test("MySQL DateTime format string", testMysql),
         Test("init with format", testInit),
         Test("formatted", testFormatted),

@@ -44,16 +44,15 @@ public extension CharacterSet {
         let filtered = unichars.filter(contains)
         return filtered.map { String($0) }
     }
+    @MainActor
     internal static let testCharacterStrings: TestClosure = {
         let array = "hello".characterStrings
         try expect(array == ["h","e","l","l","o"], String(describing:array))
     }
 
     /// Returns a character set containing all numeric digits.
-    static var numerics: CharacterSet {
-        let validCharacterString = "0123456789"
-        return CharacterSet(charactersIn: validCharacterString)
-    }
+    static let numerics = CharacterSet(charactersIn: "0123456789")
+
     /// Returns a character set containing the characters allowed in an URL's parameter subcomponent.
     static var urlParameterAllowed: CharacterSet {
         var validCharacterString = CharacterSet.alphanumerics.characterStrings.joined()
@@ -97,7 +96,7 @@ public extension HTML {
 
 extension String: Testable {}
 public extension String {
-    static var INVALID_ENCODING = "INVALID_ENCODING"
+    static let INVALID_ENCODING = "INVALID_ENCODING"
     
     // MARK: - UUID Generation
     static func uuid() -> String {
@@ -282,6 +281,7 @@ public extension String {
         return self.trimmingCharacters(in: badSet)
     }
     
+    @MainActor
     internal static let testTriming: TestClosure = {
         let long = "ExampleWorld/world.json"
         let trim = "world.json"
@@ -289,6 +289,7 @@ public extension String {
         // assert
         try expect(trimmed == "ExampleWorld/", "Trimmed: \(trimmed)")
     }
+    @MainActor
     internal static let testTrimingEmpty: TestClosure = {
         let long = "ExampleWorld/world.json"
         let trim = ""
@@ -407,6 +408,7 @@ public extension String {
         }
         return fixed.joined(separator: ".")
     }
+    @MainActor
     internal static let testSentenceCapitalized: TestClosure = {
         let capitalized = "hello world. goodbye world.".sentenceCapitalized
         try expect(capitalized == "Hello world. Goodbye world.", String(describing:capitalized))
@@ -457,14 +459,10 @@ public extension String {
     }
 
     /// An array of string of all the vowels in the english language (not counting Y).
-    static var vowels: [String] {
-        return ["a", "e", "i", "o", "u"]
-    }
+    static let vowels = ["a", "e", "i", "o", "u"]
     
     /// An array of all the consonants in the english language (not counting Y).
-    static var consonants: [String] {
-        return ["b", "c", "d", "f", "g", "h", "j", "k", "l", "m", "n", "p", "q", "r", "s", "t", "v", "w", "x", "z"]
-    }
+    static let consonants = ["b", "c", "d", "f", "g", "h", "j", "k", "l", "m", "n", "p", "q", "r", "s", "t", "v", "w", "x", "z"]
     
     /// The name game string
     var banana : String {
@@ -561,6 +559,7 @@ public extension String {
     func substring(with range: NSRange) -> String { // TODO: figure out how to replace this...
         return (self as NSString).substring(with: range)
     }
+    @MainActor
     internal static let testSubstring: TestClosure = {
         let extraction = TEST_STRING.substring(with: NSRange(7...12))
         try expect(extraction == "string" , String(describing:extraction))
@@ -596,22 +595,27 @@ public extension String {
         return substr
     }
     internal static let TEST_STRING = "A long string with some <em>intérressant</em> properties!"
+    @MainActor
     internal static let testExtractTags: TestClosure = {
         let extraction = TEST_STRING.extract(from: "<em>", to: "</em>") // should never fail
         try expect(extraction == "intérressant" , String(describing:extraction))
     }
+    @MainActor
     internal static let testExtractNilStart: TestClosure = {
         let extraction = TEST_STRING.extract(from: nil, to: "string")
         try expect(extraction == "A long " , String(describing:extraction))
     }
+    @MainActor
     internal static let testExtractNilEnd: TestClosure = {
         let extraction = TEST_STRING.extract(from: "</em>", to: nil)
         try expect(extraction == " properties!" , String(describing:extraction))
     }
+    @MainActor
     internal static let testExtractMissingStart: TestClosure = {
         let extraction = TEST_STRING.extract(from: "<strong>", to: "</em>")
         try expect(extraction == nil , String(describing:extraction))
     }
+    @MainActor
     internal static let testExtractMissingEnd: TestClosure = {
         let extraction = TEST_STRING.extract(from: "<em>", to: "</strong>")
         try expect(extraction == nil , String(describing:extraction))
@@ -709,13 +713,12 @@ public extension Optional where Wrapped == any Numeric {
 
 #if canImport(SwiftUI)
 import SwiftUI
-struct String_Previews: PreviewProvider {
-    static var previews: some View {
-        TestsListView(tests: String.tests)
-    }
+#Preview("Tests") {
+    TestsListView(tests: String.tests)
 }
 #endif
 
+@MainActor
 let testTextReversal: TestClosure = {
     let text = """
 v1.0.8 8/10/2022 Manually created initializers for SwiftUI views to prevent internal protection errors.

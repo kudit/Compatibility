@@ -25,21 +25,25 @@ public extension PostData {
     
     // MARK: - Tests
     internal static let TEST_DATA: PostData = ["id": 13, "name": "Jack & \"Jill\"", "foo": false, "bar": "0.0"]
+    @MainActor
     internal static let testPostDataQueryEncoding: TestClosure = {
         //debug(testData.queryString ?? "Unable to generate query string")
         let query = TEST_DATA.queryString ?? "Unable to generate query string"
         let expected = "name=Jack%20%26%20%22Jill%22"
         try expect(query.contains(expected), "\(query) does not contain \(expected)")
     }
+    @MainActor
     internal static let testFetchGwinnettCheck: TestClosure = {
         let results = try await fetchURL(urlString: "https://www.GwinnettCounty.com")
         try expect(results.contains("Gwinnett"), results)
     }
+    @MainActor
     internal static let testFetchGETCheck: TestClosure = {
         let query = TEST_DATA.queryString ?? "ERROR"
         let results = try await fetchURL(urlString: "https://plickle.com/pd.php?\(query)")
         try expect(results.contains("[name] => Jack & \"Jill\""), results)
     }
+    @MainActor
     internal static let testFetchPOSTCheck: TestClosure = {
         let results = try await fetchURL(urlString: "https://plickle.com/pd.php", postData:TEST_DATA)
         try expect(results.contains("'name' => 'Jack & \\\"Jill\\\"',"), results)
