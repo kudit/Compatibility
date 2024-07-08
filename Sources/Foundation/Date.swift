@@ -26,7 +26,7 @@ public extension String {
     static let mysqlDateTimeFormat = "yyyy-MM-dd HH:mm:ss"
 }
 
-@available(macOS 12.0, watchOS 8, *)
+@available(macOS 12.0, watchOS 8, tvOS 15, *)
 public extension DateFormatter.Style {
     var dateStyle: Date.FormatStyle.DateStyle {
         switch self {
@@ -108,7 +108,7 @@ public extension Date {
     }
     
     /// Use date formatter style to create localized string version of the date.
-    @available(macOS 12.0, watchOS 8, *)
+    @available(macOS 12.0, watchOS 8, tvOS 15, *)
     @available(*, deprecated, renamed: "formatted(date:time:)")
     func string(withStyle dateFormatterStyle:DateFormatter.Style) -> String {
         return self.formatted(date: dateFormatterStyle.dateStyle, time: .omitted)
@@ -132,7 +132,7 @@ public extension Date {
     }
     
     var pretty: String {
-        if #available(macOS 12.0, watchOS 8, *) {
+        if #available(macOS 12.0, watchOS 8, tvOS 15, *) {
             self.formatted(date: .abbreviated, time: .shortened)
         } else {
             // Fallback on earlier versions
@@ -143,7 +143,11 @@ public extension Date {
     internal static let testPretty: TestClosure = {
         let date = Date(from: "2023-01-02 17:12:00", format: .mysqlDateTimeFormat)
         let pretty = date?.pretty ?? "FAILED"
-        try expect(pretty == "Jan 2, 2023 at 5:12 PM", String(describing:pretty))
+        if #available(iOS 16, *) {
+            try expect(pretty == "Jan 2, 2023 at 5:12 PM", String(describing:pretty))
+        } else {
+            try expect(pretty == "Jan 2, 2023, 5:12 PM", String(describing:pretty))
+        }
     }
     
     

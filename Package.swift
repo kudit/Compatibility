@@ -7,7 +7,7 @@
 
 import PackageDescription
 
-let version = "1.0.2"
+let version = "1.0.3"
 let packageLibraryName = "Compatibility"
 
 // Products define the executables and libraries a package produces, making them visible to other packages.
@@ -33,9 +33,8 @@ var targets = [
 ]
 
 var platforms: [SupportedPlatform] = [
-	.iOS("15.2"), // minimum for Swift Playgrounds support
 	.macOS("10.15"), // minimum for sleep, SwiftUI, ObservableObject, & @Published
-	.tvOS("17"), // 13 minimum for SwiftUI, 17 minimum for Menu
+	.tvOS("13"), // 13 minimum for SwiftUI, 17 minimum for Menu
 	.watchOS("6"), // minimum for SwiftUI, watchOS 7 typically needed for most UI, however (for #buildAvailability) so really should be watchOS 9+.
 ]
 
@@ -47,6 +46,10 @@ platforms += [
 
 #if canImport(AppleProductTypes) // swift package dump-package fails because of this
 import AppleProductTypes
+
+platforms += [
+    .iOS("15.2"), // minimum for Swift Playgrounds support
+]
 
 products += [
 	.iOSApplication(
@@ -84,6 +87,10 @@ targets += [
 	),
 ]
 
+#else
+platforms += [
+    .iOS("13"), // minimum for Combine/SwiftUI
+]
 #endif // for Swift Package compiling for https://swiftpackageindex.com/add-a-package
 
 let package = Package(

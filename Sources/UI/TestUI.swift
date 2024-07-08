@@ -56,7 +56,7 @@ public struct TestsListView: View {
     }
 }
 
-@available(macOS 12.0, watchOS 8, *)
+@available(macOS 12.0, watchOS 8, tvOS 17, *)
 public struct AllTestsListView: View {
     // only necessary since in module and otherwise inaccessible outside package
     public init() {}
@@ -94,7 +94,7 @@ public struct AllTestsListView: View {
     }
 }
 
-@available(macOS 12.0, watchOS 8, *)
+@available(macOS 12.0, watchOS 8, tvOS 17, *)
 #Preview("Tests") {
     AllTestsListView()
 }

@@ -78,7 +78,7 @@ public extension TabViewStyle where Self == DefaultTabViewStyle {
     }
 }
 #else
-@available(watchOS 7.0, *)
+@available(watchOS 7.0, tvOS 14, *)
 public extension TabViewStyle where Self == PageTabViewStyle {
     // can't just name segmented because marked as explicitly unavailable
     static var pageBackport: PageTabViewStyle {
@@ -100,8 +100,8 @@ public extension ContainerView {
 }
 
 // Try just re-definiing NavigationStack here and in this, do the check and show the appropriate SwiftUI implementation if that makes sense.
-@MainActor
 @available(watchOS 7.0, *)
+@MainActor
 public struct NavigationStack<Root: View>: View {
     var root: () -> Root
 

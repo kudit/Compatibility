@@ -6,6 +6,8 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Color.version constant (must be hard coded since inaccessible in code)
 - [ ] Tag with matching version in GitHub.
 
+v1.0.3 7/8/2024 Reduced tvOS version requirements to tvOS 13 (though menu and other UI features are not supported).
+
 v1.0.2 7/8/2024 Fixed some data race issues and fixed breaking support for watchOS and Linux.  Added condition for @Published to ensure compilation on Linux.  Made PostData require a Sendable type and added Sendable conformance to NetworkError.  Fixed sendability of Message to prevent issues using `debug()`.
 
 v1.0.1 7/7/2024 Fixed missing date in change log.  Moved DebugLevel.defaultLevel in initializers into nil initializers so can make sure to reference static property not in the initializer.  Changed default color to orange.  Changed several static vars to lets for concurrency safety.  Enabled `main {}` to be used with throwing functions.  Added `.spi.yml` file for Swift Package Index compiler.
@@ -17,7 +19,7 @@ v1.0 7/6/2024 Initial code and features pulled from KuditFrameworks.  Converted 
 ## Bugs to fix:
 Known issues that need to be addressed.
 
-- [ ] Menu buttons in tvOS do not work.
+- [ ] Menu buttons in tvOS do not work at all.
 
 ## Roadmap:
 Planned features and anticipated API changes.  If you want to contribute, this is a great place to start.
