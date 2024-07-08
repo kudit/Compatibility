@@ -51,7 +51,10 @@ public final class Test: ObservableObject {
     }
     public let title: String
     public var task: TestClosure
-    @Published public var progress: TestProgress = .notStarted
+    #if canImport(Combine)
+    @Published
+    #endif
+    public var progress: TestProgress = .notStarted
     
     public init(_ title: String, _ task: @escaping TestClosure ) {
         self.title = title

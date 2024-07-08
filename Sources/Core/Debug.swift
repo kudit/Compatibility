@@ -42,7 +42,10 @@ extension Notification.Name {
 @MainActor
 public class ObservableDebugLevel: ObservableObject {
     public static var shared = ObservableDebugLevel()
-    @Published public var value = DebugLevel.currentLevel
+#if canImport(Combine)
+@Published
+#endif
+    public var value = DebugLevel.currentLevel
     public init() { // use shared
         // subscribe to debuglevel changes
         NotificationCenter.default.addObserver(forName: .currentDebugLevelChanged, object: nil, queue: nil) { _ in
@@ -177,6 +180,7 @@ public func debugContext(isMainThread: Bool, file: String, function: String, lin
  */
 public func debug(_ message: Any, level: DebugLevel? = nil, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) {
     let isMainThread = Thread.isMainThread // capture before we switch to main thread for printing
+    let message = String(describing: message) // convert to sendable item to avoid any thread issues.
     main { // to ensure that the current debug level (which must be called on the main actor with new concurrency) is thread-safe.  Should be okay since print is effectively UI anyways...
         let level = level ?? DebugLevel.defaultLevel
         // Enable setting breakpoints for various debug levels.

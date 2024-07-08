@@ -50,7 +50,7 @@ public extension URL {
     @available(iOS 15, macCatalyst 15.0, *)
     func download() async throws -> Data {
         do {
-            if #available(macOS 12.0, *) {
+            if #available(macOS 12.0, watchOS 8, *) {
                 let (fileURL, response) = try await URLSession.shared.download(from: self)
                 debug("URL Download response: \(response)", level: .DEBUG)
 

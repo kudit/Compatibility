@@ -26,7 +26,7 @@ public extension String {
     static let mysqlDateTimeFormat = "yyyy-MM-dd HH:mm:ss"
 }
 
-@available(macOS 12.0, *)
+@available(macOS 12.0, watchOS 8, *)
 public extension DateFormatter.Style {
     var dateStyle: Date.FormatStyle.DateStyle {
         switch self {
@@ -108,7 +108,7 @@ public extension Date {
     }
     
     /// Use date formatter style to create localized string version of the date.
-    @available(macOS 12.0, *)
+    @available(macOS 12.0, watchOS 8, *)
     @available(*, deprecated, renamed: "formatted(date:time:)")
     func string(withStyle dateFormatterStyle:DateFormatter.Style) -> String {
         return self.formatted(date: dateFormatterStyle.dateStyle, time: .omitted)
@@ -132,7 +132,7 @@ public extension Date {
     }
     
     var pretty: String {
-        if #available(macOS 12.0, *) {
+        if #available(macOS 12.0, watchOS 8, *) {
             self.formatted(date: .abbreviated, time: .shortened)
         } else {
             // Fallback on earlier versions

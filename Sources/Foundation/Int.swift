@@ -134,13 +134,13 @@ public extension BinaryInteger {
 }
 @MainActor
 internal let byteTests: TestClosure = {
-    let fileTests = [
+    let fileTests: [UInt64: String] = [
         12334: "12 KB",
         2131231: "2.1 MB",
         3342131231: "3.34 GB",
         4231232323234: "4.23 TB",
     ]
-    let memoryTests = [
+    let memoryTests: [UInt64: String] = [
         12334: "12 KB",
         2131231: "2 MB",
         3342131231: "3.11 GB",
@@ -150,7 +150,7 @@ internal let byteTests: TestClosure = {
     var failedMessages = [String]()
     var allPass = true
     
-    let runTestsClosure: (ByteCountFormatter.CountStyle, [Int: String]) -> Void = { style, tests in
+    let runTestsClosure: (ByteCountFormatter.CountStyle, [UInt64: String]) -> Void = { style, tests in
         for (count, expected) in tests {
             let parts = count.byteParts(style)
             let craftedString = "\(parts.count) \(parts.units)"

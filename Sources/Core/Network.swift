@@ -7,7 +7,7 @@
 
 import Foundation
 
-public typealias PostData = [String: Any]
+public typealias PostData = [String: Sendable]
 public extension PostData {
     var queryString: String? {
         //return "fooish=barish&baz=buzz"
@@ -57,7 +57,7 @@ public extension PostData {
     ]
 }
 
-public enum NetworkError: Error, CustomStringConvertible {
+public enum NetworkError: Error, CustomStringConvertible, Sendable {
     // Throw when unable to parse a URL
     case urlParsing(urlString: String)
     
