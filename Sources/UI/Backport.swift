@@ -15,8 +15,23 @@ public extension View {
     var backport: Backport<Self> { Backport(self) }
 }
 
+extension Backport where Content == Any {
+    /// Usage: Backport.AsyncImage(url: URL)
+    @ViewBuilder static func AsyncImage(url: URL?) -> some View {
+        if #available(iOS 15, macOS 12, watchOS 8, tvOS 15, *) {
+            SwiftUI.AsyncImage(url: url)
+        } else if #available(watchOS 7, macOS 11, tvOS 14, *) {
+            //MyCustomAsyncImage(url: url)
+            ProgressView()
+        } else {
+            Text(url?.lastPathComponent ?? "?")
+        }
+    }
+}
+
+// MARK: - Backport View compatibility functions
 public extension Backport where Content: View {
-    @available(tvOS 14, *)
+    @available(tvOS 14, macOS 11, watchOS 7, *)
     func onChange<V>(
         of value: V,
         perform action: @escaping () -> Void
@@ -61,9 +76,10 @@ public extension Backport where Content: View {
             }
         }
     }
+    
     func background<V>(alignment: Alignment = .center, @ViewBuilder content: @escaping () -> V) -> some View where V : View {
         Group {
-            if #available(tvOS 15.0, *) {
+            if #available(tvOS 15.0, macOS 12, watchOS 8, *) {
                 self.content.background(alignment: alignment) {
                     content()
                 }
@@ -78,7 +94,7 @@ public extension Backport where Content: View {
     }
     func overlay<V>(alignment: Alignment = .center, @ViewBuilder content: @escaping () -> V) -> some View where V : View {
         Group {
-            if #available(tvOS 15.0, *) {
+            if #available(tvOS 15.0, macOS 12, watchOS 8, *) {
                 self.content.overlay(alignment: alignment) {
                     content()
                 }
@@ -88,6 +104,34 @@ public extension Backport where Content: View {
                     self.content
                     content()
                 }
+            }
+        }
+    }
+    func ignoresSafeArea(_ regions: SafeAreaRegions = .all, edges: Edge.Set = .all) -> some View {
+        Group {
+            if #available(tvOS 14.0, macOS 11, watchOS 7, *) {
+                content.ignoresSafeArea(regions.convert, edges: edges)
+            } else {
+                // Fallback on earlier versions
+                content
+            }
+        }
+    }
+    func background<V>(_ color: Color) -> some View where V : View {
+        background { color }
+    }
+    enum SafeAreaRegions: Sendable {
+        case all, container, keyboard
+        
+        @available(tvOS 14.0, macOS 11, watchOS 7, *)
+        public var convert: SwiftUI.SafeAreaRegions {
+            switch self {
+            case .all:
+                    .all
+            case .container:
+                    .container
+            case .keyboard:
+                    .keyboard
             }
         }
     }
@@ -112,24 +156,148 @@ public extension PickerStyle where Self == SegmentedPickerStyle {
 }
 #endif
 
-// MARK: Page TabViewStyle
-#if os(macOS) && !targetEnvironment(macCatalyst)
-@available(macOS 11.0, *)
-public extension TabViewStyle where Self == DefaultTabViewStyle {
-    // can't just name segmented because marked as explicitly unavailable
-    static var pageBackport: DefaultTabViewStyle {
-        return .automatic
+// MARK: TabView
+extension Backport where Content == Any {
+    /// Usage: Backport.AsyncImage(url: URL)
+    @ViewBuilder static func TabView<C: View>(@ViewBuilder content: () -> C) -> some View {
+        if #available(watchOS 7, tvOS 14, macOS 11, *) {
+            SwiftUI.TabView(content: content)
+        } else {
+            VStack(content: content)
+        }
     }
 }
-#else
-@available(watchOS 7.0, tvOS 14, *)
-public extension TabViewStyle where Self == PageTabViewStyle {
-    // can't just name segmented because marked as explicitly unavailable
-    static var pageBackport: PageTabViewStyle {
-        return .page
+public enum BackportTabViewStyle: Sendable {
+    public enum BackportIndexDisplayMode: Sendable {
+        case always, automatic, never
+        #if !os(macOS)
+        @available(watchOS 7.0, tvOS 14, *)
+        public var converted: PageTabViewStyle.IndexDisplayMode {
+            switch self {
+            case .always:
+                if #available(watchOS 8.0, *) {
+                    return .always
+                } else {
+                    // Fallback on earlier versions
+                    return .automatic
+                }
+            case .automatic:
+                return .automatic
+            case .never:
+                if #available(watchOS 8.0, *) {
+                    return .never
+                } else {
+                    // Fallback on earlier versions
+                    return .automatic
+                }
+            }
+        }
+        #endif
+    }
+//    public enum BackportTransitionStyle: Sendable {
+//        /// Automatic transition style
+//        case automatic
+//
+//        /// A transition style that blurs content between each tab
+//        case blur
+//
+//        /// A transition style that has no animation between each tab
+//        case identity
+//
+//        @available(watchOS 10.0, *)
+//        @available(iOS, unavailable)
+//        @available(macOS, unavailable)
+//        @available(tvOS, unavailable)
+//        @available(visionOS, unavailable)
+//        public var converted: VerticalPageTabViewStyle.TransitionStyle {
+//            switch self {
+//            case .automatic:
+//                return .automatic
+//            case .blur:
+//                return .blur
+//            case .identity:
+//                return .identity
+//            }
+//        }
+//    }
+    case automatic, page//, verticalPage
+    // compound cases (problematic for switch below
+//    case pageIndex(BackportIndexDisplayMode), verticalPageTransition(BackportTransitionStyle)
+  // 2024 cases
+//    case grouped, sidebarAdaptable, tabBarOnly
+}
+public extension Backport where Content: View {
+    /// Sets the style for the tab view within the current environment.
+    ///
+    /// - Parameter style: The style to apply to this tab view.
+    @ViewBuilder func tabViewStyle(_ style: BackportTabViewStyle) -> some View {
+        Group {
+            #if os(macOS)
+                content
+            #else
+            if #available(watchOS 7.0, tvOS 14, *) {
+                switch style {
+                case .automatic:
+                    content
+                case .page:
+                    content.tabViewStyle(.page)
+//                case .pageIndex(let backportIndexDisplayMode):
+//                    content//.tabViewStyle(.page(backportIndexDisplayMode.converted))
+//                case .verticalPage: // only supported on watchOS
+//                    //if #unavailable(watchOS 10.0) { // doesn't really work
+//                    if availables
+//                        // Fallback on earlier versions
+//                        content.tabViewStyle(.page)
+//                    } else {
+//                        content.tabViewStyle(.verticalPage)
+//                    }
+//                case .verticalPageTransition(let backportTransitionStyle):
+//                    if #available(watchOS 10.0, *) {
+//                        content//.tabViewStyle(.verticalPage(backportTransitionStyle.converted))
+//                    } else {
+//                        // Fallback on earlier versions
+//                        content.tabViewStyle(.page)
+//                    }
+        //        case .grouped:
+        //            if #unavailable(macOS 15) {
+        //                // Fallback on alternate versions
+        //                return .automatic
+        //            } else {
+        //                return .grouped
+        //            }
+        //        case .sidebarAdaptable:
+        //            return .sidebarAdaptable
+        //        case .tabBarOnly:
+        //            return .tabBarOnly
+                }
+            } else {
+                // Fallback on earlier versions
+                content
+            }
+            #endif
+        }
     }
 }
-#endif
+
+//
+//
+//#if os(macOS) && !targetEnvironment(macCatalyst)
+//@available(macOS 11.0, *)
+//public extension TabViewStyle where Self == DefaultTabViewStyle {
+//    // can't just name segmented because marked as explicitly unavailable
+//    static var pageBackport: DefaultTabViewStyle {
+//        return .automatic
+//    }
+//}
+//#else
+//@available(watchOS 7.0, tvOS 14, *)
+//public extension TabViewStyle where Self == PageTabViewStyle {
+//    // can't just name segmented because marked as explicitly unavailable
+//    static var pageBackport: PageTabViewStyle {
+//        return .page
+//    }
+//}
+//#endif
 
 
 // MARK: - Container Views & Backport Navigation Stack
@@ -176,5 +344,28 @@ public struct NavigationStack<Root: View>: View {
 #endif
     }
 }
+
+
+#Preview("Page Tabs") {
+    Backport.TabView {
+        Color.red
+        Color.green
+        Color.blue
+    }.backport.tabViewStyle(.page)
+}
+#Preview("Automatic Tabs") {
+    Backport.TabView {
+        Color.red
+        Color.green
+        Color.blue
+    }.backport.tabViewStyle(.automatic)
+}
+//#Preview("Vertical Page Tabs") {
+//    Backport.TabView {
+//        Color.red
+//        Color.green
+//        Color.blue
+//    }.backport.tabViewStyle(.verticalPage)
+//}
 
 #endif

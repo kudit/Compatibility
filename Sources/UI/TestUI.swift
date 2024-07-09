@@ -62,9 +62,6 @@ public struct AllTestsListView: View {
     public init() {}
     public var body: some View {
         List {
-            Section("Threading Tests") {
-                TestsRowsView(tests: KuThreading.tests)
-            }
             Section("Int Tests") {
                 TestsRowsView(tests: Int.tests)
             }
@@ -79,6 +76,9 @@ public struct AllTestsListView: View {
             }
             Section("CharacterSet Tests") {
                 TestsRowsView(tests: CharacterSet.tests)
+            }
+            Section("Threading Tests") {
+                TestsRowsView(tests: KuThreading.tests)
             }
             Section {
                 Divider()

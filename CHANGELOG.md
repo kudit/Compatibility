@@ -6,6 +6,8 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Color.version constant (must be hard coded since inaccessible in code)
 - [ ] Tag with matching version in GitHub.
 
+v1.0.6 7/9/2024 Broke macOS and watchOS with last update.  Re-worked TabView Backport to be more compatible and easier.  Added some preview tests. 
+
 v1.0.5 7/9/2024 Updated Xcode minimum versions to match package.  Added Backport .overlay and .foregroundStyle and .background for older tvOS.
 
 v1.0.4 7/8/2024 Attempted to fix issues with Linux compatibility (swapped legacyData around so extension of URLRequest instead of URLSession).  Added additional #if canImport(Combine) checks.

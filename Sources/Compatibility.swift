@@ -6,8 +6,11 @@
 //
 
 public struct Compatibility {
-    public static let version = "1.0.5"
+    public static let version = "1.0.6"
 }
+
+// TODO: UNAVAILABLE
+//@available(*, unavailable, message: "use native function rather than backport?")
 
 /*
  
@@ -83,7 +86,14 @@ public struct Compatibility {
      visionOS 1.0+
 
 2024 Swift 5.10 (March), Swift 6 (September)
+canImport(Testing)
     iOS 18+
+    iPadOS 18+
+    macOS 15+
+    Mac Catalyst 18+
+    tvOS 18+
+    watchOS 11+
+    visionOS 2+
  
  */
 
