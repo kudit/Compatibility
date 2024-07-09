@@ -82,13 +82,13 @@ public enum NetworkError: Error, CustomStringConvertible, Sendable {
     }
 }
 
-extension URLSession {
-    func legacyData(for request: URLRequest) async throws -> (Data, URLResponse) {
+extension URLRequest {
+    func legacyData(for session: URLSession) async throws -> (Data, URLResponse) {
         try await withCheckedThrowingContinuation { continuation in
-            guard let url = request.url else {
+            guard let url = self.url else {
                 return continuation.resume(throwing: URLError(.badURL))
             }
-            let task = self.dataTask(with: url) { data, response, error in
+            let task = session.dataTask(with: url) { data, response, error in
                 guard let data = data, let response = response else {
                     let error = error ?? URLError(.badServerResponse)
                     return continuation.resume(throwing: error)
@@ -133,7 +133,7 @@ func fetchURL(urlString: String, postData: PostData? = nil, file: String = #file
         (data, _) = try await URLSession.shared.data(for: request)
     } else {
         // Fallback on earlier versions
-        (data, _) = try await URLSession.shared.legacyData(for: request)
+        (data, _) = try await request.legacyData(for: URLSession.shared)
     }
     
     //debug("DEBUG RESPONSE DATA: \(data)")

@@ -26,6 +26,7 @@ public extension String {
     static let mysqlDateTimeFormat = "yyyy-MM-dd HH:mm:ss"
 }
 
+#if canImport(Combine) // not available in Linux
 @available(macOS 12.0, watchOS 8, tvOS 15, *)
 public extension DateFormatter.Style {
     var dateStyle: Date.FormatStyle.DateStyle {
@@ -45,6 +46,7 @@ public extension DateFormatter.Style {
         }
     }
 }
+#endif
 
 public extension Date {
     //    Legacy.  Use String constant instead.
@@ -108,11 +110,13 @@ public extension Date {
     }
     
     /// Use date formatter style to create localized string version of the date.
+    #if canImport(Combine)
     @available(macOS 12.0, watchOS 8, tvOS 15, *)
     @available(*, deprecated, renamed: "formatted(date:time:)")
     func string(withStyle dateFormatterStyle:DateFormatter.Style) -> String {
         return self.formatted(date: dateFormatterStyle.dateStyle, time: .omitted)
     }
+    #endif
     
     @available(macOS 12.0, *)
     @MainActor
@@ -133,7 +137,12 @@ public extension Date {
     
     var pretty: String {
         if #available(macOS 12.0, watchOS 8, tvOS 15, *) {
+            #if canImport(Combine) // not supported in Linux
             self.formatted(date: .abbreviated, time: .shortened)
+            #else
+            // Fallback on earlier versions
+            self.formatted(withFormat: .mysqlDateTimeFormat)
+            #endif
         } else {
             // Fallback on earlier versions
             self.formatted(withFormat: .mysqlDateTimeFormat)

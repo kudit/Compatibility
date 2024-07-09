@@ -60,7 +60,7 @@ public extension URL {
             } else {
                 // Fallback on earlier versions
                 let request = URLRequest(url: self)
-                let (data, _) = try await URLSession.shared.legacyData(for: request)
+                let (data, _) = try await request.legacyData(for: URLSession.shared)
                 return data
             }
         } catch URLError.appTransportSecurityRequiresSecureConnection {

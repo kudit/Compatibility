@@ -51,7 +51,9 @@ public extension CharacterSet {
     }
 
     /// Returns a character set containing all numeric digits.
-    static let numerics = CharacterSet(charactersIn: "0123456789")
+    // NOTE: Can't use static let because CharacterSet is not Sendable :(
+    static var numerics: CharacterSet { CharacterSet(charactersIn: "0123456789")
+    }
 
     /// Returns a character set containing the characters allowed in an URL's parameter subcomponent.
     static var urlParameterAllowed: CharacterSet {
@@ -62,6 +64,7 @@ public extension CharacterSet {
 }
 
 // MARK: - HTML
+// TODO: Change this to be a custom struct instead to ensure type-safety and validate HTML?
 public typealias HTML = String
 public extension HTML {
     /// Cleans the HTML content to ensure this isn't just a snippet of HTML and includes the proper headers, etc.
@@ -86,10 +89,12 @@ public extension HTML {
     /// Generate an NSAttributedString from the HTML content enclosed
     var attributedString: NSAttributedString {
         let cleaned = self.cleaned
+#if canImport(Combine) // not supported in Linux :(
         let data = Data(cleaned.utf8)
         if let attributedString = try? NSAttributedString(data: data, options: [.documentType: NSAttributedString.DocumentType.html], documentAttributes: nil) {
             return attributedString
         }
+#endif
         return NSAttributedString(string: cleaned)
     }
 }
@@ -153,6 +158,9 @@ public extension String {
         // print("NaN")
         return false
     }
+    
+    // NOTE: NSDataDetector is not available on Linux!
+    #if canImport(Combine)
     /// Helper for various data detector matches.
     /// Returns `true` iff the `String` matches the data detector type for the complete string.
     func matchesDataDetector(type: NSTextCheckingResult.CheckingType, scheme: String? = nil) -> Bool {
@@ -179,6 +187,12 @@ public extension String {
     var isURL: Bool {
         return matchesDataDetector(type: .link)
     }
+    /// `true` iff the `String` is an address in the proper form.
+    var isAddress: Bool {
+        return matchesDataDetector(type: .address)
+    }
+    #endif
+    
     /// Returns a URL if the String can be converted to URL.  `nil` otherwise.
     var asURL: URL? {
         // make sure data matches detector so "world.json" isn't seen as a valid URL.  must be fully qualified.
@@ -193,11 +207,6 @@ public extension String {
         let parts = self.components(separatedBy: "/")
         let last = parts.last ?? self
         return last
-    }
-
-    /// `true` iff the `String` is an address in the proper form.
-    var isAddress: Bool {
-        return matchesDataDetector(type: .address)
     }
 
     /// `true` if the byte length of the `String` is larger than 100k (the exact threashold may change)
@@ -623,23 +632,23 @@ public extension String {
 
     
     
-    
-    /// Deletes a section of text from the first occurrence of `start` to the next occurrence of `end` (inclusive).
-    /// - Warning: string must contain `start` and `end` in order to work as expected.
-    @available(*, deprecated, message: "There may be better ways to do this not in the standard library") // TODO: see where used and adapt.  If keep, change to deleting(from: to:) no throws (just don't do anything)
-    func stringByDeleting(from start: String, to end: String) throws -> String {
-        let scanner = Scanner(string: self)
-        scanner.charactersToBeSkipped = nil // don't skip any whitespace!
-        var beginning: NSString? = ""
-        scanner.scanUpTo(start, into: &beginning)
-        guard beginning != nil else {
-            return self
-        }
-        scanner.scanUpTo(end, into: nil)
-        scanner.scanString(end, into: nil)
-        let tail = scanner.string.substring(from: self.index(self.startIndex, offsetBy: scanner.scanLocation))
-        return "\(beginning!)" + tail
-    }
+  // NOTE: Removed since deprecated for a while and throws errors in Linux as it's unable to bridge NSString to String.
+//    /// Deletes a section of text from the first occurrence of `start` to the next occurrence of `end` (inclusive).
+//    /// - Warning: string must contain `start` and `end` in order to work as expected.
+//    @available(*, deprecated, message: "There may be better ways to do this not in the standard library") // TODO: see where used and adapt.  If keep, change to deleting(from: to:) no throws (just don't do anything)
+//    func stringByDeleting(from start: String, to end: String) throws -> String {
+//        let scanner = Scanner(string: self)
+//        scanner.charactersToBeSkipped = nil // don't skip any whitespace!
+//        var beginning: NSString? = ""
+//        scanner.scanUpTo(start, into: &beginning)
+//        guard beginning != nil else {
+//            return self
+//        }
+//        scanner.scanUpTo(end, into: nil)
+//        scanner.scanString(end, into: nil)
+//        let tail = scanner.string.substring(from: self.index(self.startIndex, offsetBy: scanner.scanLocation))
+//        return "\(beginning!)" + tail
+//    }
 
     // MARK: - JSON Tools
     /// Return an object extracted from the JSON data in this string or nil if this is not a valid JSON string.
