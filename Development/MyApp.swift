@@ -18,4 +18,16 @@ struct MyApp: App {
     AllTestsListView()
 }
 
+#Preview {
+    RoundedRectangle(cornerRadius: 15)
+        .frame(width: 50, height: 50)
+        .foregroundColor(.green)
+        .backport.overlay {
+            Image(systemName: "applelogo")
+                .imageScale(.large)
+                .foregroundColor(.white)
+        }
+        .background(Color.yellow)
+}
+
 #endif

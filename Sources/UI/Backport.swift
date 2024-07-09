@@ -15,8 +15,8 @@ public extension View {
     var backport: Backport<Self> { Backport(self) }
 }
 
-@available(watchOS 8.0, tvOS 15.0, macOS 12.0, *)
 public extension Backport where Content: View {
+    @available(tvOS 14, *)
     func onChange<V>(
         of value: V,
         perform action: @escaping () -> Void
@@ -33,7 +33,7 @@ public extension Backport where Content: View {
             }
         }
     }
-    func backgroundStyle(_ style: some ShapeStyle) -> some View {
+    func backgroundStyle<S>(_ style: S) -> some View where S : ShapeStyle {
         Group {
             if #available(watchOS 9.0, tvOS 16.0, macOS 13.0, iOS 16.0, *) {
                 content.backgroundStyle(style)
@@ -42,7 +42,51 @@ public extension Backport where Content: View {
                 if let color = style as? Color {
                     content.background(color)
                 } else {
-                    content // don't apply style if watchOS 6 or 7
+                    content // don't apply style if watchOS 6 or 7 or older tvOS
+                }
+            }
+        }
+    }
+    func foregroundStyle<S>(_ style: S) -> some View where S : ShapeStyle {
+        Group {
+            if #available(watchOS 9.0, tvOS 16.0, macOS 13.0, iOS 16.0, *) {
+                content.foregroundStyle(style)
+            } else {
+                // Fallback on earlier versions
+                if let color = style as? Color {
+                    content.foregroundColor(color)
+                } else {
+                    content // don't apply style if watchOS 6 or 7 or older tvOS
+                }
+            }
+        }
+    }
+    func background<V>(alignment: Alignment = .center, @ViewBuilder content: @escaping () -> V) -> some View where V : View {
+        Group {
+            if #available(tvOS 15.0, *) {
+                self.content.background(alignment: alignment) {
+                    content()
+                }
+            } else {
+                // Fallback on earlier versions
+                ZStack(alignment: alignment) {
+                    self.content
+                    content()
+                }
+            }
+        }
+    }
+    func overlay<V>(alignment: Alignment = .center, @ViewBuilder content: @escaping () -> V) -> some View where V : View {
+        Group {
+            if #available(tvOS 15.0, *) {
+                self.content.overlay(alignment: alignment) {
+                    content()
+                }
+            } else {
+                // Fallback on earlier versions
+                ZStack(alignment: alignment) {
+                    self.content
+                    content()
                 }
             }
         }
