@@ -31,7 +31,7 @@ extension Backport where Content == Any {
 
 // MARK: - Backport View compatibility functions
 public extension Backport where Content: View {
-    @available(tvOS 14, macOS 11, watchOS 7, *)
+    @available(tvOS 14, macOS 11, iOS 14, watchOS 7, *)
     func onChange<V>(
         of value: V,
         perform action: @escaping () -> Void
@@ -79,7 +79,7 @@ public extension Backport where Content: View {
     
     func background<V>(alignment: Alignment = .center, @ViewBuilder content: @escaping () -> V) -> some View where V : View {
         Group {
-            if #available(tvOS 15.0, macOS 12, watchOS 8, *) {
+            if #available(tvOS 15.0, macOS 12, watchOS 8, iOS 15, *) {
                 self.content.background(alignment: alignment) {
                     content()
                 }
@@ -94,7 +94,7 @@ public extension Backport where Content: View {
     }
     func overlay<V>(alignment: Alignment = .center, @ViewBuilder content: @escaping () -> V) -> some View where V : View {
         Group {
-            if #available(tvOS 15.0, macOS 12, watchOS 8, *) {
+            if #available(tvOS 15.0, macOS 12, watchOS 8, iOS 15, *) {
                 self.content.overlay(alignment: alignment) {
                     content()
                 }
@@ -109,7 +109,7 @@ public extension Backport where Content: View {
     }
     func ignoresSafeArea(_ regions: SafeAreaRegions = .all, edges: Edge.Set = .all) -> some View {
         Group {
-            if #available(tvOS 14.0, macOS 11, watchOS 7, *) {
+            if #available(tvOS 14.0, macOS 11, watchOS 7, iOS 14, *) {
                 content.ignoresSafeArea(regions.convert, edges: edges)
             } else {
                 // Fallback on earlier versions
@@ -123,7 +123,7 @@ public extension Backport where Content: View {
     enum SafeAreaRegions: Sendable {
         case all, container, keyboard
         
-        @available(tvOS 14.0, macOS 11, watchOS 7, *)
+        @available(tvOS 14.0, macOS 11, iOS 14, watchOS 7, *)
         public var convert: SwiftUI.SafeAreaRegions {
             switch self {
             case .all:
@@ -160,7 +160,7 @@ public extension PickerStyle where Self == SegmentedPickerStyle {
 extension Backport where Content == Any {
     /// Usage: Backport.AsyncImage(url: URL)
     @ViewBuilder static func TabView<C: View>(@ViewBuilder content: () -> C) -> some View {
-        if #available(watchOS 7, tvOS 14, macOS 11, *) {
+        if #available(watchOS 7, iOS 14, tvOS 14, macOS 11, *) {
             SwiftUI.TabView(content: content)
         } else {
             VStack(content: content)
@@ -171,7 +171,7 @@ public enum BackportTabViewStyle: Sendable {
     public enum BackportIndexDisplayMode: Sendable {
         case always, automatic, never
         #if !os(macOS)
-        @available(watchOS 7.0, tvOS 14, *)
+        @available(watchOS 7.0, iOS 14, tvOS 14, *)
         public var converted: PageTabViewStyle.IndexDisplayMode {
             switch self {
             case .always:
@@ -235,7 +235,7 @@ public extension Backport where Content: View {
             #if os(macOS)
                 content
             #else
-            if #available(watchOS 7.0, tvOS 14, *) {
+            if #available(watchOS 7.0, tvOS 14, iOS 14, *) {
                 switch style {
                 case .automatic:
                     content

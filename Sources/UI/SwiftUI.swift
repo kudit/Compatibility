@@ -43,7 +43,7 @@ public extension View {
     }
 }
 
-@available(macOS 12, watchOS 8.0, tvOS 15, *)
+@available(macOS 12, watchOS 8.0, iOS 15, tvOS 15, *)
 #Preview("Closure Test") {
     VStack {
         Text("Normal")
@@ -83,7 +83,7 @@ public extension Binding {
     }
 }
 
-@available(macOS 12, watchOS 8.0, tvOS 15, *)
+@available(macOS 12, watchOS 8.0, iOS 15, tvOS 15, *)
 struct ConvertTestView: View {
     @State private var count: Int = 3
     var body: some View {
@@ -116,7 +116,7 @@ struct ConvertTestView: View {
         .padding()
     }
 }
-@available(macOS 12, watchOS 8, tvOS 15, *)
+@available(macOS 12, watchOS 8, iOS 15, tvOS 15, *)
 #Preview("Convert Test") {
     ConvertTestView()
 }
@@ -130,7 +130,7 @@ public extension Shape {
     }
 }
 
-@available(macOS 12, watchOS 8, tvOS 15, *)
+@available(macOS 12, watchOS 8, iOS 15, tvOS 15, *)
 #Preview("Fill & Stroke") {
     VStack {
         Circle()
@@ -183,7 +183,7 @@ public extension InsettableShape {
 
 
 // MARK: - Material
-@available(macOS 12, watchOS 8, tvOS 15, *)
+@available(macOS 12, watchOS 8, iOS 15, tvOS 15, *)
 public extension View {
     func backgroundMaterial() -> some View {
         self
@@ -201,7 +201,7 @@ public extension View {
     }
 }
 
-@available(macOS 12, watchOS 8, tvOS 15, *)
+@available(macOS 12, watchOS 8, iOS 15, tvOS 15, *)
 #Preview("Material Test") {
     ZStack {
         Color.clear

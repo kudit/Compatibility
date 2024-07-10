@@ -49,7 +49,7 @@ public extension Menu where LabelView == Image {
 }
 #endif
 
-@available(macOS 12, watchOS 7, tvOS 17, *)
+@available(macOS 12, watchOS 7, iOS 14, tvOS 17, *)
 public struct MenuTest: View {
     public var body: some View {
         Menu("KC") {
@@ -66,7 +66,7 @@ public struct MenuTest: View {
     }
 }
 
-@available(macOS 12, watchOS 7, tvOS 17, *)
+@available(macOS 12, watchOS 7, iOS 14, tvOS 17, *)
 #Preview("Watch Menu test") {
     MenuTest().navigationWrapper()
 }

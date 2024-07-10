@@ -22,7 +22,7 @@ This is actively maintained so if there is a feature request or change, we will 
 
 ## Requirements
 
-- iOS 13+ (15.2+ minimum required for Swift Playgrounds support)
+- iOS 15.2+ (15.2+ minimum required for Swift Playgrounds support)
 - tvOS 13.0+ (17+ for most SwiftUI features)
 - watchOS 6.0+
 - macOS 10.5+ (12.0+ for most SwiftUI features)

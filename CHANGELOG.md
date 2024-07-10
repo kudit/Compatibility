@@ -6,6 +6,8 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Color.version constant (must be hard coded since inaccessible in code)
 - [ ] Tag with matching version in GitHub.
 
+v1.0.7 7/10/2024 Removed color logging static variable from DeviceLevel and moved to Color package instead.  Added compiler checks so logical functions can work in iOS 13 but the UI mostly requires iOS 15.
+
 v1.0.6 7/9/2024 Broke macOS and watchOS with last update.  Re-worked TabView Backport to be more compatible and easier.  Added some preview tests. 
 
 v1.0.5 7/9/2024 Updated Xcode minimum versions to match package.  Added Backport .overlay and .foregroundStyle and .background for older tvOS.
@@ -36,5 +38,6 @@ Planned features and anticipated API changes.  If you want to contribute, this i
 ## Proposals:
 This is where proposals can be discussed for potential movement to the roadmap.
 
+- [ ] Should we raise tvOS and watchOS and macOS and other platforms to match the iOS 15 requirement to prune unnecessary legacy code?  Cannot have less than iOS 15.2 due to Swift Playgrounds.
 - [ ] Debug: see if there's a way to add interpolation as a parameter to customize the output format.  Perhaps using a debug output formatter object that can be set?
 - [ ] Debug: allow setting a closure that will pre-process debug statements to allow for injection in debug statements?

@@ -27,7 +27,7 @@ public extension String {
 }
 
 #if canImport(Combine) // not available in Linux
-@available(macOS 12.0, watchOS 8, tvOS 15, *)
+@available(macOS 12.0, watchOS 8, iOS 15, tvOS 15, *)
 public extension DateFormatter.Style {
     var dateStyle: Date.FormatStyle.DateStyle {
         switch self {
@@ -111,7 +111,7 @@ public extension Date {
     
     /// Use date formatter style to create localized string version of the date.
     #if canImport(Combine)
-    @available(macOS 12.0, watchOS 8, tvOS 15, *)
+    @available(macOS 12.0, watchOS 8, iOS 15, tvOS 15, *)
     @available(*, deprecated, renamed: "formatted(date:time:)")
     func string(withStyle dateFormatterStyle:DateFormatter.Style) -> String {
         return self.formatted(date: dateFormatterStyle.dateStyle, time: .omitted)
@@ -136,7 +136,7 @@ public extension Date {
     }
     
     var pretty: String {
-        if #available(macOS 12.0, watchOS 8, tvOS 15, *) {
+        if #available(macOS 12.0, watchOS 8, iOS 15, tvOS 15, *) {
             #if canImport(Combine) // not supported in Linux
             self.formatted(date: .abbreviated, time: .shortened)
             #else

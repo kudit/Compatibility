@@ -90,11 +90,7 @@ public enum DebugLevel: Comparable, CustomStringConvertible, CaseIterable, Senda
     /// Set this to a set of levels where we should include the context info.  Defaults to `.important` so that Notices and Debug messages are less noisy and easier to see.
     @MainActor
     public static var levelsToIncludeContext: Set<DebugLevel> = .important
-    
-    /// Set this to `true` to log failed color parsing notices when returning `nil`
-    @MainActor
-    public static var colorLogging = false
-    
+        
     /// setting this to false will make debug() act exactly like print()
     @MainActor
     public static var includeContext = true
