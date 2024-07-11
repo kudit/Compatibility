@@ -7,7 +7,7 @@
 
 import PackageDescription
 
-let version = "1.0.10"
+let version = "1.0.11"
 let packageLibraryName = "Compatibility"
 
 // Products define the executables and libraries a package produces, making them visible to other packages.
@@ -76,6 +76,9 @@ products += [
 			.landscapeLeft,
 			.portraitUpsideDown(.when(deviceFamilies: [.pad]))
 		],
+        capabilities: [
+            .outgoingNetworkConnections() // for networking tests
+        ],
 		appCategory: .developerTools
 	),
 ]

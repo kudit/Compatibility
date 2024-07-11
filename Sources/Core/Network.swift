@@ -7,12 +7,24 @@
 
 import Foundation
 
-public typealias PostData = [String: Sendable]
+public struct PostData: RawRepresentable, ExpressibleByDictionaryLiteral, Sendable {
+    public typealias RawValue = [String: Sendable]
+    public var rawValue: RawValue
+    public init(rawValue: RawValue) {
+        self.rawValue = rawValue
+    }
+        
+    public typealias Key = String
+    public typealias Value = Sendable
+    public init(dictionaryLiteral elements: (Key, Value)...) {
+        self.init(rawValue: RawValue(uniqueKeysWithValues: elements))
+    }
+}
 public extension PostData {
     var queryString: String? {
         //return "fooish=barish&baz=buzz"
         var items = [URLQueryItem]()
-        for (key, value) in self {
+        for (key, value) in self.rawValue {
             items.append(URLQueryItem(name: key, value: "\(value)"))
         }
         var urlComponents = URLComponents()
@@ -49,9 +61,12 @@ public enum NetworkError: Error, CustomStringConvertible, Sendable {
     }
 }
 
-#if canImport(FoundationNetworking)
+#if canImport(Combine) || canImport(FoundationNetworking) // for Linux support of URLRequest
+#if canImport(FoundationNetowrking)
 import FoundationNetworking
+#endif
 
+@available(iOS 13, watchOS 6, tvOS 13, *)
 public extension PostData {
     // MARK: - Tests
     internal static let TEST_DATA: PostData = ["id": 13, "name": "Jack & \"Jill\"", "foo": false, "bar": "0.0"]
@@ -79,7 +94,7 @@ public extension PostData {
         try expect(results.contains("'name' => 'Jack & \\\"Jill\\\"',"), results)
     }
     @MainActor
-    static let networkTests = [
+    static let tests = [
         Test("POST data query encoding", testPostDataQueryEncoding),
         Test("fetchURL Gwinnett check", testFetchGwinnettCheck),
         Test("fetchURL GET check", testFetchGETCheck),
@@ -87,6 +102,7 @@ public extension PostData {
     ]
 }
 
+@available(iOS 13, watchOS 6, tvOS 13, *)
 extension URLRequest {
     func legacyData(for session: URLSession) async throws -> (Data, URLResponse) {
         try await withCheckedThrowingContinuation { continuation in
@@ -108,6 +124,7 @@ extension URLRequest {
 }
 
 /// Fetch data from URL including optional postData.  Will report included file information and automatically debug output to the logs.
+@available(iOS 13, watchOS 6, tvOS 13, *) // for concurrency
 public func fetchURL(urlString: String, postData: PostData? = nil, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) async throws -> String {
     debug("Fetching URL [\(urlString)]...", level: .NOTICE, file: file, function: function, line: line, column: column)
     // create the url with URL
@@ -151,15 +168,15 @@ public func fetchURL(urlString: String, postData: PostData? = nil, file: String 
     }
 }
 
+@available(iOS 15, watchOS 6, tvOS 13, *)
 public extension URL {
     /// download data asynchronously and return the data or nil if there is a failure
-    @available(iOS 15, macCatalyst 15.0, *)
     func download() async throws -> Data {
         do {
             if #available(macOS 12.0, watchOS 8, tvOS 15, *) {
                 let (fileURL, response) = try await URLSession.shared.download(from: self)
                 debug("URL Download response: \(response)", level: .DEBUG)
-
+                
                 // load data from local file URL
                 let data = try Data(contentsOf: fileURL)
                 return data
@@ -178,8 +195,9 @@ public extension URL {
 
 #if canImport(SwiftUI)
 import SwiftUI
+@available(iOS 13, tvOS 13, watchOS 8, *)
 #Preview {
-    TestsListView(tests: PostData.networkTests)
+    TestsListView(tests: PostData.tests)
 }
 #endif
 #endif

@@ -6,6 +6,8 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Color.version constant (must be hard coded since inaccessible in code)
 - [ ] Tag with matching version in GitHub.
 
+v1.0.11 7/11/2024 Not sure why the tvOS didn't warn about async function availability (probably because of app target), but warning in Color so fixing here.  Fixed so runs in Swift Playgrounds (missed testing this and there were some issues with global typealiases so converted PostData and HTML to structs).  Restored Network code by checking for combine OR FoundationNetowrking for Linux.  Added network requirement so tests pass in Swift Playgrounds.  Added networking tests to All Tests.
+
 v1.0.10 7/11/2024 Fixed missed watchOS check for version availability.
 
 v1.0.9 7/11/2024 Added support for iOS 11, tvOS 11, watchOS 4 to match DeviceKit.  Removed Testable protocol since it doesn't really make sense.  Figured out how to conditionally include platform requirement for Swift Playgrounds without modifying module requirement.

@@ -65,12 +65,24 @@ public extension CharacterSet {
 }
 
 // MARK: - HTML
-// TODO: Change this to be a custom struct instead to ensure type-safety and validate HTML?
-public typealias HTML = String
-public extension HTML {
+public struct HTML: CustomStringConvertible, ExpressibleByStringLiteral, ExpressibleByStringInterpolation, RawRepresentable {
+    public var rawValue: String
+    public init(rawValue: String) {
+        self.rawValue = rawValue
+    }
+
+    public typealias StringLiteralType = String
+    public init(stringLiteral value: String) {
+        self.rawValue = value
+    }
+    
+    public var description: String {
+        return "\(rawValue)"
+    }
+
     /// Cleans the HTML content to ensure this isn't just a snippet of HTML and includes the proper headers, etc.
     var cleaned: HTML {
-        var cleaned = self
+        var cleaned = self.rawValue
         if !cleaned.contains("<body>") {
             cleaned = """
 <body>
@@ -85,18 +97,18 @@ public extension HTML {
 </html>
 """
         }
-        return cleaned
+        return HTML(rawValue: cleaned)
     }
     /// Generate an NSAttributedString from the HTML content enclosed
     var attributedString: NSAttributedString {
         let cleaned = self.cleaned
 #if canImport(Combine) // not supported in Linux :(
-        let data = Data(cleaned.utf8)
+        let data = Data(cleaned.rawValue.utf8)
         if let attributedString = try? NSAttributedString(data: data, options: [.documentType: NSAttributedString.DocumentType.html], documentAttributes: nil) {
             return attributedString
         }
 #endif
-        return NSAttributedString(string: cleaned)
+        return NSAttributedString(string: cleaned.rawValue)
     }
 }
 
@@ -544,7 +556,7 @@ public extension String {
         return self.data(using: String.Encoding.utf8)
     }
 #if canImport(NSAttributedString)
-/// Attributed string if content contains HTML markup.  Can also be used to decode entities and strip tags.
+/// Attributed string if content contains HTML markup.  Can also be used to decode entities and strip tags.  Possibly better to convert to HTML type and then use attributedString property convernvert HTML to rich text.
     var attributedStringFromHTML: NSAttributedString? {
         guard let encodedData = self.utf8data else {
             print("WARNING: Unable to decode string data: \(self)")

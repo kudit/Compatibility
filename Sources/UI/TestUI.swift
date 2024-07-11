@@ -83,6 +83,9 @@ public struct AllTestsListView: View {
             Section("Threading Tests") {
                 TestsRowsView(tests: KuThreading.tests)
             }
+            Section("Network Tests") {
+                TestsRowsView(tests: PostData.tests)
+            }
             Section {
                 Divider()
             } footer: {

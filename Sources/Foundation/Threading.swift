@@ -19,22 +19,19 @@ func timeTolerance(start: TimeInterval, end: TimeInterval, expected: TimeInterva
 
 // would have made this a static function on task but extending it apparently has issues??
 // Sleep extension for sleeping a thread in seconds
-@available(iOS 13, watchOS 6, *) // for concurrency
+@available(iOS 13, watchOS 6, tvOS 13, *) // for concurrency
 public func sleep(seconds: Double, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) async {
     let duration = UInt64(seconds * 1_000_000_000)
     do {
-        if #available(tvOS 13, *) {
-            try await Task.sleep(nanoseconds: duration)
-        } else {
-            // Fallback on earlier versions
-            sleep(UInt32(seconds)) // give fetch from server time to finish
-        }
+        try await Task.sleep(nanoseconds: duration)
+//            // Fallback on earlier versions
+//            sleep(UInt32(seconds)) // give fetch from server time to finish
     } catch {
         // do nothing but make debug log if we can.
         debug("Sleep function was interrupted", level: .DEBUG, file: file, function: function, line: line, column: column)
     }
 }
-@available(iOS 13, watchOS 6, *) // for concurrency
+@available(iOS 13, watchOS 6, tvOS 13, *) // for concurrency
 @MainActor
 internal let testSleep3: TestClosure = {
     let then = Date.timeIntervalSinceReferenceDate
@@ -43,7 +40,7 @@ internal let testSleep3: TestClosure = {
     let now = Date.timeIntervalSinceReferenceDate
     try timeTolerance(start: then, end: now, expected: seconds)
 }
-@available(iOS 13, watchOS 6, *) // for concurrency
+@available(iOS 13, watchOS 6, tvOS 13, *) // for concurrency
 @MainActor
 internal let testSleep2: TestClosure = {
     let start = Date.timeIntervalSinceReferenceDate
@@ -187,28 +184,27 @@ public func delay(_ delay:Double, closure:@escaping () -> Void) {
 
 }
 
-@available(iOS 13, watchOS 6, *) // for concurrency
+@available(iOS 13, watchOS 6, tvOS 13, *) // for concurrency
 @MainActor
 internal let testDelay: TestClosure = {
     let start = Date.timeIntervalSinceReferenceDate
     let delayTime = 0.4
     var end: TimeInterval
-    if #available(tvOS 13, *) {
-        end = await withCheckedContinuation { continuation in
-            delay(delayTime) {
-                let end = Date.timeIntervalSinceReferenceDate
-                continuation.resume(returning: end)
-            }
-        }
-    } else {
-        // Fallback on earlier versions
+    end = await withCheckedContinuation { continuation in
         delay(delayTime) {
-            debug("Legacy delay task finished.", level: .DEBUG)
+            let end = Date.timeIntervalSinceReferenceDate
+            continuation.resume(returning: end)
         }
-        // run delay just for testing (will not actually affect test though)
-        await sleep(seconds: delayTime)
-        end = Date.timeIntervalSinceReferenceDate
     }
+//    } else {
+//        // Fallback on earlier versions
+//        delay(delayTime) {
+//            debug("Legacy delay task finished.", level: .DEBUG)
+//        }
+//        // run delay just for testing (will not actually affect test though)
+//        await sleep(seconds: delayTime)
+//        end = Date.timeIntervalSinceReferenceDate
+//    }
     try timeTolerance(start: start, end: end, expected: delayTime)
 }
 
