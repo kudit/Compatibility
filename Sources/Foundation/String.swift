@@ -32,8 +32,9 @@ public extension LosslessStringConvertible {
     }
 }
 
-extension CharacterSet: Testable {
-    public static let tests = [
+@available(watchOS 6, iOS 13, tvOS 13, *)
+extension CharacterSet {
+    @MainActor public static let tests = [
         Test("character strings", testCharacterStrings),
     ]
 }
@@ -99,7 +100,6 @@ public extension HTML {
     }
 }
 
-extension String: Testable {}
 public extension String {
     static let INVALID_ENCODING = "INVALID_ENCODING"
     
@@ -665,6 +665,7 @@ public extension String {
         }
     }
     
+    @available(watchOS 6, iOS 13, tvOS 13, *)
     @MainActor
     static let tests = [
         Test("sentence capitalized", testSentenceCapitalized),
@@ -722,6 +723,7 @@ public extension Optional where Wrapped == any Numeric {
 
 #if canImport(SwiftUI)
 import SwiftUI
+@available(watchOS 6, iOS 13, tvOS 13, *)
 #Preview("Tests") {
     TestsListView(tests: String.tests)
 }
@@ -807,6 +809,7 @@ extension String {
 
 #if canImport(SwiftUI)
 import SwiftUI
+@available(watchOS 6, iOS 13, tvOS 13, *)
 #Preview("Tests") {
     TestsListView(tests: String.tests + CharacterSet.tests)
 }

@@ -124,6 +124,7 @@ public extension Collection {
         try expect(array[nth: 7] == 2, "Should be looped value")
     }
 }
+@available(watchOS 6.0, iOS 13, tvOS 13, *)
 @MainActor
 let collectionTests: [Test] = [
     Test("safety", [Int].safeTests),
@@ -132,6 +133,7 @@ let collectionTests: [Test] = [
 
 
 // Array Identifiable
+@available(watchOS 6.0, iOS 13, tvOS 13, *)
 public extension Array where Element: Identifiable {
     subscript(id: Element.ID) -> Element? {
         get {
@@ -184,6 +186,7 @@ public extension Collection where Element: DoubleConvertible & AdditiveArithmeti
 
 #if canImport(SwiftUI)
 import SwiftUI
+@available(watchOS 6, iOS 13, tvOS 13, *)
 #Preview("Tests") {
     TestsListView(tests: collectionTests)
 }

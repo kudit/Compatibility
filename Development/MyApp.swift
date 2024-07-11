@@ -4,6 +4,7 @@ import SwiftUI
 import Compatibility
 #endif
 
+@available(iOS 15.0, tvOS 17, *)
 @main
 struct MyApp: App {
     var body: some Scene {
@@ -13,11 +14,12 @@ struct MyApp: App {
     }
 }
 
-@available(macOS 12.0, *)
+@available(macOS 12.0, iOS 15, tvOS 17, *)
 #Preview {
     AllTestsListView()
 }
 
+@available(iOS 13, *)
 #Preview {
     RoundedRectangle(cornerRadius: 15)
         .frame(width: 50, height: 50)

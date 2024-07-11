@@ -10,6 +10,7 @@ import SwiftUI
 
 // MARK: - Menu compatibility for watchOS
 #if os(watchOS)
+@available(watchOS 6.0, *)
 public struct Menu<Content: View, LabelView: View>: View {
     var content: () -> Content
     var label: () -> LabelView
@@ -26,6 +27,7 @@ public struct Menu<Content: View, LabelView: View>: View {
         }, label: label)
     }
 }
+@available(watchOS 6.0, *)
 public extension Menu where LabelView == Text {
     init(
         _ title: some StringProtocol,
@@ -36,6 +38,7 @@ public extension Menu where LabelView == Text {
         })
     }
 }
+@available(watchOS 6.0, *)
 public extension Menu where LabelView == Image {
     init(
         _ title: some StringProtocol,

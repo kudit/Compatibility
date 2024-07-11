@@ -39,6 +39,7 @@ extension Notification.Name {
     static let currentDebugLevelChanged = Notification.Name("currentDebugLevelChanged")
 }
 
+@available(watchOS 6.0, iOS 13, tvOS 13, *)
 @MainActor
 public class ObservableDebugLevel: ObservableObject {
     public static var shared = ObservableDebugLevel()

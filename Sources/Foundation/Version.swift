@@ -127,12 +127,14 @@ public extension OperatingSystemVersion {
 #if canImport(SwiftUI)
 // Don't know why this is necessary.  CustomStringConvertible should have covered this.
 import SwiftUI
+@available(watchOS 6.0, iOS 13, tvOS 13, *)
 public extension LocalizedStringKey.StringInterpolation {
     mutating func appendInterpolation(_ value: Version) {
         appendInterpolation(value.description)
     }
 }
 
+@available(watchOS 6, iOS 13, tvOS 13, *)
 #Preview("Tests") {
     VStack {
         Text("Version test: \(Version("13"))")

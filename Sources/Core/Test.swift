@@ -3,11 +3,13 @@ import Foundation
 // TODO: Once Swift Testing is available, can re-write all this code into test classes that conform to Swift Testing so that we can also run code in Previews and Test Applications?
 public typealias TestClosure = () async throws -> Void
 
-// don't make this public to avoid compiling test stuff into framework, however, do make public so apps can add in their own tests.
-public protocol Testable {
-    // actor isolated since each Test is @MainActor isolated due to being an ObservableObject.
-    @MainActor static var tests: [Test] { get }
-}
+// This could be anything, not necessary a struct or class, so if we need this, have a list of tests rather than a Testable object
+//// don't make this public to avoid compiling test stuff into framework, however, do make public so apps can add in their own tests.
+//public protocol Testable {
+//    // actor isolated since each Test is @MainActor isolated due to being an ObservableObject.
+//    @available(watchOS 6.0, *)
+//    @MainActor static var tests: [Test] { get }
+//}
 
 // TODO: NEXT: Convert these to Testing expectations so we don't have to write custom error descriptions.
 /// Sets an expectation for testing.  In the future, convert to Swift #expect calls so we get better context without specifying a debugString.
@@ -23,6 +25,7 @@ public func expect(_ condition: Bool, _ debugString: String? = nil, file: String
 }
 
 // Test Handlers
+@available(watchOS 6.0, iOS 13, tvOS 13, *) // due to ObservableObject
 @MainActor
 public final class Test: ObservableObject {
     public enum TestProgress: Sendable {
@@ -87,6 +90,7 @@ public final class Test: ObservableObject {
         return "\(progress): \(title)\(errorString)"
     }
 }
+@available(watchOS 6, iOS 13, tvOS 13, *)
 public extension Test {
     static func dummyAsyncThrows() async throws {
     }
@@ -94,6 +98,7 @@ public extension Test {
 
 #if canImport(SwiftUI)
 import SwiftUI
+@available(watchOS 6, iOS 13, tvOS 13, *)
 #Preview {
     TestsListView(tests: KuThreading.tests + Int.tests)
 }

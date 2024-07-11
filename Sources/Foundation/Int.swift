@@ -167,7 +167,8 @@ internal let byteTests: TestClosure = {
 
 // MARK: - Tests
 
-extension Int: Testable {
+@available(watchOS 6, iOS 13, tvOS 13, *)
+extension Int {
     @MainActor
     public static let tests: [Test] = [
         Test("plusplus", testPlusPlus),
@@ -179,6 +180,7 @@ extension Int: Testable {
 
 #if canImport(SwiftUI)
 import SwiftUI
+@available(watchOS 6, iOS 13, tvOS 13, *)
 #Preview("Ordinals") {
     List {
         ForEach(1..<25 + .random(max: 5), id: \.self) { i in
@@ -186,6 +188,7 @@ import SwiftUI
         }
     }
 }
+@available(watchOS 6, iOS 13, tvOS 13, *)
 #Preview("Tests") {
     TestsListView(tests: Int.tests)
 }

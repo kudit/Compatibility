@@ -254,7 +254,7 @@ public extension Date {
         try expect(interval == time, "\(interval) != \(time)")
     }
 }
-@available(macOS 12.0, *)
+@available(macOS 12.0, watchOS 6, iOS 13, tvOS 13, *)
 public extension Date {
     @MainActor
     static let tests = [
@@ -268,7 +268,7 @@ public extension Date {
 
 #if canImport(SwiftUI)
 import SwiftUI
-@available(macOS 12.0, *)
+@available(macOS 12.0, watchOS 6, iOS 13, tvOS 13, *)
 #Preview {
     VStack {
         Text("\(String(describing: Date(from: "2023-01-02 17:12:00", format: "yyyy-MM-dd HH:mm:ss")))")
@@ -277,7 +277,7 @@ import SwiftUI
         Text("\(String(describing: Date(from: "2023-01-02 17:12:00", format: "yyyy-MM-dd HH:mm:ss")?.pretty))")
     }
 }
-@available(macOS 12.0, *)
+@available(macOS 12.0, watchOS 6, iOS 13, tvOS 13, *)
 #Preview("Tests") {
     TestsListView(tests: Date.tests)
 }

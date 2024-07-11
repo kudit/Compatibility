@@ -6,7 +6,7 @@
 //
 
 public struct Compatibility {
-    public static let version = "1.0.8"
+    public static let version = "1.0.9"
 }
 
 // TODO: UNAVAILABLE

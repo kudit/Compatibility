@@ -11,18 +11,22 @@ public struct Backport<Content> {
     }
 }
 
+@available(watchOS 6.0, iOS 13, tvOS 13, *)
 public extension View {
     var backport: Backport<Self> { Backport(self) }
 }
 
+@available(watchOS 6.0, iOS 13, tvOS 13, *)
 extension Backport where Content == Any {
     /// Usage: Backport.AsyncImage(url: URL)
     @ViewBuilder static func AsyncImage(url: URL?) -> some View {
-        if #available(iOS 15, macOS 12, watchOS 8, tvOS 15, *) {
-            SwiftUI.AsyncImage(url: url)
-        } else if #available(watchOS 7, macOS 11, tvOS 14, *) {
-            //MyCustomAsyncImage(url: url)
-            ProgressView()
+        if #available(watchOS 7, macOS 11, tvOS 14, iOS 14, *) {
+            if #available(iOS 15, macOS 12, watchOS 8, tvOS 15, *) {
+                SwiftUI.AsyncImage(url: url)
+            } else {
+                //MyCustomAsyncImage(url: url)
+                ProgressView()
+            }
         } else {
             Text(url?.lastPathComponent ?? "?")
         }
@@ -30,6 +34,7 @@ extension Backport where Content == Any {
 }
 
 // MARK: - Backport View compatibility functions
+@available(watchOS 6.0, iOS 13, tvOS 13, *)
 public extension Backport where Content: View {
     @available(tvOS 14, macOS 11, iOS 14, watchOS 7, *)
     func onChange<V>(
@@ -37,7 +42,7 @@ public extension Backport where Content: View {
         perform action: @escaping () -> Void
     ) -> some View where V : Equatable {
         Group {
-            if #available(iOS 17.0, macOS 14.0, macCatalyst 17.0, tvOS 17.0, watchOS 10.0, visionOS 1.0, *) {
+            if #available(iOS 17.0, macOS 14.0, macCatalyst 17.0, tvOS 17.0, watchOS 10.0, *) {
                 content.onChange(of: value) {
                     action()
                 }
@@ -141,6 +146,7 @@ public extension Backport where Content: View {
 
 // MARK: Segmented PickerStyle
 #if os(watchOS)
+@available(watchOS 6.0, *)
 public extension PickerStyle where Self == DefaultPickerStyle {
     // can't just name segmented because marked as explicitly unavailable
     static var segmentedBackport: DefaultPickerStyle {
@@ -148,6 +154,7 @@ public extension PickerStyle where Self == DefaultPickerStyle {
     }
 }
 #else
+@available(iOS 13.0, tvOS 13, *)
 public extension PickerStyle where Self == SegmentedPickerStyle {
     // can't just name segmented because marked as explicitly unavailable
     static var segmentedBackport: SegmentedPickerStyle {
@@ -157,6 +164,7 @@ public extension PickerStyle where Self == SegmentedPickerStyle {
 #endif
 
 // MARK: TabView
+@available(watchOS 6.0, iOS 13, tvOS 13, *)
 extension Backport where Content == Any {
     /// Usage: Backport.AsyncImage(url: URL)
     @ViewBuilder static func TabView<C: View>(@ViewBuilder content: () -> C) -> some View {
@@ -226,6 +234,7 @@ public enum BackportTabViewStyle: Sendable {
   // 2024 cases
 //    case grouped, sidebarAdaptable, tabBarOnly
 }
+@available(watchOS 6.0, iOS 13, tvOS 13, *)
 public extension Backport where Content: View {
     /// Sets the style for the tab view within the current environment.
     ///
@@ -301,10 +310,12 @@ public extension Backport where Content: View {
 
 
 // MARK: - Container Views & Backport Navigation Stack
+@available(watchOS 6.0, iOS 13, tvOS 13, *)
 public protocol ContainerView: View {
     associatedtype Content
     init(content: @escaping () -> Content)
 }
+@available(watchOS 6.0, iOS 13, tvOS 13, *)
 public extension ContainerView {
     init(@ViewBuilder _ content: @escaping () -> Content) {
         self.init(content: content)
@@ -312,7 +323,7 @@ public extension ContainerView {
 }
 
 // Try just re-definiing NavigationStack here and in this, do the check and show the appropriate SwiftUI implementation if that makes sense.
-@available(watchOS 7.0, *)
+@available(watchOS 7.0, iOS 13, tvOS 13, *)
 @MainActor
 public struct NavigationStack<Root: View>: View {
     var root: () -> Root
@@ -346,6 +357,7 @@ public struct NavigationStack<Root: View>: View {
 }
 
 
+@available(watchOS 6.0, iOS 13, tvOS 13, *)
 #Preview("Page Tabs") {
     Backport.TabView {
         Color.red
@@ -353,6 +365,7 @@ public struct NavigationStack<Root: View>: View {
         Color.blue
     }.backport.tabViewStyle(.page)
 }
+@available(watchOS 6.0, iOS 13, tvOS 13, *)
 #Preview("Automatic Tabs") {
     Backport.TabView {
         Color.red
