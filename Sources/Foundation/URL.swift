@@ -46,26 +46,4 @@ public extension URL {
         }
         return secureURL
     }
-    /// download data asynchronously and return the data or nil if there is a failure
-    @available(iOS 15, macCatalyst 15.0, *)
-    func download() async throws -> Data {
-        do {
-            if #available(macOS 12.0, watchOS 8, tvOS 15, *) {
-                let (fileURL, response) = try await URLSession.shared.download(from: self)
-                debug("URL Download response: \(response)", level: .DEBUG)
-
-                // load data from local file URL
-                let data = try Data(contentsOf: fileURL)
-                return data
-            } else {
-                // Fallback on earlier versions
-                let request = URLRequest(url: self)
-                let (data, _) = try await request.legacyData(for: URLSession.shared)
-                return data
-            }
-        } catch URLError.appTransportSecurityRequiresSecureConnection {
-            // replace http with https
-            return try await self.secured.download()
-        }
-    }
 }

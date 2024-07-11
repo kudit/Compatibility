@@ -22,7 +22,37 @@ public extension PostData {
     var queryEncoded: Data? {
         return queryString?.data(using: .utf8)
     }
+}
+
+public enum NetworkError: Error, CustomStringConvertible, Sendable {
+    // Throw when unable to parse a URL
+    case urlParsing(urlString: String)
     
+    case postDataEncoding(_ data: PostData)
+    
+    // Invalid HTTP response (with response code)
+    case invalidResponse(code: Int? = nil)
+    
+    case nilResponse
+    
+    public var description: String {
+        switch self {
+        case .urlParsing(let urlString):
+            return "URL could not be created from \(urlString)"
+        case .postDataEncoding(let data):
+            return "Post Data could not be encoded from \(data)"
+        case .invalidResponse(let code):
+            return "Invalid Response (\(code != nil ? "\(code!)" : "No code")) received from the server"
+        case .nilResponse:
+            return "nil Data received from the server"
+        }
+    }
+}
+
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+
+public extension PostData {
     // MARK: - Tests
     internal static let TEST_DATA: PostData = ["id": 13, "name": "Jack & \"Jill\"", "foo": false, "bar": "0.0"]
     @MainActor
@@ -57,31 +87,6 @@ public extension PostData {
     ]
 }
 
-public enum NetworkError: Error, CustomStringConvertible, Sendable {
-    // Throw when unable to parse a URL
-    case urlParsing(urlString: String)
-    
-    case postDataEncoding(_ data: PostData)
-    
-    // Invalid HTTP response (with response code)
-    case invalidResponse(code: Int? = nil)
-    
-    case nilResponse
-    
-    public var description: String {
-        switch self {
-        case .urlParsing(let urlString):
-            return "URL could not be created from \(urlString)"
-        case .postDataEncoding(let data):
-            return "Post Data could not be encoded from \(data)"
-        case .invalidResponse(let code):
-            return "Invalid Response (\(code != nil ? "\(code!)" : "No code")) received from the server"
-        case .nilResponse:
-            return "nil Data received from the server"
-        }
-    }
-}
-
 extension URLRequest {
     func legacyData(for session: URLSession) async throws -> (Data, URLResponse) {
         try await withCheckedThrowingContinuation { continuation in
@@ -103,7 +108,7 @@ extension URLRequest {
 }
 
 /// Fetch data from URL including optional postData.  Will report included file information and automatically debug output to the logs.
-func fetchURL(urlString: String, postData: PostData? = nil, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) async throws -> String {
+public func fetchURL(urlString: String, postData: PostData? = nil, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) async throws -> String {
     debug("Fetching URL [\(urlString)]...", level: .NOTICE, file: file, function: function, line: line, column: column)
     // create the url with URL
     guard let url = URL(string: urlString) else {
@@ -146,9 +151,35 @@ func fetchURL(urlString: String, postData: PostData? = nil, file: String = #file
     }
 }
 
+public extension URL {
+    /// download data asynchronously and return the data or nil if there is a failure
+    @available(iOS 15, macCatalyst 15.0, *)
+    func download() async throws -> Data {
+        do {
+            if #available(macOS 12.0, watchOS 8, tvOS 15, *) {
+                let (fileURL, response) = try await URLSession.shared.download(from: self)
+                debug("URL Download response: \(response)", level: .DEBUG)
+
+                // load data from local file URL
+                let data = try Data(contentsOf: fileURL)
+                return data
+            } else {
+                // Fallback on earlier versions
+                let request = URLRequest(url: self)
+                let (data, _) = try await request.legacyData(for: URLSession.shared)
+                return data
+            }
+        } catch URLError.appTransportSecurityRequiresSecureConnection {
+            // replace http with https
+            return try await self.secured.download()
+        }
+    }
+}
+
 #if canImport(SwiftUI)
 import SwiftUI
 #Preview {
     TestsListView(tests: PostData.networkTests)
 }
+#endif
 #endif

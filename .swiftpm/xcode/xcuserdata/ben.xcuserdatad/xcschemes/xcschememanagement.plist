@@ -22,7 +22,7 @@
 		<key>Compatibility Library.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>isShown</key>
-			<true/>
+			<false/>
 			<key>orderHint</key>
 			<integer>3</integer>
 		</dict>
