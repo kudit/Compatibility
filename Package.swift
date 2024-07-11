@@ -7,7 +7,7 @@
 
 import PackageDescription
 
-let version = "1.0.11"
+let version = "1.0.12"
 let packageLibraryName = "Compatibility"
 
 // Products define the executables and libraries a package produces, making them visible to other packages.
@@ -102,6 +102,7 @@ let package = Package(
     name: packageLibraryName,
     platforms: platforms,
     products: products,
+    // include dependencies
     dependencies: [
         // Dependencies declare other packages that this package depends on.
 //        .package(url: "https://github.com/apple/swift-collections", "1.1.1"..<"2.0.0")

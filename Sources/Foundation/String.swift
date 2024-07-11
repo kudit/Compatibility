@@ -65,7 +65,7 @@ public extension CharacterSet {
 }
 
 // MARK: - HTML
-public struct HTML: CustomStringConvertible, ExpressibleByStringLiteral, ExpressibleByStringInterpolation, RawRepresentable {
+public struct HTML: CustomStringConvertible, ExpressibleByStringLiteral, ExpressibleByStringInterpolation, RawRepresentable, Sendable {
     public var rawValue: String
     public init(rawValue: String) {
         self.rawValue = rawValue
