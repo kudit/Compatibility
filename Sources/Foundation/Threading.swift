@@ -19,11 +19,11 @@ func timeTolerance(start: TimeInterval, end: TimeInterval, expected: TimeInterva
 
 // would have made this a static function on task but extending it apparently has issues??
 // Sleep extension for sleeping a thread in seconds
-@available(iOS 13, *) // for concurrency
+@available(iOS 13, watchOS 6, *) // for concurrency
 public func sleep(seconds: Double, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) async {
     let duration = UInt64(seconds * 1_000_000_000)
     do {
-        if #available(watchOS 6.0, tvOS 13, *) {
+        if #available(tvOS 13, *) {
             try await Task.sleep(nanoseconds: duration)
         } else {
             // Fallback on earlier versions
@@ -34,7 +34,7 @@ public func sleep(seconds: Double, file: String = #file, function: String = #fun
         debug("Sleep function was interrupted", level: .DEBUG, file: file, function: function, line: line, column: column)
     }
 }
-@available(iOS 13, *) // for concurrency
+@available(iOS 13, watchOS 6, *) // for concurrency
 @MainActor
 internal let testSleep3: TestClosure = {
     let then = Date.timeIntervalSinceReferenceDate
@@ -43,7 +43,7 @@ internal let testSleep3: TestClosure = {
     let now = Date.timeIntervalSinceReferenceDate
     try timeTolerance(start: then, end: now, expected: seconds)
 }
-@available(iOS 13, *) // for concurrency
+@available(iOS 13, watchOS 6, *) // for concurrency
 @MainActor
 internal let testSleep2: TestClosure = {
     let start = Date.timeIntervalSinceReferenceDate
@@ -187,13 +187,13 @@ public func delay(_ delay:Double, closure:@escaping () -> Void) {
 
 }
 
-@available(iOS 13, *) // for concurrency
+@available(iOS 13, watchOS 6, *) // for concurrency
 @MainActor
 internal let testDelay: TestClosure = {
     let start = Date.timeIntervalSinceReferenceDate
     let delayTime = 0.4
     var end: TimeInterval
-    if #available(watchOS 6.0, tvOS 13, *) {
+    if #available(tvOS 13, *) {
         end = await withCheckedContinuation { continuation in
             delay(delayTime) {
                 let end = Date.timeIntervalSinceReferenceDate

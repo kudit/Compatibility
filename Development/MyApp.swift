@@ -4,7 +4,7 @@ import SwiftUI
 import Compatibility
 #endif
 
-@available(iOS 15.0, tvOS 17, *)
+@available(iOS 15.0, tvOS 17, watchOS 8, *)
 @main
 struct MyApp: App {
     var body: some Scene {
@@ -14,7 +14,7 @@ struct MyApp: App {
     }
 }
 
-@available(macOS 12.0, iOS 15, tvOS 17, *)
+@available(macOS 12.0, iOS 15, tvOS 17, watchOS 8, *)
 #Preview {
     AllTestsListView()
 }

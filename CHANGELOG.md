@@ -6,6 +6,8 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Color.version constant (must be hard coded since inaccessible in code)
 - [ ] Tag with matching version in GitHub.
 
+v1.0.10 7/11/2024 Fixed missed watchOS check for version availability.
+
 v1.0.9 7/11/2024 Added support for iOS 11, tvOS 11, watchOS 4 to match DeviceKit.  Removed Testable protocol since it doesn't really make sense.  Figured out how to conditionally include platform requirement for Swift Playgrounds without modifying module requirement.
 
 v1.0.8 7/11/2024 Moved all URLRequest functions into Network code and gated around a FoundationNetworking import check for Linux which may or may not include this.  Fixed target versions (Xcode project).
