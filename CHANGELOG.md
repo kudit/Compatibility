@@ -6,6 +6,8 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Color.version constant (must be hard coded since inaccessible in code)
 - [ ] Tag with matching version in GitHub.
 
+v1.0.13 7/11/2024 Undid structure form of HTML and PostData since it won't code/decode properly automatically in KuditFrameworks.  Seeing if typealias will work again (it does if we wrap the typealias in a structure).  Added an HTML test for attributedString.  Removed redundant old attributedStringFromHTML code.
+
 v1.0.12 7/11/2024 Needed to make HTML sendable.
 
 v1.0.11 7/11/2024 Not sure why the tvOS didn't warn about async function availability (probably because of app target), but warning in Color so fixing here.  Fixed so runs in Swift Playgrounds (missed testing this and there were some issues with global typealiases so converted PostData and HTML to structs).  Restored Network code by checking for combine OR FoundationNetowrking for Linux.  Added network requirement so tests pass in Swift Playgrounds.  Added networking tests to All Tests.

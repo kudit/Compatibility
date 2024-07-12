@@ -65,24 +65,20 @@ public extension CharacterSet {
 }
 
 // MARK: - HTML
-public struct HTML: CustomStringConvertible, ExpressibleByStringLiteral, ExpressibleByStringInterpolation, RawRepresentable, Sendable {
-    public var rawValue: String
-    public init(rawValue: String) {
-        self.rawValue = rawValue
-    }
+#if canImport(NSAttributedString)
+import NSAttributedString
+#endif
 
-    public typealias StringLiteralType = String
-    public init(stringLiteral value: String) {
-        self.rawValue = value
-    }
-    
-    public var description: String {
-        return "\(rawValue)"
-    }
-
+// need it to be a typealias rather than a struct so that when coded it stores as a string instead of a keyed object.
+// Needs to be in a container or the compiler has issues in Swift Playgrounds.
+public extension Compatibility {
+    typealias HTML = String
+}
+public typealias HTML = Compatibility.HTML
+public extension HTML {
     /// Cleans the HTML content to ensure this isn't just a snippet of HTML and includes the proper headers, etc.
     var cleaned: HTML {
-        var cleaned = self.rawValue
+        var cleaned = self
         if !cleaned.contains("<body>") {
             cleaned = """
 <body>
@@ -97,20 +93,51 @@ public struct HTML: CustomStringConvertible, ExpressibleByStringLiteral, Express
 </html>
 """
         }
-        return HTML(rawValue: cleaned)
+        return cleaned
     }
+
+#if canImport(Combine) || canImport(NSAttributedString)
     /// Generate an NSAttributedString from the HTML content enclosed
     var attributedString: NSAttributedString {
         let cleaned = self.cleaned
-#if canImport(Combine) // not supported in Linux :(
-        let data = Data(cleaned.rawValue.utf8)
+        let data = Data(cleaned.utf8)
         if let attributedString = try? NSAttributedString(data: data, options: [.documentType: NSAttributedString.DocumentType.html], documentAttributes: nil) {
             return attributedString
         }
+        return NSAttributedString(string: cleaned)
+    }
 #endif
-        return NSAttributedString(string: cleaned.rawValue)
+    
+    internal static let testHTML = """
+    <html>
+    <head>
+    <title>Title</title>
+    <style>
+    body {
+        text-decoration: underline;
+        font-size: x-large;
+        font-family: sans-serif;
+        border: 5px solid blue; /* Not supported */
+        padding: 20px; /* Not supported */
+    }
+    </style>
+    </head>
+    <body>
+    <h1>Header</h1>
+    <p>The quick <strong style="color: brown;">bold</strong> <span style="color: orange;">fox</span> <span style="color: green;">jumped</span> over the <em>italic</em> dog.</p>
+    </body>
+    </html>
+    """
+}
+
+#if canImport(SwiftUI) && (canImport(Combine) || canImport(NSAttributedString))
+@available(iOS 15, macOS 12.0, tvOS 15, watchOS 8, *)
+#Preview("HTML") {
+    ScrollView {
+        Text(AttributedString(HTML.testHTML.attributedString))
     }
 }
+#endif
 
 public extension String {
     static let INVALID_ENCODING = "INVALID_ENCODING"
@@ -555,25 +582,6 @@ public extension String {
     var utf8data: Data? {
         return self.data(using: String.Encoding.utf8)
     }
-#if canImport(NSAttributedString)
-/// Attributed string if content contains HTML markup.  Can also be used to decode entities and strip tags.  Possibly better to convert to HTML type and then use attributedString property convernvert HTML to rich text.
-    var attributedStringFromHTML: NSAttributedString? {
-        guard let encodedData = self.utf8data else {
-            print("WARNING: Unable to decode string data: \(self)")
-            return nil
-        }
-        let attributedOptions : [String: AnyObject] = [
-            NSDocumentTypeDocumentAttribute: NSHTMLTextDocumentType as AnyObject,
-            NSCharacterEncodingDocumentAttribute: String.Encoding.utf8 as AnyObject
-        ]
-        do {
-            return try NSAttributedString(data: encodedData, options: attributedOptions, documentAttributes: nil)
-        } catch {
-            print("WARNING: Problem getting encoded string: \(error)")
-            return nil
-        }
-    }
-#endif
     
     // MARK: - Parsing
     /// Fix to avoid casting String to NSString

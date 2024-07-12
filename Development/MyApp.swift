@@ -14,7 +14,7 @@ struct MyApp: App {
     }
 }
 
-@available(macOS 12.0, iOS 15, tvOS 17, watchOS 8, *)
+@available(iOS 15, macOS 12.0, tvOS 17, watchOS 8, *)
 #Preview {
     AllTestsListView()
 }

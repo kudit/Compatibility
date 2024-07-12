@@ -7,24 +7,16 @@
 
 import Foundation
 
-public struct PostData: RawRepresentable, ExpressibleByDictionaryLiteral, Sendable {
-    public typealias RawValue = [String: Sendable]
-    public var rawValue: RawValue
-    public init(rawValue: RawValue) {
-        self.rawValue = rawValue
-    }
-        
-    public typealias Key = String
-    public typealias Value = Sendable
-    public init(dictionaryLiteral elements: (Key, Value)...) {
-        self.init(rawValue: RawValue(uniqueKeysWithValues: elements))
-    }
+// Typealias needs to be initially part of another structure or throws compiler errors in Swift Playgrounds.
+public extension Compatibility {
+    typealias PostData = [String:Sendable]
 }
+public typealias PostData = Compatibility.PostData
 public extension PostData {
     var queryString: String? {
         //return "fooish=barish&baz=buzz"
         var items = [URLQueryItem]()
-        for (key, value) in self.rawValue {
+        for (key, value) in self {
             items.append(URLQueryItem(name: key, value: "\(value)"))
         }
         var urlComponents = URLComponents()

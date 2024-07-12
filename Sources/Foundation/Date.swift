@@ -27,7 +27,7 @@ public extension String {
 }
 
 #if canImport(Combine) // not available in Linux
-@available(macOS 12.0, watchOS 8, iOS 15, tvOS 15, *)
+@available(iOS 15, macOS 12.0, watchOS 8, tvOS 15, *)
 public extension DateFormatter.Style {
     var dateStyle: Date.FormatStyle.DateStyle {
         switch self {
@@ -111,7 +111,7 @@ public extension Date {
     
     /// Use date formatter style to create localized string version of the date.
     #if canImport(Combine)
-    @available(macOS 12.0, watchOS 8, iOS 15, tvOS 15, *)
+    @available(iOS 15, macOS 12.0, watchOS 8, tvOS 15, *)
     @available(*, deprecated, renamed: "formatted(date:time:)")
     func string(withStyle dateFormatterStyle:DateFormatter.Style) -> String {
         return self.formatted(date: dateFormatterStyle.dateStyle, time: .omitted)
@@ -268,7 +268,7 @@ public extension Date {
 
 #if canImport(SwiftUI)
 import SwiftUI
-@available(macOS 12.0, watchOS 6, iOS 13, tvOS 13, *)
+@available(iOS 13, macOS 12.0, tvOS 13, watchOS 6, *)
 #Preview {
     VStack {
         Text("\(String(describing: Date(from: "2023-01-02 17:12:00", format: "yyyy-MM-dd HH:mm:ss")))")
