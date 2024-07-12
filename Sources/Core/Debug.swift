@@ -1,5 +1,3 @@
-import Foundation
-
 // for flags in swift packages: https://stackoverflow.com/questions/38813906/swift-how-to-use-preprocessor-flags-like-if-debug-to-implement-api-keys
 //swiftSettings: [
 //    .define("VAPOR")

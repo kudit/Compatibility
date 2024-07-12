@@ -65,6 +65,9 @@ public struct AllTestsListView: View {
     public init() {}
     public var body: some View {
         List {
+            Section("Version Tests") {
+                TestsRowsView(tests: Version.tests)
+            }
             Section("Int Tests") {
                 TestsRowsView(tests: Int.tests)
             }

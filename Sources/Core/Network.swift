@@ -5,8 +5,6 @@
 //  Created by Ben Ku on 7/6/24.
 //
 
-import Foundation
-
 // Typealias needs to be initially part of another structure or throws compiler errors in Swift Playgrounds.
 public extension Compatibility {
     typealias PostData = [String:Sendable]
@@ -53,10 +51,10 @@ public enum NetworkError: Error, CustomStringConvertible, Sendable {
     }
 }
 
-#if canImport(Combine) || canImport(FoundationNetworking) // for Linux support of URLRequest
-#if canImport(FoundationNetowrking)
-import FoundationNetworking
-#endif
+#if canImport(Combine)// || canImport(FoundationNetworking) // for Linux support of URLRequest - apparently still doesn't work even if we were to include that, so gate this to not be available on linux :(
+//#if canImport(FoundationNetowrking)
+//import FoundationNetworking
+//#endif
 
 @available(iOS 13, watchOS 6, tvOS 13, *)
 public extension PostData {

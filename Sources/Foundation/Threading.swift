@@ -6,8 +6,6 @@
 //  Copyright © 2016 Kudit. All rights reserved.
 //
 
-import Foundation
-
 func timeTolerance(start: TimeInterval, end: TimeInterval, expected: TimeInterval) throws {
     let timeElapsed = end - start
     // should never be negative

@@ -6,8 +6,6 @@
 //  Copyright © 2016 Kudit. All rights reserved.
 //
 
-import Foundation
-
 public extension Dictionary where Value: AnyObject {
     @available(*, deprecated, renamed: "firstKey")
     func key(for value: AnyObject) -> Key? {

@@ -5,8 +5,6 @@
 //  Created by Ben Ku on 7/3/24.
 //
 
-import Foundation
-
 #if !canImport(Combine)
 // Compatibility OperatingSystemVersion for Linux
 public struct OperatingSystemVersion : Sendable {
@@ -42,6 +40,7 @@ extension OperatingSystemVersion: CustomStringConvertible { // @retroactive in S
         return osVersion
     }
 }
+extension OperatingSystemVersion: Codable {}
 extension OperatingSystemVersion: ExpressibleByStringLiteral, ExpressibleByStringInterpolation { // @retroactive in Swift 6?
     // For ExpressibleByStringLiteral conformance
     public init(stringLiteral: String) {
@@ -104,25 +103,48 @@ public extension OperatingSystemVersion {
     }
     
     // TODO: Convert to Swift Testing
-    static func test() -> Bool {
+    @MainActor
+    internal static var testVersions: TestClosure = {
         let first = Version("2")
         let second = Version("12.1")
         let third: Version = "2.12.1"
         let fourth: Version = "12.1.0"
-        return first < second && third > first && fourth == second && third < fourth
+        try expect(first < second)
+        try expect(third > first)
+        try expect(fourth == second)
+        try expect(third < fourth)
     }
+
+    @MainActor
+    internal static var versionCodableTest: TestClosure = {
+        let one = Version("2")
+        let two = Version("12.1")
+        let three: Version = "2.12.1"
+        let array = [one, two, three]
+        let json = array.asJSON()
+        let expected = """
+["2.0","12.1","2.12.1"]
+"""
+        try expect(json == expected, "unexpected json coding conversion: \(json)")
+    }
+
+    @available(iOS 13, tvOS 13, watchOS 6, *)
+    @MainActor
+    static var tests: [Test] = [
+        Test("Version Tests", testVersions)
+    ]
 }
 
-// TODO: Remove - causes conflic with collection joined version
 //// For collection convenience
-//public extension [Version] {
-//    var asStringArray: [String] {
-//        self.map { $0.rawValue }
-//    }
+public extension [Version] {
+    var asStringArray: [String] {
+        self.map { $0.rawValue }
+    }
+//    // TODO: Remove - causes conflict with collection joined version
 //    func joined(separator: String = "") -> String {
 //        asStringArray.joined(separator: separator)
 //    }
-//}
+}
 
 #if canImport(SwiftUI)
 // Don't know why this is necessary.  CustomStringConvertible should have covered this.
@@ -136,13 +158,6 @@ public extension LocalizedStringKey.StringInterpolation {
 
 @available(watchOS 6, iOS 13, tvOS 13, *)
 #Preview("Tests") {
-    VStack {
-        Text("Version test: \(Version("13"))")
-        if Version.test() {
-            Text("Tests pass")
-        } else {
-            Text("Tests failed!")
-        }
-    }
+    TestsListView(tests: Version.tests)
 }
 #endif

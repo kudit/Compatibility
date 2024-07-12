@@ -6,6 +6,8 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Color.version constant (must be hard coded since inaccessible in code)
 - [ ] Tag with matching version in GitHub.
 
+v1.0.14 7/12/2024 Removed unnecessary utf8data extension since Data(String.utf8) works as a non-optional.  Added Codable conformance for Version.  Updated/enhanced Version tests.  Added JSON encoding/decoding simple functions and removed unnecessary similar code.  Removed unnecessary Foundation imports.  Made changes to hopefully get Linux support validation.
+
 v1.0.13 7/11/2024 Undid structure form of HTML and PostData since it won't code/decode properly automatically in KuditFrameworks.  Seeing if typealias will work again (it does if we wrap the typealias in a structure).  Added an HTML test for attributedString.  Removed redundant old attributedStringFromHTML code.
 
 v1.0.12 7/11/2024 Needed to make HTML sendable.
@@ -40,16 +42,20 @@ v1.0 7/6/2024 Initial code and features pulled from KuditFrameworks.  Converted 
 Known issues that need to be addressed.
 
 - [ ] Menu buttons in tvOS do not work at all.
+- [ ] Make icon coloring more orange.
+- [ ] Add playground tint to background.
 
 ## Roadmap:
 Planned features and anticipated API changes.  If you want to contribute, this is a great place to start.
 
+- [ ] Add coding tests.
 - [ ] Once Swift Testing is officially released, convert Testing functions to @Test functions and change expect function calls to #expect calls and remove custom debug statements.
 - [ ] Make App Icon more orange at top.
 
 ## Proposals:
 This is where proposals can be discussed for potential movement to the roadmap.
 
+- [ ] Determine when Version should print 1.0.0 vs 1.0 vs 1 (do 1.0 at least, but if .0.0, just print the major and minor and not the patch) - see if there are best practices.
 - [ ] Should we raise tvOS and watchOS and macOS and other platforms to match the iOS 15 requirement to prune unnecessary legacy code?  Cannot have less than iOS 15.2 due to Swift Playgrounds.
 - [ ] Debug: see if there's a way to add interpolation as a parameter to customize the output format.  Perhaps using a debug output formatter object that can be set?
 - [ ] Debug: allow setting a closure that will pre-process debug statements to allow for injection in debug statements?

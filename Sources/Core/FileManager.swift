@@ -5,8 +5,6 @@
 //  Created by Ben Ku on 8/12/22.
 //
 
-import Foundation
-
 extension FileManager {
     enum FileError: Error {
         case noDirectorySpecified

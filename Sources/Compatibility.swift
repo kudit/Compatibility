@@ -6,8 +6,10 @@
 //
 
 public struct Compatibility {
-    public static let version = "1.0.13"
+    public static let version = "1.0.14"
 }
+
+@_exported import Foundation
 
 // TODO: UNAVAILABLE
 //@available(*, unavailable, message: "use native function rather than backport?")

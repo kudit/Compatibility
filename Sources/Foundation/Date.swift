@@ -5,8 +5,6 @@
 //  Created by Ben Ku on 8/12/22.
 //
 
-import Foundation
-
 //
 //  NSDate.swift
 //  KuditFrameworks
@@ -15,7 +13,6 @@ import Foundation
 //  Copyright © 2016 Kudit. All rights reserved.
 //
 
-import Foundation
 #if canImport(Darwin)
 import Darwin
 #elseif os(Linux)

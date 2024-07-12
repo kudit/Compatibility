@@ -6,8 +6,6 @@
 //  Copyright © 2016 Kudit. All rights reserved.
 //
 
-import Foundation
-
 // for NSDocumentTypeDocumentAttribute
 //#if os(OSX)
 //    import AppKit

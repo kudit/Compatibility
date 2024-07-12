@@ -5,8 +5,6 @@
 //  Created by Ben Ku on 7/6/24.
 //
 
-import Foundation
-
 public protocol DoubleConvertible {
     var doubleValue: Double { get }
 }

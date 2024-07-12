@@ -6,8 +6,6 @@
 //  Copyright © 2016 Kudit. All rights reserved.
 //
 
-@_exported import Foundation
-
 /// TODO: Make note of how to convert a string to markdown?
 
 // for NSDocumentTypeDocumentAttribute
@@ -146,14 +144,14 @@ public extension String {
     static func uuid() -> String {
         return UUID().uuidString
     }
-
+    
     // MARK: - Introspection
     /*
-    /// number of characters in the `String`
-    @available(*, deprecated, message: "use String.count instead") // TODO: see where used and adapt.
-    var length: Int {
-        return self.count
-    }
+     /// number of characters in the `String`
+     @available(*, deprecated, message: "use String.count instead") // TODO: see where used and adapt.
+     var length: Int {
+     return self.count
+     }
      */
     /// Return whether this value should evalute to true whether it's a positive integer, "true", "t", "yes", "y", or "on" regardless of capitalization.
     var asBool: Bool {
@@ -188,18 +186,18 @@ public extension String {
     var isNumeric: Bool {
         if let _ = Double(self) {
             return true
-//            if let intVersion = Int(foo) {
-//                print("Int: \(intVersion)")
-//            } else {
-//                print("Double: \(doubleVersion)")
-//            }
+            //            if let intVersion = Int(foo) {
+            //                print("Int: \(intVersion)")
+            //            } else {
+            //                print("Double: \(doubleVersion)")
+            //            }
         }
         // print("NaN")
         return false
     }
     
     // NOTE: NSDataDetector is not available on Linux!
-    #if canImport(Combine)
+#if canImport(Combine)
     /// Helper for various data detector matches.
     /// Returns `true` iff the `String` matches the data detector type for the complete string.
     func matchesDataDetector(type: NSTextCheckingResult.CheckingType, scheme: String? = nil) -> Bool {
@@ -208,11 +206,11 @@ public extension String {
             return false
         }
         return firstMatch.range.location != NSNotFound
-            // make sure the entire string is an email, not just contains an email
-            && firstMatch.range.location == 0
-            && firstMatch.range.length == count
-            // make sure the link type matches if link scheme
-            && (type != .link || scheme == nil || firstMatch.url?.scheme == scheme)
+        // make sure the entire string is an email, not just contains an email
+        && firstMatch.range.location == 0
+        && firstMatch.range.length == count
+        // make sure the link type matches if link scheme
+        && (type != .link || scheme == nil || firstMatch.url?.scheme == scheme)
     }
     /// `true` iff the `String` is an email address in the proper form.
     var isEmail: Bool {
@@ -230,7 +228,6 @@ public extension String {
     var isAddress: Bool {
         return matchesDataDetector(type: .address)
     }
-    #endif
     
     /// Returns a URL if the String can be converted to URL.  `nil` otherwise.
     var asURL: URL? {
@@ -240,6 +237,7 @@ public extension String {
         }
         return URL(string: self)
     }
+#endif
 
     /// Get last "path" component of a string (basically everything from the last `/` to the end)
     var lastPathComponent: String {
@@ -247,7 +245,7 @@ public extension String {
         let last = parts.last ?? self
         return last
     }
-
+    
     /// `true` if the byte length of the `String` is larger than 100k (the exact threashold may change)
     var isLarge: Bool {
         let bytes = self.lengthOfBytes(using: String.Encoding.utf8)
@@ -276,7 +274,7 @@ public extension String {
         return characters
         //return Array(self.characters).map { String($0) }
     }
-
+    
     // MARK: - Trimming
     /// Returns a new string made by removing whitespace from both ends of the `String`.
     var trimmed: String {
@@ -301,7 +299,7 @@ public extension String {
         }
         while returnString.hasSuffix(trimString) {
             let index = returnString.index(returnString.endIndex, offsetBy: -(trimString.count + 1)) // NOTE: Needs the +1 since the endIndex is one AFTER the position and we're using the "through:" syntax which includes the last index.
-//            print("Trimming suffix \(trimString) from \(returnString) offset: \(-trimString.count)")
+            //            print("Trimming suffix \(trimString) from \(returnString) offset: \(-trimString.count)")
             returnString = returnString.prefix(through: index) // since through, need to be -1 to not be inclusive
             //returnString = returnString.substring(to: returnString.characters.index(returnString.endIndex, offsetBy: -trimString.length))
         }
@@ -345,13 +343,13 @@ public extension String {
         // assert
         try expect(trimmed == long, "Trimmed should match long: \(trimmed)")
     }
-
+    
     
     // MARK: - Replacements
     func replacingCharacters(in range: NSRange, with string: String) -> String {
         return (self as NSString).replacingCharacters(in: range, with: string)
     }
-
+    
     /// Returns a new string in which all occurrences of any target
     /// strings in a specified range of the `String` are replaced by
     /// another given string.
@@ -375,7 +373,7 @@ public extension String {
         with replacement: String,
         options: CompareOptions = [],
         range searchRange: Range<Index>? = nil
-        ) -> String {
+    ) -> String {
         let characters = findCharacters.characterStrings
         return self.replacingOccurrences(of: characters, with: replacement, options: options, range: searchRange)
     }
@@ -387,7 +385,7 @@ public extension String {
         with replacement: String,
         options: CompareOptions = [],
         range searchRange: Range<Index>? = nil
-        ) -> String {
+    ) -> String {
         return self.components(separatedBy: characterSet).joined(separator: replacement)
     }
     
@@ -428,7 +426,7 @@ public extension String {
         characters: String,
         options: CompareOptions = [],
         range searchRange: Range<Index>? = nil
-        ) -> String {
+    ) -> String {
         let whitelistCharacterSet = CharacterSet(charactersIn: characters)
         let badCharacterSet = whitelistCharacterSet.inverted
         return self.components(separatedBy: badCharacterSet).joined(separator: "")
@@ -437,7 +435,7 @@ public extension String {
     var duplicateCharactersRemoved: String {
         return self.characterStrings.unique.joined(separator: "")
     }
-
+    
     // MARK: - Transformed
     /// version of string with first letter of each sentence capitalized
     var sentenceCapitalized: String {
@@ -461,7 +459,7 @@ public extension String {
         let capitalized = "hello world. goodbye world.".sentenceCapitalized
         try expect(capitalized == "Hello world. Goodbye world.", String(describing:capitalized))
     }
-
+    
     /// normalized version of string for comparisons and database lookups.  If normalization fails or results in an empty string, original string is returned.
     var normalized: String? {
         // expand ligatures and other joined characters and flatten to simple ascii (æ => ae, etc.) by converting to ascii data and back
@@ -505,7 +503,7 @@ public extension String {
     func repeated(_ times: Int) -> String {
         return String(repeating: self, count: times)
     }
-
+    
     /// An array of string of all the vowels in the english language (not counting Y).
     static let vowels = ["a", "e", "i", "o", "u"]
     
@@ -540,7 +538,7 @@ public extension String {
         string += "\(shortName)\n\(self)!"
         return string
     }
-
+    
     // MARK: - Encoded
     /// URL encoded (% encoded) string or the `String` "`COULD_NOT_ENCODE`" if the `String` is not valid Unicode.
     var urlEncoded: String {
@@ -569,7 +567,7 @@ public extension String {
     var fileExtension: String {
         return self.replacingOccurrences(of: "\(self.fileBasename).", with: "")
     }
-
+    
     // MARK: - HTML Tools
     /// String with XML style tags removed.
     var tagsStripped: String {
@@ -578,9 +576,6 @@ public extension String {
             cleaned = cleaned.replacingCharacters(in: range, with: "")
         }
         return cleaned
-    }
-    var utf8data: Data? {
-        return self.data(using: String.Encoding.utf8)
     }
     
     // MARK: - Parsing
@@ -593,7 +588,7 @@ public extension String {
         let extraction = TEST_STRING.substring(with: NSRange(7...12))
         try expect(extraction == "string" , String(describing:extraction))
     }
-
+    
     /// Parses out a substring from the first occurrence of `start` to the next occurrence of `end`.
     /// If `start` or `end` are `nil`, will parse from the beginning of the `String` or to the end of the `String`.
     /// If the `String` doesn't contain the start or end (whichever is provided), this will return nil.
@@ -649,34 +644,57 @@ public extension String {
         let extraction = TEST_STRING.extract(from: "<em>", to: "</strong>")
         try expect(extraction == nil , String(describing:extraction))
     }
-
     
     
-  // NOTE: Removed since deprecated for a while and throws errors in Linux as it's unable to bridge NSString to String.
-//    /// Deletes a section of text from the first occurrence of `start` to the next occurrence of `end` (inclusive).
-//    /// - Warning: string must contain `start` and `end` in order to work as expected.
-//    @available(*, deprecated, message: "There may be better ways to do this not in the standard library") // TODO: see where used and adapt.  If keep, change to deleting(from: to:) no throws (just don't do anything)
-//    func stringByDeleting(from start: String, to end: String) throws -> String {
-//        let scanner = Scanner(string: self)
-//        scanner.charactersToBeSkipped = nil // don't skip any whitespace!
-//        var beginning: NSString? = ""
-//        scanner.scanUpTo(start, into: &beginning)
-//        guard beginning != nil else {
-//            return self
-//        }
-//        scanner.scanUpTo(end, into: nil)
-//        scanner.scanString(end, into: nil)
-//        let tail = scanner.string.substring(from: self.index(self.startIndex, offsetBy: scanner.scanLocation))
-//        return "\(beginning!)" + tail
-//    }
-
+    
+    // NOTE: Removed since deprecated for a while and throws errors in Linux as it's unable to bridge NSString to String.
+    //    /// Deletes a section of text from the first occurrence of `start` to the next occurrence of `end` (inclusive).
+    //    /// - Warning: string must contain `start` and `end` in order to work as expected.
+    //    @available(*, deprecated, message: "There may be better ways to do this not in the standard library") // TODO: see where used and adapt.  If keep, change to deleting(from: to:) no throws (just don't do anything)
+    //    func stringByDeleting(from start: String, to end: String) throws -> String {
+    //        let scanner = Scanner(string: self)
+    //        scanner.charactersToBeSkipped = nil // don't skip any whitespace!
+    //        var beginning: NSString? = ""
+    //        scanner.scanUpTo(start, into: &beginning)
+    //        guard beginning != nil else {
+    //            return self
+    //        }
+    //        scanner.scanUpTo(end, into: nil)
+    //        scanner.scanString(end, into: nil)
+    //        let tail = scanner.string.substring(from: self.index(self.startIndex, offsetBy: scanner.scanLocation))
+    //        return "\(beginning!)" + tail
+    //    }
+    
     // MARK: - JSON Tools
+    /**
+     Returns a string with backslashes added before characters that need to be escaped. These characters are:
+
+//     single quote (')
+     double quote (")
+     backslash (\)
+//     NUL (the NUL byte)
+     */
+    func addSlashes() -> String {
+        return self
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+    }
+    
+    /// Returns `self` as the `errorMessage` parameter of a JSON object with a `success` parameter equal to `false`.  Pass a debug `level` to also print a debug statement as the provided `level`.
+    func asErrorJSON(level: DebugLevel = .NOTICE) -> String {
+        debug(self, level: level)
+        return """
+{
+    "success" : false,
+    "errorMessage": "\(self.addSlashes())"
+}
+"""
+    }
+    
     /// Return an object extracted from the JSON data in this string or nil if this is not a valid JSON string.
+    @available(*, deprecated, message: "Is this used by anyone/anything?  If not, remove.  Deprecated in version 1.0.13")
     var JSONObject: Any? {
-        guard let data = self.utf8data else {
-            print("WARNING: Unable to convert string to data: \(self)")
-            return nil
-        }
+        let data = Data(self.utf8)
         do {
             return try JSONSerialization.jsonObject(with: data, options: [])
         } catch {
@@ -699,34 +717,6 @@ public extension String {
         Test("extract missing end", testExtractMissingEnd),
         Test("Line Reversal", testTextReversal)
     ]
-}
-
-
-public extension NSSecureCoding {
-    /// helper for converting objects to JSON strings.
-    
-    fileprivate func JSONString(_ compact: Bool) -> String? {
-        guard JSONSerialization.isValidJSONObject(self) else {
-            print("WARNING: Invalid JSON object: \(self)")
-            return nil
-        }
-        do {
-            // Pass [] if you don't care about the readability of the generated string
-            let jsonData = try JSONSerialization.data(withJSONObject: self, options: (compact ? [] : JSONSerialization.WritingOptions.prettyPrinted))
-            return String(data: jsonData, encoding: String.Encoding.utf8)
-        } catch {
-            // may be intentional print("WARNING: Unable to write JSON: \(self)")
-            return nil
-        }
-    }
-    /// Convert a valid Object to string representation in compact form.
-    var asJSON: String? {
-        return self.JSONString(true)
-    }
-    /// Convert a valid Object to string representation in compact form.
-    var asPrettyJSON: String? {
-        return self.JSONString(false)
-    }
 }
 
 // TODO: See where we can use @autoclosure in Kudit Frameworks to delay execution (particularly in test frameworks!)
