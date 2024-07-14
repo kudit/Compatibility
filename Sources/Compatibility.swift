@@ -6,7 +6,7 @@
 //
 
 public struct Compatibility {
-    public static let version = "1.0.15"
+    public static let version = "1.0.16"
 }
 
 @_exported import Foundation

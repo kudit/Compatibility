@@ -4,9 +4,16 @@ import SwiftUI
 public struct BytesView: View {
     public var label: String?
     public var bytes: (any BinaryInteger)?
-    public var font: Font? = .headline
+    public var font: Font?
     public var countStyle: ByteCountFormatter.CountStyle? = .file
     public var round = false
+    public init(label: String? = nil, bytes: (any BinaryInteger)? = nil, font: Font? = .headline, countStyle: ByteCountFormatter.CountStyle? = nil, round: Bool = false) {
+        self.label = label
+        self.bytes = bytes
+        self.font = font
+        self.countStyle = countStyle
+        self.round = round
+    }
     public var body: some View {
         HStack(alignment: .lastTextBaseline, spacing: 3) {
             if let label {
