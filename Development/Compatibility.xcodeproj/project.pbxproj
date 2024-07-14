@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		B5198A0E2C38FAD300CEA720 /* MyApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5E5FC3A2C3860EC004F2009 /* MyApp.swift */; };
 		B5198A102C38FAEB00CEA720 /* Compatibility Library in Frameworks */ = {isa = PBXBuildFile; productRef = B5198A0F2C38FAEB00CEA720 /* Compatibility Library */; };
+		B5209EE32C431CF800FBA30B /* CompatibilityDemoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5209EE22C431CF800FBA30B /* CompatibilityDemoView.swift */; };
+		B5209EE42C431CF800FBA30B /* CompatibilityDemoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5209EE22C431CF800FBA30B /* CompatibilityDemoView.swift */; };
 		B52C8E0E2C38C6DA008EBD2D /* Compatibility Library in Frameworks */ = {isa = PBXBuildFile; productRef = B52C8E0D2C38C6DA008EBD2D /* Compatibility Library */; };
 		B52C8E0F2C38CA76008EBD2D /* MyApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5E5FC3A2C3860EC004F2009 /* MyApp.swift */; };
 		B58B5C452C38F98800689837 /* (null) in Sources */ = {isa = PBXBuildFile; };
@@ -17,6 +19,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		B5209EE22C431CF800FBA30B /* CompatibilityDemoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompatibilityDemoView.swift; sourceTree = "<group>"; };
 		B52C8E082C386F2D008EBD2D /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Package.swift; path = ../Package.swift; sourceTree = "<group>"; };
 		B52C8E0C2C3886E6008EBD2D /* Compatibility.swiftpm */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = Compatibility.swiftpm; path = ..; sourceTree = "<group>"; };
 		B58B5C3F2C38F98800689837 /* CompatibilityTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CompatibilityTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -83,6 +86,7 @@
 			children = (
 				B5E5FC812C38638B004F2009 /* Resources */,
 				B5E5FC3A2C3860EC004F2009 /* MyApp.swift */,
+				B5209EE22C431CF800FBA30B /* CompatibilityDemoView.swift */,
 			);
 			name = Development;
 			sourceTree = "<group>";
@@ -201,6 +205,7 @@
 			files = (
 				B58B5C452C38F98800689837 /* (null) in Sources */,
 				B5198A0E2C38FAD300CEA720 /* MyApp.swift in Sources */,
+				B5209EE42C431CF800FBA30B /* CompatibilityDemoView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -208,6 +213,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B5209EE32C431CF800FBA30B /* CompatibilityDemoView.swift in Sources */,
 				B52C8E0F2C38CA76008EBD2D /* MyApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -271,7 +277,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 15.2;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
-				MARKETING_VERSION = 1.0.14;
+				MARKETING_VERSION = 1.0.15;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -336,7 +342,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 15.2;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
-				MARKETING_VERSION = 1.0.14;
+				MARKETING_VERSION = 1.0.15;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;

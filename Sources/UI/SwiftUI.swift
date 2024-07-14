@@ -48,20 +48,27 @@ public extension View {
 }
 
 @available(macOS 12, watchOS 8.0, iOS 15, tvOS 15, *)
-#Preview("Closure Test") {
-    VStack {
-        Text("Normal")
-        Text("conditional inclusion")
-            .closure { content in
-                if #available(iOS 999, watchOS 888, *) {
-                    AnyView(erasing: content.background(.green).border(.pink, width: 4))
-                } else {
-                    AnyView(erasing: content.background(.blue))
+public struct ClosureTestView: View {
+    public init() {}
+    public var body: some View {
+        VStack {
+            Text("Test for availability")
+            Text("conditional inclusion")
+                .closure { content in
+                    if #available(iOS 999, watchOS 888, *) {
+                        AnyView(erasing: content.padding().background(.red).border(.yellow, width: 4))
+                    } else {
+                        AnyView(erasing: content.padding().background(.blue))
+                    }
                 }
-            }
+        }
     }
 }
 
+@available(macOS 12, watchOS 8.0, iOS 15, tvOS 15, *)
+#Preview("Closure Test") {
+    ClosureTestView()
+}
 
 
 // MARK: - For sliders with Ints (and other binding conversions)
@@ -89,9 +96,10 @@ public extension Binding {
 }
 
 @available(macOS 12, watchOS 8.0, iOS 15, tvOS 15, *)
-struct ConvertTestView: View {
+public struct ConvertTestView: View {
+    public init() {}
     @State private var count: Int = 3
-    var body: some View {
+    public var body: some View {
         VStack{
             HStack {
                 ForEach(1...count, id: \.self) { n in
@@ -136,16 +144,8 @@ public extension Shape {
     }
 }
 
-@available(macOS 12, watchOS 8, iOS 15, tvOS 15, *)
-#Preview("Fill & Stroke") {
-    VStack {
-        Circle()
-            .fill(.green, strokeBorder: .blue, lineWidth: 20)
-        RoundedRectangle(cornerRadius: 25)
-            .fill(.tertiary, strokeBorder: .tint, lineWidth: 5)
-    }.padding()
-}
-
+// TODO: is the below necessary??
+/*
 @available(watchOS 6.0, iOS 13, tvOS 13, *)
 public extension InsettableShape {
     func fill<Fill: ShapeStyle, Stroke: ShapeStyle>(_ fillStyle: Fill, strokeBorder strokeStyle: Stroke, lineWidth: Double = 1) -> some View {
@@ -178,8 +178,17 @@ public extension InsettableShape {
         }
     }
 }
-
-@available(watchOS 6.0, iOS 13, tvOS 13, *)
+// TODO: Use the top syntax but the bottom compatibility
+@available(iOS 15, macOS 12, watchOS 8, tvOS 15, *)
+#Preview("Fill & Stroke") {
+    VStack {
+        Circle()
+            .fill(.green, strokeBorder: .blue, lineWidth: 20)
+        RoundedRectangle(cornerRadius: 25)
+            .fill(.tertiary, strokeBorder: .tint, lineWidth: 5)
+    }.padding()
+}
+@available(iOS 13, watchOS 6.0, tvOS 13, *)
 #Preview("Fill and Stroke") {
     VStack {
         Circle()
@@ -188,7 +197,29 @@ public extension InsettableShape {
             .fillAndStroke(.red, .orange, lineWidth: 5)
     }
 }
+ */
+@available(iOS 15, macOS 12, watchOS 6.0, tvOS 15, *)
+public struct FillAndStrokeTest: View {
+    public init() {}
+    public var body: some View {
+        VStack {
+            Circle()
+                .fill(.green, strokeBorder: .blue, lineWidth: 20)
+                .backport.overlay {
+                    Image(systemName: "applelogo")
+                        .imageScale(.large)
+                        .foregroundColor(.white)
+                }
+            RoundedRectangle(cornerRadius: 25)
+                .fill(.tertiary, strokeBorder: .tint, lineWidth: 5)
+        }.padding()
+    }
+}
 
+@available(iOS 15, macOS 12, watchOS 6.0, tvOS 15, *)
+#Preview("Fill & Stroke") {
+    FillAndStrokeTest()
+}
 
 
 // MARK: - Material
@@ -211,12 +242,20 @@ public extension View {
 }
 
 @available(macOS 12, watchOS 8, iOS 15, tvOS 15, *)
+public struct MaterialTestView: View {
+    public init() {}
+    public var body: some View {
+        ZStack {
+            Color.clear
+            Text("Test Material View")
+                .backgroundMaterial()
+        }.background(.conicGradient(colors: [.red, .green, .blue], center: .center))
+    }
+}
+
+@available(macOS 12, watchOS 8, iOS 15, tvOS 15, *)
 #Preview("Material Test") {
-    ZStack {
-        Color.clear
-        Text("Test Material View")
-            .backgroundMaterial()
-    }.background(.conicGradient(colors: [.red, .green, .blue], center: .center))
+    MaterialTestView()
 }
 
 // MARK: - Wrappers

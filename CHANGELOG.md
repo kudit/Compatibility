@@ -6,7 +6,9 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Color.version constant (must be hard coded since inaccessible in code)
 - [ ] Tag with matching version in GitHub.
 
-v1.0.14 7/12/2024 Removed unnecessary utf8data extension since Data(String.utf8) works as a non-optional.  Added Codable conformance for Version.  Updated/enhanced Version tests.  Added JSON encoding/decoding simple functions and removed unnecessary similar code.  Removed unnecessary Foundation imports.  Made changes to hopefully get Linux support validation.
+v1.0.15 7/14/2024 Added check for macOS 12 in Development app.  Improved demo app.  Added BytesView.  Added improved test views.
+
+v1.0.14 7/12/2024 Removed unnecessary utf8data extension since Data(String.utf8) works as a non-optional.  Added Codable conformance for Version.  Updated/enhanced Version tests.  Added JSON encoding/decoding simple functions and removed unnecessary similar code.  Removed unnecessary Foundation imports.  Made changes to get Linux support validation (passes all SwiftPackageIndex tests for all platforms and safe from data races!).
 
 v1.0.13 7/11/2024 Undid structure form of HTML and PostData since it won't code/decode properly automatically in KuditFrameworks.  Seeing if typealias will work again (it does if we wrap the typealias in a structure).  Added an HTML test for attributedString.  Removed redundant old attributedStringFromHTML code.
 
@@ -41,16 +43,17 @@ v1.0 7/6/2024 Initial code and features pulled from KuditFrameworks.  Converted 
 ## Bugs to fix:
 Known issues that need to be addressed.
 
+- [ ] Make App Icon more orange at top.
+- [ ] Add playground tint to background of icon.
 - [ ] Menu buttons in tvOS do not work at all.
-- [ ] Make icon coloring more orange.
-- [ ] Add playground tint to background.
 
 ## Roadmap:
 Planned features and anticipated API changes.  If you want to contribute, this is a great place to start.
 
 - [ ] Add coding tests.
 - [ ] Once Swift Testing is officially released, convert Testing functions to @Test functions and change expect function calls to #expect calls and remove custom debug statements.
-- [ ] Make App Icon more orange at top.
+- [ ] Fix tvOS usage of controls within a page view (seems to only control pagination and not buttons inside)
+- [ ] Re-work page view on watchOS to use the vertical page view style or perhaps a navigation stack.  Color doesn't look great on watchOS.
 
 ## Proposals:
 This is where proposals can be discussed for potential movement to the roadmap.

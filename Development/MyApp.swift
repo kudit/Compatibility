@@ -4,32 +4,19 @@ import SwiftUI
 import Compatibility
 #endif
 
-@available(iOS 15.0, tvOS 17, watchOS 8, *)
+@available(iOS 15.0, macOS 12, tvOS 17, watchOS 8, *)
 @main
 struct MyApp: App {
     var body: some Scene {
         WindowGroup {
-            AllTestsListView()
+            CompatibilityDemoView()
         }
     }
 }
 
 @available(iOS 15, macOS 12.0, tvOS 17, watchOS 8, *)
 #Preview {
-    AllTestsListView()
-}
-
-@available(iOS 13, *)
-#Preview {
-    RoundedRectangle(cornerRadius: 15)
-        .frame(width: 50, height: 50)
-        .foregroundColor(.green)
-        .backport.overlay {
-            Image(systemName: "applelogo")
-                .imageScale(.large)
-                .foregroundColor(.white)
-        }
-        .background(Color.yellow)
+    CompatibilityDemoView()
 }
 
 #endif
