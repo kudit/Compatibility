@@ -1,3 +1,4 @@
+#if canImport(SwiftUI)
 import SwiftUI
 
 @available(iOS 13.0, tvOS 13, watchOS 6, *)
@@ -5,9 +6,9 @@ public struct BytesView: View {
     public var label: String?
     public var bytes: (any BinaryInteger)?
     public var font: Font?
-    public var countStyle: ByteCountFormatter.CountStyle? = .file
-    public var round = false
-    public init(label: String? = nil, bytes: (any BinaryInteger)? = nil, font: Font? = .headline, countStyle: ByteCountFormatter.CountStyle? = nil, round: Bool = false) {
+    public var countStyle: ByteCountFormatter.CountStyle?
+    public var round: Bool
+    public init(label: String? = nil, bytes: (any BinaryInteger)? = nil, font: Font? = .headline, countStyle: ByteCountFormatter.CountStyle? = .file, round: Bool = false) {
         self.label = label
         self.bytes = bytes
         self.font = font
@@ -50,3 +51,4 @@ public struct RandomBytesTestView: View {
 #Preview {
     RandomBytesTestView()
 }
+#endif

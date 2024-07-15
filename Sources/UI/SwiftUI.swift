@@ -198,7 +198,7 @@ public extension InsettableShape {
     }
 }
  */
-@available(iOS 15, macOS 12, watchOS 6.0, tvOS 15, *)
+@available(iOS 15, macOS 12, watchOS 8.0, tvOS 15, *)
 public struct FillAndStrokeTest: View {
     public init() {}
     public var body: some View {
@@ -216,7 +216,7 @@ public struct FillAndStrokeTest: View {
     }
 }
 
-@available(iOS 15, macOS 12, watchOS 6.0, tvOS 15, *)
+@available(iOS 15, macOS 12, watchOS 8.0, tvOS 15, *)
 #Preview("Fill & Stroke") {
     FillAndStrokeTest()
 }

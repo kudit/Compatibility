@@ -3,8 +3,10 @@
 NOTE: Version needs to be updated in the following places:
 - [ ] Xcode project version (in build settings - normal and watch targets should inherit)
 - [ ] Package.swift iOSApplication product displayVersion.
-- [ ] Color.version constant (must be hard coded since inaccessible in code)
+- [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Tag with matching version in GitHub.
+
+v1.0.17 7/15/2024 Fixed build failures for watchOS and Linux due to ByteView SwiftUI non-conditional inclusion.  Updated icon for new themeing.  Fixed wrong default count style in public ByteView initializer.
 
 v1.0.16 7/14/2024 Added public intializer for BytesView.
 
@@ -45,8 +47,6 @@ v1.0 7/6/2024 Initial code and features pulled from KuditFrameworks.  Converted 
 ## Bugs to fix:
 Known issues that need to be addressed.
 
-- [ ] Make App Icon more orange at top.
-- [ ] Add playground tint to background of icon.
 - [ ] Menu buttons in tvOS do not work at all.
 
 ## Roadmap:

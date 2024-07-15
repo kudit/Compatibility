@@ -210,11 +210,11 @@ internal let testDelay: TestClosure = {
 struct KuThreading {
     @MainActor
     public static let tests: [Test] = [
-        Test("sleep 3", testSleep3),
-        Test("sleep 2", testSleep2),
-        Test("background 4", testBackground),
         Test("main", testMain),
         Test("delay(0.4)", testDelay),
+        Test("sleep 2", testSleep2),
+        Test("sleep 3", testSleep3),
+        Test("background 4", testBackground),
     ]
 }
 
