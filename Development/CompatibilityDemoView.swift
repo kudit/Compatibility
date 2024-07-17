@@ -12,7 +12,12 @@ import Compatibility
 struct CompatibilityDemoView: View {
     var body: some View {
         TabView {
-            AllTestsListView()
+            AllTestsListView(additionalNamedTests: [
+                "Injected Test": [Test("Dummy test") {
+                    debug("Debug test", level: .DEBUG)
+                    try expect(true)
+                }]
+            ])
                 .tabItem {
                     Text("All Tests")
                 }

@@ -60,34 +60,33 @@ public struct TestsListView: View {
 }
 
 @available(macOS 12.0, watchOS 8, iOS 15, tvOS 17, *)
+@MainActor // unnecessary in Swift 6
 public struct AllTestsListView: View {
+    /// Ordered set of section names and list of tests.  Similar to an ordered set but we do care about the order so that's why it's an array of tuples rather than a simple dictionary.  TODO: Should we change this to an ordered dictionary for clarity?  Means adding a dependency of swift-collections which isn't necessarily a problem.
+    public var namedTests: OrderedDictionary = [
+        "Version Tests": Version.tests,
+        "Int Tests": Int.tests,
+        "Collection Tests": collectionTests,
+        "Date Tests": Date.tests,
+        "String Tests": String.tests,
+        "CharacterSet Tests": CharacterSet.tests,
+        "Threading Tests": KuThreading.tests,
+        "Network Tests": PostData.tests,
+    ]
     // only necessary since in module and otherwise inaccessible outside package
-    public init() {}
+    public init(additionalNamedTests: OrderedDictionary<String, [Test]> = [:]) {
+        // put additional up front
+        self.namedTests = additionalNamedTests.merging(namedTests) { additionalTests, baseTests in
+            return additionalTests + baseTests
+        }
+    }
     public var body: some View {
         List {
-            Section("Version Tests") {
-                TestsRowsView(tests: Version.tests)
-            }
-            Section("Int Tests") {
-                TestsRowsView(tests: Int.tests)
-            }
-            Section("Collection Tests") {
-                TestsRowsView(tests: collectionTests)
-            }
-            Section("Date Tests") {
-                TestsRowsView(tests: Date.tests)
-            }
-            Section("String Tests") {
-                TestsRowsView(tests: String.tests)
-            }
-            Section("CharacterSet Tests") {
-                TestsRowsView(tests: CharacterSet.tests)
-            }
-            Section("Threading Tests") {
-                TestsRowsView(tests: KuThreading.tests)
-            }
-            Section("Network Tests") {
-                TestsRowsView(tests: PostData.tests)
+            ForEach(namedTests.keys.elements, id: \.self) { key in
+                let tests = namedTests[key] ?? []
+                Section(key) {
+                    TestsRowsView(tests: tests)
+                }
             }
             Section {
                 Divider()
@@ -95,11 +94,6 @@ public struct AllTestsListView: View {
                 Text("Compatibility v\(Compatibility.version) © 2024 Kudit LLC").font(.caption).padding()
             }
         }
-        .toolbar {
-            MenuTest()
-        }
-        .navigationTitle("Unit Tests")
-        .navigationWrapper()
     }
 }
 

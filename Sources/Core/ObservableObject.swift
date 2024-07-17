@@ -11,7 +11,7 @@ public protocol ObservableObject {
     var objectWillChange: ObjectWillChangePublisher { get }
 }
 public struct ObjectWillChangePublisher: Sendable {
-    func send() {} // dummy for calls
+    public func send() {} // dummy for calls
     static let dummyPublisher = ObjectWillChangePublisher()
 }
 public extension ObservableObject {

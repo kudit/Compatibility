@@ -22,8 +22,12 @@ public struct OperatingSystemVersion : Sendable {
 }
 #endif
 
+// Needs to be in a container or the compiler has issues in Swift Playgrounds.
+public extension Compatibility {
+    typealias Version = OperatingSystemVersion
+}
 /// Version in semantic dot notation
-public typealias Version = OperatingSystemVersion
+public typealias Version = Compatibility.Version
 
 extension OperatingSystemVersion: CustomStringConvertible { // @retroactive in Swift 6?
     // For CustomStringConvertible conformance

@@ -6,6 +6,8 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Tag with matching version in GitHub.
 
+v1.0.18 7/17/2024 Added license usage example.  Added ability to pass in additional tests to the AllTestsListView(["Section Name": tests, "Section Name 2": tests2]).  Added fix for OperatingSystemVersion in swift Playgrounds (needed to do typalias wrapper trick).  Needed to make Linux hack of ObservableObject have public send() function to prevent complaints about internal acccess.  Added OrderedDictionary and OrderedSet based on swift-collections code but simplified (originally tried adding swift-collections as a dependency but it doesn't support watchOS 4).
+
 v1.0.17 7/15/2024 Fixed build failures for watchOS and Linux due to ByteView SwiftUI non-conditional inclusion.  Updated icon for new themeing.  Fixed wrong default count style in public ByteView initializer.
 
 v1.0.16 7/14/2024 Added public intializer for BytesView.
@@ -47,7 +49,9 @@ v1.0 7/6/2024 Initial code and features pulled from KuditFrameworks.  Converted 
 ## Bugs to fix:
 Known issues that need to be addressed.
 
+- [ ] Fix test app navigation wrapper.
 - [ ] Menu buttons in tvOS do not work at all.
+- [ ] pagination in tvOS works but after pagination, view content isn't accessible.
 
 ## Roadmap:
 Planned features and anticipated API changes.  If you want to contribute, this is a great place to start.

@@ -11,8 +11,8 @@
 		B5198A102C38FAEB00CEA720 /* Compatibility Library in Frameworks */ = {isa = PBXBuildFile; productRef = B5198A0F2C38FAEB00CEA720 /* Compatibility Library */; };
 		B5209EE32C431CF800FBA30B /* CompatibilityDemoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5209EE22C431CF800FBA30B /* CompatibilityDemoView.swift */; };
 		B5209EE42C431CF800FBA30B /* CompatibilityDemoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5209EE22C431CF800FBA30B /* CompatibilityDemoView.swift */; };
-		B52C8E0E2C38C6DA008EBD2D /* Compatibility Library in Frameworks */ = {isa = PBXBuildFile; productRef = B52C8E0D2C38C6DA008EBD2D /* Compatibility Library */; };
 		B52C8E0F2C38CA76008EBD2D /* MyApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5E5FC3A2C3860EC004F2009 /* MyApp.swift */; };
+		B579D4A52C46FF1A009A037A /* Compatibility Library in Frameworks */ = {isa = PBXBuildFile; productRef = B579D4A42C46FF1A009A037A /* Compatibility Library */; };
 		B58B5C452C38F98800689837 /* (null) in Sources */ = {isa = PBXBuildFile; };
 		B5E1B6A62C3C6C3B00B92573 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B5E5FC822C3863B9004F2009 /* Assets.xcassets */; };
 		B5E5FC832C3863B9004F2009 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B5E5FC822C3863B9004F2009 /* Assets.xcassets */; };
@@ -44,7 +44,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B52C8E0E2C38C6DA008EBD2D /* Compatibility Library in Frameworks */,
+				B579D4A52C46FF1A009A037A /* Compatibility Library in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -136,7 +136,7 @@
 			);
 			name = CompatibilityTest;
 			packageProductDependencies = (
-				B52C8E0D2C38C6DA008EBD2D /* Compatibility Library */,
+				B579D4A42C46FF1A009A037A /* Compatibility Library */,
 			);
 			productName = ColorTest;
 			productReference = B5E5FC512C386144004F2009 /* CompatibilityTest.app */;
@@ -277,7 +277,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 15.2;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
-				MARKETING_VERSION = 1.0.17;
+				MARKETING_VERSION = 1.0.18;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -342,7 +342,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 15.2;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
-				MARKETING_VERSION = 1.0.17;
+				MARKETING_VERSION = 1.0.18;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
@@ -527,7 +527,7 @@
 			isa = XCSwiftPackageProductDependency;
 			productName = "Compatibility Library";
 		};
-		B52C8E0D2C38C6DA008EBD2D /* Compatibility Library */ = {
+		B579D4A42C46FF1A009A037A /* Compatibility Library */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = "Compatibility Library";
 		};

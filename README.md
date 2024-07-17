@@ -93,6 +93,12 @@ If you have the need for a specific feature that you want implemented or if you 
 ## Donations
 This was a lot of work.  If you find this useful particularly if you use this in a commercial product, please consider making a donation to http://paypal.me/kudit
 
+## License
+Feel free to use this in projects, however, please include a link back to this project and credit somewhere in the app.  Example Markdown and string interpolation for the version:
+```swift
+Text("Open Source projects used include [Compatibility](https://github.com/kudit/Compatibility) v\(Compatibility.version)
+```
+
 ## Contributors
 The complete list of people who contributed to this project is available [here](https://github.com/kudit/Compatibility/graphs/contributors).
 A big thanks to everyone who has contributed! 🙏

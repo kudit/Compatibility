@@ -7,7 +7,7 @@
 
 import PackageDescription
 
-let version = "1.0.17"
+let version = "1.0.18"
 let packageLibraryName = "Compatibility"
 
 // Products define the executables and libraries a package produces, making them visible to other packages.

@@ -55,13 +55,25 @@ public struct ClosureTestView: View {
             Text("Test for availability")
             Text("conditional inclusion")
                 .closure { content in
-                    if #available(iOS 999, watchOS 888, *) {
+                    if #available(iOS 999, macOS 999, tvOS 999, watchOS 999, visionOS 999, *) {
                         AnyView(erasing: content.padding().background(.red).border(.yellow, width: 4))
                     } else {
-                        AnyView(erasing: content.padding().background(.blue))
+                        AnyView(erasing: content.padding().background(.blue).border(.green, width: 4))
                     }
                 }
+            Text("Open Source projects used include [Compatibility](https://github.com/kudit/Compatibility) v\(Compatibility.version)")
+                .font(.caption)
         }
+        .toolbar {
+            if #available(tvOS 17, *) {
+                MenuTest()
+                    .padding()
+            } else {
+                // Fallback on earlier versions
+            }
+        }
+        .navigationTitle("Compatibility/Menu Test")
+        .navigationWrapper()
     }
 }
 

@@ -55,7 +55,7 @@ public extension Menu where LabelView == Image {
 @available(macOS 12, watchOS 7, iOS 14, tvOS 17, *)
 public struct MenuTest: View {
     public var body: some View {
-        Menu("KC") {
+        Menu("Symbols") {
             ForEach(["suit.diamond", "star", "suit.spade.fill","suit.heart","suit.club","star.fill"], id: \.self) { symbol in
                 Button {
                     // Perform an action here.
