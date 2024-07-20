@@ -2,6 +2,23 @@
 //swiftSettings: [
 //    .define("VAPOR")
 //]
+public func checkBreakpoint(level: DebugLevel) {
+    // Enable setting breakpoints for various debug levels.
+    switch level {
+    case .OFF:
+        break // for breakpoint
+    case .ERROR:
+        break // for breakpoint
+    case .WARNING:
+        break // for breakpoint
+    case .NOTICE:
+        break // for breakpoint
+    case .DEBUG:
+        break // for breakpoint
+    case .SILENT:
+        break // for breakpoint
+    }
+}
 
 
 //@available(*, deprecated, renamed: "CustomError")
@@ -173,32 +190,27 @@ public func debugContext(isMainThread: Bool, file: String, function: String, lin
  - Parameter line: For bubbling down the #line number from a call site.
  - Parameter column: For bubbling down the #column number from a call site. (Not used currently but here for completeness).
  */
+//@discardableResult
 public func debug(_ message: Any, level: DebugLevel? = nil, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) {
     let isMainThread = Thread.isMainThread // capture before we switch to main thread for printing
     let message = String(describing: message) // convert to sendable item to avoid any thread issues.
-    main { // to ensure that the current debug level (which must be called on the main actor with new concurrency) is thread-safe.  Should be okay since print is effectively UI anyways...
-        let level = level ?? DebugLevel.defaultLevel
-        // Enable setting breakpoints for various debug levels.
-        switch level {
-        case .OFF:
-            break // for breakpoint
-        case .ERROR:
-            break // for breakpoint
-        case .WARNING:
-            break // for breakpoint
-        case .NOTICE:
-            break // for breakpoint
-        case .DEBUG:
-            break // for breakpoint
-        case .SILENT:
-            break // for breakpoint
+    if let level {
+        checkBreakpoint(level: level)
+    }
+    main { // to ensure that the current debug level (which must be called on the main actor with new concurrency) is thread-safe.  Should be okay since print is effectively UI 
+        let resolvedLevel: DebugLevel
+        if let level {
+            resolvedLevel = level
+        } else {
+            resolvedLevel = DebugLevel.defaultLevel
+            checkBreakpoint(level: resolvedLevel)
         }
-        guard DebugLevel.isAtLeast(level) else {
+        guard DebugLevel.isAtLeast(resolvedLevel) else {
             return
         }
         if DebugLevel.includeContext {
             let context = debugContext(isMainThread: isMainThread, file: file, function: function, line: line, column: column)
-            print("\(DebugLevel.levelsToIncludeContext.contains(level) ? context : "")\(level.emoji) \(message)")
+            print("\(DebugLevel.levelsToIncludeContext.contains(resolvedLevel) ? context : "")\(resolvedLevel.emoji) \(message)")
         } else {
             print(message)
         }

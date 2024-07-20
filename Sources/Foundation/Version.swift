@@ -121,13 +121,19 @@ public extension OperatingSystemVersion {
 
     @MainActor
     internal static var versionCodableTest: TestClosure = {
+        
+//        - [ ] Determine when Version should print 1.0.0 vs 1.0 vs 1 (do 1.0 at least, but if .0.0, just print the major and minor and not the patch) - see if there are best practices.
+
         let one = Version("2")
         let two = Version("12.1")
         let three: Version = "2.12.1"
-        let array = [one, two, three]
+        let a: Version = "1.0.0"
+        let b: Version = "2.0"
+        let c: Version = "3.0.1"
+        let array = [one, two, three, a, b, c]
         let json = array.asJSON()
         let expected = """
-["2.0","12.1","2.12.1"]
+["2.0","12.1","2.12.1","1.0","2.0","3.0.1"]
 """
         try expect(json == expected, "unexpected json coding conversion: \(json)")
     }
@@ -135,7 +141,8 @@ public extension OperatingSystemVersion {
     @available(iOS 13, tvOS 13, watchOS 6, *)
     @MainActor
     static var tests: [Test] = [
-        Test("Version Tests", testVersions)
+        Test("Version Comparison Tests", testVersions),
+        Test("Version Codable Tests", versionCodableTest),
     ]
 }
 

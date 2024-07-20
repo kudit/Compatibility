@@ -72,7 +72,7 @@ public struct ClosureTestView: View {
                 // Fallback on earlier versions
             }
         }
-        .navigationTitle("Compatibility/Menu Test")
+        .backport.navigationTitle("Compatibility/Menu Test")
         .navigationWrapper()
     }
 }

@@ -10,13 +10,30 @@ import Compatibility
 
 @available(iOS 15.0, macOS 12, tvOS 17, watchOS 8, *)
 struct CompatibilityDemoView: View {
+    @State var runCount = 0
     var body: some View {
         TabView {
             AllTestsListView(additionalNamedTests: [
-                "Injected Test": [Test("Dummy test") {
-                    debug("Debug test", level: .DEBUG)
-                    try expect(true)
-                }]
+                "Injected Test": [
+                    Test("FoObar") {
+                        let foo = "bar"
+                        try expect(foo == "bar")
+                    },
+                    Test("Fail Test (should fail)") {
+                        self.runCount++
+                        try expect(false, "This has run \(runCount) times")
+                    },
+                    Test("Availability Test") {
+                        let success: Bool
+                        if #available(iOS 11, *) {
+                            success = true
+                        } else {
+                            debug("Version too old", level: .ERROR)
+                            success = false
+                        }
+                        try expect(success, "Availability check failed!  Should not be possible to run on older than iOS 11.")
+                    },
+                ]
             ])
                 .tabItem {
                     Text("All Tests")
@@ -36,6 +53,14 @@ struct CompatibilityDemoView: View {
             FillAndStrokeTest()
                 .tabItem {
                     Text("Fill & Stroke")
+                }
+            PlacardShowcaseView()
+                .tabItem {
+                    Text("Placard Showcase")
+                }
+            TriangleShowcaseView()
+                .tabItem {
+                    Text("Triangle Showcase")
                 }
             MaterialTestView()
                 .tabItem {

@@ -11,14 +11,15 @@ This is actively maintained so if there is a feature request or change, we will 
 
 ## Features
 
-- [x] Threading features to make syntax easier (`main {}` and `background {}`).
-- [x] Sleep feature for simple delays in tasks.
-- [x] Testing framework for providing tests inline in frameworks that can be output/tested using #Previews.
-- [x] Several SwiftUI features that have been added have been "Backported" so that you can use the new features on new platforms but have an automatic fallback for older platforms that do not support the feature.
-- [x] Emoji prefixing of debug outputs.
-- [x] Automatically including context in debug output to make finding the source of the debug easier.
-- [x] Easily set breakpoints on various levels of debug statements.
-- [x] Provides a simple CustomError type that can be initialized with a string for throwing errors when you don't care about the type of error thrown.
+- Can develop and modify without Xcode using Swift Playgrounds on iPad!
+- Threading features to make syntax easier (`main {}` and `background {}`).
+- Sleep feature for simple delays in tasks.
+- Testing framework for providing tests inline in frameworks that can be output/tested using #Previews.
+- Several SwiftUI features that have been added have been "Backported" so that you can use the new features on new platforms but have an automatic fallback for older platforms that do not support the feature.
+- Emoji prefixing of debug outputs.
+- Automatically including context in debug output to make finding the source of the debug easier.
+- Easily set breakpoints on various levels of debug statements.
+- Provides a simple CustomError type that can be initialized with a string for throwing errors when you don't care about the type of error thrown.
 
 ## Requirements
 

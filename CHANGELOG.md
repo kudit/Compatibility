@@ -6,6 +6,8 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Tag with matching version in GitHub.
 
+v1.1.0 7/19/2024 Added withoutZeros function to Double.  Added .backport.navigationTitle() function for older iOS.  Fixed JSON coding issue (since we're using codable, don't need to verify that all the contents are actually JSON supported NSObjects).  Added additional version tests.  Added injection tests with a count to include expected failure and run count.  Fixed so debug breakpoints are accessible from the proper thread instead of being stranded on the main thread.  Added Placard shape.  Added Triangle shaped.  Fixed .backport.background(color)
+
 v1.0.18 7/17/2024 Added license usage example.  Added ability to pass in additional tests to the AllTestsListView(["Section Name": tests, "Section Name 2": tests2]).  Added fix for OperatingSystemVersion in swift Playgrounds (needed to do typalias wrapper trick).  Needed to make Linux hack of ObservableObject have public send() function to prevent complaints about internal acccess.  Added OrderedDictionary and OrderedSet based on swift-collections code but simplified (originally tried adding swift-collections as a dependency but it doesn't support watchOS 4).
 
 v1.0.17 7/15/2024 Fixed build failures for watchOS and Linux due to ByteView SwiftUI non-conditional inclusion.  Updated icon for new themeing.  Fixed wrong default count style in public ByteView initializer.
@@ -49,9 +51,9 @@ v1.0 7/6/2024 Initial code and features pulled from KuditFrameworks.  Converted 
 ## Bugs to fix:
 Known issues that need to be addressed.
 
-- [ ] Fix test app navigation wrapper.
 - [ ] Menu buttons in tvOS do not work at all.
 - [ ] pagination in tvOS works but after pagination, view content isn't accessible.
+- [ ] Placard view looks weird in macOS.
 
 ## Roadmap:
 Planned features and anticipated API changes.  If you want to contribute, this is a great place to start.
@@ -64,8 +66,6 @@ Planned features and anticipated API changes.  If you want to contribute, this i
 ## Proposals:
 This is where proposals can be discussed for potential movement to the roadmap.
 
-- [ ] Determine when Version should print 1.0.0 vs 1.0 vs 1 (do 1.0 at least, but if .0.0, just print the major and minor and not the patch) - see if there are best practices.
-- [ ] Should we raise tvOS and watchOS and macOS and other platforms to match the iOS 15 requirement to prune unnecessary legacy code?  Cannot have less than iOS 15.2 due to Swift Playgrounds.
 - [ ] Debug: see if there's a way to add interpolation as a parameter to customize the output format.  Perhaps using a debug output formatter object that can be set?
 - [ ] Debug: allow setting a closure that will pre-process debug statements to allow for injection in debug statements?
 

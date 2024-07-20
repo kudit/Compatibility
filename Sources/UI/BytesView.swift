@@ -40,7 +40,7 @@ public struct RandomBytesTestView: View {
         List {
             ForEach(0..<10, id: \.self) { index in
                 let pow = Int(pow(10, index).description) ?? 1
-                let bytes = Int.random(max: 123456) * pow
+                let bytes = Int64(Int.random(max: 123456)) * Int64(pow)
                 BytesView(label: "\"\(bytes)\"", bytes: bytes)
             }
         }

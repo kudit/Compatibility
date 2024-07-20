@@ -122,7 +122,7 @@ public extension Backport where Content: View {
             }
         }
     }
-    func background<V>(_ color: Color) -> some View where V : View {
+    func background(_ color: Color) -> some View {
         background { color }
     }
     enum SafeAreaRegions: Sendable {
@@ -140,6 +140,74 @@ public extension Backport where Content: View {
             }
         }
     }
+}
+
+// MARK: Navigation Title
+@available(watchOS 6.0, iOS 13, tvOS 13, *)
+public extension Backport where Content: View {
+    //TODO: find a way to better consolidate code?  Possibly a protocol?)
+    func navigationTitle(_ title: Text) -> some View {
+        Group {
+            if #available(iOS 14.0, macOS 11, tvOS 14, watchOS 7, *) {
+                content.navigationTitle(title)
+            } else {
+                // Fallback on earlier versions
+                #if !os(macOS) // macOS 10.5 doesn't support this
+                    content.navigationBarTitle(title)
+                #else
+                    content
+                #endif
+            }
+        }
+    }
+
+    func navigationTitle(_ titleKey: LocalizedStringKey) -> some View {
+        Group {
+            if #available(iOS 14.0, macOS 11, tvOS 14, watchOS 7, *) {
+                content.navigationTitle(titleKey)
+            } else {
+                // Fallback on earlier versions
+                #if !os(macOS) // macOS 10.5 doesn't support this
+                    content.navigationBarTitle(titleKey)
+                #else
+                    content
+                #endif
+            }
+        }
+    }
+
+    func navigationTitle<S>(_ title: S) -> some View where S : StringProtocol {
+        Group {
+            if #available(iOS 14.0, macOS 11, tvOS 14, watchOS 7, *) {
+                content.navigationTitle(title)
+            } else {
+                // Fallback on earlier versions
+                #if !os(macOS) // macOS 10.5 doesn't support this
+                    content.navigationBarTitle(title)
+                #else
+                    content
+                #endif
+            }
+        }
+    }
+
+//    func navigationTitle(_ title: Binding<String>) -> some View {
+//        Group {
+//            if #available(iOS 16.0, macOS 13, tvOS 16, watchOS 9, *) {
+//                content.navigationTitle(title)
+//            } else {
+//                // Fallback on earlier versions
+//                #if !os(macOS) // macOS 10.5 doesn't support this
+//                content.navigationBarTitle(title.wrappedValue)
+//                #else
+//                    content
+//                #endif
+//            }
+//        }
+//    }
+
+    // ONLY AVAILABLE IN WATCHOS 7
+//    func navigationTitle<V>(@ViewBuilder _ title: () -> V) -> some View where V : View {
 }
 
 // MARK: - Missing Styles
@@ -310,6 +378,22 @@ public extension Backport where Content: View {
 
 
 // MARK: - Container Views & Backport Navigation Stack
+// https://www.swiftbysundell.com/tips/creating-custom-swiftui-container-views/
+/**
+Example implementation of a ContainerView:
+ 
+```
+ struct Carousel<Content: View>: ContainerView {
+     var content: () -> Content
+     // init automatically synthesized
+     var body: some View {
+         ScrollView(.horizontal) {
+             HStack(content: content).padding()
+         }
+     }
+ }
+```
+ */
 @available(watchOS 6.0, iOS 13, tvOS 13, *)
 public protocol ContainerView: View {
     associatedtype Content

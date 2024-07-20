@@ -3,9 +3,10 @@
 public extension Encodable {
     func asJSON(outputFormatting: JSONEncoder.OutputFormatting? = nil) -> String {
         // really should never error since we conform to Encodable
-        guard JSONSerialization.isValidJSONObject(self) else {
-            return "WARNING: Invalid JSON object: \(self)".asErrorJSON(level: .ERROR)
-        }
+        // Don't need to do this check since we should conform to Encodable
+//        guard JSONSerialization.isValidJSONObject(self) else {
+//            return "WARNING: Invalid JSON object: \(self)".asErrorJSON(level: .ERROR)
+//        }
         let encoder = JSONEncoder()
         if let outputFormatting {
             encoder.outputFormatting = outputFormatting
@@ -34,3 +35,4 @@ public extension Decodable {
 }
 
 // TODO: Add tests!!
+//Swift Kudit Frameworks: Create tests for Json optional including test for bad data types bad Json and compatibility
