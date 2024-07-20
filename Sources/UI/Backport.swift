@@ -36,23 +36,127 @@ extension Backport where Content == Any {
 // MARK: - Backport View compatibility functions
 @available(watchOS 6.0, iOS 13, tvOS 13, *)
 public extension Backport where Content: View {
-    @available(tvOS 14, macOS 11, iOS 14, watchOS 7, *)
+    // MARK: - .onChange
+    
+    /// Adds a modifier for this view that fires an action when a specific
+    /// value changes.
+    ///
+    /// You can use `onChange` to trigger a side effect as the result of a
+    /// value changing, such as an `Environment` key or a `Binding`.
+    ///
+    /// The system may call the action closure on the main actor, so avoid
+    /// long-running tasks in the closure. If you need to perform such tasks,
+    /// detach an asynchronous background task.
+    ///
+    /// When the value changes, the new version of the closure will be called,
+    /// so any captured values will have their values from the time that the
+    /// observed value has its new value. In the following code example,
+    /// `PlayerView` calls into its model when `playState` changes model.
+    ///
+    ///     struct PlayerView: View {
+    ///         var episode: Episode
+    ///         @State private var playState: PlayState = .paused
+    ///
+    ///         var body: some View {
+    ///             VStack {
+    ///                 Text(episode.title)
+    ///                 Text(episode.showTitle)
+    ///                 PlayButton(playState: $playState)
+    ///             }
+    ///             .onChange(of: playState) {
+    ///                 model.playStateDidChange(state: playState)
+    ///             }
+    ///         }
+    ///     }
+    ///
+    /// - Parameters:
+    ///   - value: The value to check against when determining whether
+    ///     to run the closure.
+    ///   - initial: Whether the action should be run when this view initially
+    ///     appears.
+    ///   - action: A closure to run when the value changes.
+    ///
+    /// - Returns: A view that fires an action when the specified value changes.
+    @available(iOS 14, macOS 11, tvOS 14, watchOS 7, *)
     func onChange<V>(
         of value: V,
-        perform action: @escaping () -> Void
+        initial: Bool = false,
+        _ action: @escaping () -> Void
+    ) -> some View where V : Equatable {
+        onChange(of: value, initial: initial) { _,_ in
+            action()
+        }
+    }
+
+    /// Adds a modifier for this view that fires an action when a specific
+    /// value changes.
+    ///
+    /// You can use `onChange` to trigger a side effect as the result of a
+    /// value changing, such as an `Environment` key or a `Binding`.
+    ///
+    /// The system may call the action closure on the main actor, so avoid
+    /// long-running tasks in the closure. If you need to perform such tasks,
+    /// detach an asynchronous background task.
+    ///
+    /// When the value changes, the new version of the closure will be called,
+    /// so any captured values will have their values from the time that the
+    /// observed value has its new value. The old and new observed values are
+    /// passed into the closure. In the following code example, `PlayerView`
+    /// passes both the old and new values to the model.
+    ///
+    ///     struct PlayerView: View {
+    ///         var episode: Episode
+    ///         @State private var playState: PlayState = .paused
+    ///
+    ///         var body: some View {
+    ///             VStack {
+    ///                 Text(episode.title)
+    ///                 Text(episode.showTitle)
+    ///                 PlayButton(playState: $playState)
+    ///             }
+    ///             .onChange(of: playState) { oldState, newState in
+    ///                 model.playStateDidChange(from: oldState, to: newState)
+    ///             }
+    ///         }
+    ///     }
+    ///
+    /// - Parameters:
+    ///   - value: The value to check against when determining whether
+    ///     to run the closure.
+    ///   - initial: Whether the action should be run when this view initially
+    ///     appears.
+    ///   - action: A closure to run when the value changes.
+    ///   - oldValue: The old value that failed the comparison check (or the
+    ///     initial value when requested).
+    ///   - newValue: The new value that failed the comparison check.
+    ///
+    /// - Returns: A view that fires an action when the specified value changes.
+    @available(iOS 14, macOS 11.0, tvOS 14.0, watchOS 7.0, *)
+    func onChange<V>(
+        of value: V,
+        initial: Bool = false,
+        _ action: @escaping (_ oldValue: V, _ newValue: V) -> Void
     ) -> some View where V : Equatable {
         Group {
             if #available(iOS 17.0, macOS 14.0, macCatalyst 17.0, tvOS 17.0, watchOS 10.0, *) {
-                content.onChange(of: value) {
-                    action()
+                content.onChange(of: value, initial: initial) { oldState, newState in
+                    action(oldState, newState)
                 }
             } else {
-                content.onChange(of: value) { _ in
-                    action()
+                content.onChange(of: value) { newState in
+                    action(value, newState) // in the closure, `value` will be the old value.
+                }
+                .onAppear {
+                    if initial {
+                        action(value, value)
+                    }
                 }
             }
         }
     }
+    
+    
+    // MARK: - Background/foreground/overlay and styling
     func backgroundStyle<S>(_ style: S) -> some View where S : ShapeStyle {
         Group {
             if #available(watchOS 9.0, tvOS 16.0, macOS 13.0, iOS 16.0, *) {

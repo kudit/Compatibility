@@ -15,20 +15,29 @@ func timeTolerance(start: TimeInterval, end: TimeInterval, expected: TimeInterva
     try expect(delta < timeTolerances, "took \(delta) seconds (expecting \(expected) sec difference)")
 }
 
+// Implemented as static funcs with global wrappers in case something like View creates similarly named functions like background and we need to reference this specific version.
+
 // would have made this a static function on task but extending it apparently has issues??
 // Sleep extension for sleeping a thread in seconds
 @available(iOS 13, watchOS 6, tvOS 13, *) // for concurrency
 public func sleep(seconds: Double, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) async {
-    let duration = UInt64(seconds * 1_000_000_000)
-    do {
-        try await Task.sleep(nanoseconds: duration)
-//            // Fallback on earlier versions
-//            sleep(UInt32(seconds)) // give fetch from server time to finish
-    } catch {
-        // do nothing but make debug log if we can.
-        debug("Sleep function was interrupted", level: .DEBUG, file: file, function: function, line: line, column: column)
+    await Compatibility.sleep(seconds: seconds, file: file, function: function, line: line, column: column)
+}
+public extension Compatibility {
+    @available(iOS 13, watchOS 6, tvOS 13, *) // for concurrency
+    static func sleep(seconds: Double, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) async {
+        let duration = UInt64(seconds * 1_000_000_000)
+        do {
+            try await Task.sleep(nanoseconds: duration)
+            //            // Fallback on earlier versions
+            //            sleep(UInt32(seconds)) // give fetch from server time to finish
+        } catch {
+            // do nothing but make debug log if we can.
+            debug("Sleep function was interrupted", level: .DEBUG, file: file, function: function, line: line, column: column)
+        }
     }
 }
+
 @available(iOS 13, watchOS 6, tvOS 13, *) // for concurrency
 @MainActor
 internal let testSleep3: TestClosure = {
@@ -59,35 +68,46 @@ internal let testSleep2: TestClosure = {
 //    closure()
 //}
 
+// Restored background { for image processing or other large async task: Avoid heavy synchronous work within Task. Use custom DispatchQueue when heavy work like image processing is required.https://wojciechkulik.pl/ios/swift-concurrency-things-they-dont-tell-you
+
 /// run potentially long-running code on a background thread
 @available(watchOS 6, iOS 13, tvOS 13, *)
 public func background(_ closure: @escaping () async -> Void) {
-    // run this block code on a background thread
-    // new concurrency method:
-    Task.detached(priority: .background) {
-        // background code here
-        await closure()
-    }
+    Compatibility.background(closure)
 }
 /// Run potentially long-running code on a background thread.  Available as a fallback for earlier versions that don't support concurrency or for code that doesn't await (synchronous but possibly long-running)
 public func background(_ closure: @escaping () -> Void) {
-    if #available(watchOS 6.0, iOS 13, tvOS 13, *) {
-        let asyncFunc: () async -> Void = {
-            closure()
-        }
-        background {
-            await asyncFunc()
-        }
-    } else {
-        // Fallback on earlier versions
-        // old queue method:
-        DispatchQueue.global().async {
+    Compatibility.background(closure)
+}
+public extension Compatibility {
+    @available(watchOS 6, iOS 13, tvOS 13, *)
+    static func background(_ closure: @escaping () async -> Void) {
+        // run this block code on a background thread
+        // new concurrency method:
+        Task.detached(priority: .background) {
             // background code here
-            closure()
+            await closure()
+        }
+    }
+    /// Run potentially long-running code on a background thread.  Available as a fallback for earlier versions that don't support concurrency or for code that doesn't await (synchronous but possibly long-running)
+    static func background(_ closure: @escaping () -> Void) {
+        if #available(watchOS 6.0, iOS 13, tvOS 13, *) {
+            let asyncFunc: () async -> Void = {
+                closure()
+            }
+            background {
+                await asyncFunc()
+            }
+        } else {
+            // Fallback on earlier versions
+            // old queue method:
+            DispatchQueue.global().async {
+                // background code here
+                closure()
+            }
         }
     }
 }
-// Restored background { for image processing or other large async task: Avoid heavy synchronous work within Task. Use custom DispatchQueue when heavy work like image processing is required.https://wojciechkulik.pl/ios/swift-concurrency-things-they-dont-tell-you
 @MainActor
 internal let testBackground: TestClosure = {
     let start = Date.timeIntervalSinceReferenceDate
@@ -95,7 +115,7 @@ internal let testBackground: TestClosure = {
     if #available(watchOS 6.0, iOS 13, tvOS 13, *) {
         end = await withCheckedContinuation { continuation in
             background {
-                sleep(4)
+                await sleep(seconds: 4)
                 let end = Date.timeIntervalSinceReferenceDate
                 continuation.resume(returning: end)
             }
@@ -115,34 +135,26 @@ internal let testBackground: TestClosure = {
 
 /// run code on the main thread
 public func main(_ closure: @MainActor @escaping () -> Void) {
-    if #available(watchOS 6.0, iOS 13, tvOS 13, *) {
-        Task { @MainActor in
-            // finish up on main thread
-            closure()
-        }
-    } else {
-        // Fallback on earlier versions
-        DispatchQueue.main.async {
-            // finish up on main thread
-            closure()
+    Compatibility.main(closure)
+}
+public extension Compatibility {
+    /// run code on the main thread
+    static func main(_ closure: @MainActor @escaping () -> Void) {
+        if #available(watchOS 6.0, iOS 13, tvOS 13, *) {
+            Task { @MainActor in
+                // finish up on main thread
+                closure()
+            }
+        } else {
+            // Fallback on earlier versions
+            DispatchQueue.main.async {
+                // finish up on main thread
+                closure()
+            }
         }
     }
 }
-// TODO: Does a throwing main closure make sense?  When would this be used bridging the async operation?
-//public func main(_ closure: @MainActor @escaping () throws -> Void) {
-//    if #available(watchOS 6.0, *) {
-//        Task { @MainActor in
-//            // finish up on main thread
-//            try closure()
-//        }
-//    } else {
-//        // Fallback on earlier versions
-//        DispatchQueue.main.async {
-//            // finish up on main thread
-//            try closure()
-//        }
-//    }
-//}
+
 @available(watchOS 6.0, iOS 13, tvOS 13, *)
 @MainActor
 internal let testMain: TestClosure = {
@@ -168,18 +180,33 @@ delay(0.4) {
 */
 /// run the block of code on the main thread after the `delay` (in seconds) have passed.
 public func delay(_ delay:Double, closure:@escaping () -> Void) {
-    if #available(watchOS 6.0, iOS 13, tvOS 13, *) {
-        Task {
-            await sleep(seconds: delay)
-            closure()
-        }
-    } else {
-        // Fallback on earlier versions
-        DispatchQueue.main.asyncAfter(
-            // delay below was previously: Double(Int64(delay * Double(NSEC_PER_SEC))) / Double(NSEC_PER_SEC)
-            deadline: DispatchTime.now() + delay, execute: closure)
-    }
+    Compatibility.delay(delay, closure: closure)
+}
+public extension Compatibility {
+    /**
+    Utility function to delay execution of code by a certain amount of seconds.
 
+    Usage:
+    ```
+    delay(0.4) {
+    // do stuff
+    }
+    ```
+    */
+    /// run the block of code on the main thread after the `delay` (in seconds) have passed.
+    static func delay(_ delay:Double, closure:@escaping () -> Void) {
+        if #available(watchOS 6.0, iOS 13, tvOS 13, *) {
+            Task {
+                await sleep(seconds: delay)
+                closure()
+            }
+        } else {
+            // Fallback on earlier versions
+            DispatchQueue.main.asyncAfter(
+                // delay below was previously: Double(Int64(delay * Double(NSEC_PER_SEC))) / Double(NSEC_PER_SEC)
+                deadline: DispatchTime.now() + delay, execute: closure)
+        }
+    }
 }
 
 @available(iOS 13, watchOS 6, tvOS 13, *) // for concurrency

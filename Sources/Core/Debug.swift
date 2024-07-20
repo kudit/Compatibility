@@ -192,27 +192,43 @@ public func debugContext(isMainThread: Bool, file: String, function: String, lin
  */
 //@discardableResult
 public func debug(_ message: Any, level: DebugLevel? = nil, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) {
-    let isMainThread = Thread.isMainThread // capture before we switch to main thread for printing
-    let message = String(describing: message) // convert to sendable item to avoid any thread issues.
-    if let level {
-        checkBreakpoint(level: level)
-    }
-    main { // to ensure that the current debug level (which must be called on the main actor with new concurrency) is thread-safe.  Should be okay since print is effectively UI 
-        let resolvedLevel: DebugLevel
+    Compatibility.debug(message, level: level, file: file, function: function, line: line, column: column)
+}
+public extension Compatibility {
+    /**
+     Ku: Debug helper for printing info to screen including file and line info of call site.  Also can provide a log level for use in loggers or for globally turning on/off logging. (Modify DebugLevel.currentLevel to set level to output.  When launching app, probably can set this to DebugLevel.OFF
+     
+     - Parameter message: The message to report.
+     - Parameter level: The logging level to use.
+     - Parameter file: For bubbling down the #file name from a call site.
+     - Parameter function: For bubbling down the #function name from a call site.
+     - Parameter line: For bubbling down the #line number from a call site.
+     - Parameter column: For bubbling down the #column number from a call site. (Not used currently but here for completeness).
+     */
+    //@discardableResult
+    static func debug(_ message: Any, level: DebugLevel? = nil, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) {
+        let isMainThread = Thread.isMainThread // capture before we switch to main thread for printing
+        let message = String(describing: message) // convert to sendable item to avoid any thread issues.
         if let level {
-            resolvedLevel = level
-        } else {
-            resolvedLevel = DebugLevel.defaultLevel
-            checkBreakpoint(level: resolvedLevel)
+            checkBreakpoint(level: level)
         }
-        guard DebugLevel.isAtLeast(resolvedLevel) else {
-            return
-        }
-        if DebugLevel.includeContext {
-            let context = debugContext(isMainThread: isMainThread, file: file, function: function, line: line, column: column)
-            print("\(DebugLevel.levelsToIncludeContext.contains(resolvedLevel) ? context : "")\(resolvedLevel.emoji) \(message)")
-        } else {
-            print(message)
+        main { // to ensure that the current debug level (which must be called on the main actor with new concurrency) is thread-safe.  Should be okay since print is effectively UI
+            let resolvedLevel: DebugLevel
+            if let level {
+                resolvedLevel = level
+            } else {
+                resolvedLevel = DebugLevel.defaultLevel
+                checkBreakpoint(level: resolvedLevel)
+            }
+            guard DebugLevel.isAtLeast(resolvedLevel) else {
+                return
+            }
+            if DebugLevel.includeContext {
+                let context = debugContext(isMainThread: isMainThread, file: file, function: function, line: line, column: column)
+                print("\(DebugLevel.levelsToIncludeContext.contains(resolvedLevel) ? context : "")\(resolvedLevel.emoji) \(message)")
+            } else {
+                print(message)
+            }
         }
     }
 }

@@ -9,7 +9,7 @@ public typealias TestClosure = () async throws -> Void
 //    @MainActor static var tests: [Test] { get }
 //}
 
-// TODO: NEXT: Convert these to Testing expectations so we don't have to write custom error descriptions.
+// TODO: NEXT: Convert these to Testing expectations so we don't have to write custom error descriptions.  Also move to Test static method that is shadowed in the global space.
 /// Sets an expectation for testing.  In the future, convert to Swift #expect calls so we get better context without specifying a debugString.
 public func expect(_ condition: Bool, _ debugString: String? = nil, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) throws {
     guard condition else {
