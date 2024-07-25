@@ -11,12 +11,12 @@ public struct Backport<Content> {
     }
 }
 
-@available(watchOS 6.0, iOS 13, tvOS 13, *)
+@available(iOS 13, tvOS 13, watchOS 6.0, *)
 public extension View {
     var backport: Backport<Self> { Backport(self) }
 }
 
-@available(watchOS 6.0, iOS 13, tvOS 13, *)
+@available(iOS 13, tvOS 13, watchOS 6.0, *)
 extension Backport where Content == Any {
     /// Usage: Backport.AsyncImage(url: URL)
     @ViewBuilder static func AsyncImage(url: URL?) -> some View {
@@ -34,7 +34,7 @@ extension Backport where Content == Any {
 }
 
 // MARK: - Backport View compatibility functions
-@available(watchOS 6.0, iOS 13, tvOS 13, *)
+@available(iOS 13, tvOS 13, watchOS 6.0, *)
 public extension Backport where Content: View {
     // MARK: - .onChange
     
@@ -232,7 +232,7 @@ public extension Backport where Content: View {
     enum SafeAreaRegions: Sendable {
         case all, container, keyboard
         
-        @available(tvOS 14.0, macOS 11, iOS 14, watchOS 7, *)
+        @available(iOS 14, macOS 11, tvOS 14.0, watchOS 7, *)
         public var convert: SwiftUI.SafeAreaRegions {
             switch self {
             case .all:
@@ -244,7 +244,137 @@ public extension Backport where Content: View {
             }
         }
     }
+    
+    /// Configures the ``fileExporter``, ``fileImporter``, or ``fileMover`` to
+    /// open with the specified default directory.
+    ///
+    /// - Parameter defaultDirectory: The directory to show when
+    ///   the system file dialog launches. If the given file dialog has
+    ///   a `fileDialogCustomizationID` if stores the user-chosen directory and subsequently
+    ///   opens with it, ignoring the default value provided in this modifier.
+    func fileDialogDefaultDirectory(_ defaultDirectory: URL?) -> some View {
+#if os(tvOS) || os(watchOS)
+        content // do nothing - does not apply in tvOS or watchOS
+#else
+        Group {
+            if #available(iOS 17.0, macOS 14.0, *) {
+                content.fileDialogDefaultDirectory(defaultDirectory)
+            } else {
+                content
+            }
+        }
+#endif
+    }
 }
+
+// MARK: Presentation Detents
+//@available(watchOS 8.0, tvOS 15.0, macOS 12.0, *)
+@available(iOS 13, tvOS 13, watchOS 6.0, *)
+public extension Backport where Content: View {
+    enum BackportPresentationDetent: Sendable {
+        case large, medium
+        
+        @available(iOS 16, macOS 13, macCatalyst 16, tvOS 16, watchOS 9,  *)
+        var converted: PresentationDetent {
+            switch self {
+            case .large:
+                return .large
+            case .medium:
+                return .medium
+            }
+        }
+    }
+    
+    @available(iOS 16, macOS 13, macCatalyst 16, tvOS 16, watchOS 9,  *)
+    private func convert(_ detents: Set<BackportPresentationDetent>) -> Set<PresentationDetent> {
+        return Set(detents.map { $0.converted })
+    }
+    
+    func presentationDetents(_ detents: Set<BackportPresentationDetent>) -> some View {
+        Group {
+            if #available(iOS 16, macOS 13, macCatalyst 16, tvOS 16, watchOS 9,  *) {
+                content.presentationDetents(convert(detents))
+            } else {
+                // Fallback on earlier versions
+                content // do nothing
+            }
+        }
+    }
+}
+
+// MARK: scrollClipDisabled()
+@available(iOS 13, tvOS 13, watchOS 6.0, *)
+extension Backport where Content: View {
+    /// Sets whether a scroll view clips its content to its bounds.
+    ///
+    /// By default, a scroll view clips its content to its bounds, but you can
+    /// disable that behavior by using this modifier. For example, if the views
+    /// inside the scroll view have shadows that extend beyond the bounds of the
+    /// scroll view, you can use this modifier to avoid clipping the shadows:
+    ///
+    ///     struct ContentView: View {
+    ///         var disabled: Bool
+    ///         let colors: [Color] = [.red, .green, .blue, .mint, .teal]
+    ///
+    ///         var body: some View {
+    ///             ScrollView(.horizontal) {
+    ///                 HStack(spacing: 20) {
+    ///                     ForEach(colors, id: \.self) { color in
+    ///                         Rectangle()
+    ///                             .frame(width: 100, height: 100)
+    ///                             .foregroundStyle(color)
+    ///                             .shadow(color: .primary, radius: 20)
+    ///                     }
+    ///                 }
+    ///             }
+    ///             .scrollClipDisabled(disabled)
+    ///         }
+    ///     }
+    ///
+    /// The scroll view in the above example clips when the
+    /// content view's `disabled` input is `false`, as it does
+    /// if you omit the modifier, but not when the input is `true`:
+    ///
+    /// @TabNavigator {
+    ///     @Tab("True") {
+    ///         ![A horizontal row of uniformly sized, evenly spaced, vertically aligned squares inside a bounding box that's about twice the height of the squares, and almost four times the width. From left to right, three squares appear in full, while only the first quarter of a fourth square appears at the far right. All the squares have shadows that fade away before reaching the top or the bottom of the bounding box.](View-scrollClipDisabled-1-iOS)
+    ///     }
+    ///     @Tab("False") {
+    ///         ![A horizontal row of uniformly sized, evenly spaced, vertically aligned squares inside a bounding box that's about twice the height of the squares, and almost four times the width. From left to right, three squares appear in full, while only the first quarter of a fourth square appears at the far right. All the squares have shadows that are visible in between squares, but clipped at the top and bottom of the squares.](View-scrollClipDisabled-2-iOS)
+    ///     }
+    /// }
+    ///
+    /// While you might want to avoid clipping parts of views that exceed the
+    /// bounds of the scroll view, like the shadows in the above example, you
+    /// typically still want the scroll view to clip at some point.
+    /// Create custom clipping by using the ``View/clipShape(_:style:)``
+    /// modifier to add a different clip shape. The following code disables
+    /// the default clipping and then adds rectangular clipping that exceeds
+    /// the bounds of the scroll view by the default padding amount:
+    ///
+    ///     ScrollView(.horizontal) {
+    ///         // ...
+    ///     }
+    ///     .scrollClipDisabled()
+    ///     .padding()
+    ///     .clipShape(Rectangle())
+    ///
+    /// - Parameter disabled: A Boolean value that specifies whether to disable
+    ///   scroll view clipping.
+    ///
+    /// - Returns: A view that disables or enables scroll view clipping.
+    public func scrollClipDisabled(_ disabled: Bool = true) -> some View {
+        Group {
+            if #available(iOS 17, macOS 14, macCatalyst 17.0, tvOS 17, watchOS 10, *) {
+                content.scrollClipDisabled(disabled)
+            } else {
+                // Fallback on earlier versions
+                content
+            }
+        }
+    }
+}
+
 
 // MARK: Navigation Title
 @available(watchOS 6.0, iOS 13, tvOS 13, *)

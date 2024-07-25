@@ -1141,3 +1141,44 @@ extension OrderedDictionary: Decodable where Key: Decodable, Value: Decodable {
         }
     }
 }
+
+// MARK: - DictionaryConvertible
+public protocol DictionaryConvertible: Sequence {
+    associatedtype Key: Hashable
+    associatedtype Value
+    var dictionaryValue: Dictionary<Key, Value> { get }
+    subscript(key: Key) -> Value? { get set }
+}
+extension Dictionary: DictionaryConvertible {
+    public var dictionaryValue: Dictionary<Key, Value> {
+        self
+    }
+}
+extension OrderedDictionary: DictionaryConvertible {
+    public var dictionaryValue: Dictionary<Key, Value> {
+        var dictionaryValue = Dictionary<Key, Value>()
+        for (key, value) in self {
+            dictionaryValue[key] = value
+        }
+        return dictionaryValue
+    }
+}
+
+// MARK: - Dictionary addition
+public extension DictionaryConvertible where Self.Element == (Self.Key, Self.Value) {
+    /// Adds the right hand dictionary to the left hand dictionary.  If there are matching keys, the right hand side will replace the values in the left hand side.
+    @inlinable
+    static func += <Other>(lhs: inout Self, rhs: Other) where Other : DictionaryConvertible, Self.Key == Other.Key, Self.Value == Other.Value, Self.Element == Other.Element {
+        for (key, value) in rhs {
+            lhs[key] = value
+        }
+    }
+
+    /// Adds the right hand dictionary to the left hand dictionary and returns the result.  If there are matching keys, the right hand side will replace the values in the left hand side.
+    @inlinable
+    static func + <Other>(lhs: Self, rhs: Other) -> Self where Other : DictionaryConvertible, Self.Key == Other.Key, Self.Value == Other.Value, Self.Element == Other.Element {
+        var union = lhs
+        union += rhs
+        return union
+    }
+}

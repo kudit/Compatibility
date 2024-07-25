@@ -751,3 +751,20 @@ extension OrderedSet {
 // MARK: - Sendable Conformance
 extension OrderedSet: @unchecked Sendable where Element: Sendable {}
 
+// MARK: - Set Addition
+public extension OrderedSet {
+    /// Adds the right hand collection to the left hand OrderedSet.  Duplicates will be ignored and the ordering will not change.
+    @inlinable
+    static func += <Other>(lhs: inout Self, rhs: Other) where Other : Sequence, Self.Element == Other.Element {
+        lhs.append(contentsOf: rhs)
+    }
+
+    /// Adds the right hand collection to the left hand OrderedSet and returns the result.  Duplicates will be ignored and the ordering will not change.
+    @inlinable
+    static func + <Other>(lhs: Self, rhs: Other) -> Self where Other : Sequence, Self.Element == Other.Element {
+        var union = lhs
+        union += rhs
+        return union
+    }
+}
+

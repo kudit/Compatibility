@@ -68,6 +68,7 @@ internal let testSleep2: TestClosure = {
 //    closure()
 //}
 
+// MARK: - Background Tasks
 // Restored background { for image processing or other large async task: Avoid heavy synchronous work within Task. Use custom DispatchQueue when heavy work like image processing is required.https://wojciechkulik.pl/ios/swift-concurrency-things-they-dont-tell-you
 
 /// run potentially long-running code on a background thread
@@ -78,6 +79,14 @@ public func background(_ closure: @escaping () async -> Void) {
 /// Run potentially long-running code on a background thread.  Available as a fallback for earlier versions that don't support concurrency or for code that doesn't await (synchronous but possibly long-running)
 public func background(_ closure: @escaping () -> Void) {
     Compatibility.background(closure)
+}
+@available(watchOS 6, iOS 13, tvOS 13, *)
+public func background<ReturnType: Sendable>(_ closure: @Sendable @escaping () async throws -> ReturnType) async throws -> ReturnType {
+    try await Compatibility.background(closure)
+}
+@available(watchOS 6, iOS 13, tvOS 13, *)
+public func background<ReturnType: Sendable>(_ closure: @Sendable @escaping () async -> ReturnType?) async -> ReturnType? {
+    await Compatibility.background(closure)
 }
 public extension Compatibility {
     @available(watchOS 6, iOS 13, tvOS 13, *)
@@ -107,7 +116,31 @@ public extension Compatibility {
             }
         }
     }
+    /// Throwable return background task.
+    @available(watchOS 6, iOS 13, tvOS 13, *)
+    static func background<ReturnType: Sendable>(_ closure: @Sendable @escaping () async throws -> ReturnType) async throws -> ReturnType {
+        let longRunningTask = Task.detached(priority: .background) {
+            return try await closure()
+        }
+        let result = await longRunningTask.result
+        return try result.get()
+    }
+    /// Non-throwing return background task.  Return type must be an optional since there could be some error thrown by `result.get()` (though practically that should never happen)
+    @available(watchOS 6, iOS 13, tvOS 13, *)
+    static func background<ReturnType: Sendable>(_ closure: @Sendable @escaping () async -> ReturnType?) async -> ReturnType? {
+        let longRunningTask = Task.detached(priority: .background) {
+            return await closure()
+        }
+        let result = await longRunningTask.result
+        do {
+            return try result.get()
+        } catch {
+            debug("non-throwing background task threw error (this should not be possible): \(error)", level: .ERROR)
+            return nil
+        }
+    }
 }
+
 @MainActor
 internal let testBackground: TestClosure = {
     let start = Date.timeIntervalSinceReferenceDate
@@ -132,6 +165,8 @@ internal let testBackground: TestClosure = {
     }
     try timeTolerance(start: start, end: end, expected: 4)
 }
+
+// MARK: - Main
 
 /// run code on the main thread
 public func main(_ closure: @MainActor @escaping () -> Void) {

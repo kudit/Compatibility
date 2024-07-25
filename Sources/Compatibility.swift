@@ -6,7 +6,10 @@
 //
 
 public struct Compatibility {
-    public static let version = "1.1.1"
+    public static let version = "1.2.0"
+    
+    /// will be true if we're in a debug configuration and false if we're building for release
+    public static var isDebug = _isDebugAssertConfiguration()
 }
 
 @_exported import Foundation
