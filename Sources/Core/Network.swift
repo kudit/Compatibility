@@ -113,49 +113,55 @@ extension URLRequest {
     }
 }
 
-/// Fetch data from URL including optional postData.  Will report included file information and automatically debug output to the logs.
+extension Compatibility {
+    /// Fetch data from URL including optional postData.  Will report included file information and automatically debug output to the logs.
+    @available(iOS 13, watchOS 6, tvOS 13, *) // for concurrency
+    public static func fetchURL(urlString: String, postData: PostData? = nil, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) async throws -> String {
+        debug("Fetching URL [\(urlString)]...", level: .NOTICE, file: file, function: function, line: line, column: column)
+        // create the url with URL
+        guard let url = URL(string: urlString) else {
+            throw NetworkError.urlParsing(urlString: urlString)
+        }
+        
+        // now create the URLRequest object using the url object
+        var request = URLRequest(url: url)
+        if let parameters = postData {
+            request.httpMethod = "POST" //set http method as POST
+            
+            // declare the parameter as a dictionary that contains string as key and value combination. considering inputs are valid
+            
+            //let parameters: [String: Any] = ["id": 13, "name": "jack"]
+            guard let data = postData?.queryEncoded else {
+                throw NetworkError.postDataEncoding(parameters)
+            }
+            request.httpBody = data
+        } else {
+            request.httpMethod = "GET" //set http method as GET
+        }
+        debug("FETCHING: \(request)", level: .DEBUG, file: file, function: function, line: line, column: column)
+        
+        var data: Data
+        // create dataTask using the session object to send data to the server
+        if #available(iOS 15.0, watchOS 8.0, tvOS 15.0, *) {
+            (data, _) = try await URLSession.shared.data(for: request)
+        } else {
+            // Fallback on earlier versions
+            (data, _) = try await request.legacyData(for: URLSession.shared)
+        }
+        
+        //debug("DEBUG RESPONSE DATA: \(data)")
+        
+        if let responseString = String(data: data, encoding: .utf8) {
+            //debug("DEBUG RESPONSE STRING: \(responseString)")
+            return responseString
+        } else {
+            throw NetworkError.invalidResponse()
+        }
+    }
+}
 @available(iOS 13, watchOS 6, tvOS 13, *) // for concurrency
 public func fetchURL(urlString: String, postData: PostData? = nil, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) async throws -> String {
-    debug("Fetching URL [\(urlString)]...", level: .NOTICE, file: file, function: function, line: line, column: column)
-    // create the url with URL
-    guard let url = URL(string: urlString) else {
-        throw NetworkError.urlParsing(urlString: urlString)
-    }
-    
-    // now create the URLRequest object using the url object
-    var request = URLRequest(url: url)
-    if let parameters = postData {
-        request.httpMethod = "POST" //set http method as POST
-        
-        // declare the parameter as a dictionary that contains string as key and value combination. considering inputs are valid
-        
-        //let parameters: [String: Any] = ["id": 13, "name": "jack"]
-        guard let data = postData?.queryEncoded else {
-            throw NetworkError.postDataEncoding(parameters)
-        }
-        request.httpBody = data
-    } else {
-        request.httpMethod = "GET" //set http method as GET
-    }
-    debug("FETCHING: \(request)", level: .DEBUG, file: file, function: function, line: line, column: column)
-    
-    var data: Data
-    // create dataTask using the session object to send data to the server
-    if #available(iOS 15.0, watchOS 8.0, tvOS 15.0, *) {
-        (data, _) = try await URLSession.shared.data(for: request)
-    } else {
-        // Fallback on earlier versions
-        (data, _) = try await request.legacyData(for: URLSession.shared)
-    }
-    
-    //debug("DEBUG RESPONSE DATA: \(data)")
-    
-    if let responseString = String(data: data, encoding: .utf8) {
-        //debug("DEBUG RESPONSE STRING: \(responseString)")
-        return responseString
-    } else {
-        throw NetworkError.invalidResponse()
-    }
+    try await Compatibility.fetchURL(urlString: urlString, postData: postData, file: file, function: function, line: line, column: column)
 }
 
 @available(iOS 15, watchOS 6, tvOS 13, *)

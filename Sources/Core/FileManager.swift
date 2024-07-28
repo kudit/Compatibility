@@ -5,8 +5,8 @@
 //  Created by Ben Ku on 8/12/22.
 //
 
-extension FileManager {
-    enum FileError: Error {
+public extension FileManager {
+    enum FileError: Error, Sendable {
         case noDirectorySpecified
     }
 
