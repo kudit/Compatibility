@@ -7,7 +7,7 @@
 
 import PackageDescription
 
-let version = "1.2.1"
+let version = "1.2.2"
 let packageLibraryName = "Compatibility"
 
 // Products define the executables and libraries a package produces, making them visible to other packages.
@@ -23,34 +23,39 @@ var products = [
 var targets = [
 	Target.target(
 		name: packageLibraryName,
-		dependencies: [
-//            .product(name: "Collections", package: "swift-collections"),
-//            .product(name: "OrderedCollections", package: "swift-collections"),
-//			.product(name: "CustomType", package: "customtype"), // apparently needs to be lowercase.  Also note this is "Device Library" not "Device"
-		],
+        dependencies: [
+//            .product(name: "Compatibility Library", package: "compatibility"), // apparently needs to be lowercase.  Also note this is "Compatibility Library" not "Compatibility"
+        ],
 		path: "Sources"
+		// If resources need to be included in the module, include here
+//		,resources: [ // unfortuantely cannot be conditionally compiled based on Swift version since the tool seems to be run on latest version.
+//            Resource.process("Resources"),
+//        ]
+//		,swiftSettings: [
+//			.enableUpcomingFeature("BareSlashRegexLiterals")
+//		]
 	),
 ]
 
 var platforms: [SupportedPlatform] = [
-	.macOS("10.15"), // minimum for sleep, SwiftUI, ObservableObject, & @Published
-	.tvOS("11"), // 13 minimum for SwiftUI, 17 minimum for Menu
-	.watchOS("4"), // 6 minimum for SwiftUI, watchOS 7 typically needed for most UI, however (for #buildAvailability) so really should be watchOS 9+.
+	.macOS("10.15"), // minimum for sleep, SwiftUI, ObservableObject, & @Published, 12 minimum for Date.now
+	.tvOS("11"), // 13 minimum for SwiftUI, 15 minimum for Date.now, 17 minimum for Menu
+	.watchOS("4"), // 6 minimum for SwiftUI, watchOS 7 typically needed for most UI, 8 for Date.now, however (for #buildAvailability) so really should be watchOS 9+.
 ]
 
 #if canImport(PlaygroundSupport)
 platforms += [
-    .iOS("15.2"), // minimum for Swift Playgrounds support
+    .iOS("15.2"), // minimum for Swift Playgrounds support (maximum version for test iPhone 7)
 ]
 #else
 platforms += [
-    .iOS("11"), // 13 minimum for Combine/SwiftUI
+    .iOS("11"), // 13 minimum for Combine/SwiftUI, 15 minimum for Date.now, (maximum version for test iPhone 7)
 ]
 #endif
 
 #if os(visionOS)
 platforms += [
-    .visionOS("1.0"), // unavailable in Swift Playgrounds
+    .visionOS("1.0"), // unavailable in Swift Playgrounds so has to be separate
 ]
 #endif
 
@@ -89,11 +94,23 @@ targets += [
 		dependencies: [
 			.init(stringLiteral: packageLibraryName), // have to use init since normally would be assignable by string literal but we're not using a string literal
 		],
-		path: "Development",
-		resources: [
+		path: "Development"
+//		,exclude: ["Device.xcodeproj/*"]
+		// Include test app resources.
+		,resources: [
 			.process("Resources")
 		]
+//		,swiftSettings: [
+//			.enableUpcomingFeature("BareSlashRegexLiterals")
+//		]
 	),
+//	.testTarget(
+//		name: "\(packageLibraryName)Tests",
+//		dependencies: [
+//			.init(stringLiteral: packageLibraryName), // have to use init since normally would be assignable by string literal but we're not using a string literal
+//		],
+//		path: "Tests"
+//	),
 ]
 
 #endif // for Swift Package compiling for https://swiftpackageindex.com/add-a-package
@@ -105,8 +122,7 @@ let package = Package(
     // include dependencies
     dependencies: [
         // Dependencies declare other packages that this package depends on.
-//        .package(url: "https://github.com/apple/swift-collections", "1.1.1"..<"2.0.0")
-//        .package(url: "https://github.com/kudit/CustomType", "1.0.0"..<"2.0.0"),
+//        .package(url: "https://github.com/kudit/Compatibility", "1.1.0"..<"2.0.0"),
     ],
     targets: targets
 )

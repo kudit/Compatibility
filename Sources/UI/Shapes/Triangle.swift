@@ -8,7 +8,7 @@
 #if canImport(SwiftUI)
 import SwiftUI
 
-@available(iOS 13.0, tvOS 13, watchOS 6, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 public struct Triangle: Shape {
     public var flatEdge: Edge
     public func path(in rect: CGRect) -> Path {
@@ -43,7 +43,7 @@ public struct Triangle: Shape {
     }
 }
 
-@available(iOS 13.0, tvOS 13, watchOS 6, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 public struct TriangleShowcaseView: View {
     public init() {}
     public var body: some View {
@@ -63,7 +63,7 @@ public struct TriangleShowcaseView: View {
     }
 }
 
-@available(iOS 13.0, tvOS 13, watchOS 6, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 #Preview("Triangles") {
     TriangleShowcaseView()
 }

@@ -4,7 +4,11 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Xcode project version (in build settings - normal and watch targets should inherit)
 - [ ] Package.swift iOSApplication product displayVersion.
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
-- [ ] Tag with matching version in GitHub.
+- [ ] Update changelog and tag with matching version in GitHub.
+
+Test including capabilities for compatibility in a project that doesn't have entitlements that doesn't use the user default
+
+v1.2.2 8/8/2024 Standardized Package.swift, CHANGELOG.md, README.md, and LICENSE.txt files.  Standardized deployment targets.  Added DataStore code and added tests.  Added Date.nowBackport for supporting earlier versions.  Moved Environmental checks from Device so we can use in more places and needed for testing DataStores in previews.  Added `asDictionary()` method for Codable objects similar to `asJSON()`.  Standardized ordering and labelling of all `available` checks to iOS, macOS, tvOS, watchOS, visionOS (the order in which each platform got swift language support).  Also removed unnecessary `.0` from versions and unnecessary `macCatalyst` checks.  Fixed `Version` so that when encoded it stores as a `String` instead of as a struct.  Changed `Compatibility` to enum since it isn't really a structure and avoids accidentally instantiating.  Updated `ClearableTextField` to only update value when the field looses focus instead of every character (also fixed issue where that was not public).
 
 v1.2.1 7/27/2024 Moved fetchURL code into a Compatibility extension so can specifically target.  Doh!  Debug was printing at the right time I think, they were just set to .SILENT!  Fix for data race error.  Added additional sendable conformances on enums and made FileManager extension public.  Changed documentation for delay to be clear it runs on the same thread and doesn't force to main or background.
 
@@ -54,14 +58,12 @@ v1.0 7/6/2024 Initial code and features pulled from KuditFrameworks.  Converted 
 
 ## Bugs to fix:
 Known issues that need to be addressed.
-
 - [ ] Menu buttons in tvOS do not work at all.
 - [ ] pagination in tvOS works but after pagination, view content isn't accessible.
 - [ ] Placard view looks weird in macOS.
 
 ## Roadmap:
 Planned features and anticipated API changes.  If you want to contribute, this is a great place to start.
-
 - [ ] Add coding tests.
 - [ ] Once Swift Testing is officially released, convert Testing functions to @Test functions and change expect function calls to #expect calls and remove custom debug statements.
 - [ ] Fix tvOS usage of controls within a page view (seems to only control pagination and not buttons inside)
@@ -69,8 +71,8 @@ Planned features and anticipated API changes.  If you want to contribute, this i
 
 ## Proposals:
 This is where proposals can be discussed for potential movement to the roadmap.
-
 - [ ] Debug: see if there's a way to add interpolation as a parameter to customize the output format.  Perhaps using a debug output formatter object that can be set?
 - [ ] Debug: allow setting a closure that will pre-process debug statements to allow for injection in debug statements?
+- [ ] Protocol for a DataStore synced ObservableObject that will automatically add property wrappers for @DataStoreBacked to properties that aren't ignored? may be too difficult (add in a future path perhaps with macros to automatically synthesize code and coding keys etc??  Macros aren't easily able to be written like property wrappers, so this may not happen.)
 
 If get error TypeAlias is not available in Module.Module, convert to struct and seems to fix it.  Public top-level typealiases seem to cause issues. 

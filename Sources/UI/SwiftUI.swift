@@ -3,12 +3,12 @@ import SwiftUI
 
 // MARK: - Padding and spacing
 
-@available(watchOS 6.0, iOS 13, tvOS 13, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 public extension EdgeInsets {
     static let zero = EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0)
 }
 
-@available(watchOS 6.0, iOS 13, tvOS 13, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 public extension View {
     func padding(size: Double) -> some View {
         padding(EdgeInsets(top: size, leading: size, bottom: size, trailing: size))
@@ -21,7 +21,7 @@ public extension View {
 
 // MARK: - Conditional modifier
 /// https://www.avanderlee.com/swiftui/conditional-view-modifier/
-@available(watchOS 6.0, iOS 13, tvOS 13, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 public extension View {
     /// Applies the given transform if the given condition evaluates to `true`.
     /// - Parameters:
@@ -36,7 +36,7 @@ public extension View {
         }
     }
 }
-@available(watchOS 6.0, iOS 13, tvOS 13, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 public extension View {
     /// Applies the given transform.  If using a branching call, both views must be the identical type or use `AnyView(erasing: VIEWCODE)` or a `Group { }` wrapper..
     /// - Parameters:
@@ -47,7 +47,7 @@ public extension View {
     }
 }
 
-@available(macOS 12, watchOS 8.0, iOS 15, tvOS 15, *)
+@available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
 public struct ClosureTestView: View {
     public init() {}
     public var body: some View {
@@ -77,7 +77,7 @@ public struct ClosureTestView: View {
     }
 }
 
-@available(macOS 12, watchOS 8.0, iOS 15, tvOS 15, *)
+@available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
 #Preview("Closure Test") {
     ClosureTestView()
 }
@@ -86,7 +86,7 @@ public struct ClosureTestView: View {
 // MARK: - For sliders with Ints (and other binding conversions)
 /// https://stackoverflow.com/questions/65736518/how-do-i-create-a-slider-in-swiftui-for-an-int-type-property
 /// Slider(value: .convert(from: $count), in: 1...8, step: 1)
-@available(watchOS 6.0, iOS 13, tvOS 13, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 public extension Binding {
     static func convert<TInt, TFloat>(from intBinding: Binding<TInt>) -> Binding<TFloat>
         where TInt:   BinaryInteger, TFloat: BinaryFloatingPoint {
@@ -107,7 +107,7 @@ public extension Binding {
     }
 }
 
-@available(macOS 12, watchOS 8.0, iOS 15, tvOS 15, *)
+@available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
 public struct ConvertTestView: View {
     public init() {}
     @State private var count: Int = 3
@@ -141,13 +141,13 @@ public struct ConvertTestView: View {
         .padding()
     }
 }
-@available(macOS 12, watchOS 8, iOS 15, tvOS 15, *)
+@available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
 #Preview("Convert Test") {
     ConvertTestView()
 }
 
 // Support fill and stroke
-@available(watchOS 6.0, iOS 13, tvOS 13, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 public extension Shape {
     func fill<Fill: ShapeStyle, Stroke: ShapeStyle>(_ fillStyle: Fill, strokeBorder strokeStyle: Stroke, lineWidth: Double = 1) -> some View {
         self
@@ -158,7 +158,7 @@ public extension Shape {
 
 // TODO: is the below necessary??
 /*
-@available(watchOS 6.0, iOS 13, tvOS 13, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 public extension InsettableShape {
     func fill<Fill: ShapeStyle, Stroke: ShapeStyle>(_ fillStyle: Fill, strokeBorder strokeStyle: Stroke, lineWidth: Double = 1) -> some View {
         self
@@ -168,7 +168,7 @@ public extension InsettableShape {
 }
 
 // TODO: Deprecate this in favor of above??
-@available(watchOS 6.0, iOS 13, tvOS 13, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 public extension InsettableShape {
     /// Fills and strokes this shape with a color or gradient in a compatible way for iOS 17 and earlier.
     ///
@@ -179,7 +179,7 @@ public extension InsettableShape {
     ///   - lineWidth: The width of the stroke that outlines this shape.
     /// - Returns: A shape view filled with the color or gradient you supply and stroked with the content and line width specified.
     func fillAndStroke<F: ShapeStyle,S: ShapeStyle>(_ content: F = .foreground, style: FillStyle = FillStyle(), _ strokeContent: S, lineWidth: CGFloat = 1, antialiased: Bool = true) -> some View {
-        if #available(iOS 17.0, macOS 14.0, macCatalyst 17.0, tvOS 17.0, watchOS 10.0, *) {
+        if #available(iOS 17, macOS 14, tvOS 17, watchOS 10, *) {
             return self
                 .fill(content, style: style)
                 .stroke(strokeContent, lineWidth: lineWidth, antialiased: antialiased)
@@ -191,7 +191,7 @@ public extension InsettableShape {
     }
 }
 // TODO: Use the top syntax but the bottom compatibility
-@available(iOS 15, macOS 12, watchOS 8, tvOS 15, *)
+@available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
 #Preview("Fill & Stroke") {
     VStack {
         Circle()
@@ -200,7 +200,7 @@ public extension InsettableShape {
             .fill(.tertiary, strokeBorder: .tint, lineWidth: 5)
     }.padding()
 }
-@available(iOS 13, watchOS 6.0, tvOS 13, *)
+@available(iOS 13, watchOS 6, tvOS 13, *)
 #Preview("Fill and Stroke") {
     VStack {
         Circle()
@@ -210,7 +210,7 @@ public extension InsettableShape {
     }
 }
  */
-@available(iOS 15, macOS 12, watchOS 8.0, tvOS 15, *)
+@available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
 public struct FillAndStrokeTest: View {
     public init() {}
     public var body: some View {
@@ -228,20 +228,20 @@ public struct FillAndStrokeTest: View {
     }
 }
 
-@available(iOS 15, macOS 12, watchOS 8.0, tvOS 15, *)
+@available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
 #Preview("Fill & Stroke") {
     FillAndStrokeTest()
 }
 
 
 // MARK: - Material
-@available(macOS 12, watchOS 8, iOS 15, tvOS 15, *)
+@available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
 public extension View {
     func backgroundMaterial() -> some View {
         self
             .padding()
             .background {
-                if #available(watchOS 10.0, *) {
+                if #available(watchOS 10, *) {
                     RoundedRectangle(cornerRadius: 20)
                         .fill(.regularMaterial)
                 } else {
@@ -253,7 +253,7 @@ public extension View {
     }
 }
 
-@available(macOS 12, watchOS 8, iOS 15, tvOS 15, *)
+@available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
 public struct MaterialTestView: View {
     public init() {}
     public var body: some View {
@@ -265,13 +265,13 @@ public struct MaterialTestView: View {
     }
 }
 
-@available(macOS 12, watchOS 8, iOS 15, tvOS 15, *)
+@available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
 #Preview("Material Test") {
     MaterialTestView()
 }
 
 // MARK: - Wrappers
-@available(watchOS 7.0, iOS 13, tvOS 13, *)
+@available(iOS 13, tvOS 13, watchOS 7, *)
 public extension View {
     @MainActor
     func navigationWrapper() -> some View {
@@ -281,7 +281,7 @@ public extension View {
     }
 }
 
-@available(watchOS 6.0, iOS 13, tvOS 13, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 public extension View {
     func scrollWrapper() -> some View {
         ScrollView {

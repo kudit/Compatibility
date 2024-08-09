@@ -1,7 +1,7 @@
 #if canImport(SwiftUI)
 import SwiftUI
 
-@available(iOS 13.0, tvOS 13, watchOS 6, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 public struct BytesView: View {
     public var label: String?
     public var bytes: (any BinaryInteger)?
@@ -33,7 +33,7 @@ public struct BytesView: View {
     }
 }
 
-@available(iOS 13.0, tvOS 13, watchOS 6, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 public struct RandomBytesTestView: View {
     public init() {}
     public var body: some View {
@@ -47,7 +47,7 @@ public struct RandomBytesTestView: View {
     }
 }
 
-@available(iOS 13.0, tvOS 13, watchOS 6, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 #Preview {
     RandomBytesTestView()
 }

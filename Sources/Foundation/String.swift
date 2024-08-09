@@ -30,7 +30,7 @@ public extension LosslessStringConvertible {
     }
 }
 
-@available(watchOS 6, iOS 13, tvOS 13, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 extension CharacterSet {
     @MainActor public static let tests = [
         Test("character strings", testCharacterStrings),
@@ -129,7 +129,7 @@ public extension HTML {
 }
 
 #if canImport(SwiftUI) && (canImport(Combine) || canImport(NSAttributedString))
-@available(iOS 15, macOS 12.0, tvOS 15, watchOS 8, *)
+@available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
 #Preview("HTML") {
     ScrollView {
         Text(AttributedString(HTML.testHTML.attributedString))
@@ -703,7 +703,7 @@ public extension String {
         }
     }
     
-    @available(watchOS 6, iOS 13, tvOS 13, *)
+    @available(iOS 13, tvOS 13, watchOS 6, *)
     @MainActor
     static let tests = [
         Test("sentence capitalized", testSentenceCapitalized),
@@ -733,7 +733,7 @@ public extension Optional where Wrapped == any Numeric {
 
 #if canImport(SwiftUI)
 import SwiftUI
-@available(watchOS 6, iOS 13, tvOS 13, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 #Preview("Tests") {
     TestsListView(tests: String.tests)
 }
@@ -819,7 +819,7 @@ extension String {
 
 #if canImport(SwiftUI)
 import SwiftUI
-@available(watchOS 6, iOS 13, tvOS 13, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 #Preview("Tests") {
     TestsListView(tests: String.tests + CharacterSet.tests)
 }

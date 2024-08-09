@@ -8,7 +8,7 @@
 #if canImport(SwiftUI)
 import SwiftUI
 
-@available(iOS 13.0, tvOS 13, watchOS 6, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 public struct Placard: Shape {
     public func path(in rect: CGRect) -> Path {
         let baseline = CGFloat(0.5)
@@ -44,7 +44,7 @@ public struct Placard: Shape {
     }
 }
 
-@available(iOS 14.0, macOS 11, tvOS 14, watchOS 7, *)
+@available(iOS 14, macOS 11, tvOS 14, watchOS 7, *)
 public struct PlacardShowcaseView: View {
     public init() {}
     public var body: some View {
@@ -86,7 +86,7 @@ HStack {
     }
 }
 
-@available(iOS 14.0, macOS 11, tvOS 14, watchOS 7, *)
+@available(iOS 14, macOS 11, tvOS 14, watchOS 7, *)
 #Preview("Showcase") {
     PlacardShowcaseView()
 }

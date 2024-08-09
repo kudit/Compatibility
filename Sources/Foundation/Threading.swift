@@ -19,12 +19,12 @@ func timeTolerance(start: TimeInterval, end: TimeInterval, expected: TimeInterva
 
 // would have made this a static function on task but extending it apparently has issues??
 // Sleep extension for sleeping a thread in seconds
-@available(iOS 13, watchOS 6, tvOS 13, *) // for concurrency
+@available(iOS 13, tvOS 13, watchOS 6, *) // for concurrency
 public func sleep(seconds: Double, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) async {
     await Compatibility.sleep(seconds: seconds, file: file, function: function, line: line, column: column)
 }
 public extension Compatibility {
-    @available(iOS 13, watchOS 6, tvOS 13, *) // for concurrency
+    @available(iOS 13, tvOS 13, watchOS 6, *) // for concurrency
     static func sleep(seconds: Double, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) async {
         let duration = UInt64(seconds * 1_000_000_000)
         do {
@@ -38,7 +38,7 @@ public extension Compatibility {
     }
 }
 
-@available(iOS 13, watchOS 6, tvOS 13, *) // for concurrency
+@available(iOS 13, tvOS 13, watchOS 6, *) // for concurrency
 @MainActor
 internal let testSleep3: TestClosure = {
     let then = Date.timeIntervalSinceReferenceDate
@@ -47,7 +47,7 @@ internal let testSleep3: TestClosure = {
     let now = Date.timeIntervalSinceReferenceDate
     try timeTolerance(start: then, end: now, expected: seconds)
 }
-@available(iOS 13, watchOS 6, tvOS 13, *) // for concurrency
+@available(iOS 13, tvOS 13, watchOS 6, *) // for concurrency
 @MainActor
 internal let testSleep2: TestClosure = {
     let start = Date.timeIntervalSinceReferenceDate
@@ -72,7 +72,7 @@ internal let testSleep2: TestClosure = {
 // Restored background { for image processing or other large async task: Avoid heavy synchronous work within Task. Use custom DispatchQueue when heavy work like image processing is required.https://wojciechkulik.pl/ios/swift-concurrency-things-they-dont-tell-you
 
 /// run potentially long-running code on a background thread
-@available(watchOS 6, iOS 13, tvOS 13, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 public func background(_ closure: @escaping () async -> Void) {
     Compatibility.background(closure)
 }
@@ -80,16 +80,16 @@ public func background(_ closure: @escaping () async -> Void) {
 public func background(_ closure: @escaping () -> Void) {
     Compatibility.background(closure)
 }
-@available(watchOS 6, iOS 13, tvOS 13, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 public func background<ReturnType: Sendable>(_ closure: @Sendable @escaping () async throws -> ReturnType) async throws -> ReturnType {
     try await Compatibility.background(closure)
 }
-@available(watchOS 6, iOS 13, tvOS 13, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 public func background<ReturnType: Sendable>(_ closure: @Sendable @escaping () async -> ReturnType?) async -> ReturnType? {
     await Compatibility.background(closure)
 }
 public extension Compatibility {
-    @available(watchOS 6, iOS 13, tvOS 13, *)
+    @available(iOS 13, tvOS 13, watchOS 6, *)
     static func background(_ closure: @escaping () async -> Void) {
         // run this block code on a background thread
         // new concurrency method:
@@ -100,7 +100,7 @@ public extension Compatibility {
     }
     /// Run potentially long-running code on a background thread.  Available as a fallback for earlier versions that don't support concurrency or for code that doesn't await (synchronous but possibly long-running)
     static func background(_ closure: @escaping () -> Void) {
-        if #available(watchOS 6.0, iOS 13, tvOS 13, *) {
+        if #available(iOS 13, tvOS 13, watchOS 6, *) {
             let asyncFunc: () async -> Void = {
                 closure()
             }
@@ -117,7 +117,7 @@ public extension Compatibility {
         }
     }
     /// Throwable return background task.
-    @available(watchOS 6, iOS 13, tvOS 13, *)
+    @available(iOS 13, tvOS 13, watchOS 6, *)
     static func background<ReturnType: Sendable>(_ closure: @Sendable @escaping () async throws -> ReturnType) async throws -> ReturnType {
         let longRunningTask = Task.detached(priority: .background) {
             return try await closure()
@@ -126,7 +126,7 @@ public extension Compatibility {
         return try result.get()
     }
     /// Non-throwing return background task.  Return type must be an optional since there could be some error thrown by `result.get()` (though practically that should never happen)
-    @available(watchOS 6, iOS 13, tvOS 13, *)
+    @available(iOS 13, tvOS 13, watchOS 6, *)
     static func background<ReturnType: Sendable>(_ closure: @Sendable @escaping () async -> ReturnType?) async -> ReturnType? {
         let longRunningTask = Task.detached(priority: .background) {
             return await closure()
@@ -135,7 +135,7 @@ public extension Compatibility {
         do {
             return try result.get()
         } catch {
-            debug("non-throwing background task threw error (this should not be possible): \(error)", level: .ERROR)
+            debug("This shouldn't ever happen and is no longer a try in Swift 6!", level: .ERROR)
             return nil
         }
     }
@@ -145,7 +145,7 @@ public extension Compatibility {
 internal let testBackground: TestClosure = {
     let start = Date.timeIntervalSinceReferenceDate
     let end: TimeInterval
-    if #available(watchOS 6.0, iOS 13, tvOS 13, *) {
+    if #available(iOS 13, tvOS 13, watchOS 6, *) {
         end = await withCheckedContinuation { continuation in
             background {
                 await sleep(seconds: 4)
@@ -175,7 +175,7 @@ public func main(_ closure: @MainActor @escaping () -> Void) {
 public extension Compatibility {
     /// run code on the main thread
     static func main(_ closure: @MainActor @escaping () -> Void) {
-        if #available(watchOS 6.0, iOS 13, tvOS 13, *) {
+        if #available(iOS 13, tvOS 13, watchOS 6, *) {
             Task { @MainActor in
                 // finish up on main thread
                 closure()
@@ -190,7 +190,7 @@ public extension Compatibility {
     }
 }
 
-@available(watchOS 6.0, iOS 13, tvOS 13, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 @MainActor
 internal let testMain: TestClosure = {
     let runOnMainThread = await withCheckedContinuation { continuation in
@@ -230,7 +230,7 @@ public extension Compatibility {
     */
     /// run the block of code on the current thread after the `delay` (in seconds) have passed.  If this is before iOS 13, tvOS 13, and watchOS 6, will be run on the main thread rather than the same thread..
     static func delay(_ delay:Double, closure:@escaping () -> Void) {
-        if #available(iOS 13, tvOS 13, watchOS 6.0, *) {
+        if #available(iOS 13, tvOS 13, watchOS 6, *) {
             Task {
                 await sleep(seconds: delay)
                 closure()
@@ -244,7 +244,7 @@ public extension Compatibility {
     }
 }
 
-@available(iOS 13, watchOS 6, tvOS 13, *) // for concurrency
+@available(iOS 13, tvOS 13, watchOS 6, *) // for concurrency
 @MainActor
 internal let testDelay: TestClosure = {
     let start = Date.timeIntervalSinceReferenceDate
@@ -268,7 +268,7 @@ internal let testDelay: TestClosure = {
     try timeTolerance(start: start, end: end, expected: delayTime)
 }
 
-@available(watchOS 6, iOS 13, tvOS 13, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 struct KuThreading {
     @MainActor
     public static let tests: [Test] = [
@@ -282,7 +282,7 @@ struct KuThreading {
 
 #if canImport(SwiftUI)
 import SwiftUI
-@available(watchOS 6, iOS 13, tvOS 13, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 #Preview("Tests") {
     TestsListView(tests: KuThreading.tests)
 }

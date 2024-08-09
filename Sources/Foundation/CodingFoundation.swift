@@ -1,6 +1,5 @@
 //
 //  DictionaryCoding.swift
-//  Shout It
 //
 //  Created by Ben Ku on 9/28/23.
 //
@@ -8,6 +7,7 @@
 // https://github.com/ashleymills/SwiftDictionaryCoding/blob/master/SwiftDictionaryCoding/Classes/DictionaryDecoder.swift
 
 // Note: Needed to support Data values since JSON doesn't support Data natively
+// TODO: make more generic so works with Arrays: /// Converts a codable object to a foundational representation for storage in UserDefaults or UbiquitousKeyValueStores.
 
 public class DictionaryEncoder {
     private let encoder = JSONEncoder()
@@ -70,6 +70,30 @@ public class DictionaryDecoder {
     public func decode<T>(_ type: T.Type, from jsonObject: Any) throws -> T where T : Decodable {
         let data = try JSONSerialization.data(withJSONObject: jsonObject, options: [])
         return try decoder.decode(type, from: data)
+    }
+}
+
+public extension Encodable {
+//    @available(iOS 13, tvOS 13, watchOS 6, *)
+    /// Returns a generic dictionary with string keys for the object.
+    func asDictionary() -> Dictionary<String, Any>? {
+        // really should never error since we conform to Encodable as long as the base is a dictionary or container structure.  Only issue would be an array.
+        do {
+            return try DictionaryEncoder().encode(self) as? Dictionary<String, Any>
+        } catch {
+            debug("Unable to convert codable object to dictionary.  Possibly this is an array?\n\(error)", level: .WARNING)
+            return nil
+        }
+    }
+}
+
+public extension Decodable {
+    init?(fromDictionary dictionary: Dictionary<String, Any>) {
+        if let decoded = try? DictionaryDecoder().decode(Self.self, from: dictionary) {
+            self = decoded
+        } else {
+            return nil
+        }
     }
 }
 

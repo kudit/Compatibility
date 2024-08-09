@@ -2,7 +2,7 @@
 import SwiftUI
 
 // MARK: - Test UI
-@available(watchOS 6.0, iOS 13, tvOS 13, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 public struct TestRow: View {
     @ObservedObject public var test: Test
     
@@ -28,7 +28,7 @@ public struct TestRow: View {
     }
 }
 
-@available(watchOS 6.0, iOS 13, tvOS 13, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 struct TestsRowsView: View {
     var tests: [Test]
     var body: some View {
@@ -42,7 +42,7 @@ struct TestsRowsView: View {
 }
 
 // use this to test the local file tests only.
-@available(watchOS 6.0, iOS 13, tvOS 13, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 public struct TestsListView: View {
     public var tests: [Test]
     
@@ -59,7 +59,7 @@ public struct TestsListView: View {
     }
 }
 
-@available(macOS 12.0, watchOS 8, iOS 15, tvOS 17, *)
+@available(iOS 15, macOS 12, tvOS 17, watchOS 8, *)
 @MainActor // unnecessary in Swift 6
 public struct AllTestsListView: View {
     /// Ordered set of section names and list of tests.  Similar to an ordered set but we do care about the order so that's why it's an array of tuples rather than a simple dictionary.  TODO: Should we change this to an ordered dictionary for clarity?  Means adding a dependency of swift-collections which isn't necessarily a problem.
@@ -97,7 +97,7 @@ public struct AllTestsListView: View {
     }
 }
 
-@available(macOS 12.0, watchOS 8, iOS 15, tvOS 17, *)
+@available(iOS 15, macOS 12, tvOS 17, watchOS 8, *)
 #Preview("Tests") {
     AllTestsListView()
 }

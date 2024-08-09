@@ -24,7 +24,7 @@ public extension String {
 }
 
 #if canImport(Combine) // not available in Linux
-@available(iOS 15, macOS 12.0, watchOS 8, tvOS 15, *)
+@available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
 public extension DateFormatter.Style {
     var dateStyle: Date.FormatStyle.DateStyle {
         switch self {
@@ -69,7 +69,7 @@ public extension Date {
     }
     /// create a date from a `dateString` in the specified `format`
     /// If there is a bad format or this can't happen, will set to reference date.  Use the failable init instead for better checking.`
-    @available(*, deprecated, renamed: "init(dateString:formatString:)")
+    @available(*, deprecated, renamed: "init(from:format:)")
     init(dateString:String, format formatString:String) {
         if let date = Date(from: dateString, format: formatString) {
             self = date
@@ -86,6 +86,16 @@ public extension Date {
         //        return (date == Date(from: "01/02/2023 17:12", format: "m/d/Y G:i"), String(describing:date))
     }
     
+    /// Equivalent to `Date.now` but supported on iOS < 15
+    static var nowBackport: Date {
+        if #available(iOS 15, macOS 12, tvOS 15, watchOS 8, *) {
+            Date.now
+        } else {
+            // Fallback on earlier versions
+            Date()
+        }
+    }
+    
     // MARK: - Formatting using format strings and styles
     /// format using DateFormatter.dateFormat string.  Not PHP Date format string.  For reference: https://www.advancedswift.com/date-formatter-cheatsheet-formulas-swift/#date-format-cheatsheet
     // TODO: Create a conversion from PHP Date String format to Swift Date format strings and vice versa?
@@ -100,7 +110,7 @@ public extension Date {
         return formatted(withFormat: formatString)
     }
     /// The date formatted using the provided format string.  This is in Swift Date format NOT PHP Date format string.
-    @available(macOS 12.0, *)
+    @available(macOS 12, *)
     @available(*, deprecated, renamed: "formatted(withFormat:)")
     func formatted(_ format: String) -> String {
         return formatted(withFormat: format)
@@ -108,14 +118,14 @@ public extension Date {
     
     /// Use date formatter style to create localized string version of the date.
     #if canImport(Combine)
-    @available(iOS 15, macOS 12.0, watchOS 8, tvOS 15, *)
+    @available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
     @available(*, deprecated, renamed: "formatted(date:time:)")
     func string(withStyle dateFormatterStyle:DateFormatter.Style) -> String {
         return self.formatted(date: dateFormatterStyle.dateStyle, time: .omitted)
     }
     #endif
     
-    @available(macOS 12.0, *)
+    @available(macOS 12, *)
     @MainActor
     internal static let testFormatted: TestClosure = {
         let date = Date(from: "2023-01-02 17:12:00", format: .mysqlDateTimeFormat)
@@ -133,7 +143,7 @@ public extension Date {
     }
     
     var pretty: String {
-        if #available(macOS 12.0, watchOS 8, iOS 15, tvOS 15, *) {
+        if #available(iOS 15, macOS 12, tvOS 15, watchOS 8, *) {
             #if canImport(Combine) // not supported in Linux
             self.formatted(date: .abbreviated, time: .shortened)
             #else
@@ -251,7 +261,8 @@ public extension Date {
         try expect(interval == time, "\(interval) != \(time)")
     }
 }
-@available(macOS 12.0, watchOS 6, iOS 13, tvOS 13, *)
+
+@available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
 public extension Date {
     @MainActor
     static let tests = [
@@ -265,7 +276,7 @@ public extension Date {
 
 #if canImport(SwiftUI)
 import SwiftUI
-@available(iOS 13, macOS 12.0, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
 #Preview {
     VStack {
         Text("\(String(describing: Date(from: "2023-01-02 17:12:00", format: "yyyy-MM-dd HH:mm:ss")))")
@@ -274,7 +285,7 @@ import SwiftUI
         Text("\(String(describing: Date(from: "2023-01-02 17:12:00", format: "yyyy-MM-dd HH:mm:ss")?.pretty))")
     }
 }
-@available(macOS 12.0, watchOS 6, iOS 13, tvOS 13, *)
+@available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
 #Preview("Tests") {
     TestsListView(tests: Date.tests)
 }

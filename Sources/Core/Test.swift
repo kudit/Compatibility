@@ -5,7 +5,7 @@ public typealias TestClosure = () async throws -> Void
 //// don't make this public to avoid compiling test stuff into framework, however, do make public so apps can add in their own tests.
 //public protocol Testable {
 //    // actor isolated since each Test is @MainActor isolated due to being an ObservableObject.
-//    @available(watchOS 6.0, *)
+//    @available(watchOS 6, *)
 //    @MainActor static var tests: [Test] { get }
 //}
 
@@ -23,7 +23,7 @@ public func expect(_ condition: Bool, _ debugString: String? = nil, file: String
 }
 
 // Test Handlers
-@available(watchOS 6.0, iOS 13, tvOS 13, *) // due to ObservableObject
+@available(iOS 13, tvOS 13, watchOS 6, *) // due to ObservableObject
 @MainActor
 public final class Test: ObservableObject {
     public enum TestProgress: Sendable {
@@ -88,7 +88,7 @@ public final class Test: ObservableObject {
         return "\(progress): \(title)\(errorString)"
     }
 }
-@available(watchOS 6, iOS 13, tvOS 13, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 public extension Test {
     static func dummyAsyncThrows() async throws {
     }
@@ -96,7 +96,7 @@ public extension Test {
 
 #if canImport(SwiftUI)
 import SwiftUI
-@available(watchOS 6, iOS 13, tvOS 13, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 #Preview {
     TestsListView(tests: KuThreading.tests + Int.tests)
 }

@@ -56,7 +56,7 @@ public enum NetworkError: Error, CustomStringConvertible, Sendable {
 //import FoundationNetworking
 //#endif
 
-@available(iOS 13, watchOS 6, tvOS 13, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 public extension PostData {
     // MARK: - Tests
     internal static let TEST_DATA: PostData = ["id": 13, "name": "Jack & \"Jill\"", "foo": false, "bar": "0.0"]
@@ -92,7 +92,7 @@ public extension PostData {
     ]
 }
 
-@available(iOS 13, watchOS 6, tvOS 13, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 extension URLRequest {
     func legacyData(for session: URLSession) async throws -> (Data, URLResponse) {
         try await withCheckedThrowingContinuation { continuation in
@@ -115,7 +115,7 @@ extension URLRequest {
 
 extension Compatibility {
     /// Fetch data from URL including optional postData.  Will report included file information and automatically debug output to the logs.
-    @available(iOS 13, watchOS 6, tvOS 13, *) // for concurrency
+    @available(iOS 13, tvOS 13, watchOS 6, *) // for concurrency
     public static func fetchURL(urlString: String, postData: PostData? = nil, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) async throws -> String {
         debug("Fetching URL [\(urlString)]...", level: .NOTICE, file: file, function: function, line: line, column: column)
         // create the url with URL
@@ -142,7 +142,7 @@ extension Compatibility {
         
         var data: Data
         // create dataTask using the session object to send data to the server
-        if #available(iOS 15.0, watchOS 8.0, tvOS 15.0, *) {
+        if #available(iOS 15, watchOS 8, tvOS 15, *) {
             (data, _) = try await URLSession.shared.data(for: request)
         } else {
             // Fallback on earlier versions
@@ -159,17 +159,17 @@ extension Compatibility {
         }
     }
 }
-@available(iOS 13, watchOS 6, tvOS 13, *) // for concurrency
+@available(iOS 13, tvOS 13, watchOS 6, *) // for concurrency
 public func fetchURL(urlString: String, postData: PostData? = nil, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) async throws -> String {
     try await Compatibility.fetchURL(urlString: urlString, postData: postData, file: file, function: function, line: line, column: column)
 }
 
-@available(iOS 15, watchOS 6, tvOS 13, *)
+@available(iOS 15, tvOS 13, watchOS 6, *)
 public extension URL {
     /// download data asynchronously and return the data or nil if there is a failure
     func download() async throws -> Data {
         do {
-            if #available(macOS 12.0, watchOS 8, tvOS 15, *) {
+            if #available(macOS 12, tvOS 15, watchOS 8, *) {
                 let (fileURL, response) = try await URLSession.shared.download(from: self)
                 debug("URL Download response: \(response)", level: .DEBUG)
                 
@@ -191,7 +191,7 @@ public extension URL {
 
 #if canImport(SwiftUI)
 import SwiftUI
-@available(iOS 13, tvOS 13, watchOS 8, *)
+@available(iOS 13, macOS 11, tvOS 13, watchOS 6, *)
 #Preview {
     TestsListView(tests: PostData.tests)
 }

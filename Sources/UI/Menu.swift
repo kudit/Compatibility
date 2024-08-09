@@ -10,7 +10,7 @@ import SwiftUI
 
 // MARK: - Menu compatibility for watchOS
 #if os(watchOS)
-@available(watchOS 6.0, *)
+@available(watchOS 6, *)
 public struct Menu<Content: View, LabelView: View>: View {
     var content: () -> Content
     var label: () -> LabelView
@@ -27,7 +27,7 @@ public struct Menu<Content: View, LabelView: View>: View {
         }, label: label)
     }
 }
-@available(watchOS 6.0, *)
+@available(watchOS 6, *)
 public extension Menu where LabelView == Text {
     init(
         _ title: some StringProtocol,
@@ -38,7 +38,7 @@ public extension Menu where LabelView == Text {
         })
     }
 }
-@available(watchOS 6.0, *)
+@available(watchOS 6, *)
 public extension Menu where LabelView == Image {
     init(
         _ title: some StringProtocol,
@@ -52,7 +52,7 @@ public extension Menu where LabelView == Image {
 }
 #endif
 
-@available(macOS 12, watchOS 7, iOS 14, tvOS 17, *)
+@available(iOS 14, macOS 12, tvOS 17, watchOS 7, *)
 public struct MenuTest: View {
     public var body: some View {
         Menu("Symbols") {
@@ -69,7 +69,7 @@ public struct MenuTest: View {
     }
 }
 
-@available(macOS 12, watchOS 7, iOS 14, tvOS 17, *)
+@available(iOS 14, macOS 12, tvOS 17, watchOS 7, *)
 #Preview("Watch Menu test") {
     MenuTest().navigationWrapper()
 }

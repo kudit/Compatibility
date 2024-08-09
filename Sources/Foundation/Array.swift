@@ -56,9 +56,37 @@ public extension Array {
         guard size > 0 && count > 0 else {
             return []
         }
-        return stride(from: 0, to: count, by: size).map {
-            Array(self[$0 ..< Swift.min($0 + size, count)])
+//        return stride(from: 0, to: count, by: size).map {
+//            Array(self[$0 ..< Swift.min($0 + size, count)])
+//        }
+        // `stride` has issues with RawRepresentable so do manually
+        var results = [[Element]]()
+        var progress = [Element]()
+        for item in self {
+            progress.append(item)
+            if progress.count == size {
+                results.append(progress)
+                progress = []
+            }
         }
+        if !progress.isEmpty {
+            results.append(progress)
+        }
+        return results
+    }
+}
+
+// MARK: - RawRepresentable conformance when array contents are RawRepresentable.  Must conform an array to this so we don't force this version of the raw representation on all sequences.
+public protocol RawRepresentableSequence: Sequence, ExpressibleByArrayLiteral, RawRepresentable where Element: RawRepresentable, RawValue == [Element.RawValue] {
+    init<S>(_ s: S) where Element == S.Element, S : Sequence
+}
+public extension RawRepresentableSequence {
+    init(rawValue: [Element.RawValue]) {
+        self.init(rawValue.compactMap { Element(rawValue: $0) })
+    }
+    
+    var rawValue: RawValue {
+        self.map { $0.rawValue }
     }
 }
 
@@ -124,7 +152,7 @@ public extension Collection {
         try expect(array[nth: 7] == 2, "Should be looped value")
     }
 }
-@available(watchOS 6.0, iOS 13, tvOS 13, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 @MainActor
 let collectionTests: [Test] = [
     Test("safety", [Int].safeTests),
@@ -133,7 +161,7 @@ let collectionTests: [Test] = [
 
 
 // Array Identifiable
-@available(watchOS 6.0, iOS 13, tvOS 13, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 public extension Array where Element: Identifiable {
     subscript(id: Element.ID) -> Element? {
         get {
@@ -186,7 +214,7 @@ public extension Collection where Element: DoubleConvertible & AdditiveArithmeti
 
 #if canImport(SwiftUI)
 import SwiftUI
-@available(watchOS 6, iOS 13, tvOS 13, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 #Preview("Tests") {
     TestsListView(tests: collectionTests)
 }

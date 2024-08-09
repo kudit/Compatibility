@@ -8,11 +8,21 @@
 import SwiftUI
 import Compatibility
 
-@available(iOS 15.0, macOS 12, tvOS 17, watchOS 8, *)
+@available(iOS 15, macOS 12, tvOS 17, watchOS 8, *)
 struct CompatibilityDemoView: View {
     @State var runCount = 0
     var body: some View {
         TabView {
+            CompatibilityEnvironmentTestView()
+                .tabItem {
+                    Text("Compatibility")
+                }
+            if #available(watchOS 9, *) {
+                DataStoreTestView()
+                    .tabItem {
+                        Text("DataStore")
+                    }
+            }
             AllTestsListView(additionalNamedTests: [
                 "Injected Test": [
                     Test("FoObar") {
@@ -71,7 +81,7 @@ struct CompatibilityDemoView: View {
     }
 }
 
-@available(iOS 15.0, macOS 12, tvOS 17, watchOS 8, *)
+@available(iOS 15, macOS 12, tvOS 17, watchOS 8, *)
 #Preview {
     CompatibilityDemoView()
 }
