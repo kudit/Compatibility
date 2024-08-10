@@ -8,16 +8,17 @@
 
 public enum Compatibility {
     /// The version of the Compatibility Library since cannot get directly from Package.swift.
-    public static let version: Version = "1.2.2"
+    public static let version: Version = "1.2.3"
     
     /// will be true if we're in a debug configuration and false if we're building for release
     public static let isDebug = _isDebugAssertConfiguration()
     
     // MARK: - iCloud Support
     /// Use before tracking to disable iCloud checks to prevent crashes if we don't need to use iCloud for DataStore.
-    //    @MainActor
+    @MainActor
     public static var iCloudSupported = true
     
+    @MainActor
     public static var iCloudIsEnabled: Bool {
         guard Self.iCloudSupported else {
             debug("iCloud is not supported by this app.", level: .DEBUG)
@@ -35,6 +36,7 @@ public enum Compatibility {
         return true
     }
     
+    @MainActor
     public static var iCloudStatus: CloudStatus {
         guard Self.iCloudSupported else {
             return .notSupported
@@ -203,6 +205,12 @@ canImport(Testing)
  */
 
 // This has been a godsend! https://davedelong.com/blog/2021/10/09/simplifying-backwards-compatibility-in-swift/
+
+#if !canImport(Combine) // this isn't available on linux!
+extension FileManager {
+    @NSCopying open var ubiquityIdentityToken: (any NSCoding & NSCopying & NSObjectProtocol)? { nil }
+}
+#endif
 
 #if canImport(SwiftUI)
 import SwiftUI

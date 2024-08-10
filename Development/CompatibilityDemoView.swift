@@ -13,11 +13,11 @@ struct CompatibilityDemoView: View {
     @State var runCount = 0
     var body: some View {
         TabView {
-            CompatibilityEnvironmentTestView()
-                .tabItem {
-                    Text("Compatibility")
-                }
             if #available(watchOS 9, *) {
+                CompatibilityEnvironmentTestView()
+                    .tabItem {
+                        Text("Compatibility")
+                    }
                 DataStoreTestView()
                     .tabItem {
                         Text("DataStore")

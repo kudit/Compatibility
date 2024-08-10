@@ -8,6 +8,8 @@ NOTE: Version needs to be updated in the following places:
 
 Test including capabilities for compatibility in a project that doesn't have entitlements that doesn't use the user default
 
+v1.2.3 89/2024 Fixed several data race safety issues.  Fixed linux support. 
+
 v1.2.2 8/8/2024 Standardized Package.swift, CHANGELOG.md, README.md, and LICENSE.txt files.  Standardized deployment targets.  Added DataStore code and added tests.  Added Date.nowBackport for supporting earlier versions.  Moved Environmental checks from Device so we can use in more places and needed for testing DataStores in previews.  Added `asDictionary()` method for Codable objects similar to `asJSON()`.  Standardized ordering and labelling of all `available` checks to iOS, macOS, tvOS, watchOS, visionOS (the order in which each platform got swift language support).  Also removed unnecessary `.0` from versions and unnecessary `macCatalyst` checks.  Fixed `Version` so that when encoded it stores as a `String` instead of as a struct.  Changed `Compatibility` to enum since it isn't really a structure and avoids accidentally instantiating.  Updated `ClearableTextField` to only update value when the field looses focus instead of every character (also fixed issue where that was not public).
 
 v1.2.1 7/27/2024 Moved fetchURL code into a Compatibility extension so can specifically target.  Doh!  Debug was printing at the right time I think, they were just set to .SILENT!  Fix for data race error.  Added additional sendable conformances on enums and made FileManager extension public.  Changed documentation for delay to be clear it runs on the same thread and doesn't force to main or background.

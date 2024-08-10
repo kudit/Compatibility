@@ -13,6 +13,7 @@ import UIKit
 #endif
 
 @available(iOS 13, tvOS 13, watchOS 9, *)
+@MainActor
 public class CloudStorageSync: ObservableObject {
     public static let shared = CloudStorageSync()
 
@@ -49,14 +50,12 @@ public class CloudStorageSync: ObservableObject {
 
         // Use main queue as synchronization queue to get exclusive accessing to observers dictionary.
         // Since main queue is needed anyway to change UI properties.
-        main {
-            self.status = Status(date: Date(), source: .externalChange(reason), keys: keys)
-
-            debug("External change of keys: \(keys)", level: .DEBUG) // TODO: Make silent once confirmed workings
-            for key in keys {
-                for observer in self.observers[key, default: []] {
-                    observer.keyChanged()
-                }
+        self.status = Status(date: Date(), source: .externalChange(reason), keys: keys)
+        
+        debug("External change of keys: \(keys)", level: .DEBUG) // TODO: Make silent once confirmed workings
+        for key in keys {
+            for observer in self.observers[key, default: []] {
+                observer.keyChanged()
             }
         }
     }
@@ -64,27 +63,21 @@ public class CloudStorageSync: ObservableObject {
     internal func notifyObservers(for key: String) {
         // Use main queue as synchronization queue to get exclusive accessing to observers dictionary.
         // Since main queue is needed anyway to change UI properties.
-        main {
-            for observer in self.observers[key, default: []] {
-                observer.keyChanged()
-            }
+        for observer in self.observers[key, default: []] {
+            observer.keyChanged()
         }
     }
 
     internal func addObserver(_ observer: KeyObserver, key: String) {
         // Use main queue as synchronization queue to get exclusive accessing to observers dictionary.
         // Since main queue is needed anyway to change UI properties.
-        main {
-            self.observers[key, default: []].append(observer)
-        }
+        self.observers[key, default: []].append(observer)
     }
 
     internal func removeObserver(_ observer: KeyObserver) {
         // Use main queue as synchronization queue to get exclusive accessing to observers dictionary.
         // Since main queue is needed anyway to change UI properties.
-        main {
-            self.observers = self.observers.mapValues { $0.filter { $0 !== observer } }
-        }
+        self.observers = self.observers.mapValues { $0.filter { $0 !== observer } }
     }
 
     // Note:

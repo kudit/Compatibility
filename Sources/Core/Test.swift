@@ -69,9 +69,13 @@ public final class Test: ObservableObject {
             do {
                 //await PHP.sleep(2)
                 try await self.task()
-                self.progress = .pass
+                main { // editing progress must happen on main actor
+                    self.progress = .pass
+                }
             } catch {
-                self.progress = .fail("\(error)")
+                main {
+                    self.progress = .fail("\(error)")
+                }
             }
         }
     }

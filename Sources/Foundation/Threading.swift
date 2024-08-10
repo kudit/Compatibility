@@ -73,11 +73,11 @@ internal let testSleep2: TestClosure = {
 
 /// run potentially long-running code on a background thread
 @available(iOS 13, tvOS 13, watchOS 6, *)
-public func background(_ closure: @escaping () async -> Void) {
+public func background(_ closure: @Sendable @escaping () async -> Void) {
     Compatibility.background(closure)
 }
 /// Run potentially long-running code on a background thread.  Available as a fallback for earlier versions that don't support concurrency or for code that doesn't await (synchronous but possibly long-running)
-public func background(_ closure: @escaping () -> Void) {
+public func background(_ closure: @Sendable @escaping () -> Void) {
     Compatibility.background(closure)
 }
 @available(iOS 13, tvOS 13, watchOS 6, *)
@@ -90,7 +90,7 @@ public func background<ReturnType: Sendable>(_ closure: @Sendable @escaping () a
 }
 public extension Compatibility {
     @available(iOS 13, tvOS 13, watchOS 6, *)
-    static func background(_ closure: @escaping () async -> Void) {
+    static func background(_ closure: @Sendable @escaping () async -> Void) {
         // run this block code on a background thread
         // new concurrency method:
         Task.detached(priority: .background) {
@@ -99,7 +99,7 @@ public extension Compatibility {
         }
     }
     /// Run potentially long-running code on a background thread.  Available as a fallback for earlier versions that don't support concurrency or for code that doesn't await (synchronous but possibly long-running)
-    static func background(_ closure: @escaping () -> Void) {
+    static func background(_ closure: @Sendable @escaping () -> Void) {
         if #available(iOS 13, tvOS 13, watchOS 6, *) {
             let asyncFunc: () async -> Void = {
                 closure()

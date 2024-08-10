@@ -10,6 +10,7 @@ import SwiftUI
 import Combine
 
 @available(iOS 13, tvOS 13, watchOS 9, *) // TODO: Should this be moved into a static property so we don't pollute the global namespace?  Not applicable since private and only used in this file?
+@MainActor
 private let sync = CloudStorageSync.shared
 
 @available(iOS 13, tvOS 13, watchOS 9, *)
@@ -29,6 +30,7 @@ private let sync = CloudStorageSync.shared
         self.object = CloudStorageObject(key: key, syncGet: syncGet, syncSet: syncSet)
     }
 
+//    @MainActor
     public static subscript<OuterSelf: ObservableObject>(
         _enclosingInstance instance: OuterSelf,
         wrapped wrappedKeyPath: ReferenceWritableKeyPath<OuterSelf, Value>,
@@ -45,18 +47,20 @@ private let sync = CloudStorageSync.shared
 }
 
 @available(iOS 13, tvOS 13, watchOS 9, *)
+// @MainActor??
 internal class KeyObserver {
     weak var storageObjectWillChange: ObservableObjectPublisher?
     weak var enclosingObjectWillChange: ObservableObjectPublisher?
 
     func keyChanged() {
+        // TODO: Need to do from main actor???
         storageObjectWillChange?.send()
         enclosingObjectWillChange?.send()
     }
 }
 
 @available(iOS 13, tvOS 13, watchOS 9, *)
-//@MainActor
+@MainActor
 internal class CloudStorageObject<Value>: ObservableObject {
     private let key: String
     private let syncGet: () -> Value
@@ -83,7 +87,9 @@ internal class CloudStorageObject<Value>: ObservableObject {
     }
 
     deinit {
-        sync.removeObserver(keyObserver)
+        main { // removeObserver must be called on main and apparently deinit isn't called on main even in @MainActor isolated.
+            sync.removeObserver(self.keyObserver)
+        }
     }
 }
 
