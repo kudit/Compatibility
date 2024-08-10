@@ -8,7 +8,7 @@
 
 public enum Compatibility {
     /// The version of the Compatibility Library since cannot get directly from Package.swift.
-    public static let version: Version = "1.2.3"
+    public static let version: Version = "1.2.4"
     
     /// will be true if we're in a debug configuration and false if we're building for release
     public static let isDebug = _isDebugAssertConfiguration()
@@ -208,7 +208,7 @@ canImport(Testing)
 
 #if !canImport(Combine) // this isn't available on linux!
 extension FileManager {
-    @NSCopying open var ubiquityIdentityToken: (any NSCoding & NSCopying & NSObjectProtocol)? { nil }
+    var ubiquityIdentityToken: String? { nil }
 }
 #endif
 
