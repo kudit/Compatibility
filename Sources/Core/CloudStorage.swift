@@ -47,7 +47,7 @@ private let sync = CloudStorageSync.shared
 }
 
 @available(iOS 13, tvOS 13, watchOS 6, *)
-//@MainActor // prevent publishing changes on background thread
+@MainActor // prevent publishing changes on background thread
 internal class KeyObserver {
     weak var storageObjectWillChange: ObservableObjectPublisher?
     weak var enclosingObjectWillChange: ObservableObjectPublisher?

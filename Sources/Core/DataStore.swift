@@ -6,6 +6,7 @@ public enum DataStoreType: Sendable {
     case iCloud
     
     public var shared: DataStore {
+#if canImport(CoreML) // not available in Linux so skip
         if #available(watchOS 9, *) {
             // xcode previews indicate icloud is not available and thus will default to UserDefaults.  Playgrounds will indicate iCloud availability but values don't seem to persist.
             if self == .iCloud && !Compatibility.isPlayground && !Compatibility.isPreview {
@@ -13,6 +14,7 @@ public enum DataStoreType: Sendable {
                 return NSUbiquitousKeyValueStore.default
             } // if not, just use local.  Technically this case shouldn't even be available on unsupported devices
         }
+#endif
         debug("Using local store")
         return UserDefaults.standard
     }
@@ -105,6 +107,7 @@ extension UserDefaults: DataStore {
 }
 
 // MARK: - iCloud (NSUbiquitousKeyValueStore)
+#if canImport(CoreML) // not available in Linux
 @available(watchOS 9, *)
 extension NSUbiquitousKeyValueStore: DataStore {
     public func set(_ value: Int, forKey defaultName: String) {
@@ -145,6 +148,7 @@ public extension NSUbiquitousKeyValueStore {
         return self.dictionaryRepresentation
     }
 }
+#endif
 
 // TODO: Since we have the @CloudStorage wrapper, we really don't need this at all anymore.
 /*

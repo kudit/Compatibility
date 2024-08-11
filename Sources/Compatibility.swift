@@ -8,7 +8,7 @@
 
 public enum Compatibility {
     /// The version of the Compatibility Library since cannot get directly from Package.swift.
-    public static let version: Version = "1.2.5"
+    public static let version: Version = "1.2.6"
     
     /// will be true if we're in a debug configuration and false if we're building for release
     public static let isDebug = _isDebugAssertConfiguration()
@@ -133,8 +133,11 @@ public enum Compatibility {
     macOS 10.12
  
  2017
+ canImport(CoreML)
     iOS 11
     macOS 10.13
+    tvOS 11
+    watchOS 4
  
  2018
     iOS 12
@@ -206,7 +209,7 @@ canImport(Testing)
 
 // This has been a godsend! https://davedelong.com/blog/2021/10/09/simplifying-backwards-compatibility-in-swift/
 
-#if !canImport(Combine) // this isn't available on linux!
+#if !canImport(CoreML) // this isn't available on linux!
 extension FileManager {
     var ubiquityIdentityToken: String? { nil }
 }

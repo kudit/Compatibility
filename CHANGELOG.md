@@ -8,6 +8,8 @@ NOTE: Version needs to be updated in the following places:
 
 Test including capabilities for compatibility in a project that doesn't have entitlements that doesn't use the user default
 
+v1.2.6 8/11/2024 Addressing data-race error and Linux compatibility.  Added additional check for 2017 platforms to gate against linux but allow code in older iOS.
+
 v1.2.5 8/10/2024 Tweaked [Version] RawRepresentable to be more universal and not Compatibility specific.  Improved checks so that @CloudStorage can be used in older versions of watchOS, it just will use UserDefaults instead.  Restored DataStore for fallback compatibility.  Updated README with examples.  Fixed runtime publishing data-race errors.
 
 v1.2.4 8/10/2024 Attempting to fix linux support.

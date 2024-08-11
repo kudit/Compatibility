@@ -5,7 +5,7 @@
 //  Created by Ben Ku on 7/7/24.
 //
 
-#if !canImport(Combine)
+#if !canImport(Combine) // for Linux support
 // Add stub here to make sure we can compile
 public protocol ObservableObject {
     var objectWillChange: ObjectWillChangePublisher { get }
