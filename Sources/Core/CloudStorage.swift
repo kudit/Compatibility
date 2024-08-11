@@ -9,11 +9,11 @@
 import SwiftUI
 import Combine
 
-@available(iOS 13, tvOS 13, watchOS 9, *) // TODO: Should this be moved into a static property so we don't pollute the global namespace?  Not applicable since private and only used in this file?
+@available(iOS 13, tvOS 13, watchOS 6, *) // TODO: Should this be moved into a static property so we don't pollute the global namespace?  Not applicable since private and only used in this file?
 @MainActor
 private let sync = CloudStorageSync.shared
 
-@available(iOS 13, tvOS 13, watchOS 9, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 @propertyWrapper public struct CloudStorage<Value>: DynamicProperty {
     @ObservedObject private var object: CloudStorageObject<Value>
 
@@ -30,7 +30,7 @@ private let sync = CloudStorageSync.shared
         self.object = CloudStorageObject(key: key, syncGet: syncGet, syncSet: syncSet)
     }
 
-//    @MainActor
+//    @MainActor // prevent publishing on background thread
     public static subscript<OuterSelf: ObservableObject>(
         _enclosingInstance instance: OuterSelf,
         wrapped wrappedKeyPath: ReferenceWritableKeyPath<OuterSelf, Value>,
@@ -46,20 +46,22 @@ private let sync = CloudStorageSync.shared
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 9, *)
-// @MainActor??
+@available(iOS 13, tvOS 13, watchOS 6, *)
+//@MainActor // prevent publishing changes on background thread
 internal class KeyObserver {
     weak var storageObjectWillChange: ObservableObjectPublisher?
     weak var enclosingObjectWillChange: ObservableObjectPublisher?
 
     func keyChanged() {
-        // TODO: Need to do from main actor???
-        storageObjectWillChange?.send()
-        enclosingObjectWillChange?.send()
+        // Need to do from main actor? Also can't do during view updates.
+        main {
+            self.storageObjectWillChange?.send()
+            self.enclosingObjectWillChange?.send()
+        }
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 9, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 @MainActor
 internal class CloudStorageObject<Value>: ObservableObject {
     private let key: String
@@ -93,7 +95,7 @@ internal class CloudStorageObject<Value>: ObservableObject {
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 9, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 extension CloudStorage where Value == Bool {
     public init(wrappedValue: Value, _ key: String) {
         self.init(
@@ -103,7 +105,7 @@ extension CloudStorage where Value == Bool {
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 9, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 extension CloudStorage where Value == Int {
     public init(wrappedValue: Value, _ key: String) {
         self.init(
@@ -113,7 +115,7 @@ extension CloudStorage where Value == Int {
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 9, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 extension CloudStorage where Value == Double {
     public init(wrappedValue: Value, _ key: String) {
         self.init(
@@ -123,7 +125,7 @@ extension CloudStorage where Value == Double {
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 9, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 extension CloudStorage where Value == String {
     public init(wrappedValue: Value, _ key: String) {
         self.init(
@@ -133,7 +135,7 @@ extension CloudStorage where Value == String {
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 9, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 extension CloudStorage where Value == URL {
     public init(wrappedValue: Value, _ key: String) {
         self.init(
@@ -143,7 +145,7 @@ extension CloudStorage where Value == URL {
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 9, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 extension CloudStorage where Value == Data {
     public init(wrappedValue: Value, _ key: String) {
         self.init(
@@ -153,7 +155,7 @@ extension CloudStorage where Value == Data {
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 9, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 extension CloudStorage where Value: RawRepresentable, Value.RawValue == Int {
     public init(wrappedValue: Value, _ key: String) {
         self.init(
@@ -163,7 +165,7 @@ extension CloudStorage where Value: RawRepresentable, Value.RawValue == Int {
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 9, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 extension CloudStorage where Value: RawRepresentable, Value.RawValue == String {
     public init(wrappedValue: Value, _ key: String) {
         self.init(
@@ -173,7 +175,7 @@ extension CloudStorage where Value: RawRepresentable, Value.RawValue == String {
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 9, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 extension CloudStorage where Value == Bool? {
     public init(_ key: String) {
         self.init(
@@ -183,7 +185,7 @@ extension CloudStorage where Value == Bool? {
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 9, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 extension CloudStorage where Value == Int? {
     public init(_ key: String) {
         self.init(
@@ -193,7 +195,7 @@ extension CloudStorage where Value == Int? {
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 9, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 extension CloudStorage where Value == Double? {
     public init(_ key: String) {
         self.init(
@@ -203,7 +205,7 @@ extension CloudStorage where Value == Double? {
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 9, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 extension CloudStorage where Value == String? {
     public init(_ key: String) {
         self.init(
@@ -213,7 +215,7 @@ extension CloudStorage where Value == String? {
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 9, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 extension CloudStorage where Value == URL? {
     public init(_ key: String) {
         self.init(
@@ -223,7 +225,7 @@ extension CloudStorage where Value == URL? {
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 9, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 extension CloudStorage where Value == Data? {
     public init(_ key: String) {
         self.init(

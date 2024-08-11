@@ -191,15 +191,18 @@ public extension [Version] {
 // The rawValue for an array of versions should be a comma-separated String, not an array of strings since this is easier to store
 extension [Version]: RawRepresentable {
     public init(rawValue: String) {
-        var versions = Set(rawValue.split(separator: ",").map { Version(String($0).trimmed) })
-        if !versions.contains(Compatibility.version) {
-            versions.insert(Compatibility.version)
-        }
+        // remove duplicates and convert invalid values to 0.0.0
+        let versions = Set(rawValue.split(separator: ",").map { Version(String($0).trimmed) })
+        // order
         self = versions.sorted()
     }
     
     public var rawValue: String {
         self.map { $0.rawValue }.joined(separator: ",")
+    }
+    
+    public init(rawValue: String, required: Version) {
+        self.init(rawValue: "\(required),\(rawValue)")
     }
 }
 

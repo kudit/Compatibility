@@ -12,25 +12,30 @@ import Combine
 import UIKit
 #endif
 
-@available(iOS 13, tvOS 13, watchOS 9, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 @MainActor
 public class CloudStorageSync: ObservableObject {
+//    @MainActor
     public static let shared = CloudStorageSync()
 
-    private let ubiquitousKvs: NSUbiquitousKeyValueStore
-//    @MainActor
+    private let ubiquitousKvs: DataStore
     private var observers: [String: [KeyObserver]] = [:]
 
     @Published private(set) public var status: Status
 
     private init() {
-        ubiquitousKvs = NSUbiquitousKeyValueStore.default
+        if #available(watchOS 9.0, *) {
+            ubiquitousKvs = DataStoreType.iCloud.shared // NSUbiquitousKeyValueStore.default
+        } else {
+            // Fallback on earlier versions
+            ubiquitousKvs = DataStoreType.local.shared
+        }
         status = Status(date: Date(), source: .initial, keys: [])
 
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(didChangeExternally(notification:)),
-            name: NSUbiquitousKeyValueStore.didChangeExternallyNotification,
+            name: type(of: ubiquitousKvs).notificationName, // NSUbiquitousKeyValueStore.didChangeExternallyNotification,
             object: nil)
         ubiquitousKvs.synchronize()
 
@@ -95,7 +100,7 @@ public class CloudStorageSync: ObservableObject {
 }
 
 // Wrap calls to NSUbiquitousKeyValueStore
-@available(iOS 13, tvOS 13, watchOS 9, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 extension CloudStorageSync {
     public func object(forKey key: String) -> Any? {
         ubiquitousKvs.object(forKey: key)
@@ -196,7 +201,7 @@ extension CloudStorageSync {
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 9, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 extension CloudStorageSync {
     public enum ChangeReason {
         case serverChange

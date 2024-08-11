@@ -1,7 +1,5 @@
 // TODO: Do we want to restrict DataStore to the main thread?
 
-// TODO: Since we have the @CloudStorage wrapper, we really don't need this at all anymore.
-/*
 public enum DataStoreType: Sendable {
     case local
     @available(watchOS 9, *)
@@ -70,6 +68,8 @@ public protocol DataStore {
     func bool(forKey: String) -> Bool
     ///Returns the integer value associated with the specified key.
     func integer(forKey: String) -> Int
+    ///Returns the longlong value associated with the specified key.  Note that this is here just for compatibility with @CloudStorage and may result in truncation...
+    func longLong(forKey: String) -> Int64
     ///Returns the double value associated with the specified key.
     func double(forKey: String) -> Double
     ///Returns a dictionary that contains a union of all key-value pairs in the domains in the search list.
@@ -98,6 +98,10 @@ extension DataStore {
 extension UserDefaults: DataStore {
     public static var notificationName = UserDefaults.didChangeNotification
     public var type: DataStoreType { .local }
+    
+    public func longLong(forKey: String) -> Int64 {
+        return Int64(integer(forKey: forKey))
+    }
 }
 
 // MARK: - iCloud (NSUbiquitousKeyValueStore)
@@ -141,6 +145,9 @@ public extension NSUbiquitousKeyValueStore {
         return self.dictionaryRepresentation
     }
 }
+
+// TODO: Since we have the @CloudStorage wrapper, we really don't need this at all anymore.
+/*
 
 // MARK: - Observation
 @available(watchOS 9, *)
@@ -400,7 +407,7 @@ extension String {
     static let string1Key = "string1"
     static let string2Key = "string2"
     static let tokensAvailableKey = "tokensAvailable"
-    static let compatibilityVersionsRunKey = "compatibilityVersionsRun"
+    public static let compatibilityVersionsRunKey = "compatibilityVersionsRun"
     static let lastSavedKey = "lastSaved"
     static let string1Initial = "Initialized String 1"
     static let string2Initial = "Initialized String 2"
@@ -434,19 +441,20 @@ class DataStoreTestModel: ObservableObject {
     @CloudStorage(.tokensAvailableKey)
     var tokensAvailable = 0
     // store as a single comma-separated String for simplicity
-    @CloudStorage(.compatibilityVersionsRunKey) var moduleVersionsRunStorage = "\(Compatibility.version.rawValue)"
+    @CloudStorage(.compatibilityVersionsRunKey) var moduleVersionsRunStorage: String?
     var moduleVersionsRun: [Version] {
         get {
-            var versions = [Version](rawValue: moduleVersionsRunStorage)
-            if !versions.contains(Compatibility.version) {
-                versions.append(Compatibility.version)
-                versions = versions.unique.sorted()
+//            if moduleVersionsRunStorage == nil {
+//                // first run!
+            let resolvedVersions = [Version](rawValue: moduleVersionsRunStorage ?? "", required: Compatibility.version)
+            // make sure to propagate back if changed!
+            if resolvedVersions.rawValue != moduleVersionsRunStorage {
+                // but do on separate thread since updates aren't supported within view rendering
+                delay(0.01) {
+                    self.moduleVersionsRunStorage = resolvedVersions.rawValue
+                }
             }
-            let versionsString = versions.rawValue
-            if versionsString != moduleVersionsRunStorage {
-                moduleVersionsRunStorage = versionsString
-            }
-            return versions
+            return resolvedVersions
         }
         set {
             moduleVersionsRunStorage = newValue.rawValue

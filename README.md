@@ -100,16 +100,16 @@ background {
 }
 ```
 
-### Storing data to UserDefaults or iCloud Key Value Store if available.
-This is super useful so we don't have to worry about whether the user has iCloud enabled or what happens if they log out.  The app should do the correct thing based on the policies you have set up and you don't need to worry about whether you're saving to the local UserDefaults or to iCloud since the syntax is the same.  If you use this, be sure to add a PrivacyInfo value since UserDefaults can be used to fingerprint.  Example file can be found in the package at `Compatibility.swiftpm/Development/Resources/PrivacyInfo.xcprivacy`
-You also need to add an entitlement if you use iCloud Key Value Store.  Example that automatically pulls the identifier from the project can be found at `Compatibility.swiftpm/Development/Resources/Entitlements.entitlements` 
+### Storing data to iCloud Key Value Store if available.
+This is super useful so we don't have to worry about whether the user has iCloud enabled or what happens if they log out.  The app should do the correct thing automatically and will use the last updated value per key to resolve conflicts.  If you need more fine-grained control, cache the value and monitor for changes to update the cached value.  If you use this, you will need to add an entitlement as this uses iCloud Key Value Store.  An example entitlement that automatically pulls the identifier from the project can be found at `Compatibility.swiftpm/Development/Resources/Entitlements.entitlements` 
 
- This feature requires watchOS 9 as that is the minimum for NSUbiquitousKeyValueStore
+ This feature requires iOS 13, tvOS 13, and watchOS 9 for cloud usage as that is the minimum for NSUbiquitousKeyValueStore.  If code uses older versions, you will need to add a PrivacyInfo file since UserDefaults can be used to fingerprint.  Example file can be found in the package at `Compatibility.swiftpm/Development/Resources/PrivacyInfo.xcprivacy` 
  
  ```swift
- TODO: pull example from test usage so we know example is tested.
  
- when values change, set the store value to persist/propagate:
+// either specify a default value or make it an optional
+ @CloudStorage("keyString") var myKey: Bool = false
+ @CloudStorage("key2String") var myOtherKey: Double?
  ```
 
 All these tests can be demonstrated using previews or by running the app executable that is bundled in the Development folder of the module.
