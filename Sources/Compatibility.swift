@@ -8,7 +8,7 @@
 
 public enum Compatibility {
     /// The version of the Compatibility Library since cannot get directly from Package.swift.
-    public static let version: Version = "1.2.6"
+    public static let version: Version = "1.2.7"
     
     /// will be true if we're in a debug configuration and false if we're building for release
     public static let isDebug = _isDebugAssertConfiguration()

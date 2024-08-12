@@ -1,5 +1,5 @@
 // TODO: Once Swift Testing is available, can re-write all this code into test classes that conform to Swift Testing so that we can also run code in Previews and Test Applications?
-public typealias TestClosure = () async throws -> Void
+public typealias TestClosure = @Sendable () async throws -> Void
 
 // This could be anything, not necessary a struct or class, so if we need this, have a list of tests rather than a Testable object
 //// don't make this public to avoid compiling test stuff into framework, however, do make public so apps can add in their own tests.

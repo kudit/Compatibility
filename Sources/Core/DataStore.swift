@@ -98,7 +98,7 @@ extension DataStore {
 
 // MARK: - Local (UserDefaults)
 extension UserDefaults: DataStore {
-    public static var notificationName = UserDefaults.didChangeNotification
+    public static let notificationName = UserDefaults.didChangeNotification
     public var type: DataStoreType { .local }
     
     public func longLong(forKey: String) -> Int64 {

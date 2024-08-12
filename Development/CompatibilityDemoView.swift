@@ -9,6 +9,7 @@ import SwiftUI
 import Compatibility
 
 @available(iOS 15, macOS 12, tvOS 17, watchOS 8, *)
+@MainActor
 struct CompatibilityDemoView: View {
     @State var runCount = 0
     var body: some View {
@@ -29,7 +30,7 @@ struct CompatibilityDemoView: View {
                         let foo = "bar"
                         try expect(foo == "bar")
                     },
-                    Test("Fail Test (should fail)") {
+                    Test("Fail Test (should fail)") { @MainActor in // this must be main actor isolated since self is main actor isolated.
                         self.runCount++
                         try expect(false, "This has run \(runCount) times")
                     },

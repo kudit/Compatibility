@@ -136,6 +136,7 @@ public extension Collection {
         guard self.indices.contains(index) else { return nil }
         return self[index]
     }
+    @Sendable
     static func safeTests() throws {
         let array = [1,2,3]
         try expect(array[safe: 0] == 1, "Basic functionality fails")
@@ -146,6 +147,7 @@ public extension Collection {
         let index = self.index(self.startIndex, offsetBy: offset % self.count)
         return self[index]
     }
+    @Sendable
     static func nthTests() throws {
         let array = [1,2,3]
         try expect(array[nth: 0] == 1, "Basic functionality fails")
