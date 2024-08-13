@@ -21,7 +21,10 @@ public class CloudStorageSync: ObservableObject {
     private let ubiquitousKvs: DataStore
     private var observers: [String: [KeyObserver]] = [:]
 
-    @Published private(set) public var status: Status
+    #if canImport(Combine)
+    @Published
+    #endif
+    private(set) public var status: Status
 
     private init() {
         if #available(watchOS 9.0, *) {
@@ -31,7 +34,7 @@ public class CloudStorageSync: ObservableObject {
             ubiquitousKvs = DataStoreType.local.shared
         }
         status = Status(date: Date(), source: .initial, keys: [])
-
+        
         #if canImport(Combine)
         NotificationCenter.default.addObserver(
             self,
@@ -205,7 +208,6 @@ extension CloudStorageSync {
     }
 }
 
-#if canImport(Combine)
 @available(iOS 13, tvOS 13, watchOS 6, *)
 extension CloudStorageSync {
     public enum ChangeReason {
@@ -215,6 +217,7 @@ extension CloudStorageSync {
         case accountChange
 
         init?(rawValue: Int) {
+#if canImport(Combine)
             switch rawValue {
             case NSUbiquitousKeyValueStoreServerChange:
                 self = .serverChange
@@ -228,6 +231,9 @@ extension CloudStorageSync {
                 debug("Unknown NSUbiquitousKeyValueStoreChangeReason \(rawValue)", level: .ERROR)
                 return nil
             }
+#else
+            return nil
+#endif
         }
     }
 
@@ -262,7 +268,6 @@ extension CloudStorageSync {
         }
     }
 }
-#endif
 
 private let statusDateFormatter: DateFormatter = {
     let formatter = DateFormatter()

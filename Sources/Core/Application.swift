@@ -15,7 +15,7 @@ extension String {
 }
 
 @available(iOS 13, tvOS 13, watchOS 6, *)
-public struct Application: CustomStringConvertible {
+public struct Application: Sendable {
     @MainActor
     public static var baseDomain = "com.kudit"
     
@@ -204,22 +204,6 @@ public struct Application: CustomStringConvertible {
             // UserDefaults.synchronize // don't save in case launch issue where it will crash on launch
         }
     }
-    
-    @MainActor
-    public var description: String {
-        var description = "\(name) (v\(version))"
-        if isFirstRun {
-            description += " **First Run!**"
-        }
-        if versionsRun.count > 1 {
-            description += "\nPreviously run versions: \(previouslyRunVersions.map { "v\($0)" }.joined(separator: ", "))"
-        }
-        description += "\nIdentifier: \(Application.main.appIdentifier)"
-        // so we can disable on simple apps and still do tracking without issues.
-        description += "\niCloud Status: \(Application.iCloudStatus)"
-        description += "\nCompatibility Version: \(Compatibility.version)"
-        return description
-    }
         
     // MARK: - Version information
     // NOTE: in Objective C, the key was kCFBundleVersionKey, but that returns the build number in Swift.
@@ -254,6 +238,23 @@ public struct Application: CustomStringConvertible {
     
     /// Vendor ID (may not be used anywhere since not very helpful)
 //    public var vendorID = UIDevice.current.identifierForVendor.UUIDString
+}
+@available(iOS 13, tvOS 13, watchOS 6, *)
+extension Application: CustomStringConvertible {
+    public var description: String {
+        var description = "\(name) (v\(version))"
+        if isFirstRun {
+            description += " **First Run!**"
+        }
+        if versionsRun.count > 1 {
+            description += "\nPreviously run versions: \(previouslyRunVersions.map { "v\($0)" }.joined(separator: ", "))"
+        }
+        description += "\nIdentifier: \(Application.main.appIdentifier)"
+        // so we can disable on simple apps and still do tracking without issues.
+        description += "\niCloud Status: \(Application.iCloudStatus)"
+        description += "\nCompatibility Version: \(Compatibility.version)"
+        return description
+    }
 }
 
 

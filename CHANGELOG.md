@@ -12,6 +12,8 @@ TODO: Fix pagination dots not using primary color depending on dark mode (always
 TODO: have content of tab view extend into safe area but the contents not completely ignore safe area.
 TODO: Add some shading at the bottom so the pagination dots show and make sure they are above the Kudit LLC to avoid the safe area.
 
+v1.3.3 8/13/2024 Fixed issue for Linux and data race error.
+
 v1.3.2 8/13/2024 Fixed bug with sendable closure for `delay` by adding @MainActor versions.
 
 v1.3.1 8/12/2024 Addressed some data race errors and Linux compatibility issues.
