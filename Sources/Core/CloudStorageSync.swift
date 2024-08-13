@@ -32,11 +32,13 @@ public class CloudStorageSync: ObservableObject {
         }
         status = Status(date: Date(), source: .initial, keys: [])
 
+        #if canImport(Combine)
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(didChangeExternally(notification:)),
             name: type(of: ubiquitousKvs).notificationName, // NSUbiquitousKeyValueStore.didChangeExternallyNotification,
             object: nil)
+        #endif
         ubiquitousKvs.synchronize()
 
         #if canImport(UIKit) && !os(watchOS)
@@ -48,6 +50,7 @@ public class CloudStorageSync: ObservableObject {
         #endif
     }
 
+    #if canImport(Combine)
     @objc private func didChangeExternally(notification: Notification) {
         let reasonRaw = notification.userInfo?[NSUbiquitousKeyValueStoreChangeReasonKey] as? Int ?? -1
         let keys = notification.userInfo?[NSUbiquitousKeyValueStoreChangedKeysKey] as? [String] ?? []
@@ -64,6 +67,7 @@ public class CloudStorageSync: ObservableObject {
             }
         }
     }
+    #endif
 
     internal func notifyObservers(for key: String) {
         // Use main queue as synchronization queue to get exclusive accessing to observers dictionary.
@@ -201,6 +205,7 @@ extension CloudStorageSync {
     }
 }
 
+#if canImport(Combine)
 @available(iOS 13, tvOS 13, watchOS 6, *)
 extension CloudStorageSync {
     public enum ChangeReason {
@@ -257,6 +262,7 @@ extension CloudStorageSync {
         }
     }
 }
+#endif
 
 private let statusDateFormatter: DateFormatter = {
     let formatter = DateFormatter()

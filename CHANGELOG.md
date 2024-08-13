@@ -6,6 +6,14 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
+Update tab view to use backport version that can extend content into safe area but still respects safe area for scrolling and clearing.
+TODO: Use this answer to create a FullPageTabView that will have the desired behavior and allow setting a color for the selected and deselected (defaults to .primary and .tertiary). Allow overriding symbol on each view by taking the tabItem view if present? https://stackoverflow.com/questions/78472655/swiftui-tabview-safe-area
+TODO: Fix pagination dots not using primary color depending on dark mode (always white).  Perhaps create custom tab view style that is pageTinted(Color).  Add to Compatibility and then update this stack: https://stackoverflow.com/questions/68143240/tabview-dot-index-color-does-not-change
+TODO: have content of tab view extend into safe area but the contents not completely ignore safe area.
+TODO: Add some shading at the bottom so the pagination dots show and make sure they are above the Kudit LLC to avoid the safe area.
+
+v1.3.1 8/12/2024 Addressed some data race errors and Linux compatibility issues.
+
 v1.3.0 8/12/2024 Fixed Environment checks not being public.  Fixed so `ClearableTextField` will gain focus when pressing clear button (but now requires iOS 15).  Fixed so `CloudStorageSync` works in Playgrounds.  Added `Application` for Monetization.  Moved environment checks back to `Application` now that it's included.  Moved CloudStorageSync var to static func so it doesn't pollute the global namespace.  Reduced version requirement for propertywrapper so Application doesn't have to be completely marked and can fallback to UserDefaults for older OS versions.  Added backport compatibility for `@Published` (may not actually work for updating views however).
 
 v1.2.7 8/11/2024 Fixed a couple more data-race safety errors.  Made test closures sendable.

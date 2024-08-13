@@ -214,7 +214,7 @@ delay(0.4) {
 ```
 */
 /// run the block of code on the main thread after the `delay` (in seconds) have passed.
-public func delay(_ delay:Double, closure:@escaping () -> Void) {
+public func delay(_ delay:Double, closure: @Sendable @escaping () -> Void) {
     Compatibility.delay(delay, closure: closure)
 }
 public extension Compatibility {
@@ -229,7 +229,7 @@ public extension Compatibility {
     ```
     */
     /// run the block of code on the current thread after the `delay` (in seconds) have passed.  If this is before iOS 13, tvOS 13, and watchOS 6, will be run on the main thread rather than the same thread..
-    static func delay(_ delay:Double, closure:@escaping () -> Void) {
+    static func delay(_ delay:Double, closure: @Sendable @escaping () -> Void) {
         if #available(iOS 13, tvOS 13, watchOS 6, *) {
             Task {
                 await sleep(seconds: delay)
