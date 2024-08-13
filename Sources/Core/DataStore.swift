@@ -3,8 +3,7 @@
 @available(iOS 13, tvOS 13, watchOS 6, *)
 public enum DataStoreType: Sendable {
     case local
-    @available(watchOS 9, *)
-    case iCloud
+    case iCloud // shared will return local if watchOS < 9
     
     public var shared: DataStore {
 #if canImport(CoreML) // not available in Linux so skip
@@ -16,7 +15,9 @@ public enum DataStoreType: Sendable {
             } // if not, just use local.  Technically this case shouldn't even be available on unsupported devices
         }
 #endif
-        debug("Using local store")
+        if self != .local {
+            debug("Using local store because watchOS <9, isPlayground, isPreview, or Linux.")
+        }
         return UserDefaults.standard
     }
 }

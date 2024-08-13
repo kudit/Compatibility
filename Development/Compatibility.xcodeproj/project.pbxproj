@@ -10,12 +10,12 @@
 		B5198A0E2C38FAD300CEA720 /* MyApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5E5FC3A2C3860EC004F2009 /* MyApp.swift */; };
 		B5198A102C38FAEB00CEA720 /* Compatibility Library in Frameworks */ = {isa = PBXBuildFile; productRef = B5198A0F2C38FAEB00CEA720 /* Compatibility Library */; };
 		B51B70C62C5D6DBF001F7DCF /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = B51B70C42C5D6DBF001F7DCF /* PrivacyInfo.xcprivacy */; };
-		B51B70C72C5D6DBF001F7DCF /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = B51B70C42C5D6DBF001F7DCF /* PrivacyInfo.xcprivacy */; };
 		B5209EE32C431CF800FBA30B /* CompatibilityDemoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5209EE22C431CF800FBA30B /* CompatibilityDemoView.swift */; };
 		B5209EE42C431CF800FBA30B /* CompatibilityDemoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5209EE22C431CF800FBA30B /* CompatibilityDemoView.swift */; };
 		B52C8E0F2C38CA76008EBD2D /* MyApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5E5FC3A2C3860EC004F2009 /* MyApp.swift */; };
 		B579D4A52C46FF1A009A037A /* Compatibility Library in Frameworks */ = {isa = PBXBuildFile; productRef = B579D4A42C46FF1A009A037A /* Compatibility Library */; };
 		B58B5C452C38F98800689837 /* (null) in Sources */ = {isa = PBXBuildFile; };
+		B5CB1E3C2C6BB1D300CF542B /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = B51B70C42C5D6DBF001F7DCF /* PrivacyInfo.xcprivacy */; };
 		B5E1B6A62C3C6C3B00B92573 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B5E5FC822C3863B9004F2009 /* Assets.xcassets */; };
 		B5E5FC832C3863B9004F2009 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B5E5FC822C3863B9004F2009 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
@@ -190,7 +190,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B51B70C72C5D6DBF001F7DCF /* PrivacyInfo.xcprivacy in Resources */,
+				B5CB1E3C2C6BB1D300CF542B /* PrivacyInfo.xcprivacy in Resources */,
 				B5E1B6A62C3C6C3B00B92573 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -286,7 +286,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
-				MARKETING_VERSION = 1.3.3;
+				MARKETING_VERSION = 1.3.4;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -296,7 +296,7 @@
 				TVOS_DEPLOYMENT_TARGET = 12.0;
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
-				WATCHOS_DEPLOYMENT_TARGET = 4.0;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
 				XROS_DEPLOYMENT_TARGET = 1.0;
 			};
 			name = Debug;
@@ -352,7 +352,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
-				MARKETING_VERSION = 1.3.3;
+				MARKETING_VERSION = 1.3.4;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
@@ -360,7 +360,7 @@
 				TVOS_DEPLOYMENT_TARGET = 12.0;
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
-				WATCHOS_DEPLOYMENT_TARGET = 4.0;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
 				XROS_DEPLOYMENT_TARGET = 1.0;
 			};
 			name = Release;
@@ -376,7 +376,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				INFOPLIST_KEY_WKWatchOnly = YES;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.kudit.CompatibilityTest;
+				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -388,6 +389,7 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
 			};
 			name = Debug;
 		};
@@ -402,7 +404,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				INFOPLIST_KEY_WKWatchOnly = YES;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.kudit.CompatibilityTest;
+				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -415,6 +418,7 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 4;
 				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
 			};
 			name = Release;
 		};

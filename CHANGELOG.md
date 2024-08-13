@@ -12,6 +12,8 @@ TODO: Fix pagination dots not using primary color depending on dark mode (always
 TODO: have content of tab view extend into safe area but the contents not completely ignore safe area.
 TODO: Add some shading at the bottom so the pagination dots show and make sure they are above the Kudit LLC to avoid the safe area.
 
+v1.3.4 8/13/2024 Fixed watchOS app testing (needed to add/remove keys in Info.plist and update Entitlements to be hard-coded not dynamic).  Added test for when iCloud not available to use `UserDefaults` store.  Changed `iCloudSupported` test to assume supported on devices since this works even when logged out.  Simplified initialization of `CloudStorageSync`.  Improved appearance and behavior of `ClearableTextField` for better experience on Apple Watch (wasn't working at all before).
+
 v1.3.3 8/13/2024 Fixed issue for Linux and data race error.
 
 v1.3.2 8/13/2024 Fixed bug with sendable closure for `delay` by adding @MainActor versions.

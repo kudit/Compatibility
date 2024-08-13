@@ -38,11 +38,16 @@ public struct Application: Sendable {
             debug("iCloud works oddly in playgrounds and previews so don't actually support.", level: .DEBUG)
             return false
         }
+        #if !os(watchOS)
+        // CloudKit clients should not use this token as a way to identify whether the iCloud account is logged in. Instead, use accountStatus(completionHandler:) or fetchUserRecordID(completionHandler:).
         guard let token = FileManager.default.ubiquityIdentityToken else {
             debug("iCloud not available", level: .DEBUG)
             return false
         }
         debug("iCloud logged in with token `\(token)`", level: .SILENT)
+        #else
+        debug("watchOS can't get the ubiquityIdentityToken but can support cloud storage.")
+        #endif
         return true
     }
     

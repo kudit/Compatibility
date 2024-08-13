@@ -39,7 +39,15 @@ public struct ClearableTextField: View {
     
     public var body: some View {
         HStack {
-            TextField(label, text: $fieldText, onEditingChanged: {
+            TextField(label, text: Binding(get: {
+                fieldText
+            }, set: {
+                fieldText = $0
+                #if os(watchOS)
+                // since watchOS doesn't seem to use onEditingChanged or focused:
+                    persistChanges()
+                #endif
+            }), onEditingChanged: {
                 focused in
                 // only set change when focus is lost and the value is changed, not while editing to prevent lots of noisy spam.  If we need to know as people are typing, we should install a hook here...
                 if !focused {
@@ -61,8 +69,10 @@ public struct ClearableTextField: View {
                         }
                     }
                     .foregroundColor(.gray) // since we have this, buttonStyle can be .plain
+                    #if os(watchOS) // clear button is hard to target on watch
+                    .padding(.leading, 10)
+                    #endif
                 }
-                .padding(.trailing, 10)
                 .buttonStyle(.plain)                        // ensures the clear button isn't automatically invoked when tapping on row.
             }
         }

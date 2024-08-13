@@ -8,7 +8,7 @@
 
 public enum Compatibility {
     /// The version of the Compatibility Library since cannot get directly from Package.swift.
-    public static let version: Version = "1.3.3"
+    public static let version: Version = "1.3.4"
 }
 
 public extension Compatibility { // for brief period where Application wasn't available
@@ -173,7 +173,7 @@ public extension Compatibility { // for brief period where Application wasn't av
      macOS 12+ (last supported by Touchbook)
      Mac Catalyst 15.0+
      tvOS 15+
-    NOTE: NO WATCH OS SUPPORT
+    NOTE: NO WATCH OS SUPPORT (watchOS 8 is the last supported by Series 3)
      visionOS 1.0+
  
  2022 Swift 5.7 (September)

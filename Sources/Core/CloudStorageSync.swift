@@ -27,30 +27,25 @@ public class CloudStorageSync: ObservableObject {
     private(set) public var status: Status
 
     private init() {
-        if #available(watchOS 9.0, *) {
-            ubiquitousKvs = DataStoreType.iCloud.shared // NSUbiquitousKeyValueStore.default
-        } else {
-            // Fallback on earlier versions
-            ubiquitousKvs = DataStoreType.local.shared
-        }
+        ubiquitousKvs = DataStoreType.iCloud.shared // NSUbiquitousKeyValueStore.default or UserDefaults if preview, playgrounds, linux, or watchOS < 9
         status = Status(date: Date(), source: .initial, keys: [])
-        
-        #if canImport(Combine)
+
+#if canImport(Combine)
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(didChangeExternally(notification:)),
             name: type(of: ubiquitousKvs).notificationName, // NSUbiquitousKeyValueStore.didChangeExternallyNotification,
             object: nil)
-        #endif
+#endif
         ubiquitousKvs.synchronize()
-
-        #if canImport(UIKit) && !os(watchOS)
+                
+#if canImport(UIKit) && !os(watchOS)
         NotificationCenter.default.addObserver(
             ubiquitousKvs,
             selector: #selector(NSUbiquitousKeyValueStore.synchronize),
             name: UIApplication.willEnterForegroundNotification,
             object: nil)
-        #endif
+#endif
     }
 
     #if canImport(Combine)
@@ -63,7 +58,7 @@ public class CloudStorageSync: ObservableObject {
         // Since main queue is needed anyway to change UI properties.
         self.status = Status(date: Date(), source: .externalChange(reason), keys: keys)
         
-        debug("External change of keys: \(keys)", level: .DEBUG) // TODO: Make silent once confirmed workings
+        debug("External change of keys: \(keys)", level: .DEBUG) // TODO: Make silent once confirmed working
         for key in keys {
             for observer in self.observers[key, default: []] {
                 observer.keyChanged()

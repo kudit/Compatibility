@@ -121,7 +121,9 @@ init() {
 ```
 
 ### Storing data to iCloud Key Value Store if available.
-This is super useful so we don't have to worry about whether the user has iCloud enabled or what happens if they log out.  The app should do the correct thing automatically and will use the last updated value per key to resolve conflicts.  If you need more fine-grained control, cache the value and monitor for changes to update the cached value.  If you use this, you will need to add an entitlement as this uses iCloud Key Value Store.  An example entitlement that automatically pulls the identifier from the project can be found at `Compatibility.swiftpm/Development/Resources/Entitlements.entitlements` 
+This is super useful so we don't have to worry about whether the user has iCloud enabled or what happens if they log out.  The app should do the correct thing automatically and will use the last updated value per key to resolve conflicts.  If you need more fine-grained control, cache the value and monitor for changes to update the cached value.  If you use this, you will need to add an entitlement as this uses iCloud Key Value Store.  An example entitlement that automatically pulls the identifier from the project can be found at `Compatibility.swiftpm/Development/Resources/Entitlements.entitlements`
+If you have a watchOS app, you may need to set the key manually vs pulling from the identifier so that the watchOS app and the iOS app use the same store: ex: `$(TeamIdentifierPrefix)com.kudit.CompatibilityTest` (note there is no period before the `com`)
+If you want it to automatically set and don't have a watchOS app, use this: `$(TeamIdentifierPrefix)$(CFBundleIdentifier)`
 
  This feature requires iOS 13, tvOS 13, and watchOS 9 for cloud usage as that is the minimum for NSUbiquitousKeyValueStore.  If code uses older versions, you will need to add a PrivacyInfo file since UserDefaults can be used to fingerprint.  Example file can be found in the package at `Compatibility.swiftpm/Development/Resources/PrivacyInfo.xcprivacy` 
  
