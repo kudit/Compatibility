@@ -100,6 +100,26 @@ background {
 }
 ```
 
+### Trick to generate warning that can easily be disabled without using `#warning()`:
+Defaults to true so application will need to call a function during init/launch:
+```swift
+if false { // this will generate a warning if left as false
+    debug("This should be run in init.")
+}
+```
+
+### Application version tracking and firstRun checks:
+This should be run in the App init.
+```swift
+init() {
+    Application.track() // ensures Application.main.isFirstRun and Application.main.versions variables are properly set.
+    if Application.main.isFirstRun {
+        debug("First Run!")
+    }
+    debug("All versions run: \(Application.main.versionsRun)")
+}
+```
+
 ### Storing data to iCloud Key Value Store if available.
 This is super useful so we don't have to worry about whether the user has iCloud enabled or what happens if they log out.  The app should do the correct thing automatically and will use the last updated value per key to resolve conflicts.  If you need more fine-grained control, cache the value and monitor for changes to update the cached value.  If you use this, you will need to add an entitlement as this uses iCloud Key Value Store.  An example entitlement that automatically pulls the identifier from the project can be found at `Compatibility.swiftpm/Development/Resources/Entitlements.entitlements` 
 

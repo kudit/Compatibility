@@ -7,7 +7,7 @@
 
 #if canImport(Combine)
 import Combine
-
+#endif
 #if canImport(UIKit)
 import UIKit
 #endif
@@ -220,7 +220,7 @@ extension CloudStorageSync {
             case NSUbiquitousKeyValueStoreAccountChange:
                 self = .accountChange
             default:
-                assertionFailure("Unknown NSUbiquitousKeyValueStoreChangeReason \(rawValue)")
+                debug("Unknown NSUbiquitousKeyValueStoreChangeReason \(rawValue)", level: .ERROR)
                 return nil
             }
         }
@@ -263,5 +263,3 @@ private let statusDateFormatter: DateFormatter = {
     formatter.timeStyle = .medium
     return formatter
 }()
-
-#endif

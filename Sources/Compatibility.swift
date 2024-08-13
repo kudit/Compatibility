@@ -8,48 +8,58 @@
 
 public enum Compatibility {
     /// The version of the Compatibility Library since cannot get directly from Package.swift.
-    public static let version: Version = "1.2.7"
-    
-    /// will be true if we're in a debug configuration and false if we're building for release
-    public static let isDebug = _isDebugAssertConfiguration()
-    
-    // MARK: - iCloud Support
-    /// Use before tracking to disable iCloud checks to prevent crashes if we don't need to use iCloud for DataStore.
+    public static let version: Version = "1.3.0"
+}
+
+public extension Compatibility { // for brief period where Application wasn't available
+    @available(*, deprecated, renamed: "Application.isDebug")
+    static let isDebug = _isDebugAssertConfiguration()
+
+    // MARK: - Entitlements Information
+    @available(*, deprecated, renamed: "Application.iCloudSupported")
     @MainActor
-    public static var iCloudSupported = true
-    
-    @MainActor
-    public static var iCloudIsEnabled: Bool {
-        guard Self.iCloudSupported else {
-            debug("iCloud is not supported by this app.", level: .DEBUG)
-            return false
+    static var iCloudSupported: Bool {
+        get {
+            if #available(iOS 13, tvOS 13, watchOS 6, *) {
+                Application.iCloudSupported
+            } else {
+                // Fallback on earlier versions
+                false
+            }
         }
-        if isPlayground || isPreview {
-            debug("iCloud works oddly in playgrounds and previews so don't actually support.")
-            return false
+        set {
+            if #available(iOS 13, tvOS 13, watchOS 6, *) {
+                Application.iCloudSupported = newValue
+            } else {
+                // Fallback on earlier versions
+                // do nothing
+            }
         }
-        guard let token = FileManager.default.ubiquityIdentityToken else {
-            debug("iCloud not available", level: .DEBUG)
-            return false
-        }
-        debug("iCloud logged in with token `\(token)`", level: .SILENT)
-        return true
     }
     
+    @available(*, deprecated, renamed: "Application.iCloudIsEnabled")
     @MainActor
-    public static var iCloudStatus: CloudStatus {
-        guard Self.iCloudSupported else {
-            return .notSupported
-        }
-        if iCloudIsEnabled {
-            return .available
+    static var iCloudIsEnabled: Bool {
+        if #available(iOS 13, tvOS 13, watchOS 6, *) {
+            Application.iCloudIsEnabled
         } else {
-            return .unavailable
+            // Fallback on earlier versions
+            false
         }
     }
     
-    // MARK: - Environmental info
-    /// Returns `true` if running on the simulator vs actual device.
+    @available(*, deprecated, renamed: "Application.iCloudStatus")
+    @MainActor
+    static var iCloudStatus: CloudStatus {
+        if #available(iOS 13, tvOS 13, watchOS 6, *) {
+            Application.iCloudStatus
+        } else {
+            // Fallback on earlier versions
+            .notSupported
+        }
+    }
+    
+    @available(*, deprecated, renamed: "Application.isSimulator")
     static var isSimulator: Bool {
 #if targetEnvironment(simulator)
         // your simulator code
@@ -59,13 +69,8 @@ public enum Compatibility {
         return false
 #endif
     }
-    
-    // In macOS Playgrounds Preview: swift-playgrounds-dev-previews.swift-playgrounds-app.hdqfptjlmwifrrakcettacbhdkhn.501.KuditFramework
-    // In macOS Playgrounds Running: swift-playgrounds-dev-run.swift-playgrounds-app.hdqfptjlmwifrrakcettacbhdkhn.501.KuditFrameworksApp
-    // In iPad Playgrounds Preview: swift-playgrounds-dev-previews.swift-playgrounds-app.agxhnwfqkxciovauscbmuhqswxkm.501.KuditFramework
-    // In iPad Playgrounds Running: swift-playgrounds-dev-run.swift-playgrounds-app.agxhnwfqkxciovauscbmuhqswxkm.501.KuditFrameworksApp
-    // warning: {"message":"This code path does I/O on the main thread underneath that can lead to UI responsiveness issues. Consider ways to optimize this code path","antipattern trigger":"+[NSBundle allBundles]","message type":"suppressable","show in console":"0"}
-    /// Returns `true` if running in Swift Playgrounds.
+
+    @available(*, deprecated, renamed: "Application.isPlayground")
     static var isPlayground: Bool {
         //print("Testing inPlayground: Bundles", Bundle.allBundles.map { $0.bundleIdentifier }.description)")
         if Bundle.allBundles.contains(where: { ($0.bundleIdentifier ?? "").contains("swift-playgrounds") }) {
@@ -77,17 +82,12 @@ public enum Compatibility {
         }
     }
     
-    /// Returns `true` if running in an XCode or Swift Playgrounds #Preview macro.
+    @available(*, deprecated, renamed: "Application.isPreview")
     static var isPreview: Bool {
         ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
     }
     
-    /// Returns `true` if NOT running in preview, playground, or simulator.
-    static var isRealDevice: Bool {
-        return !isPreview && !isPlayground && !isSimulator
-    }
-    
-    /// Returns `true` if is macCatalyst app on macOS
+    @available(*, deprecated, renamed: "Application.isMacCatalyst")
     static var isMacCatalyst: Bool {
 #if targetEnvironment(macCatalyst)
         return true
@@ -95,6 +95,7 @@ public enum Compatibility {
         return false
 #endif
     }
+
 }
 @_exported import Foundation
 
@@ -243,31 +244,37 @@ public struct TestCheck: View {
 
 @available(iOS 15, macOS 12, tvOS 15, watchOS 9, *)
 public struct CompatibilityEnvironmentTestView: View {
-    @CloudStorage(.compatibilityVersionsRunKey) var previouslyRunVersions = Compatibility.version.rawValue
+    @CloudStorage(.compatibilityVersionsRunKey) var previouslyRunCompatibilityVersions = Compatibility.version.rawValue
     public init() {}
     public var body: some View {
         List {
+            Section("Application") {
+                Text("Version \(Application.main.version)")
+                TestCheck("is first run", Application.main.isFirstRun)
+                Text("Previously run versions:")
+                Text("\(Application.main.previouslyRunVersions)")
+            }
             Section("Compatibility") {
                 Text("Version \(Compatibility.version)")
-                TestCheck("is Debug", Compatibility.isDebug)
-                Text("Previously run versions:")
-                Text("\(previouslyRunVersions)")
+                TestCheck("is Debug", Application.isDebug)
+                Text("Previously run Compatibility versions:")
+                Text("\(previouslyRunCompatibilityVersions)")
             }
             Section("iCloud") {
-                TestCheck("Supported by app", Compatibility.iCloudSupported)
-                TestCheck("Enabled", Compatibility.iCloudIsEnabled)
+                TestCheck("Supported by app", Application.iCloudSupported)
+                TestCheck("Enabled", Application.iCloudIsEnabled)
                 HStack {
                     Text("iCloud status:")
-                    Image(systemName: Compatibility.iCloudStatus.symbolName)
-                    Text("\(Compatibility.iCloudStatus)")
+                    Image(systemName: Application.iCloudStatus.symbolName)
+                    Text("\(Application.iCloudStatus)")
                 }
             }
             Section("Environment") {
-                TestCheck("isSimulator", Compatibility.isSimulator)
-                TestCheck("isPlayground", Compatibility.isPlayground)
-                TestCheck("isPreview", Compatibility.isPreview)
-                TestCheck("isRealDevice", Compatibility.isRealDevice)
-                TestCheck("isMacCatalyst", Compatibility.isMacCatalyst)
+                TestCheck("isSimulator", Application.isSimulator)
+                TestCheck("isPlayground", Application.isPlayground)
+                TestCheck("isPreview", Application.isPreview)
+                TestCheck("isRealDevice", Application.isRealDevice)
+                TestCheck("isMacCatalyst", Application.isMacCatalyst)
             }
         }
     }

@@ -1,5 +1,6 @@
 // TODO: Do we want to restrict DataStore to the main thread?
 
+@available(iOS 13, tvOS 13, watchOS 6, *)
 public enum DataStoreType: Sendable {
     case local
     @available(watchOS 9, *)
@@ -9,7 +10,7 @@ public enum DataStoreType: Sendable {
 #if canImport(CoreML) // not available in Linux so skip
         if #available(watchOS 9, *) {
             // xcode previews indicate icloud is not available and thus will default to UserDefaults.  Playgrounds will indicate iCloud availability but values don't seem to persist.
-            if self == .iCloud && !Compatibility.isPlayground && !Compatibility.isPreview {
+            if self == .iCloud && !Application.isPlayground && !Application.isPreview {
                 debug("Using ubiquitous store")
                 return NSUbiquitousKeyValueStore.default
             } // if not, just use local.  Technically this case shouldn't even be available on unsupported devices
@@ -80,6 +81,7 @@ public protocol DataStore {
     /// Remove a key and it's value from the store.
     func removeObject(forKey: String)
     
+    @available(iOS 13, tvOS 13, watchOS 6, *)
     var type: DataStoreType { get }
 }
 
@@ -88,15 +90,18 @@ extension DataStore {
     public var description: String {
         return isLocal ? "Local" : "iCloud" + " data store"
     }
+    @available(iOS 13, tvOS 13, watchOS 6, *)
     public static func shared(for type: DataStoreType) -> DataStore {
         return type.shared
     }
+    @available(iOS 13, tvOS 13, watchOS 6, *)
     public var isLocal: Bool {
         self.type == .local
     }
 }
 
 // MARK: - Local (UserDefaults)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 extension UserDefaults: DataStore {
     public static let notificationName = UserDefaults.didChangeNotification
     public var type: DataStoreType { .local }
@@ -108,7 +113,7 @@ extension UserDefaults: DataStore {
 
 // MARK: - iCloud (NSUbiquitousKeyValueStore)
 #if canImport(CoreML) // not available in Linux
-@available(watchOS 9, *)
+@available(iOS 13, tvOS 13, watchOS 9, *)
 extension NSUbiquitousKeyValueStore: DataStore {
     public func set(_ value: Int, forKey defaultName: String) {
         self.set(Int64(value), forKey: defaultName)
@@ -549,10 +554,18 @@ class DataStoreTestModel: ObservableObject {
 public struct DataStoreTestView: View {
     @ObservedObject var model = DataStoreTestModel.shared
     @CloudStorage(.string2Key) var string2 = String.string2Initial
+    @CloudStorage(.appVersionsRunKey) var appVersionsRun: String?
     public init() {}
     public var body: some View {
         List {
             Section("DataStore values") {
+                Text("App Run Versions:")
+                ClearableTextField(label: "App Run Versions", text: Binding(get: {
+                    appVersionsRun
+                }, set: {
+                    appVersionsRun = $0
+                }))
+                Text("Debug tests:")
                 ClearableTextField(label: "Label String 1", text: Binding(get: {
                     model.string1
                 }, set: {
@@ -593,11 +606,8 @@ public struct DataStoreTestView: View {
                         model.lastSaved = .nowBackport
                         //                    model.save()
                     }
-                    guard let newValue = $0, newValue != "" else {
-                        model.moduleVersionsRun = []
-                        return
-                    }
-                    model.moduleVersionsRun = newValue.split(separator: ",").map { Version(stringLiteral: String($0).trimmed) }
+                    model.moduleVersionsRun = [Version](rawValue: $0 ?? "", required: Compatibility.version)
+                    // may change so update binding (if multiple 0 values, it won't update UI because technically the value isn't changing).
                 }))
                 Text("Last saved: \(model.lastSaved)")
 //                Button("Reset") {
@@ -605,8 +615,8 @@ public struct DataStoreTestView: View {
 //                }
                 HStack {
                     Text("iCloud:").opacity(0.5)
-                    Image(systemName: Compatibility.iCloudStatus.symbolName)
-                    Text("\(Compatibility.iCloudStatus)")
+                    Image(systemName: Application.iCloudStatus.symbolName)
+                    Text("\(Application.iCloudStatus)")
                 }
             }
         }

@@ -4,45 +4,53 @@
 //
 //  Created by Ben Ku on 7/30/24.
 //
-#if canImport(SwiftUI)
+#if canImport(SwiftUI) && canImport(Combine)
 import SwiftUI
 import Combine
 
 // https://fatbobman.com/en/posts/textfield-event-focus-keyboard/
 
 // TODO: Allow selection when tapping? https://stackoverflow.com/questions/67502138/select-all-text-in-textfield-upon-click-swiftui
-@available(iOS 14, macOS 12, tvOS 14, watchOS 9, *)
+@available(iOS 15, macOS 12, tvOS 15, watchOS 9, *)
 public struct ClearableTextField: View {
     @State var label: String
     @Binding var text: String?
     @State private var fieldText: String// = "initial" - including an initial value causes this not to work?  Perhaps using synthesized initializer instead?
+    // https://fatbobman.medium.com/advanced-swiftui-textfield-events-focus-keyboard-c99bc9f57c91
+    @FocusState var isFocused:Bool
     public init(label: String, text: Binding<String?>) {
         self.label = label
         _text = text
         fieldText = text.wrappedValue ?? ""
     }
+    func persistChanges() {
+        let originalValue = _text.wrappedValue
+        let newValue = fieldText
+        guard originalValue != newValue else {
+            // don't actually do anything if we just focus the field and nothing has changed
+            return
+        }
+        if newValue == "" {
+            text = nil
+        } else {
+            text = newValue
+        }
+    }
+    
     public var body: some View {
         HStack {
             TextField(label, text: $fieldText, onEditingChanged: {
                 focused in
                 // only set change when focus is lost and the value is changed, not while editing to prevent lots of noisy spam.  If we need to know as people are typing, we should install a hook here...
                 if !focused {
-                    let originalValue = _text.wrappedValue
-                    let newValue = fieldText
-                    guard originalValue != newValue else {
-                        // don't actually do anything if we just focus the field and nothing has changed
-                        return
-                    }
-                    if newValue == "" {
-                        text = nil
-                    } else {
-                        text = newValue
-                    }
+                    persistChanges()
                 }
             })
+            .focused($isFocused)
             if fieldText != "" {
                 Button {
                     fieldText = ""
+                    isFocused = true
                 } label: {
                     Group {
                         if #available(iOS 14, macOS 11, tvOS 14, watchOS 7, *) {

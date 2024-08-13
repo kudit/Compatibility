@@ -8,8 +8,10 @@
 #if canImport(SwiftUI) && canImport(Combine)
 import SwiftUI
 import Combine
+#endif
 
-@available(iOS 13, tvOS 13, watchOS 6, *) // TODO: Should this be moved into a static property so we don't pollute the global namespace?  Not applicable since private and only used in this file?
+// Static stored properites are not supported in generic types so we have to use a global var.
+@available(iOS 13, tvOS 13, watchOS 6, *)
 @MainActor
 private let sync = CloudStorageSync.shared
 
@@ -22,15 +24,18 @@ private let sync = CloudStorageSync.shared
         nonmutating set { object.value = newValue }
     }
 
+    #if canImport(SwiftUI)
     public var projectedValue: Binding<Value> {
         Binding { object.value } set: { object.value = $0 }
     }
+    #endif
 
     public init(keyName key: String, syncGet: @escaping () -> Value, syncSet: @escaping (Value) -> Void) {
         self.object = CloudStorageObject(key: key, syncGet: syncGet, syncSet: syncSet)
     }
 
 //    @MainActor // prevent publishing on background thread
+    #if canImport(Combine)
     public static subscript<OuterSelf: ObservableObject>(
         _enclosingInstance instance: OuterSelf,
         wrapped wrappedKeyPath: ReferenceWritableKeyPath<OuterSelf, Value>,
@@ -44,6 +49,7 @@ private let sync = CloudStorageSync.shared
             instance[keyPath: storageKeyPath].wrappedValue = newValue
         }
     }
+    #endif
 }
 
 @available(iOS 13, tvOS 13, watchOS 6, *)
@@ -234,5 +240,3 @@ extension CloudStorage where Value == Data? {
             syncSet: { newValue in sync.set(newValue, for: key) })
     }
 }
-
-#endif

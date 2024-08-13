@@ -6,7 +6,7 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
-Test including capabilities for compatibility in a project that doesn't have entitlements that doesn't use the user default
+v1.3.0 8/12/2024 Fixed Environment checks not being public.  Fixed so `ClearableTextField` will gain focus when pressing clear button (but now requires iOS 15).  Fixed so `CloudStorageSync` works in Playgrounds.  Added `Application` for Monetization.  Moved environment checks back to `Application` now that it's included.  Moved CloudStorageSync var to static func so it doesn't pollute the global namespace.  Reduced version requirement for propertywrapper so Application doesn't have to be completely marked and can fallback to UserDefaults for older OS versions.  Added backport compatibility for `@Published` (may not actually work for updating views however).
 
 v1.2.7 8/11/2024 Fixed a couple more data-race safety errors.  Made test closures sendable.
 
@@ -86,3 +86,5 @@ This is where proposals can be discussed for potential movement to the roadmap.
 - [ ] Protocol for a DataStore synced ObservableObject that will automatically add property wrappers for @DataStoreBacked to properties that aren't ignored? may be too difficult (add in a future path perhaps with macros to automatically synthesize code and coding keys etc??  Macros aren't easily able to be written like property wrappers, so this may not happen.)
 
 If get error TypeAlias is not available in Module.Module, convert to struct and seems to fix it.  Public top-level typealiases seem to cause issues. 
+
+Test including capabilities for compatibility in a project that doesn't have entitlements that doesn't use the user default

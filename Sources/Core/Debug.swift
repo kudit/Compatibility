@@ -66,7 +66,8 @@ public enum DebugLevel: Comparable, CustomStringConvertible, CaseIterable, Senda
     case SILENT
     /// Change this value in production to DebugLevvel.ERROR to minimize logging.
     // set default debugging level to .DEBUG (use manual controls to turn OFF if not debug during app tracking since previews do not have app tracking set up nor does it have compiler flags or app init.
-    public static let currentLevel: DebugLevel = Compatibility.isDebug ? .DEBUG : .WARNING
+    @available(iOS 13, tvOS 13, watchOS 6, *)
+    public static let currentLevel: DebugLevel = Application.isDebug ? .DEBUG : .WARNING
     
     /// Set to change the level of debug statments without a level parameter.
     public static let defaultLevel = DebugLevel.DEBUG // needs to be a let in order for this to be concurrency safe without restricting to @MainActor.  Fork the project and change if you must.  Using .DEBUG since, well, it is a `debug()` call...
@@ -131,7 +132,12 @@ public enum DebugLevel: Comparable, CustomStringConvertible, CaseIterable, Senda
     }
     /// use to detect if the current level is at least the level.  So if the current level is .NOTICE, .isAtLeast(.ERROR) = true but .isAtLeast(.DEBUG) = false.  Will typically be used like: if DebugLevel.isAtLeast(.DEBUG) to check for whether debugging output is on.
     public static func isAtLeast(_ level: DebugLevel) -> Bool {
-        return Self.currentLevel.isAtLeast(level)
+        if #available(iOS 13, tvOS 13, watchOS 6, *) {
+            return Self.currentLevel.isAtLeast(level)
+        } else {
+            // Fallback on earlier versions
+            return Self.DEBUG.isAtLeast(level)
+        }
     }
 }
 
