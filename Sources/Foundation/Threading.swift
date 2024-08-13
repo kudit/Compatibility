@@ -101,7 +101,7 @@ public extension Compatibility {
     /// Run potentially long-running code on a background thread.  Available as a fallback for earlier versions that don't support concurrency or for code that doesn't await (synchronous but possibly long-running)
     static func background(_ closure: @Sendable @escaping () -> Void) {
         if #available(iOS 13, tvOS 13, watchOS 6, *) {
-            let asyncFunc: () async -> Void = {
+            let asyncFunc: @Sendable () async -> Void = {
                 closure()
             }
             background {
@@ -169,12 +169,12 @@ internal let testBackground: TestClosure = {
 // MARK: - Main
 
 /// run code on the main thread
-public func main(_ closure: @MainActor @escaping () -> Void) {
+public func main(_ closure: @Sendable @MainActor @escaping () -> Void) {
     Compatibility.main(closure)
 }
 public extension Compatibility {
     /// run code on the main thread
-    static func main(_ closure: @MainActor @escaping () -> Void) {
+    static func main(_ closure: @Sendable @MainActor @escaping () -> Void) {
         if #available(iOS 13, tvOS 13, watchOS 6, *) {
             Task { @MainActor in
                 // finish up on main thread
@@ -182,7 +182,7 @@ public extension Compatibility {
             }
         } else {
             // Fallback on earlier versions
-            DispatchQueue.main.async {
+            DispatchQueue.main.async { @MainActor in
                 // finish up on main thread
                 closure()
             }
@@ -248,9 +248,9 @@ public extension Compatibility {
     /// run the block of code on the current thread after the `delay` (in seconds) have passed.  If this is before iOS 13, tvOS 13, and watchOS 6, will be run on the main thread rather than the same thread..
     static func delay(_ delay:Double, closure: @MainActor @escaping () -> Void) {
         if #available(iOS 13, tvOS 13, watchOS 6, *) {
-            Task {
+            Task { @MainActor in
                 await sleep(seconds: delay)
-                await closure()
+                closure()
             }
         } else {
             // Fallback on earlier versions

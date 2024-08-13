@@ -246,7 +246,7 @@ public struct Application: Sendable {
 }
 @available(iOS 13, tvOS 13, watchOS 6, *)
 extension Application: CustomStringConvertible {
-    public var description: String {
+    @preconcurrency public var description: String {
         var description = "\(name) (v\(version))"
         if isFirstRun {
             description += " **First Run!**"
