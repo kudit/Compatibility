@@ -192,7 +192,7 @@ public struct Application: CustomStringConvertible {
         }
         if #available(watchOS 9, *) {
             // persist back to cloud for other devices and future runs or re-installs (do with delay in case of launch issue where the crash happens at launch)
-            delay(0.5) {
+            delay(0.5) { @MainActor in
                 debug("Setting versions run to: \(allVersions.rawValue)", level: .DEBUG)
                 // setting Application.main so don't capture mutating self.
                 Application.main._cloudVersionsRun = allVersions.rawValue

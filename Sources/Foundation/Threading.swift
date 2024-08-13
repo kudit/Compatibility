@@ -217,6 +217,9 @@ delay(0.4) {
 public func delay(_ delay:Double, closure: @Sendable @escaping () -> Void) {
     Compatibility.delay(delay, closure: closure)
 }
+public func delay(_ delay:Double, closure: @MainActor @escaping () -> Void) {
+    Compatibility.delay(delay, closure: closure)
+}
 public extension Compatibility {
     /**
     Utility function to delay execution of code by a certain amount of seconds.
@@ -234,6 +237,20 @@ public extension Compatibility {
             Task {
                 await sleep(seconds: delay)
                 closure()
+            }
+        } else {
+            // Fallback on earlier versions
+            DispatchQueue.global().asyncAfter(
+                // delay below was previously: Double(Int64(delay * Double(NSEC_PER_SEC))) / Double(NSEC_PER_SEC)
+                deadline: DispatchTime.now() + delay, execute: closure)
+        }
+    }
+    /// run the block of code on the current thread after the `delay` (in seconds) have passed.  If this is before iOS 13, tvOS 13, and watchOS 6, will be run on the main thread rather than the same thread..
+    static func delay(_ delay:Double, closure: @MainActor @escaping () -> Void) {
+        if #available(iOS 13, tvOS 13, watchOS 6, *) {
+            Task {
+                await sleep(seconds: delay)
+                await closure()
             }
         } else {
             // Fallback on earlier versions
