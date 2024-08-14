@@ -1,6 +1,9 @@
 #if canImport(SwiftUI)
 import SwiftUI
 
+// Font-size reference:
+// https://www.iosfontsizes.com
+
 // MARK: - Padding and spacing
 
 @available(iOS 13, tvOS 13, watchOS 6, *)

@@ -8,7 +8,7 @@
 
 public enum Compatibility {
     /// The version of the Compatibility Library since cannot get directly from Package.swift.
-    public static let version: Version = "1.3.5"
+    public static let version: Version = "1.3.6"
 }
 
 public extension Compatibility { // for brief period where Application wasn't available
@@ -249,16 +249,22 @@ public struct CompatibilityEnvironmentTestView: View {
     public var body: some View {
         List {
             Section("Application") {
-                Text("Version \(Application.main.version)")
+                Text("App Version: \(Application.main.version)")
                 TestCheck("is first run", Application.main.isFirstRun)
-                Text("Previously run versions:")
-                Text("\(Application.main.previouslyRunVersions)")
+                let previousVersions = Application.main.previouslyRunVersions
+                if previousVersions.count > 0 {
+                    Text("Previously run versions:")
+                    Text("\(previousVersions.pretty)")
+                }
             }
             Section("Compatibility") {
-                Text("Version \(Compatibility.version)")
+                Text("Compatibility Version: \(Compatibility.version)")
                 TestCheck("is Debug", Application.isDebug)
-                Text("Previously run Compatibility versions:")
-                Text("\(previouslyRunCompatibilityVersions)")
+                if previouslyRunCompatibilityVersions != "" && previouslyRunCompatibilityVersions != "\(Compatibility.version.rawValue)" {
+                    Text("Previously run Compatibility versions:")
+                    Text("\(previouslyRunCompatibilityVersions)")
+                    Text("NOTE: This only updates if we're running the DataStore test view and is not guaranteed to be run any other time or from any other app.").font(.footnote).foregroundStyle(.gray)
+                }
             }
             Section("iCloud") {
                 TestCheck("Supported by app", Application.iCloudSupported)
@@ -266,7 +272,7 @@ public struct CompatibilityEnvironmentTestView: View {
                 HStack {
                     Text("iCloud status:")
                     Image(systemName: Application.iCloudStatus.symbolName)
-                    Text("\(Application.iCloudStatus)")
+                    Text("\(Application.iCloudStatus.description)")
                 }
             }
             Section("Environment") {

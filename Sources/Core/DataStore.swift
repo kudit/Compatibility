@@ -617,7 +617,7 @@ public struct DataStoreTestView: View {
                 HStack {
                     Text("iCloud:").opacity(0.5)
                     Image(systemName: Application.iCloudStatus.symbolName)
-                    Text("\(Application.iCloudStatus)")
+                    Text("\(Application.iCloudStatus.description)")
                 }
             }
         }

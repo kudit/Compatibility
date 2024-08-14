@@ -12,6 +12,8 @@ TODO: Fix pagination dots not using primary color depending on dark mode (always
 TODO: have content of tab view extend into safe area but the contents not completely ignore safe area.
 TODO: Add some shading at the bottom so the pagination dots show and make sure they are above the Kudit LLC to avoid the safe area.
 
+v1.3.6 8/14/2024 Specified `.description` for issues with Swift 5.9 not being able to interpolate.  Added more fault-tolerance to `Version` parsing by trimming any non-numeric characters.  Added pretty output of `[Version]` for display.  Changed `Application` to a `@MainActor class` and removed `CustomStringConvertible` conformance since realistically, we'll want the same instance not a copy.  Hopefully this will address the last of the data race and Swift 5.9 errors.
+
 v1.3.5 8/13/2024 Tweaked threading code to hopefully fix all data race errors.
 
 v1.3.4 8/13/2024 Fixed watchOS app testing (needed to add/remove keys in Info.plist and update Entitlements to be hard-coded not dynamic).  Added test for when iCloud not available to use `UserDefaults` store.  Changed `iCloudSupported` test to assume supported on devices since this works even when logged out.  Simplified initialization of `CloudStorageSync`.  Improved appearance and behavior of `ClearableTextField` for better experience on Apple Watch (wasn't working at all before).

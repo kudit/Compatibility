@@ -15,7 +15,8 @@ extension String {
 }
 
 @available(iOS 13, tvOS 13, watchOS 6, *)
-public struct Application: Sendable {
+@MainActor
+public class Application: ObservableObject { // cannot automatically conform to CustomStringConvertible since it's actor-isolated...
     @MainActor
     public static var baseDomain = "com.kudit"
     
@@ -128,7 +129,7 @@ public struct Application: Sendable {
     @MainActor
     public static func track(file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) {
         // Calling Application.main is what initializes the application and does the tracking.  This really should only be called once.  TODO: Should we check to make sure this isn't called twice??  Application.main singleton should only be inited once.
-        debug("Application Tracking:\n\(Application.main)", level: .NOTICE, file: file, function: function, line: line, column: column)
+        debug("Application Tracking:\n\(Application.main.description)", level: .NOTICE, file: file, function: function, line: line, column: column)
     }
     
     // MARK: - Application information
@@ -151,7 +152,7 @@ public struct Application: Sendable {
         // for testing, if this is KuditFrameworks, we should pull the unknown identifier FAQs
         let lastComponent = identifier.components(separatedBy: ".").last // should never really be nil
         if let lastComponent, identifier.contains("swift-playgrounds-dev-previews.swift-playgrounds-app") {
-            identifier = "\(Self.baseDomain).\(lastComponent)"
+            identifier = "\(Application.baseDomain).\(lastComponent)"
         }
         // TODO: expose this so other frameworks can check for test frameworks...
         if lastComponent == "KuditFramework" || identifier.contains("com.kudit.KuditFrameworksTest") {
@@ -243,10 +244,9 @@ public struct Application: Sendable {
     
     /// Vendor ID (may not be used anywhere since not very helpful)
 //    public var vendorID = UIDevice.current.identifierForVendor.UUIDString
-}
-@available(iOS 13, tvOS 13, watchOS 6, *)
-extension Application: CustomStringConvertible {
-    @preconcurrency public var description: String {
+
+    // Note that cannot do conformance to CustomStringConvertible since it requires isolation...
+    public var description: String {
         var description = "\(name) (v\(version))"
         if isFirstRun {
             description += " **First Run!**"
@@ -256,7 +256,7 @@ extension Application: CustomStringConvertible {
         }
         description += "\nIdentifier: \(Application.main.appIdentifier)"
         // so we can disable on simple apps and still do tracking without issues.
-        description += "\niCloud Status: \(Application.iCloudStatus)"
+        description += "\niCloud Status: \(Application.iCloudStatus.description)"
         description += "\nCompatibility Version: \(Compatibility.version)"
         return description
     }

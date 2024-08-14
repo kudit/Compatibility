@@ -75,8 +75,10 @@ extension Version: Encodable {
 
 extension Version: ExpressibleByStringLiteral, ExpressibleByStringInterpolation { // @retroactive in Swift 6?
     // For ExpressibleByStringLiteral conformance
+    /// Any non-numeric text will be ignored, so if you have something like `23b123` it will be converted to `23123`.
     public init(stringLiteral: String) {
-        let components = stringLiteral.components(separatedBy: ".")
+        let cleaned = stringLiteral.trimmingCharacters(in: CharacterSet(charactersIn: "0123456789.").inverted)
+        let components = cleaned.components(separatedBy: ".")
         let major = Int(components.first ?? "0") ?? 0
         let minor: Int = components.count > 1 ? Int(components[1]) ?? 0 : 0
         let patch: Int = components.count > 2 ? Int(components[2]) ?? 0 : 0
@@ -188,11 +190,18 @@ public extension [Version] {
 //    }
 }
 
+public extension [Version] {
+    /// Pretty output like "v0.0.0, v1.0.2, v3.4.2"
+    var pretty: String {
+        return self.map { "v\($0.rawValue)" }.joined(separator: ", ")
+    }
+}
+
 // The rawValue for an array of versions should be a comma-separated String, not an array of strings since this is easier to store
 extension [Version]: RawRepresentable {
     public init(rawValue: String) {
         // remove duplicates and convert invalid values to 0.0.0
-        let versions = Set(rawValue.split(separator: ",").map { Version(String($0).trimmed) })
+        let versions = Set(rawValue.split(separator: ",").map { Version(String($0)) })
         // order
         self = versions.sorted()
     }
