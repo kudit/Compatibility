@@ -6,12 +6,16 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
+TODO: Add isFirstRunOnDevice to differentiate from isFirstRun (across devices).
 Update tab view to use backport version that can extend content into safe area but still respects safe area for scrolling and clearing.
 TODO: Use this answer to create a FullPageTabView that will have the desired behavior and allow setting a color for the selected and deselected (defaults to .primary and .tertiary). Allow overriding symbol on each view by taking the tabItem view if present? https://stackoverflow.com/questions/78472655/swiftui-tabview-safe-area
 TODO: Fix pagination dots not using primary color depending on dark mode (always white).  Perhaps create custom tab view style that is pageTinted(Color).  Add to Compatibility and then update this stack: https://stackoverflow.com/questions/68143240/tabview-dot-index-color-does-not-change
 TODO: have content of tab view extend into safe area but the contents not completely ignore safe area.
 TODO: Add some shading at the bottom so the pagination dots show and make sure they are above the Kudit LLC to avoid the safe area.
 
+v1.3.7 8/16/2024 Added automatic mapping for `@CloudStorage` where value is a `RawRepresentable` type that is a Double.  Added instructions for automatic mapping to custom types.
+
+*PASSES ALL SWIFTPACKAGEINDEX TESTS*
 v1.3.6 8/14/2024 Specified `.description` for issues with Swift 5.9 not being able to interpolate.  Added more fault-tolerance to `Version` parsing by trimming any non-numeric characters.  Added pretty output of `[Version]` for display.  Changed `Application` to a `@MainActor class` and removed `CustomStringConvertible` conformance since realistically, we'll want the same instance not a copy.  Hopefully this will address the last of the data race and Swift 5.9 errors.
 
 v1.3.5 8/13/2024 Tweaked threading code to hopefully fix all data race errors.
@@ -99,6 +103,7 @@ Planned features and anticipated API changes.  If you want to contribute, this i
 
 ## Proposals:
 This is where proposals can be discussed for potential movement to the roadmap.
+- [ ] should we rename `background {}` to `Background {}` and `Main {}` and `Delay(#) {}` to match `Task {}`?
 - [ ] Debug: see if there's a way to add interpolation as a parameter to customize the output format.  Perhaps using a debug output formatter object that can be set?
 - [ ] Debug: allow setting a closure that will pre-process debug statements to allow for injection in debug statements?
 - [ ] Protocol for a DataStore synced ObservableObject that will automatically add property wrappers for @DataStoreBacked to properties that aren't ignored? may be too difficult (add in a future path perhaps with macros to automatically synthesize code and coding keys etc??  Macros aren't easily able to be written like property wrappers, so this may not happen.)

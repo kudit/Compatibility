@@ -13,6 +13,9 @@ struct MyApp: App {
             debug("First Run!")
         }
         debug("All versions run: \(Application.main.versionsRun)")
+        background {
+            debug("Run background task (for testing)")
+        }
     }
     var body: some Scene {
         WindowGroup {

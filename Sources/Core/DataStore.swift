@@ -450,6 +450,7 @@ class DataStoreTestModel: ObservableObject {
     @CloudStorage("string3") var string3 = "String 3 initial"
     @CloudStorage(.tokensAvailableKey)
     var tokensAvailable = 0
+    @CloudStorage("doubleTest") var doubleTest = CustomDoubleType.large
     // store as a single comma-separated String for simplicity
     @CloudStorage(.compatibilityVersionsRunKey) var moduleVersionsRunStorage: String?
     var moduleVersionsRun: [Version] {
@@ -550,6 +551,14 @@ class DataStoreTestModel: ObservableObject {
     }*/
 }
 
+enum CustomDoubleType: Double, RawRepresentable, Sendable {
+    case zero = 0.0
+    case negative = -1
+    case superneg = -2
+    case large = 100
+    case pi = 3.14
+}
+
 @available(iOS 15, macOS 12, tvOS 15, watchOS 9, *)
 @MainActor
 public struct DataStoreTestView: View {
@@ -596,6 +605,14 @@ public struct DataStoreTestView: View {
                 }, set: {
                     debug("bindingTokens set \($0 ?? "nil")")
                     model.tokensAvailable = Int($0 ?? "-2") ?? -1
+                    model.lastSaved = .nowBackport
+//                    model.save()
+                }))
+                ClearableTextField(label: "Label Double Test", text: Binding(get: {
+                    "\(model.doubleTest.rawValue)"
+                }, set: {
+                    debug("bindingDoubleTest set \($0 ?? "nil")")
+                    model.doubleTest = CustomDoubleType(rawValue: Double($0 ?? "-2") ?? -1) ?? .negative
                     model.lastSaved = .nowBackport
 //                    model.save()
                 }))

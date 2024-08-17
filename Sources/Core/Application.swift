@@ -23,7 +23,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
     /// will be true if we're in a debug configuration and false if we're building for release
     nonisolated // why is this necessary???
     public static let isDebug = _isDebugAssertConfiguration()
-    
+
     // MARK: - iCloud Support
     /// Use before tracking to disable iCloud checks to prevent crashes if we can't check for iCloud.
     @MainActor

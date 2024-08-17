@@ -95,6 +95,7 @@ internal class CloudStorageObject<Value>: ObservableObject {
     }
 
     deinit {
+        // TODO: May need to keep a local copy of self.keyObserver so we don't need to access self in the main closure?
         main { // removeObserver must be called on main and apparently deinit isn't called on main even in @MainActor isolated.
             sync.removeObserver(self.keyObserver)
         }
@@ -170,6 +171,18 @@ extension CloudStorage where Value: RawRepresentable, Value.RawValue == Int {
             syncSet: { newValue in sync.set(newValue.rawValue, for: key) })
     }
 }
+
+@available(iOS 13, tvOS 13, watchOS 6, *)
+extension CloudStorage where Value: RawRepresentable, Value.RawValue == Double {
+    public init(wrappedValue: Value, _ key: String) {
+        self.init(
+            keyName: key,
+            syncGet: { sync.double(for: key).flatMap(Value.init) ?? wrappedValue },
+            syncSet: { newValue in sync.set(newValue.rawValue, for: key) })
+    }
+}
+
+// TODO: Add JSON representable for RawRepresentable when type is Codable
 
 @available(iOS 13, tvOS 13, watchOS 6, *)
 extension CloudStorage where Value: RawRepresentable, Value.RawValue == String {
