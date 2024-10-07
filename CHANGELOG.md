@@ -6,13 +6,9 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
-TODO: Add isFirstRunOnDevice to differentiate from isFirstRun (across devices).
-Update tab view to use backport version that can extend content into safe area but still respects safe area for scrolling and clearing.
-TODO: Use this answer to create a FullPageTabView that will have the desired behavior and allow setting a color for the selected and deselected (defaults to .primary and .tertiary). Allow overriding symbol on each view by taking the tabItem view if present? https://stackoverflow.com/questions/78472655/swiftui-tabview-safe-area
-TODO: Fix pagination dots not using primary color depending on dark mode (always white).  Perhaps create custom tab view style that is pageTinted(Color).  Add to Compatibility and then update this stack: https://stackoverflow.com/questions/68143240/tabview-dot-index-color-does-not-change
-TODO: have content of tab view extend into safe area but the contents not completely ignore safe area.
-TODO: Add some shading at the bottom so the pagination dots show and make sure they are above the Kudit LLC to avoid the safe area.
+v1.3.8 10/7/2024 Fixed issue with Placard initializer being internal.  Has several issues with Swift 6 that can't be fixed until Swift Playgrounds is updated as the fixes are errors in Swift Playgrounds.  Added example Settings for macOS.
 
+*PASSES ALL SWIFTPACKAGEINDEX TESTS*
 v1.3.7 8/16/2024 Added automatic mapping for `@CloudStorage` where value is a `RawRepresentable` type that is a Double.  Added instructions for automatic mapping to custom types.
 
 *PASSES ALL SWIFTPACKAGEINDEX TESTS*
@@ -96,7 +92,14 @@ Known issues that need to be addressed.
 
 ## Roadmap:
 Planned features and anticipated API changes.  If you want to contribute, this is a great place to start.
+- [ ] Add isFirstRunOnDevice to differentiate from isFirstRun (across devices).
+- [ ] Update tab view to use backport version that can extend content into safe area but still respects safe area for scrolling and clearing (for Color test app).  Have content of tab view extend into safe area but the contents not completely ignore safe area.
+- [ ] Use this answer to create a FullPageTabView that will have the desired behavior and allow setting a color for the selected and deselected (defaults to .primary and .tertiary). Allow overriding symbol on each view by taking the tabItem view if present? https://stackoverflow.com/questions/78472655/swiftui-tabview-safe-area
+- [ ] Fix pagination dots not using primary color depending on dark mode (always white).  Perhaps create custom tab view style that is pageTinted(Color).  Add to Compatibility and then update this stack: https://stackoverflow.com/questions/68143240/tabview-dot-index-color-does-not-change
+- [ ] Add some shading at the bottom so the pagination dots show and make sure they are above the Kudit LLC to avoid the safe area.
+- [ ] Add .rotated(n) function on arrays for cycling things like the .rainbow array.
 - [ ] Add coding tests.
+- [ ] Add the new document view controller model for compatibility with iOS 17 and 18 (check Viewer code for reference)
 - [ ] Once Swift Testing is officially released, convert Testing functions to @Test functions and change expect function calls to #expect calls and remove custom debug statements.
 - [ ] Fix tvOS usage of controls within a page view (seems to only control pagination and not buttons inside)
 - [ ] Re-work page view on watchOS to use the vertical page view style or perhaps a navigation stack.  Color doesn't look great on watchOS.
@@ -107,6 +110,19 @@ This is where proposals can be discussed for potential movement to the roadmap.
 - [ ] Debug: see if there's a way to add interpolation as a parameter to customize the output format.  Perhaps using a debug output formatter object that can be set?
 - [ ] Debug: allow setting a closure that will pre-process debug statements to allow for injection in debug statements?
 - [ ] Protocol for a DataStore synced ObservableObject that will automatically add property wrappers for @DataStoreBacked to properties that aren't ignored? may be too difficult (add in a future path perhaps with macros to automatically synthesize code and coding keys etc??  Macros aren't easily able to be written like property wrappers, so this may not happen.)
+
+Add in layout backport:
+// TODO: #warning("Create wrapping HStack that can specify the min and max number of items per row and bases on available space/proposed space to determine whether to break up or not.  Have layout that does vertical if not enough horizontal space (can use to flow layout on Apple Watch and tight space vs wider iPad spaces)")
+// TODO: #warning("Create ViewThatFitsBackport that will use ViewThatFits in new version or will use Geometry readers to determine in older iOS < 16.  https://useyourloaf.com/blog/swiftui-view-that-fits/")
+Consider adding compatibility layout changes to address presentation on Apple Watch and small screens: https://github.com/sampettersson/Placement.
+
+
+## Reminders:
+Static class vars/lets are done lazily.
+
+```swift
+#warning("Can be used to create a compiler warning.")
+```
 
 If get error TypeAlias is not available in Module.Module, convert to struct and seems to fix it.  Public top-level typealiases seem to cause issues. 
 

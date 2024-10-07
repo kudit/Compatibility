@@ -10,6 +10,7 @@ import SwiftUI
 
 @available(iOS 13, tvOS 13, watchOS 6, *)
 public struct Placard: Shape {
+    public init() {} // necessary for creation like Circle()
     public func path(in rect: CGRect) -> Path {
         let baseline = CGFloat(0.5)
         let cornerRadius = 0.1 * rect.size.width

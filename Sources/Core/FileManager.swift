@@ -15,6 +15,7 @@ public extension FileManager {
     */
     // TODO: Where did this go?
 
+    /// TODO: Have this include properties and options?  This is really here just as a demonstration for how to use.
     func files(in directory: URL) throws -> [URL] {
         let files = try contentsOfDirectory(at: directory, includingPropertiesForKeys: [.nameKey], options: .skipsHiddenFiles) // do we need the nameKey??
         

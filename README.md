@@ -82,7 +82,7 @@ debug("Fatal error!  This will be output to console typically even in production
 ### Debug-only code:
 If you have a feature you want to only show in debugging, you can add the following:
 ```Swift
-if Compatibility.isDebug {
+if Application.isDebug {
     // execute test/debug-only code.  This will only run in DEBUG configurations and will be removed during RELEASE compilations.
 }
 ```
@@ -121,7 +121,7 @@ init() {
 ```
 
 ### Storing data to iCloud Key Value Store if available.
-This is super useful so we don't have to worry about whether the user has iCloud enabled or what happens if they log out.  The app should do the correct thing automatically and will use the last updated value per key to resolve conflicts.  If you need more fine-grained control, cache the value and monitor for changes to update the cached value.  If you use this, you will need to add an entitlement as this uses iCloud Key Value Store.  An example entitlement can be found at ```Compatibility.swiftpm/Development/Resources/Entitlements.entitlements```
+This is super useful so we don't have to worry about whether the user has iCloud enabled or what happens if they log out.  The app should do the correct thing automatically and will use the last updated value per key to resolve conflicts.  If you need more fine-grained control, cache the value and monitor for changes to update the cached value.  If you use this, you will need to add an entitlement as this uses iCloud Key Value Store.  An example entitlement for the sample app can be found at ```Compatibility.swiftpm/Development/Resources/Entitlements.entitlements```
 If you use a similar structure to the development Xcode project, you will want to set the `Code Signing Entitlements` build setting to `Resources/Entitlements.entitlements`.
 If you have a watchOS app, you may need to set the key manually vs pulling from the identifier so that the watchOS app and the iOS app use the same store: ex: ```$(TeamIdentifierPrefix)com.kudit.CompatibilityTest``` (note there is no period before the `com`)
 If you want it to automatically set and don't have a watchOS app, set the `iCloud Key-Value Store` entitlement entry to this: ```$(TeamIdentifierPrefix)$(CFBundleIdentifier)```

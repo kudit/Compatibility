@@ -21,6 +21,23 @@ struct MyApp: App {
         WindowGroup {
             CompatibilityDemoView()
         }
+
+        #if os(macOS)
+        Settings { // For settings/preferences screen within the app
+            TabView {
+                Group{
+                    //ContentsOf the preferences view
+                    Text("Test Settings")
+                }
+                .tabItem {
+                    Label("General", systemImage: "gearshape")
+                }
+            
+                
+            }
+            .frame(width: 500, height: 280)
+        }
+        #endif
     }
 }
 
