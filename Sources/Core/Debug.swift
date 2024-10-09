@@ -36,17 +36,22 @@ public func checkBreakpoint(level: DebugLevel) {
  - Parameter message: The message
   */
 // Formerly KuError but this seems more applicable and memorable and less specific.
-public enum CustomError: Error, Sendable, CustomStringConvertible {
+public enum CustomError: Error, Sendable {
     case custom(String)
-    public init(_ message: String, level: DebugLevel = .SILENT /* Do not warn by default.  Can't be DebugLevel.defaultLevel because that needs to be on the main thread */, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) {
-        debug(message, level: level, file: file, function: function, line: line, column: column)
-        self = .custom(message)
+    public init(_ message: String, level: DebugLevel = .SILENT /* Do not warn by default.  Can't be DebugLevel.defaultLevel because that needs to be on the main thread and this may not be. */, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) {
+        
+        self = .custom(message).debug(level: level, file: file, function: function, line: line, column: column)
     }
-    public var description: String {
+    public var localizedDescription: String {
         switch self {
         case .custom(let string):
             return string
         }
+    }
+}
+extension CustomError: LocalizedError {
+    public var errorDescription: String? {
+        localizedDescription
     }
 }
 
@@ -151,21 +156,7 @@ public func debugContext(isMainThread: Bool, file: String, function: String, lin
     return context
 }
 
-//DebugLevel.currentLevel = .ERROR
-/**
- Ku: Debug helper for printing info to screen including file and line info of call site.  Also can provide a log level for use in loggers or for globally turning on/off logging. (Modify DebugLevel.currentLevel to set level to output.  When launching app, probably can set this to DebugLevel.OFF
- 
- - Parameter message: The message to report.
- - Parameter level: The logging level to use.
- - Parameter file: For bubbling down the #file name from a call site.
- - Parameter function: For bubbling down the #function name from a call site.
- - Parameter line: For bubbling down the #line number from a call site.
- - Parameter column: For bubbling down the #column number from a call site. (Not used currently but here for completeness).
- */
-//@discardableResult
-public func debug(_ message: Any, level: DebugLevel? = nil, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) {
-    Compatibility.debug(message, level: level, file: file, function: function, line: line, column: column)
-}
+// MARK: - Debug
 public extension Compatibility {
     /**
      Ku: Debug helper for printing info to screen including file and line info of call site.  Also can provide a log level for use in loggers or for globally turning on/off logging. (Modify DebugLevel.currentLevel to set level to output.  When launching app, probably can set this to DebugLevel.OFF
@@ -195,5 +186,38 @@ public extension Compatibility {
         }
         print(debugMessage)
         return debugMessage
+    }
+}
+//DebugLevel.currentLevel = .ERROR
+/**
+ Ku: Debug helper for printing info to screen including file and line info of call site.  Also can provide a log level for use in loggers or for globally turning on/off logging. (Modify DebugLevel.currentLevel to set level to output.  When launching app, probably can set this to DebugLevel.OFF
+ 
+ - Parameter message: The message to report.
+ - Parameter level: The logging level to use.
+ - Parameter file: For bubbling down the #file name from a call site.
+ - Parameter function: For bubbling down the #function name from a call site.
+ - Parameter line: For bubbling down the #line number from a call site.
+ - Parameter column: For bubbling down the #column number from a call site. (Not used currently but here for completeness).
+ */
+//@discardableResult
+public func debug(_ message: Any, level: DebugLevel? = nil, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) {
+    Compatibility.debug(message, level: level, file: file, function: function, line: line, column: column)
+}
+
+// MARK: Debug(error)
+public extension Error {
+    /**
+     Outputs the error's localized description at the specified debug level and return.  Can append to errors to debug output at the throwing location rather than the caught location.
+     
+     - Parameter error: The error to throw.
+     - Parameter level: The logging level to use.
+     - Parameter file: For bubbling down the #file name from a call site.
+     - Parameter function: For bubbling down the #function name from a call site.
+     - Parameter line: For bubbling down the #line number from a call site.
+     - Parameter column: For bubbling down the #column number from a call site. (Not used currently but here for completeness).
+     */
+    func debug(level: DebugLevel? = nil, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) -> Self {
+        Compatibility.debug(self.localizedDescription, level: level, file: file, function: function, line: line, column: column)
+        return self
     }
 }

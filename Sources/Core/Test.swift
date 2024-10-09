@@ -71,7 +71,7 @@ public final class Test: ObservableObject {
                 }
             } catch {
                 main {
-                    self.progress = .fail("\(error)")
+                    self.progress = .fail("\(error.localizedDescription)")
                 }
             }
         }

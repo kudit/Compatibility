@@ -26,28 +26,54 @@ public extension PostData {
     }
 }
 
-public enum NetworkError: Error, CustomStringConvertible, Sendable {
+public enum NetworkError: Error, Sendable {
     // Throw when unable to parse a URL
     case urlParsing(urlString: String)
     
-    case postDataEncoding(_ data: PostData)
+    case postDataEncoding(_ postData: PostData)
     
+    /// Throw when there's a server error (with HTTP error code)
     // Invalid HTTP response (with response code)
     case invalidResponse(code: Int? = nil)
     
-    case nilResponse
+    /// Throw when the server data cannot be converted to a String
+    case dataError(_ data: Data)
     
-    public var description: String {
+    /// Missing a required network capability in the package or entitlement for the app.
+    case missingEntitlement
+        
+    public var localizedDescription: String {
         switch self {
         case .urlParsing(let urlString):
-            return "URL could not be created from \(urlString)"
-        case .postDataEncoding(let data):
-            return "Post Data could not be encoded from \(data)"
+            return "URL could not be parsed from \"\(urlString)\""
+        case .postDataEncoding(let postData):
+            return "Post Data could not be encoded from: \(String(describing: postData))"
         case .invalidResponse(let code):
-            return "Invalid Response (\(code != nil ? "\(code!)" : "No code")) received from the server"
-        case .nilResponse:
-            return "nil Data received from the server"
+            return "Invalid HTTP Response: (\(code != nil ? "\(code!)" : "No code")) received from the server"
+        case .dataError(let data):
+            return "Unable to parse string out of data: \(String(describing: data))"
+        case .missingEntitlement:
+            return """
+                DEVELOPER: Check your configuration!
+                If you're running from a playground, make sure you have the capability for `Network Connections (macOS) Outgoing` enabled.
+                You can also add the following to the Package.swift:
+                ```swift
+                    capabilities: [
+                        .outgoingNetworkConnections()
+                    ],
+                ```
+                If this is an app, add the following key to the Entitlements PLIST file:
+                ```xml
+                    <key>com.apple.security.network.client</key>
+                    <true/>
+                ```
+            """
         }
+    }
+}
+extension NetworkError: LocalizedError {
+    public var errorDescription: String? {
+        localizedDescription
     }
 }
 
@@ -70,17 +96,20 @@ public extension PostData {
     @MainActor
     internal static let testFetchGwinnettCheck: TestClosure = {
         let results = try await fetchURL(urlString: "https://www.GwinnettCounty.com")
+        debug("RESULTS: \(results)", level: .DEBUG)
         try expect(results.contains("Gwinnett"), results)
     }
     @MainActor
     internal static let testFetchGETCheck: TestClosure = {
         let query = TEST_DATA.queryString ?? "ERROR"
         let results = try await fetchURL(urlString: "https://plickle.com/pd.php?\(query)")
+        debug("RESULTS: \(results)", level: .DEBUG)
         try expect(results.contains("[name] => Jack & \"Jill\""), results)
     }
     @MainActor
     internal static let testFetchPOSTCheck: TestClosure = {
         let results = try await fetchURL(urlString: "https://plickle.com/pd.php", postData:TEST_DATA)
+        debug("RESULTS: \(results)", level: .DEBUG)
         try expect(results.contains("'name' => 'Jack & \\\"Jill\\\"',"), results)
     }
     @MainActor
@@ -116,15 +145,17 @@ extension URLRequest {
 extension Compatibility {
     /// Fetch data from URL including optional postData.  Will report included file information and automatically debug output to the logs.
     @available(iOS 13, tvOS 13, watchOS 6, *) // for concurrency
-    public static func fetchURL(urlString: String, postData: PostData? = nil, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) async throws -> String {
+    public static func fetchURLData(urlString: String, postData: PostData? = nil, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) async throws -> Data {
         debug("Fetching URL [\(urlString)]...", level: .NOTICE, file: file, function: function, line: line, column: column)
         // create the url with URL
         guard let url = URL(string: urlString) else {
-            throw NetworkError.urlParsing(urlString: urlString)
+            throw NetworkError.urlParsing(urlString: urlString).debug(level: .ERROR, file: file, function: function, line: line, column: column)
         }
         
         // now create the URLRequest object using the url object
         var request = URLRequest(url: url)
+        
+        // encode the postData if provided, otherwise set the method to GET.
         if let parameters = postData {
             request.httpMethod = "POST" //set http method as POST
             
@@ -132,32 +163,61 @@ extension Compatibility {
             
             //let parameters: [String: Any] = ["id": 13, "name": "jack"]
             guard let data = postData?.queryEncoded else {
-                throw NetworkError.postDataEncoding(parameters)
+                throw NetworkError.postDataEncoding(parameters).debug(level: .ERROR, file: file, function: function, line: line, column: column)
             }
             request.httpBody = data
         } else {
             request.httpMethod = "GET" //set http method as GET
         }
-        debug("FETCHING: \(request)", level: .DEBUG, file: file, function: function, line: line, column: column)
+        //debug("FETCHING: \(request)", level: .DEBUG, file: file, function: function, line: line, column: column)
         
         var data: Data
+        var response: URLResponse
         // create dataTask using the session object to send data to the server
-        if #available(iOS 15, watchOS 8, tvOS 15, *) {
-            (data, _) = try await URLSession.shared.data(for: request)
-        } else {
-            // Fallback on earlier versions
-            (data, _) = try await request.legacyData(for: URLSession.shared)
+        do {
+            if #available(iOS 15, watchOS 8, tvOS 15, *) {
+                (data, response) = try await URLSession.shared.data(for: request)
+            } else {
+                // Fallback on earlier versions
+                (data, response) = try await request.legacyData(for: URLSession.shared)
+            }
+        } catch {
+            if let error = error as? URLError, error.code.rawValue == -1003 {
+                throw NetworkError.missingEntitlement.debug(level: .ERROR, file: file, function: function, line: line, column: column)
+            } else {
+                throw error.debug(level: .ERROR, file: file, function: function, line: line, column: column)
+            }
         }
-        
+
         //debug("DEBUG RESPONSE DATA: \(data)")
-        
-        if let responseString = String(data: data, encoding: .utf8) {
-            //debug("DEBUG RESPONSE STRING: \(responseString)")
-            return responseString
-        } else {
-            throw NetworkError.invalidResponse()
+        // Check response status code exists (should nearly always pass)
+        guard let statusCode = (response as? HTTPURLResponse)?.statusCode else {
+            debug("No status code in HTTP response.  Possibly offline?: \(String(describing: response))", level: .ERROR)
+            throw NetworkError.invalidResponse().debug(level: .ERROR, file: file, function: function, line: line, column: column)
         }
+
+        // check status code (should always be 200)
+        guard statusCode == 200 else {
+            throw NetworkError.invalidResponse(code: statusCode).debug(level: .ERROR, file: file, function: function, line: line, column: column)
+        }
+        
+        return data
     }
+    /// Fetch a string from the provided URL.  If `postData` is provided, will use `POST` method instead of `GET`.
+    public static func fetchURL(urlString: String, postData: PostData? = nil, encoding: String.Encoding = .utf8, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) async throws -> String {
+        let data = try await fetchURLData(urlString: urlString, postData: postData, file: file, function: function, line: line, column: column)
+
+        // convert result data to string
+        guard let responseString = String(data: data, encoding: encoding) else {
+            throw NetworkError.dataError(data).debug(level: .ERROR, file: file, function: function, line: line, column: column)
+        }
+        //debug("Response String:\n\(responseString)", level: .SILENT) // this could be way too chatty if happens all the time.  Just debug at the calling site if needed.
+        return responseString
+    }
+}
+@available(iOS 13, tvOS 13, watchOS 6, *) // for concurrency
+public func fetchURLData(urlString: String, postData: PostData? = nil, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) async throws -> Data {
+    try await Compatibility.fetchURLData(urlString: urlString, postData: postData, file: file, function: function, line: line, column: column)
 }
 @available(iOS 13, tvOS 13, watchOS 6, *) // for concurrency
 public func fetchURL(urlString: String, postData: PostData? = nil, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) async throws -> String {
