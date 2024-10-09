@@ -6,6 +6,9 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
+v1.3.9 10/9/2024 Fixed so builds run from Playgrounds app returns the proper identifier for Kudit Connect.  Also noticed that the version number previously was not updated anywhere!
+
+*PASSES ALL SWIFTPACKAGEINDEX TESTS*
 v1.3.8 10/7/2024 Fixed issue with Placard initializer being internal.  Has several issues with Swift 6 that can't be fixed until Swift Playgrounds is updated as the fixes are errors in Swift Playgrounds.  Added example Settings for macOS.
 
 *PASSES ALL SWIFTPACKAGEINDEX TESTS*

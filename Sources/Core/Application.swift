@@ -148,13 +148,14 @@ public class Application: ObservableObject { // cannot automatically conform to 
             return .unknownAppIdentifier
         }
         // when running in preview, identifier may be: swift-playgrounds-dev-previews.swift-playgrounds-app.hdqfptjlmwifrrakcettacbhdkhn.501.KuditFramework
-        // convert to normal identifier (assumes com.kudit.lastcomponent
+        // when running from playgrounds, identifier may be: swift-playgrounds-dev-run.swift-playgrounds-app.hdqfptjlmwifrrakcettacbhdkhn.501.KuditFrameworksApp
+        // convert to normal identifier (assumes will be com.kudit.<lastcomponent>
         // for testing, if this is KuditFrameworks, we should pull the unknown identifier FAQs
         let lastComponent = identifier.components(separatedBy: ".").last // should never really be nil
-        if let lastComponent, identifier.contains("swift-playgrounds-dev-previews.swift-playgrounds-app") {
+        if let lastComponent, identifier.contains("swift-playgrounds-dev") {
             identifier = "\(Application.baseDomain).\(lastComponent)"
         }
-        // TODO: expose this so other frameworks can check for test frameworks...
+        // NEXT: expose this so other frameworks can check for test frameworks as this is KUDIT specific.  TODO: create a list that this can check to return unknown app identifier?
         if lastComponent == "KuditFramework" || identifier.contains("com.kudit.KuditFrameworksTest") {
             return .unknownAppIdentifier
         }
