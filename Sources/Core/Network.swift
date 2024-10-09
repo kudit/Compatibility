@@ -204,6 +204,7 @@ extension Compatibility {
         return data
     }
     /// Fetch a string from the provided URL.  If `postData` is provided, will use `POST` method instead of `GET`.
+    @available(iOS 13, tvOS 13, watchOS 6, *) // for concurrency
     public static func fetchURL(urlString: String, postData: PostData? = nil, encoding: String.Encoding = .utf8, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) async throws -> String {
         let data = try await fetchURLData(urlString: urlString, postData: postData, file: file, function: function, line: line, column: column)
 
