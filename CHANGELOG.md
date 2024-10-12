@@ -6,6 +6,9 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
+v1.3.12 10/12/2024 Added HTML entities conversion.
+
+*PASSES ALL SWIFTPACKAGEINDEX TESTS*
 v1.3.11 10/9/2024 Fixed missing availability check on `fetchURL`.
 
 v1.3.10 10/9/2024 Improved error checking to report missing entitlements for network connectivity.  Added `Data` return version of `fetchURL` that works similarly with the same error checking that is used under the hood by `fetchURL`.  Added ability to easily log an error at the throwing site rather than having to debug at the catching site.  Changed errors from having a description to having a localizedDescription to better conform to the error protocol.  Should still work for output.
