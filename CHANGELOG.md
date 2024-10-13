@@ -6,6 +6,9 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
+v1.3.13 10/13/2024 Fixed so HTML entities doesn't encode ASCII characters and orders ampersand encoding first so we don't end up with duplicate encodings of encodings.
+
+*PASSES ALL SWIFTPACKAGEINDEX TESTS*
 v1.3.12 10/12/2024 Added HTML entities conversion.
 
 *PASSES ALL SWIFTPACKAGEINDEX TESTS*
