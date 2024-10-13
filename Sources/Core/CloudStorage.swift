@@ -96,8 +96,9 @@ internal class CloudStorageObject<Value>: ObservableObject {
 
     deinit {
         // TODO: May need to keep a local copy of self.keyObserver so we don't need to access self in the main closure?
+        let observer = self.keyObserver
         main { // removeObserver must be called on main and apparently deinit isn't called on main even in @MainActor isolated.
-            sync.removeObserver(self.keyObserver)
+            sync.removeObserver(observer)
         }
     }
 }

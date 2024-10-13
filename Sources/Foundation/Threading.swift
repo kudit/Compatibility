@@ -132,12 +132,16 @@ public extension Compatibility {
             return await closure()
         }
         let result = await longRunningTask.result
+#if swift(>=6)
+        return result.get()
+#else
         do {
             return try result.get()
         } catch {
             debug("This shouldn't ever happen and is no longer a try in Swift 6!", level: .ERROR)
             return nil
         }
+#endif
     }
 }
 
