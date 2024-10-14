@@ -8,7 +8,7 @@
 
 public enum Compatibility {
     /// The version of the Compatibility Library since cannot get directly from Package.swift.
-    public static let version: Version = "1.3.14"
+    public static let version: Version = "1.3.15"
 }
 
 public extension Compatibility { // for brief period where Application wasn't available

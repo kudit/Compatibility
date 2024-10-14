@@ -6,6 +6,8 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
+v1.3.15 10/13/2024 Attempting to fix Linux issue by refactoring HTML entities to use a loop rather than a long concatenation.
+
 v1.3.14 10/13/2024 Attempting to fix Linux issue.  Possibly related to warnings since Swift 6?  We can't address those until Swift Playgrounds updates for Swift 6.  Tried a conditional compile but Xcode still sees as Swift 5.10 (but maybe this will fix enough for Linux?).
 
 *PASSES ALL SWIFTPACKAGEINDEX TESTS - except Linux!*

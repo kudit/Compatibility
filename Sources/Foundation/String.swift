@@ -109,75 +109,90 @@ public extension HTML {
     /// Encode a string using the typical HTML entities syntax according to https://www.w3.org/wiki/Common_HTML_entities_used_for_typography
     // TODO: Do we want to convert this to a map and for loop?
     var htmlEncoded: String {
-        self
-            .replacingOccurrences(of: "&", with: "&amp;")
-            .replacingOccurrences(of: "¢", with: "&cent;")
-            .replacingOccurrences(of: "£", with: "&pound;")
-            .replacingOccurrences(of: "§", with: "&sect;")
-            .replacingOccurrences(of: "©", with: "&copy;")
-            .replacingOccurrences(of: "«", with: "&laquo;")
-            .replacingOccurrences(of: "»", with: "&raquo;")
-            .replacingOccurrences(of: "®", with: "&reg;")
-            .replacingOccurrences(of: "°", with: "&deg;")
-            .replacingOccurrences(of: "±", with: "&plusmn;")
-            .replacingOccurrences(of: "¶", with: "&para;")
-            .replacingOccurrences(of: "·", with: "&middot;")
-            .replacingOccurrences(of: "½", with: "&frac12;")
-            .replacingOccurrences(of: "–", with: "&ndash;")
-            .replacingOccurrences(of: "—", with: "&mdash;")
-            .replacingOccurrences(of: "¹", with: "&sup1;")
-            .replacingOccurrences(of: "²", with: "&sup2;")
-            .replacingOccurrences(of: "³", with: "&sup3;")
-            .replacingOccurrences(of: "⁴", with: "&sup4;")
-            .replacingOccurrences(of: "⁵", with: "&sup5;")
-            .replacingOccurrences(of: "⁶", with: "&sup6;")
-            .replacingOccurrences(of: "⁷", with: "&sup7;")
-            .replacingOccurrences(of: "⁸", with: "&sup8;")
-            .replacingOccurrences(of: "⁹", with: "&sup9;")
-            .replacingOccurrences(of: "<", with: "&lt;")
-            .replacingOccurrences(of: ">", with: "&gt;")
-//            .replacingOccurrences(of: "#", with: "&hash;")
-//            .replacingOccurrences(of: "@", with: "&at;")
-//            .replacingOccurrences(of: "$", with: "&dollar;")
-//            .replacingOccurrences(of: "%", with: "&percent;")
-//            .replacingOccurrences(of: "*", with: "&ast;")
-//            .replacingOccurrences(of: "+", with: "&plus;")
-//            .replacingOccurrences(of: "-", with: "&minus;")
-//            .replacingOccurrences(of: ".", with: "&period;")
-//            .replacingOccurrences(of: ",", with: "&comma;")
-//            .replacingOccurrences(of: ":", with: "&colon;")
-//            .replacingOccurrences(of: ";", with: "&semicolon;")
-//            .replacingOccurrences(of: "=", with: "&equal;")
-//            .replacingOccurrences(of: "?", with: "&question;")
-//            .replacingOccurrences(of: "!", with: "&exclam;")
-//            .replacingOccurrences(of: "/", with: "&slash;")
-//            .replacingOccurrences(of: "(", with: "&lparen;")
-//            .replacingOccurrences(of: ")", with: "&rparen;")
-//            .replacingOccurrences(of: "{", with: "&lbrace;")
-            .replacingOccurrences(of: "‘", with: "&lsquo;")
-            .replacingOccurrences(of: "’", with: "&rsquo;")
-//            .replacingOccurrences(of: "'", with: "&apos;")
-            .replacingOccurrences(of: "‚", with: "&sbquo;")
-            .replacingOccurrences(of: "“", with: "&ldquo;")
-            .replacingOccurrences(of: "”", with: "&rdquo;")
-//            .replacingOccurrences(of: "\"", with: "&quot;")
-            .replacingOccurrences(of: "„", with: "&bdquo;")
-            .replacingOccurrences(of: "†", with: "&dagger;")
-            .replacingOccurrences(of: "‡", with: "&Dagger;")
-            .replacingOccurrences(of: "•", with: "&bull;")
-            .replacingOccurrences(of: "…", with: "&hellip;")
-            .replacingOccurrences(of: "′", with: "&prime;")
-            .replacingOccurrences(of: "″", with: "&Prime;")
-            .replacingOccurrences(of: "‹", with: "&lsaquo;")
-            .replacingOccurrences(of: "›", with: "&rsaquo;")
-            .replacingOccurrences(of: "€", with: "&euro;")
-            .replacingOccurrences(of: "™", with: "&trade;")
-            .replacingOccurrences(of: "≈", with: "&asymp;")
-            .replacingOccurrences(of: "≠", with: "&ne;")
-            .replacingOccurrences(of: "≤", with: "&le;")
-            .replacingOccurrences(of: "≥", with: "&ge;")
-//            .replacingOccurrences(of: "/", with: "&sol;")
-//            .replacingOccurrences(of: "\\", with: "&bsol;")
+        let entities = [
+            "&": "&amp;",
+            "¢": "&cent;",
+            "£": "&pound;",
+            "§": "&sect;",
+            "©": "&copy;",
+            "«": "&laquo;",
+            "»": "&raquo;",
+            "®": "&reg;",
+            "°": "&deg;",
+            "±": "&plusmn;",
+            "¶": "&para;",
+            "·": "&middot;",
+            "µ": "&micro;",
+            "½": "&frac12;",
+            "¼": "&frac14;",
+            "¾": "&frac34;",
+            "–": "&ndash;",
+            "—": "&mdash;",
+            "¹": "&sup1;",
+            "²": "&sup2;",
+            "³": "&sup3;",
+            "⁴": "&sup4;",
+            "⁵": "&sup5;",
+            "⁶": "&sup6;",
+            "⁷": "&sup7;",
+            "⁸": "&sup8;",
+            "⁹": "&sup9;",
+            "<": "&lt;",
+            ">": "&gt;",
+            "‘": "&lsquo;",
+            "’": "&rsquo;",
+            "‚": "&sbquo;",
+            "“": "&ldquo;",
+            "”": "&rdquo;",
+            "„": "&bdquo;",
+            "†": "&dagger;",
+            "‡": "&Dagger;",
+            "•": "&bull;",
+            "…": "&hellip;",
+            "′": "&prime;",
+            "″": "&Prime;",
+            "‹": "&lsaquo;",
+            "›": "&rsaquo;",
+            "€": "&euro;",
+            "™": "&trade;",
+            "≈": "&asymp;",
+            "≠": "&ne;",
+            "≤": "&le;",
+            "≥": "&ge;",
+            "÷": "&divide;",
+            "√": "&radic;",
+            "∞": "&infin;",
+            "∫": "&int;",
+            "×": "&times;",
+            //            .replacingOccurrences(of: "/", with: "&sol;")
+            //            .replacingOccurrences(of: "\\", with: "&bsol;")
+            //            .replacingOccurrences(of: "'", with: "&apos;")
+            //            .replacingOccurrences(of: "\"", with: "&quot;")
+            //            .replacingOccurrences(of: "#", with: "&hash;")
+            //            .replacingOccurrences(of: "@", with: "&at;")
+            //            .replacingOccurrences(of: "$", with: "&dollar;")
+            //            .replacingOccurrences(of: "%", with: "&percent;")
+            //            .replacingOccurrences(of: "*", with: "&ast;")
+            //            .replacingOccurrences(of: "+", with: "&plus;")
+            //            .replacingOccurrences(of: "-", with: "&minus;")
+            //            .replacingOccurrences(of: ".", with: "&period;")
+            //            .replacingOccurrences(of: ",", with: "&comma;")
+            //            .replacingOccurrences(of: ":", with: "&colon;")
+            //            .replacingOccurrences(of: ";", with: "&semicolon;")
+            //            .replacingOccurrences(of: "=", with: "&equal;")
+            //            .replacingOccurrences(of: "?", with: "&question;")
+            //            .replacingOccurrences(of: "!", with: "&exclam;")
+            //            .replacingOccurrences(of: "/", with: "&slash;")
+            //            .replacingOccurrences(of: "(", with: "&lparen;")
+            //            .replacingOccurrences(of: ")", with: "&rparen;")
+            //            .replacingOccurrences(of: "{", with: "&lbrace;")
+            // accented characters we're going to not replace.
+        ]
+        var encodedString = self
+        for (symbol, entity) in entities {
+            encodedString = encodedString.replacingOccurrences(of: symbol, with: entity)
+        }
+        return encodedString
     }
 
     internal static let testHTML = """
