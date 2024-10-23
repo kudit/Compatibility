@@ -21,6 +21,7 @@ import Glibc
 
 public extension String {
     static let mysqlDateTimeFormat = "yyyy-MM-dd HH:mm:ss"
+    static let numericDateFormat = "yyyyMMddHHmmss"
 }
 
 #if canImport(Combine) // not available in Linux
@@ -140,6 +141,11 @@ public extension Date {
     @MainActor
     internal static let testMysql: TestClosure = {
         try expect(String.mysqlDateTimeFormat == "yyyy-MM-dd HH:mm:ss", String.mysqlDateTimeFormat)
+    }
+    
+    /// a flat date and time format for use in file names or build numbers
+    var numericDateTime: String {
+        self.formatted(withFormat: .numericDateFormat)
     }
     
     var pretty: String {

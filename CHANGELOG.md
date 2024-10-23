@@ -6,6 +6,9 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
+v1.3.16 10/23/2024 Updated Compatibility version key to include SF Symbol versions.  Added `debugVersion` string to `Application` so can add debug flag if compiled for debug and don't have to use version.rawValue to use in string interpolation.  Added `numericFormat` as another `Date` format and `numericDateTime` as a quick value.  Added `buildNumber` and `buildDate` features to `Bundle`.  Extracted `Bundle` extension to it's own file.
+
+*PASSES ALL SWIFTPACKAGEINDEX TESTS*
 v1.3.15 10/13/2024 Attempting to fix Linux issue by refactoring HTML entities to use a loop rather than a long concatenation.
 
 v1.3.14 10/13/2024 Attempting to fix Linux issue.  Possibly related to warnings since Swift 6?  We can't address those until Swift Playgrounds updates for Swift 6.  Tried a conditional compile but Xcode still sees as Swift 5.10 (but maybe this will fix enough for Linux?).
@@ -110,6 +113,7 @@ Known issues that need to be addressed.
 
 ## Roadmap:
 Planned features and anticipated API changes.  If you want to contribute, this is a great place to start.
+- [ ] Add option to pad function to allow padding on left and use this in function for prefixing with a number of 0s.  Left padding function: https://stackoverflow.com/questions/32338137/padding-a-swift-string-for-printing
 - [ ] Add isFirstRunOnDevice to differentiate from isFirstRun (across devices).
 - [ ] Update tab view to use backport version that can extend content into safe area but still respects safe area for scrolling and clearing (for Color test app).  Have content of tab view extend into safe area but the contents not completely ignore safe area.
 - [ ] Use this answer to create a FullPageTabView that will have the desired behavior and allow setting a color for the selected and deselected (defaults to .primary and .tertiary). Allow overriding symbol on each view by taking the tabItem view if present? https://stackoverflow.com/questions/78472655/swiftui-tabview-safe-area

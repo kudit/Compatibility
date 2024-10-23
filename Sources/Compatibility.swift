@@ -8,7 +8,7 @@
 
 public enum Compatibility {
     /// The version of the Compatibility Library since cannot get directly from Package.swift.
-    public static let version: Version = "1.3.15"
+    public static let version: Version = "1.3.16"
 }
 
 public extension Compatibility { // for brief period where Application wasn't available
@@ -155,6 +155,7 @@ public extension Compatibility { // for brief period where Application wasn't av
      tvOS 13+
      watchOS 6+
      visionOS 1.0+
+     SF Symbols 1.0
 
  2020
  canImport(AppleArchive)
@@ -165,7 +166,8 @@ public extension Compatibility { // for brief period where Application wasn't av
      tvOS 14+
      watchOS 7+
      visionOS 1.0+
- 
+     SF Symbols 2.0
+
  2021
  canImport(GroupActivities)
      iOS 15+ (last supported by iPhone 7)
@@ -175,7 +177,8 @@ public extension Compatibility { // for brief period where Application wasn't av
      tvOS 15+
     NOTE: NO WATCH OS SUPPORT (watchOS 8 is the last supported by Series 3)
      visionOS 1.0+
- 
+     SF Symbols 3.0
+
  2022 Swift 5.7 (September)
  canImport(Charts) canImport(AppIntents)
      iOS 16+
@@ -185,6 +188,7 @@ public extension Compatibility { // for brief period where Application wasn't av
      tvOS 16+
      watchOS 9+
      visionOS 1.0+
+     SF Symbols 4.0
 
  2023 Swift 5.8 (March), Swift 5.9 (September) (added #Preview syntax)
  canImport(SwiftData)
@@ -195,6 +199,7 @@ public extension Compatibility { // for brief period where Application wasn't av
      tvOS 17+
      watchOS 10+
      visionOS 1.0+
+     SF Symbols 5.0
 
 2024 Swift 5.10 (March), Swift 6 (September)
 canImport(Testing)
@@ -205,7 +210,8 @@ canImport(Testing)
     tvOS 18+
     watchOS 11+
     visionOS 2+
- 
+    SF Symbols 6.0
+
  */
 
 // This has been a godsend! https://davedelong.com/blog/2021/10/09/simplifying-backwards-compatibility-in-swift/
@@ -249,7 +255,7 @@ public struct CompatibilityEnvironmentTestView: View {
     public var body: some View {
         List {
             Section("Application") {
-                Text("App Version: \(Application.main.version)")
+                Text("App Version: \(Application.main.debugVersion)")
                 TestCheck("is first run", Application.main.isFirstRun)
                 let previousVersions = Application.main.previouslyRunVersions
                 if previousVersions.count > 0 {
