@@ -5,18 +5,19 @@ public enum DataStoreType: Sendable {
     case local
     case iCloud // shared will return local if watchOS < 9
     
+    @MainActor
     public var shared: DataStore {
 #if canImport(CoreML) // not available in Linux so skip
         if #available(watchOS 9, *) {
             // xcode previews indicate icloud is not available and thus will default to UserDefaults.  Playgrounds will indicate iCloud availability but values don't seem to persist.
-            if self == .iCloud && !Application.isPlayground && !Application.isPreview {
+            if self == .iCloud && !Application.isPlayground && !Application.isPreview && Application.iCloudIsEnabled {
                 debug("Using ubiquitous store")
                 return NSUbiquitousKeyValueStore.default
             } // if not, just use local.  Technically this case shouldn't even be available on unsupported devices
         }
 #endif
         if self != .local {
-            debug("Using local store because watchOS <9, isPlayground, isPreview, or Linux.")
+            debug("Using local store because watchOS <9, isPlayground, isPreview, Linux, or iCloud not enabled.")
         }
         return UserDefaults.standard
     }
@@ -92,6 +93,7 @@ extension DataStore {
         return isLocal ? "Local" : "iCloud" + " data store"
     }
     @available(iOS 13, tvOS 13, watchOS 6, *)
+    @MainActor
     public static func shared(for type: DataStoreType) -> DataStore {
         return type.shared
     }
@@ -484,6 +486,16 @@ class DataStoreTestModel: ObservableObject {
     @MainActor
     init() {
         // do once!
+        
+        // migrate local values to cloud values for testing.  This won't automatically happen with cloud storage so must do manually if this is what we want.
+        
+        if let existingString1 = UserDefaults.standard.object(forKey: .string1Key) as? String, !string1.contains(existingString1) { // legacy support
+            debug("Migrating local string1: \(existingString1) to cloud string1: \(string1)", level: .NOTICE)
+            string1 = "\(existingString1),\(string1)"
+            // zero out local version so we don't repeat
+            UserDefaults.standard.removeObject(forKey: .string1Key)
+        }
+        
 /*        if Self.dataStore == nil {
             let observer = DataStoreObserver(migrateLocal: {
                 store in

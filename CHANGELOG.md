@@ -6,6 +6,9 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
+v1.4.0 11/4/2024 Fixed some preview issues with legacy deprecated compatibility code.  Added `scrollContentBackground` backport.  Added `safeAreaPadding` backport.  Added `disableSmartQuotes` view modifier.  Can simulate @CloudStorage acting like UserDefaults by setting `Application.iCloudSupported = false`.  Removed cloud monitoring notifications when using UserDefaults.  Added `.precision(significantFigures)` output for Doubles.
+
+*PASSES ALL SWIFTPACKAGEINDEX TESTS*
 v1.3.16 10/23/2024 Updated Compatibility version key to include SF Symbol versions.  Added `debugVersion` string to `Application` so can add debug flag if compiled for debug and don't have to use version.rawValue to use in string interpolation.  Added `numericFormat` as another `Date` format and `numericDateTime` as a quick value.  Added `buildNumber` and `buildDate` features to `Bundle`.  Extracted `Bundle` extension to it's own file.
 
 *PASSES ALL SWIFTPACKAGEINDEX TESTS*

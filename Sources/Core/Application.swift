@@ -21,17 +21,23 @@ public class Application: ObservableObject { // cannot automatically conform to 
     public static var baseDomain = "com.kudit"
     
     /// will be true if we're in a debug configuration and false if we're building for release
-    nonisolated // why is this necessary???
+    nonisolated // Not @MainActor
     public static let isDebug = _isDebugAssertConfiguration()
 
     // MARK: - iCloud Support
-    /// Use before tracking to disable iCloud checks to prevent crashes if we can't check for iCloud.
+    /// Use before tracking to disable iCloud checks to prevent crashes if we can't check for iCloud or for simulating behavior without iCloud support for CloudStorage.
     @MainActor
     public static var iCloudSupported = true
     
+    /// Returns the ubiquityIdentityToken if iCloud is available and nil otherwise.  Can be used to check for iCloud outside of MainActor.
+    nonisolated // Not @MainActor
+    public static var iCloudToken: (any NSCoding & NSCopying & NSObjectProtocol)? {
+        return FileManager.default.ubiquityIdentityToken
+    }
+    
     @MainActor
     public static var iCloudIsEnabled: Bool {
-        guard Self.iCloudSupported else {
+        guard iCloudSupported else {
             debug("iCloud is not supported by this app.", level: .DEBUG)
             return false
         }
@@ -41,7 +47,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
         }
         #if !os(watchOS)
         // CloudKit clients should not use this token as a way to identify whether the iCloud account is logged in. Instead, use accountStatus(completionHandler:) or fetchUserRecordID(completionHandler:).
-        guard let token = FileManager.default.ubiquityIdentityToken else {
+        guard let token = iCloudToken else {
             debug("iCloud not available", level: .DEBUG)
             return false
         }
@@ -66,7 +72,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
     
     // MARK: - Environmental info
     /// Returns `true` if running on the simulator vs actual device.
-    nonisolated // why is this necessary???
+    nonisolated // Not @MainActor
     public static var isSimulator: Bool {
 #if targetEnvironment(simulator)
         // your simulator code
@@ -83,8 +89,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
     // In iPad Playgrounds Running: swift-playgrounds-dev-run.swift-playgrounds-app.agxhnwfqkxciovauscbmuhqswxkm.501.KuditFrameworksApp
     // warning: {"message":"This code path does I/O on the main thread underneath that can lead to UI responsiveness issues. Consider ways to optimize this code path","antipattern trigger":"+[NSBundle allBundles]","message type":"suppressable","show in console":"0"}
     /// Returns `true` if running in Swift Playgrounds.
-//    nonisolated // why is this necessary???
-    nonisolated // why is this necessary???
+    nonisolated // Not @MainActor
     public static var isPlayground: Bool {
         //print("Testing inPlayground: Bundles", Bundle.allBundles.map { $0.bundleIdentifier }.description)")
         if Bundle.allBundles.contains(where: { ($0.bundleIdentifier ?? "").contains("swift-playgrounds") }) {
@@ -97,19 +102,19 @@ public class Application: ObservableObject { // cannot automatically conform to 
     }
     
     /// Returns `true` if running in an XCode or Swift Playgrounds #Preview macro.
-    nonisolated // why is this necessary???
+    nonisolated // Not @MainActor
     public static var isPreview: Bool {
         ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
     }
     
     /// Returns `true` if NOT running in preview, playground, or simulator.
-    nonisolated // why is this necessary???
+    nonisolated // Not @MainActor
     public static var isRealDevice: Bool {
         return !isPreview && !isPlayground && !isSimulator
     }
     
     /// Returns `true` if is macCatalyst app on macOS
-    nonisolated // why is this necessary???
+    nonisolated // Not @MainActor
     public static var isMacCatalyst: Bool {
 #if targetEnvironment(macCatalyst)
         return true

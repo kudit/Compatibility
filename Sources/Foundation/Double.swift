@@ -33,4 +33,10 @@ public extension Double {
         formatter.maximumFractionDigits = 16 //maximum digits in Double after dot (maximum precision)
         return String(formatter.string(from: number) ?? "")
     }
+    
+    /// Rounds decimals to the specified number of places.
+    func precision(_ places: Int) -> Double {
+        let divisor = pow(10.0, Double(places))
+        return (self * divisor).rounded() / divisor
+    }
 }

@@ -1,4 +1,4 @@
-// This has been a godsend! https://davedelong.com/blog/2021/10/09/simplifying-backwards-compatibility-in-swift/
+// This has been a godsend!  Backport instructions https://davedelong.com/blog/2021/10/09/simplifying-backwards-compatibility-in-swift/
 
 #if canImport(SwiftUI)
 import SwiftUI
@@ -250,6 +250,113 @@ public extension Backport where Content: View {
             }
         }
     }
+    
+    enum Visibility : Hashable, CaseIterable {
+
+        /// The element may be visible or hidden depending on the policies of the
+        /// component accepting the visibility configuration.
+        ///
+        /// For example, some components employ different automatic behavior
+        /// depending on factors including the platform, the surrounding container,
+        /// user settings, etc.
+        case automatic
+
+        /// The element may be visible.
+        ///
+        /// Some APIs may use this value to represent a hint or preference, rather
+        /// than a mandatory assertion. For example, setting list row separator
+        /// visibility to `visible` using the
+        /// ``View/listRowSeparator(_:edges:)`` modifier may not always
+        /// result in any visible separators, especially for list styles that do not
+        /// include separators as part of their design.
+        case visible
+
+        /// The element may be hidden.
+        ///
+        /// Some APIs may use this value to represent a hint or preference, rather
+        /// than a mandatory assertion. For example, setting confirmation dialog
+        /// title visibility to `hidden` using the
+        /// ``View/confirmationDialog(_:isPresented:titleVisibility:actions:)``
+        /// modifier may not always hide the dialog title, which is required on
+        /// some platforms.
+        case hidden
+
+        @available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
+        var swiftuiValue: SwiftUI.Visibility {
+            switch self {
+            case .automatic: return .automatic
+            case .visible: return .visible
+            case .hidden: return .hidden
+            }
+        }
+    }
+
+    /// Specifies the visibility of the background for scrollable views within
+    /// this view.
+    ///
+    /// The following example hides the standard system background of the List.
+    ///
+    ///     List {
+    ///         Text("One")
+    ///         Text("Two")
+    ///         Text("Three")
+    ///     }
+    ///     .scrollContentBackground(.hidden)
+    ///
+    /// On macOS 15.0 and later, the visibility of the scroll background helps
+    /// achieve the seamless window/titlebar appearance for scroll views that
+    /// fill the window's content view, or a pane's full width and height.
+    /// `List` and `Form` have the seamless appearance by default, configurable
+    /// by hiding the scroll background. `ScrollView` can become seamless by
+    /// making the background visible.
+    ///
+    /// - Parameters:
+    ///    - visibility: the visibility to use for the background.
+    nonisolated func scrollContentBackground(_ visibility: Visibility) -> some View {
+#if os(tvOS)
+        content // this is specifically unavailable on tvOS
+#else
+        Group {
+            if #available(iOS 16, macOS 13, watchOS 9, *) {
+                content.scrollContentBackground(visibility.swiftuiValue)
+            } else {
+                // Fallback on earlier versions
+                content // ignore
+            }
+        }
+#endif
+    }
+    
+    
+    /// Adds the provided insets into the safe area of this view.
+    ///
+    /// Use this modifier when you would like to add a fixed amount
+    /// of space to the safe area a view sees.
+    ///
+    ///     ScrollView(.horizontal) {
+    ///         HStack(spacing: 10.0) {
+    ///             ForEach(items) { item in
+    ///                 ItemView(item)
+    ///             }
+    ///         }
+    ///     }
+    ///     .safeAreaPadding(.horizontal, 20.0)
+    ///
+    /// See the ``View/safeAreaInset(edge:alignment:spacing:content)``
+    /// modifier for adding to the safe area based on the size of a
+    /// view.
+    func safeAreaPadding(_ edges: Edge.Set = .all, _ length: CGFloat? = nil) -> some View {
+        Group {
+            if #available(iOS 17, macOS 14, tvOS 17, watchOS 10, *) {
+                content.safeAreaPadding(edges, length)
+            } else {
+                // Fallback on earlier versions
+                content // ignore
+            }
+        }
+    }
+
+    
     
     /// Configures the ``fileExporter``, ``fileImporter``, or ``fileMover`` to
     /// open with the specified default directory.
@@ -595,6 +702,16 @@ public extension Backport where Content: View {
     }
 }
 
+// https://stackoverflow.com/questions/78472655/swiftui-tabview-safe-area
+// Apparently this doesn't work easily.  May need to custom develop a PageView.
+@available(iOS 13, tvOS 13, watchOS 6, *)
+#Preview("Page Backgrounds") {
+    TabView {
+        Color.red
+        Color.green
+        Color.blue
+    }.backport.tabViewStyle(.page)
+}
 //
 //
 //#if os(macOS) && !targetEnvironment(macCatalyst)

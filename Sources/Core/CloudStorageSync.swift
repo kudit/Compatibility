@@ -15,7 +15,7 @@ import UIKit
 @available(iOS 13, tvOS 13, watchOS 6, *)
 @MainActor
 public class CloudStorageSync: ObservableObject {
-//    @MainActor
+    @MainActor
     public static let shared = CloudStorageSync()
 
     private let ubiquitousKvs: DataStore
@@ -30,22 +30,25 @@ public class CloudStorageSync: ObservableObject {
         ubiquitousKvs = DataStoreType.iCloud.shared // NSUbiquitousKeyValueStore.default or UserDefaults if preview, playgrounds, linux, or watchOS < 9
         status = Status(date: Date(), source: .initial, keys: [])
 
+        if !ubiquitousKvs.isLocal {
 #if canImport(Combine)
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(didChangeExternally(notification:)),
-            name: type(of: ubiquitousKvs).notificationName, // NSUbiquitousKeyValueStore.didChangeExternallyNotification,
-            object: nil)
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(didChangeExternally(notification:)),
+                name: type(of: ubiquitousKvs).notificationName, // NSUbiquitousKeyValueStore.didChangeExternallyNotification,
+                object: nil)
 #endif
-        ubiquitousKvs.synchronize()
-                
+            ubiquitousKvs.synchronize()
+            
 #if canImport(UIKit) && !os(watchOS)
-        NotificationCenter.default.addObserver(
-            ubiquitousKvs,
-            selector: #selector(NSUbiquitousKeyValueStore.synchronize),
-            name: UIApplication.willEnterForegroundNotification,
-            object: nil)
+            NotificationCenter.default.addObserver(
+                ubiquitousKvs,
+                selector: #selector(NSUbiquitousKeyValueStore.synchronize),
+                name: UIApplication.willEnterForegroundNotification,
+                object: nil)
 #endif
+            
+        }
     }
 
     #if canImport(Combine)

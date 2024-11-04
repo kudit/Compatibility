@@ -39,6 +39,18 @@ public extension View {
         }
     }
 }
+
+@available(iOS 13, tvOS 13, watchOS 6, *)
+public extension View {
+    func disableSmartQuotes() -> some View {
+#if canImport(UIKit) && !os(watchOS)
+        self.keyboardType(.asciiCapable) // prevent converting quotes to "smart" quotes which breaks parsing.
+#else
+        self
+#endif
+    }
+}
+
 @available(iOS 13, tvOS 13, watchOS 6, *)
 public extension View {
     /// Applies the given transform.  If using a branching call, both views must be the identical type or use `AnyView(erasing: VIEWCODE)` or a `Group { }` wrapper..

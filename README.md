@@ -121,7 +121,7 @@ init() {
 ```
 
 ### Storing data to iCloud Key Value Store if available.
-This is super useful so we don't have to worry about whether the user has iCloud enabled or what happens if they log out.  The app should do the correct thing automatically and will use the last updated value per key to resolve conflicts.  If you need more fine-grained control, cache the value and monitor for changes to update the cached value.  If you use this, you will need to add an entitlement as this uses iCloud Key Value Store.  An example entitlement for the sample app can be found at ```Compatibility.swiftpm/Development/Resources/Entitlements.entitlements```
+This is super useful so we don't have to worry about whether the user has iCloud enabled or what happens if they log out.  However, this will use either iCloud or UserDefaults.  It will not attempt to merge or migrate data between the two when switching.  Note that even if you don't use iCloud, you will need to include the entitlements file or this will try to use iCloud storage but fail to save if the user is logged in to iCloud.  The app should do the correct thing automatically and will use the last updated value per key to resolve conflicts.  If you need more fine-grained control, cache the value and monitor for changes to update the cached value.  If you use this, you will need to add an entitlement as this uses iCloud Key Value Store.  An example entitlement for the sample app can be found at ```Compatibility.swiftpm/Development/Resources/Entitlements.entitlements```
 If you use a similar structure to the development Xcode project, you will want to set the `Code Signing Entitlements` build setting to `Resources/Entitlements.entitlements`.
 If you have a watchOS app, you may need to set the key manually vs pulling from the identifier so that the watchOS app and the iOS app use the same store: ex: ```$(TeamIdentifierPrefix)com.kudit.CompatibilityTest``` (note there is no period before the `com`)
 If you want it to automatically set and don't have a watchOS app, set the `iCloud Key-Value Store` entitlement entry to this: ```$(TeamIdentifierPrefix)$(CFBundleIdentifier)```
@@ -134,6 +134,17 @@ If you want it to automatically set and don't have a watchOS app, set the `iClou
  @CloudStorage("keyString") var myKey: Bool = false
  @CloudStorage("key2String") var myOtherKey: Double?
  ```
+
+### Migrating old UserDefaults value to new @CloudStorage store when adding to apps that previously used @AppStorage or UserDefaults (do during model/app init):
+```swift
+// check that existing value exists in UserDefaults and that this value hasn't already been migrated.
+if let existingString1 = UserDefaults.standard.object(forKey: .string1Key) as? String, !string1.contains(existingString1) { // legacy support
+    debug("Migrating local string1: \(existingString1) to cloud string1: \(string1)", level: .NOTICE)
+    string1 = "\(existingString1),\(string1)"
+    // zero out local version so we don't do this again in the future.  If we log out of iCloud, we will lose the data but that is expected behavior.
+    UserDefaults.standard.removeObject(forKey: .string1Key)
+}
+```
 
 ### Adding custom protocol storage support to `@CloudStorage`
 ```swift

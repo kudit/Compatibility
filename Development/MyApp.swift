@@ -8,6 +8,7 @@ import Compatibility
 @main
 struct MyApp: App {
     init() {
+        //Application.iCloudSupported = false
         Application.track() // ensures Application.main.isFirstRun and Application.main.versions variables are properly set.
         if Application.main.isFirstRun {
             debug("First Run!")

@@ -78,7 +78,9 @@ struct CompatibilityDemoView: View {
                     Text("Material")
                 }
         }
+//        .backport.safeAreaPadding(.bottom, 300)
         .backport.tabViewStyle(.page)
+//        .ignoresSafeArea()
     }
 }
 

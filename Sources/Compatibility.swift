@@ -8,95 +8,9 @@
 
 public enum Compatibility {
     /// The version of the Compatibility Library since cannot get directly from Package.swift.
-    public static let version: Version = "1.3.16"
+    public static let version: Version = "1.4.0"
 }
 
-public extension Compatibility { // for brief period where Application wasn't available
-    @available(*, deprecated, renamed: "Application.isDebug")
-    static let isDebug = _isDebugAssertConfiguration()
-
-    // MARK: - Entitlements Information
-    @available(*, deprecated, renamed: "Application.iCloudSupported")
-    @MainActor
-    static var iCloudSupported: Bool {
-        get {
-            if #available(iOS 13, tvOS 13, watchOS 6, *) {
-                Application.iCloudSupported
-            } else {
-                // Fallback on earlier versions
-                false
-            }
-        }
-        set {
-            if #available(iOS 13, tvOS 13, watchOS 6, *) {
-                Application.iCloudSupported = newValue
-            } else {
-                // Fallback on earlier versions
-                // do nothing
-            }
-        }
-    }
-    
-    @available(*, deprecated, renamed: "Application.iCloudIsEnabled")
-    @MainActor
-    static var iCloudIsEnabled: Bool {
-        if #available(iOS 13, tvOS 13, watchOS 6, *) {
-            Application.iCloudIsEnabled
-        } else {
-            // Fallback on earlier versions
-            false
-        }
-    }
-    
-    @available(*, deprecated, renamed: "Application.iCloudStatus")
-    @MainActor
-    static var iCloudStatus: CloudStatus {
-        if #available(iOS 13, tvOS 13, watchOS 6, *) {
-            Application.iCloudStatus
-        } else {
-            // Fallback on earlier versions
-            .notSupported
-        }
-    }
-    
-    @available(*, deprecated, renamed: "Application.isSimulator")
-    static var isSimulator: Bool {
-#if targetEnvironment(simulator)
-        // your simulator code
-        return true
-#else
-        // your real device code
-        return false
-#endif
-    }
-
-    @available(*, deprecated, renamed: "Application.isPlayground")
-    static var isPlayground: Bool {
-        //print("Testing inPlayground: Bundles", Bundle.allBundles.map { $0.bundleIdentifier }.description)")
-        if Bundle.allBundles.contains(where: { ($0.bundleIdentifier ?? "").contains("swift-playgrounds") }) {
-            //print("in playground")
-            return true
-        } else {
-            //print("not in playground")
-            return false
-        }
-    }
-    
-    @available(*, deprecated, renamed: "Application.isPreview")
-    static var isPreview: Bool {
-        ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
-    }
-    
-    @available(*, deprecated, renamed: "Application.isMacCatalyst")
-    static var isMacCatalyst: Bool {
-#if targetEnvironment(macCatalyst)
-        return true
-#else
-        return false
-#endif
-    }
-
-}
 @_exported import Foundation
 
 // NOTE: UNAVAILABLE to mark API as unavailabe for specific versions.
@@ -186,7 +100,7 @@ public extension Compatibility { // for brief period where Application wasn't av
      macOS 13+
      Mac Catalyst 16.0+
      tvOS 16+
-     watchOS 9+
+     watchOS 9+ (minimum for WidgetKit on watchOS - supported in iOS 14 and macOS 11)
      visionOS 1.0+
      SF Symbols 4.0
 
@@ -197,7 +111,7 @@ public extension Compatibility { // for brief period where Application wasn't av
      macOS 14+
      Mac Catalyst 17.0+
      tvOS 17+
-     watchOS 10+
+     watchOS 10+ (practical minimum for WidgetKit (due to requirement of WidgetConfigurationIntent which is only available on iOS 17, macOS 14, and watchOS 10)
      visionOS 1.0+
      SF Symbols 5.0
 
@@ -213,8 +127,75 @@ canImport(Testing)
     SF Symbols 6.0
 
  */
+// MARK: - legacy compatibility code deprecations and support
+public extension Compatibility { // for brief period where Application wasn't available
+    @available(*, deprecated, renamed: "Application.isDebug")
+    static let isDebug = _isDebugAssertConfiguration()
+}
+@available(iOS 13, tvOS 13, watchOS 6, *)
+public extension Compatibility { // for brief period where Application wasn't available.  Static computed properties apparently aren't supported in extensions in iOS <13?
+    // MARK: - Entitlements Information
+    @available(*, deprecated, renamed: "Application.iCloudSupported")
+    @MainActor
+    static var iCloudSupported: Bool {
+        get {
+            Application.iCloudSupported
+        }
+        set {
+            Application.iCloudSupported = newValue
+        }
+    }
 
-// This has been a godsend! https://davedelong.com/blog/2021/10/09/simplifying-backwards-compatibility-in-swift/
+    @available(*, deprecated, renamed: "Application.iCloudIsEnabled")
+    @MainActor
+    static var iCloudIsEnabled: Bool {
+        Application.iCloudIsEnabled
+    }
+    
+    @available(*, deprecated, renamed: "Application.iCloudStatus")
+    @MainActor
+    static var iCloudStatus: CloudStatus {
+        Application.iCloudStatus
+    }
+    
+    @available(*, deprecated, renamed: "Application.isSimulator")
+    static var isSimulator: Bool {
+#if targetEnvironment(simulator)
+        // your simulator code
+        return true
+#else
+        // your real device code
+        return false
+#endif
+    }
+
+    @available(*, deprecated, renamed: "Application.isPlayground")
+    static var isPlayground: Bool {
+        //print("Testing inPlayground: Bundles", Bundle.allBundles.map { $0.bundleIdentifier }.description)")
+        if Bundle.allBundles.contains(where: { ($0.bundleIdentifier ?? "").contains("swift-playgrounds") }) {
+            //print("in playground")
+            return true
+        } else {
+            //print("not in playground")
+            return false
+        }
+    }
+    
+    @available(*, deprecated, renamed: "Application.isPreview")
+    static var isPreview: Bool {
+        ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
+    }
+    
+    @available(*, deprecated, renamed: "Application.isMacCatalyst")
+    static var isMacCatalyst: Bool {
+#if targetEnvironment(macCatalyst)
+        return true
+#else
+        return false
+#endif
+    }
+}
+
 
 #if !canImport(CoreML) // this isn't available on linux!
 extension FileManager {
@@ -254,6 +235,7 @@ public struct CompatibilityEnvironmentTestView: View {
     public init() {}
     public var body: some View {
         List {
+//            Text("Double values: \(String(describing: CGFloat(0.2)))")
             Section("Application") {
                 Text("App Version: \(Application.main.debugVersion)")
                 TestCheck("is first run", Application.main.isFirstRun)
@@ -295,6 +277,8 @@ public struct CompatibilityEnvironmentTestView: View {
 @available(iOS 15, macOS 12, tvOS 15, watchOS 9, *)
 #Preview {
     CompatibilityEnvironmentTestView()
+        .backport.scrollContentBackground(.hidden)
+        .background(.red)
 }
 
 #endif
