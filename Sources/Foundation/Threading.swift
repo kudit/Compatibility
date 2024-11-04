@@ -132,7 +132,7 @@ public extension Compatibility {
             return await closure()
         }
         let result = await longRunningTask.result
-#if swift(>=6)
+#if compiler(>=6) // DEBUG // swift(>=6) doesn't seem to work in Xcode with Swift 6.  We would just switch but Swift Playgrounds still only supports Swift 5.10 and iOS 17.  DEBUG does seem to allow differentiation between XCode and Playgrounds though may cause errors in release builds.  compiler does seem to work!!
         return result.get()
 #else
         do {

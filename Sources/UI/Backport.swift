@@ -704,7 +704,7 @@ public extension Backport where Content: View {
 
 // https://stackoverflow.com/questions/78472655/swiftui-tabview-safe-area
 // Apparently this doesn't work easily.  May need to custom develop a PageView.
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, tvOS 13, watchOS 7, *)
 #Preview("Page Backgrounds") {
     TabView {
         Color.red

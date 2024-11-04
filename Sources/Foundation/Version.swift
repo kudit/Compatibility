@@ -29,7 +29,7 @@ public extension Compatibility {
 /// Version in semantic dot notation
 public typealias Version = Compatibility.Version
 
-extension Version: CustomStringConvertible { // @retroactive in Swift 6?
+extension Version: Swift.CustomStringConvertible { // @retroactive in Swift 6?
     // For CustomStringConvertible conformance
     /// SemVer string (format of "*major*.*minor*.*patch*")
     ///
@@ -46,7 +46,7 @@ extension Version: CustomStringConvertible { // @retroactive in Swift 6?
 }
 
 // MARK: - Codable conformance so stored as string rather than as a structure of values.
-extension Version: Decodable {
+extension Version: Swift.Decodable {
     enum CodingKeys: String, CodingKey {
         case majorVersion, minorVersion, patchVersion
     }
@@ -65,7 +65,7 @@ extension Version: Decodable {
         }
     }
 }
-extension Version: Encodable {
+extension Version: Swift.Encodable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
         try container.encode(self.rawValue)
@@ -73,7 +73,7 @@ extension Version: Encodable {
 }
 
 
-extension Version: ExpressibleByStringLiteral, ExpressibleByStringInterpolation { // @retroactive in Swift 6?
+extension Version: Swift.ExpressibleByStringLiteral, Swift.ExpressibleByStringInterpolation { // @retroactive in Swift 6?
     // For ExpressibleByStringLiteral conformance
     /// Any non-numeric text will be ignored, so if you have something like `23b123` it will be converted to `23123`.
     public init(stringLiteral: String) {
@@ -85,7 +85,7 @@ extension Version: ExpressibleByStringLiteral, ExpressibleByStringInterpolation 
         self.init(majorVersion: major, minorVersion: minor, patchVersion: patch)
     }
 }
-extension Version: RawRepresentable { // @retroactive in Swift 6?
+extension Version: Swift.RawRepresentable { // @retroactive in Swift 6?
     // For RawRepresentable conformance (so we can store and make codable as a String)
     public typealias RawValue = String
     public init(rawValue: String) {
@@ -95,13 +95,13 @@ extension Version: RawRepresentable { // @retroactive in Swift 6?
         return description
     }
 }
-extension Version: LosslessStringConvertible { // @retroactive in Swift 6?
+extension Version: Swift.LosslessStringConvertible { // @retroactive in Swift 6?
     // For LosslessStringConvertible conformance
     public init(_ rawValue: String) {
         self.init(stringLiteral: rawValue)
     }
 }
-extension Version: Comparable { // @retroactive in Swift 6?
+extension Version: Swift.Comparable { // @retroactive in Swift 6?
     // For Comparable conformance
     /// Return the components of this version as an integer array of length 3 (always length 3 even if minor and patch are 0).
     public static func < (left: Self, right: Self) -> Bool {
@@ -120,7 +120,7 @@ extension Version: Comparable { // @retroactive in Swift 6?
     }
 }
 
-extension Version: Hashable {}
+extension Version: Swift.Hashable {}
 
 public extension Version {
     // For legacy code compatibility
@@ -198,7 +198,7 @@ public extension [Version] {
 }
 
 // The rawValue for an array of versions should be a comma-separated String, not an array of strings since this is easier to store
-extension [Version]: RawRepresentable {
+extension [Version]: Swift.RawRepresentable {
     public init(rawValue: String) {
         // remove duplicates and convert invalid values to 0.0.0
         let versions = Set(rawValue.split(separator: ",").map { Version(String($0)) })
