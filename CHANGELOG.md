@@ -6,6 +6,8 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
+v1.4.4 11/4/2024 Removed circular dependancy on Color.
+
 v1.4.3 11/4/2024 Added import of Color when available in Radial Layout previews.
 
 v1.4.2 11/4/2024 Added OverlappingStack and RadialLayout.

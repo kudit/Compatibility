@@ -219,16 +219,12 @@ private struct OverlappingStack: Layout {
     }
 }
 
-#if !canImport(Color)
 @available(iOS 13, tvOS 13, watchOS 6, *)
 extension [Color] {
     static var rainbow: [Color] {
         [.red, .orange, .yellow, .green, .blue, .purple]
     }
 }
-#else
-import Color
-#endif
 
 @available(iOS 13, tvOS 13, watchOS 6, *)
 #Preview("OverlappingHStack") {
