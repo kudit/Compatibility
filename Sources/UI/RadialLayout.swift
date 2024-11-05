@@ -60,6 +60,10 @@ public struct RadialLayout: Layout {
     }
 }
 
+#if canImport(Color)
+import Color
+#endif
+
 @available(macOS 13.0, iOS 16.0, tvOS 20.0, watchOS 9.0, *)
 #Preview("Radial") {
     RadialLayout {

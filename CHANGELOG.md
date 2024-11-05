@@ -6,6 +6,8 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
+v1.4.3 11/4/2024 Added import of Color when available in Radial Layout previews.
+
 v1.4.2 11/4/2024 Added OverlappingStack and RadialLayout.
 
 v1.4.1 11/4/2024 Added compiler check for Threading `background` tasks so that warnings are silenced in Swift 6 but still works in Swift Playgrounds.  Removed URL comparison since causes warnings in Swift 6 and doesn't seem used most places (and where used, can simply reference the path comparison that it wraps).  Fixed issues with watchOS.  Fixed compile issues with Linux by removing `iCloudToken` variable.  Addressed @retroactive warnings in a way that works with Swift Playgrounds.  Added Embossed modifier.

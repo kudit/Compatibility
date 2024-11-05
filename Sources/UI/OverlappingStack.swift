@@ -226,6 +226,8 @@ extension [Color] {
         [.red, .orange, .yellow, .green, .blue, .purple]
     }
 }
+#else
+import Color
 #endif
 
 @available(iOS 13, tvOS 13, watchOS 6, *)
