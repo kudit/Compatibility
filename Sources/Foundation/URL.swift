@@ -23,11 +23,12 @@ public extension URL {
 }
 
 
-//extension URL: Comparable {
-//    public static func < (lhs: URL, rhs: URL) -> Bool {
-//        return lhs.path < rhs.path
-//    }
-//}
+extension URL: Swift.Comparable {
+    @available(*, deprecated, message: "Compare `.path` instead.")
+    public static func < (lhs: URL, rhs: URL) -> Bool {
+        return lhs.path < rhs.path
+    }
+}
 
 public extension URL {
     /// Force the URL to https if it is HTTP

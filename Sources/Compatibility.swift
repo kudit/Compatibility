@@ -8,7 +8,7 @@
 
 public enum Compatibility {
     /// The version of the Compatibility Library since cannot get directly from Package.swift.
-    public static let version: Version = "1.4.4"
+    public static let version: Version = "1.4.5"
 }
 
 @_exported import Foundation

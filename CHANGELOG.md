@@ -6,6 +6,9 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
+v1.4.5 11/5/2024 Changed package version to Swift 5.8 to see if this will work to get all checks in Swift Package Index.  Restored URL comparison but deprecated for transition assistance.
+
+*PASSES ALL SWIFTPACKAGEINDEX TESTS*
 v1.4.4 11/4/2024 Removed circular dependancy on Color.
 
 v1.4.3 11/4/2024 Added import of Color when available in Radial Layout previews.
