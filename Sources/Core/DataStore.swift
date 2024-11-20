@@ -643,6 +643,9 @@ public struct DataStoreTestView: View {
 //                Button("Reset") {
 //                    model.reset()
 //                }
+                Button("Synchronize") {
+                    DataStoreType.iCloud.shared.synchronize()
+                }
                 HStack {
                     Text("iCloud:").opacity(0.5)
                     Image(systemName: Application.iCloudStatus.symbolName)

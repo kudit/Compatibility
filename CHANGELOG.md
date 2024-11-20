@@ -6,7 +6,10 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
-v1.4.5 11/5/2024 Changed package version to Swift 5.8 to see if this will work to get all checks in Swift Package Index.  Restored URL comparison but deprecated for transition assistance.
+v1.4.6 11/20/2024 Restored package version to Swift 5.9 since 5.8 doesn't seem to work in SPI.  Added documentation to fill(strokeWidth:) function to be clear this is the Compatibility version.  Added synchronization button for DataStore test UI.  Added additional backports.  Added UIRequiresFullScreen key to info to silence warning when building iPad versions. 
+
+*PASSES ALL SWIFTPACKAGEINDEX TESTS*
+v1.4.5 11/5/2024 Changed package version to Swift 5.8 to see if this will work to get all checks in Swift Package Index (does not).  Restored URL comparison but deprecated for transition assistance.
 
 *PASSES ALL SWIFTPACKAGEINDEX TESTS*
 v1.4.4 11/4/2024 Removed circular dependancy on Color.

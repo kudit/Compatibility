@@ -556,6 +556,226 @@ public extension Backport where Content: View {
 //    func navigationTitle<V>(@ViewBuilder _ title: () -> V) -> some View where V : View {
 }
 
+
+#if canImport(_StoreKit_SwiftUI)
+import _StoreKit_SwiftUI
+#endif
+
+@available(iOS 13, tvOS 13, watchOS 6, *)
+public extension Backport where Content: View {
+    /// Sets the presentation background of the enclosing sheet using a shape
+    /// style.
+    ///
+    /// The following example uses the ``Material/thick`` material as the sheet
+    /// background:
+    ///
+    ///     struct ContentView: View {
+    ///         @State private var showSettings = false
+    ///
+    ///         var body: some View {
+    ///             Button("View Settings") {
+    ///                 showSettings = true
+    ///             }
+    ///             .sheet(isPresented: $showSettings) {
+    ///                 SettingsView()
+    ///                     .presentationBackground(.thickMaterial)
+    ///             }
+    ///         }
+    ///     }
+    ///
+    /// The `presentationBackground(_:)` modifier differs from the
+    /// ``View/background(_:ignoresSafeAreaEdges:)`` modifier in several key
+    /// ways. A presentation background:
+    ///
+    /// * Automatically fills the entire presentation.
+    /// * Allows views behind the presentation to show through translucent
+    ///   styles.
+    ///
+    /// - Parameter style: The shape style to use as the presentation
+    ///   background.
+    func presentationBackground<S>(_ style: S) -> some View where S : ShapeStyle {
+        Group {
+            if #available(iOS 16.4, macOS 13.3, tvOS 16.4, watchOS 9.4, *) {
+                content.presentationBackground(style)
+            } else {
+                // Fallback on earlier versions
+                if let color = style as? Color {
+                    content.background(color)
+                } else {
+                    content // ignore if older and unsupported
+                }
+            }
+        }
+    }
+    
+    /// The criteria that determines when an animation is considered finished.
+    enum AnimationCompletionCriteria : Sendable {
+        
+        /// The animation has logically completed, but may still be in its long
+        /// tail.
+        ///
+        /// If a subsequent change occurs that creates additional animations on
+        /// properties with `logicallyComplete` completion callbacks registered,
+        /// then those callbacks will fire when the animations from the change that
+        /// they were registered with logically complete, ignoring the new
+        /// animations.
+        case logicallyComplete
+        
+        /// The entire animation is finished and will now be removed.
+        ///
+        /// If a subsequent change occurs that creates additional animations on
+        /// properties with `removed` completion callbacks registered, then those
+        /// callbacks will only fire when *all* of the created animations are
+        /// complete.
+        case removed
+        
+        @available(iOS 17, macOS 14, tvOS 17, watchOS 10, *)
+        var swiftUIAnimationCompletion: SwiftUI.AnimationCompletionCriteria {
+            switch self {
+            case .logicallyComplete:
+                return .logicallyComplete
+            case .removed:
+                return .removed
+            }
+        }
+    }
+    /// Returns the result of recomputing the view's body with the provided
+    /// animation, and runs the completion when all animations are complete.
+    ///
+    /// This function sets the given ``Animation`` as the ``Transaction/animation``
+    /// property of the thread's current ``Transaction`` as well as calling
+    /// ``Transaction/addAnimationCompletion`` with the specified completion.
+    ///
+    /// The completion callback will always be fired exactly one time. If no
+    /// animations are created by the changes in `body`, then the callback will be
+    /// called immediately after `body`.
+    func withAnimation<Result>(_ animation: Animation? = .default, completionCriteria: AnimationCompletionCriteria = .logicallyComplete, duration: TimeInterval = 0.35, _ body: () throws -> Result, completion: @escaping () -> Void) rethrows -> Result {
+        if #available(iOS 17, macOS 14, tvOS 17, watchOS 10, *) {
+            return try SwiftUI.withAnimation(animation, completionCriteria: completionCriteria.swiftUIAnimationCompletion, body, completion: completion)
+        } else {
+            // Fallback on earlier versions
+            let results = try SwiftUI.withAnimation(animation) {
+                try body()
+            }
+            
+            delay(duration) { // This should pull the duration from the animation but this is just for compatibility so we'll hard-code since there's no good way to pull the duration from the animation.
+                completion()
+            }
+            
+            return results
+        }
+    }
+    
+
+    enum ProductViewStyle {
+        case automatic
+        case compact
+    }
+    /// Sets the style for product views within a view.
+    ///
+    /// This modifier styles any ``ProductView`` or ``StoreView`` instances within a view.
+    func productViewStyle(_ style: Backport.ProductViewStyle) -> some View {
+        Group {
+            if #available(iOS 17, macOS 14, tvOS 17, watchOS 10, *) {
+#if os(visionOS)
+                    content.productViewStyle(.automatic)
+#else
+                switch style {
+                case .automatic:
+                    content.productViewStyle(.automatic)
+                case .compact:
+                    content.productViewStyle(.compact)
+                }
+#endif
+            } else {
+                // Fallback on earlier versions (do nothing)
+                content
+            }
+        }
+    }
+    
+    
+    
+    /// Presents a modal view that covers as much of the screen as
+    /// possible when binding to a Boolean value you provide is true.
+    ///
+    /// Use this method to show a modal view that covers as much of the screen
+    /// as possible. The example below displays a custom view when the user
+    /// toggles the value of the `isPresenting` binding:
+    ///
+    ///     struct FullScreenCoverPresentedOnDismiss: View {
+    ///         @State private var isPresenting = false
+    ///         var body: some View {
+    ///             Button("Present Full-Screen Cover") {
+    ///                 isPresenting.toggle()
+    ///             }
+    ///             .fullScreenCover(isPresented: $isPresenting,
+    ///                              onDismiss: didDismiss) {
+    ///                 VStack {
+    ///                     Text("A full-screen modal view.")
+    ///                         .font(.title)
+    ///                     Text("Tap to Dismiss")
+    ///                 }
+    ///                 .onTapGesture {
+    ///                     isPresenting.toggle()
+    ///                 }
+    ///                 .foregroundColor(.white)
+    ///                 .frame(maxWidth: .infinity,
+    ///                        maxHeight: .infinity)
+    ///                 .background(Color.blue)
+    ///                 .ignoresSafeArea(edges: .all)
+    ///             }
+    ///         }
+    ///
+    ///         func didDismiss() {
+    ///             // Handle the dismissing action.
+    ///         }
+    ///     }
+    ///
+    /// ![A full-screen modal view with the text A full-screen modal view
+    /// and Tap to Dismiss.](SwiftUI-FullScreenCoverIsPresented.png)
+    /// - Parameters:
+    ///   - isPresented: A binding to a Boolean value that determines whether
+    ///     to present the sheet.
+    ///   - onDismiss: The closure to execute when dismissing the modal view.
+    ///   - content: A closure that returns the content of the modal view.
+    func fullScreenCover<CoverContent>(isPresented: Binding<Bool>, onDismiss: (() -> Void)? = nil, @ViewBuilder content: @escaping () -> CoverContent) -> some View where CoverContent : View {
+        Group {
+            if #available(iOS 14, macOS 99, tvOS 14, watchOS 7, *) {
+#if !os(macOS)
+                self.content.fullScreenCover(isPresented: isPresented, onDismiss: onDismiss, content: content)
+#endif
+            } else {
+                // Fallback on earlier versions
+                self.content.sheet(isPresented: isPresented, onDismiss: onDismiss, content: content)
+            }
+        }
+    }
+}
+
+@available(iOS 14, macOS 11, tvOS 14, watchOS 7, *)
+public extension ToolbarItemPlacement {
+    static let bottomBackport: ToolbarItemPlacement = {
+#if os(tvOS)
+        return .automatic // won't actually show up
+#elseif os(macOS)
+        return .status
+#else
+        if #available(iOS 1, watchOS 10, *) {
+            return .bottomBar
+        } else {
+            // Fallback on earlier versions
+            #if os(watchOS)
+            return .automatic
+            #else
+            return .status
+            #endif
+        }
+#endif
+    }()
+}
+
+
 // MARK: - Missing Styles
 
 // MARK: Segmented PickerStyle

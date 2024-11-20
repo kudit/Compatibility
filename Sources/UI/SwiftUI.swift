@@ -164,6 +164,7 @@ public struct ConvertTestView: View {
 // Support fill and stroke
 @available(iOS 13, tvOS 13, watchOS 6, *)
 public extension Shape {
+    /// Compatibility backport fill and stroke on shapes.
     func fill<Fill: ShapeStyle, Stroke: ShapeStyle>(_ fillStyle: Fill, strokeBorder strokeStyle: Stroke, lineWidth: Double = 1) -> some View {
         self
             .stroke(strokeStyle, lineWidth: lineWidth)

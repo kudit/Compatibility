@@ -8,7 +8,7 @@
 
 public enum Compatibility {
     /// The version of the Compatibility Library since cannot get directly from Package.swift.
-    public static let version: Version = "1.4.5"
+    public static let version: Version = "1.4.6"
 }
 
 @_exported import Foundation
@@ -94,7 +94,7 @@ public enum Compatibility {
      SF Symbols 3.0
 
  2022 Swift 5.7 (September)
- canImport(Charts) canImport(AppIntents)
+ canImport(Charts) canImport(AppIntents) canImport(CoreTransferable)
      iOS 16+
      iPadOS 16.0+
      macOS 13+
