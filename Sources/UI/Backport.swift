@@ -677,7 +677,7 @@ public extension Backport where Content: View {
     func productViewStyle(_ style: Backport.ProductViewStyle) -> some View {
         Group {
             if #available(iOS 17, macOS 14, tvOS 17, watchOS 10, *) {
-#if os(visionOS)
+#if os(visionOS) || os(watchOS)
                     content.productViewStyle(.automatic)
 #else
                 switch style {

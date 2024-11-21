@@ -6,6 +6,8 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
+v1.4.7 11/21/2024 Fixed issue with watchOS failing due to lack of `compact` product style.
+
 v1.4.6 11/20/2024 Restored package version to Swift 5.9 since 5.8 doesn't seem to work in SPI.  Added documentation to fill(strokeWidth:) function to be clear this is the Compatibility version.  Added synchronization button for DataStore test UI.  Added additional backports.  Added UIRequiresFullScreen key to info to silence warning when building iPad versions. 
 
 *PASSES ALL SWIFTPACKAGEINDEX TESTS*
