@@ -383,9 +383,9 @@ public extension Backport where Content: View {
 // MARK: Presentation Detents
 @available(iOS 13, tvOS 13, watchOS 6, *)
 public extension Backport where Content: View {
-    enum BackportPresentationDetent: Sendable {
-        case large, medium
-        
+    enum BackportPresentationDetent: Sendable, Hashable {
+        case large, medium, fraction(CGFloat)
+
         @available(iOS 16, macOS 13, tvOS 16, watchOS 9,  *)
         var converted: PresentationDetent {
             switch self {
@@ -393,6 +393,8 @@ public extension Backport where Content: View {
                 return .large
             case .medium:
                 return .medium
+            case .fraction(let fraction):
+                return .fraction(fraction)
             }
         }
     }

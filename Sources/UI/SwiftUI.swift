@@ -85,6 +85,7 @@ public struct ClosureTestView: View {
                     .padding()
             } else {
                 // Fallback on earlier versions
+                // toolbars are not shown in tvOS?
             }
         }
         .backport.navigationTitle("Compatibility/Menu Test")
@@ -271,13 +272,28 @@ public extension View {
 
 @available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
 public struct MaterialTestView: View {
+    @State var showSheet: Bool = false
     public init() {}
     public var body: some View {
         ZStack {
             Color.clear
-            Text("Test Material View")
-                .backgroundMaterial()
+            Button {
+                showSheet = true
+            } label: {
+                Text("Test Material View")
+                    .backgroundMaterial()
+            }
         }.background(.conicGradient(colors: [.red, .green, .blue], center: .center))
+            .sheet(isPresented: $showSheet) {
+                ZStack {
+                    Color.blue
+                    VStack {
+                        Color.yellow
+                        Color.green
+                    }.padding()
+                }
+                .backport.presentationDetents([.fraction(1/3), .medium, .large])
+            }
     }
 }
 

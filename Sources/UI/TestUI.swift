@@ -63,6 +63,7 @@ public struct TestsListView: View {
 @MainActor // unnecessary in Swift 6
 public struct AllTestsListView: View {
     /// Ordered set of section names and list of tests.  Similar to an ordered set but we do care about the order so that's why it's an array of tuples rather than a simple dictionary.  TODO: Should we change this to an ordered dictionary for clarity?  Means adding a dependency of swift-collections which isn't necessarily a problem.
+    // TODO: Have this be some singleton shared state so that it's not tied to the view so it won't re-create when view changes.
     public var namedTests: OrderedDictionary = [
         "Version Tests": Version.tests,
         "Int Tests": Int.tests,
