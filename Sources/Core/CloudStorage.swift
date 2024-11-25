@@ -16,6 +16,7 @@ import Combine
 private let sync = CloudStorageSync.shared
 
 @available(iOS 13, tvOS 13, watchOS 6, *)
+@MainActor
 @propertyWrapper public struct CloudStorage<Value>: DynamicProperty {
     @ObservedObject private var object: CloudStorageObject<Value>
 

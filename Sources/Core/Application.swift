@@ -209,10 +209,12 @@ public class Application: ObservableObject { // cannot automatically conform to 
         }
         if #available(watchOS 9, *) {
             // persist back to cloud for other devices and future runs or re-installs (do with delay in case of launch issue where the crash happens at launch)
-            delay(0.5) { @MainActor in
+            delay(0.5) { // technically should still be on the main thread.  Would do @MainActor in but Swift 6 has issues with that
                 debug("Setting versions run to: \(allVersions.rawValue)", level: .DEBUG)
                 // setting Application.main so don't capture mutating self.
-                Application.main._cloudVersionsRun = allVersions.rawValue
+                Compatibility.main { // but need to add this to guarantee for compiler issues.
+                    Application.main._cloudVersionsRun = allVersions.rawValue
+                }
             }
         } else {
             // Since future versions will use the cloud version, modifying UserDefaults won't ever be necessary with new versions.  However, if we are building for an old platform, go ahead and use local UserDefaults to store.

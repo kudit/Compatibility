@@ -3,6 +3,7 @@
 #if canImport(SwiftUI)
 import SwiftUI
 
+@MainActor // for swift6 compliance and since this is SwiftUI, should be @MainActor anyways.
 public struct Backport<Content> {
     public let content: Content
 
@@ -13,6 +14,7 @@ public struct Backport<Content> {
 
 @available(iOS 13, tvOS 13, watchOS 6, *)
 public extension View {
+    @MainActor
     var backport: Backport<Self> { Backport(self) }
 }
 
@@ -312,7 +314,7 @@ public extension Backport where Content: View {
     ///
     /// - Parameters:
     ///    - visibility: the visibility to use for the background.
-    nonisolated func scrollContentBackground(_ visibility: Visibility) -> some View {
+    func scrollContentBackground(_ visibility: Visibility) -> some View {
 #if os(tvOS)
         content // this is specifically unavailable on tvOS
 #else
@@ -651,7 +653,7 @@ public extension Backport where Content: View {
     /// The completion callback will always be fired exactly one time. If no
     /// animations are created by the changes in `body`, then the callback will be
     /// called immediately after `body`.
-    func withAnimation<Result>(_ animation: Animation? = .default, completionCriteria: AnimationCompletionCriteria = .logicallyComplete, duration: TimeInterval = 0.35, _ body: () throws -> Result, completion: @escaping () -> Void) rethrows -> Result {
+    func withAnimation<Result>(_ animation: Animation? = .default, completionCriteria: AnimationCompletionCriteria = .logicallyComplete, duration: TimeInterval = 0.35, _ body: () throws -> Result, completion: @Sendable @escaping () -> Void) rethrows -> Result {
         if #available(iOS 17, macOS 14, tvOS 17, watchOS 10, *) {
             return try SwiftUI.withAnimation(animation, completionCriteria: completionCriteria.swiftUIAnimationCompletion, body, completion: completion)
         } else {
@@ -757,6 +759,7 @@ public extension Backport where Content: View {
 
 @available(iOS 14, macOS 11, tvOS 14, watchOS 7, *)
 public extension ToolbarItemPlacement {
+    @MainActor // for swift6 compliance and since this is SwiftUI, should be @MainActor anyways.
     static let bottomBackport: ToolbarItemPlacement = {
 #if os(tvOS)
         return .automatic // won't actually show up

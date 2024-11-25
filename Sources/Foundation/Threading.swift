@@ -221,9 +221,11 @@ delay(0.4) {
 public func delay(_ delay:Double, closure: @Sendable @escaping () -> Void) {
     Compatibility.delay(delay, closure: closure)
 }
+#if swift(<6) // @MainActor is @Sendable in Swift 6?
 public func delay(_ delay:Double, closure: @MainActor @escaping () -> Void) {
     Compatibility.delay(delay, closure: closure)
 }
+#endif
 public extension Compatibility {
     /**
     Utility function to delay execution of code by a certain amount of seconds.
@@ -249,6 +251,7 @@ public extension Compatibility {
                 deadline: DispatchTime.now() + delay, execute: closure)
         }
     }
+    #if swift(<6)
     /// run the block of code on the current thread after the `delay` (in seconds) have passed.  If this is before iOS 13, tvOS 13, and watchOS 6, will be run on the main thread rather than the same thread..
     static func delay(_ delay:Double, closure: @MainActor @escaping () -> Void) {
         if #available(iOS 13, tvOS 13, watchOS 6, *) {
@@ -263,6 +266,7 @@ public extension Compatibility {
                 deadline: DispatchTime.now() + delay, execute: closure)
         }
     }
+    #endif
 }
 
 @available(iOS 13, tvOS 13, watchOS 6, *) // for concurrency

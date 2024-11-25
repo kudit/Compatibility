@@ -463,8 +463,10 @@ class DataStoreTestModel: ObservableObject {
             // make sure to propagate back if changed!
             if resolvedVersions.rawValue != moduleVersionsRunStorage {
                 // but do on separate thread since updates aren't supported within view rendering
-                delay(0.01) { @MainActor in
-                    self.moduleVersionsRunStorage = resolvedVersions.rawValue
+                delay(0.01) {
+                    main {
+                        self.moduleVersionsRunStorage = resolvedVersions.rawValue
+                    }
                 }
             }
             return resolvedVersions

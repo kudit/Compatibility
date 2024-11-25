@@ -6,6 +6,8 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
+v1.4.9 11/25/2024 Addressing Swift 6 errors with using sync from non-isolated context.  Reduced requirement to Swift 5.8 to see if we can now pass additional Swift Package Index tests.
+
 v1.4.8 11/22/2024 Added `.fraction` option for backport `presentationDetents` and added test in `MaterialTestView`.  Also fixed missing version update in Compatibility.swift.
 
 *PASSES ALL SWIFTPACKAGEINDEX TESTS*
