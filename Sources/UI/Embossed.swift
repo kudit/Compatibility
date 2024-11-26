@@ -2,6 +2,7 @@
 import SwiftUI
 
 @available(iOS 13, tvOS 13, watchOS 6, *)
+@MainActor
 struct EmbossedModifier: ViewModifier {
     @State var offset = 4.0
     @State var blur = 4.0

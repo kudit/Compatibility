@@ -37,6 +37,7 @@ extension Backport where Content == Any {
 
 // MARK: - Backport View compatibility functions
 @available(iOS 13, tvOS 13, watchOS 6, *)
+@MainActor
 public extension Backport where Content: View {
     // MARK: - .onChange
     
@@ -653,7 +654,7 @@ public extension Backport where Content: View {
     /// The completion callback will always be fired exactly one time. If no
     /// animations are created by the changes in `body`, then the callback will be
     /// called immediately after `body`.
-    func withAnimation<Result>(_ animation: Animation? = .default, completionCriteria: AnimationCompletionCriteria = .logicallyComplete, duration: TimeInterval = 0.35, _ body: () throws -> Result, completion: @Sendable @escaping () -> Void) rethrows -> Result {
+    func withAnimation<Result>(_ animation: Animation? = .default, completionCriteria: AnimationCompletionCriteria = .logicallyComplete, duration: TimeInterval = 0.35, _ body: () throws -> Result, completion: @MainActor @Sendable @escaping () -> Void) rethrows -> Result {
         if #available(iOS 17, macOS 14, tvOS 17, watchOS 10, *) {
             return try SwiftUI.withAnimation(animation, completionCriteria: completionCriteria.swiftUIAnimationCompletion, body, completion: completion)
         } else {
@@ -663,7 +664,9 @@ public extension Backport where Content: View {
             }
             
             delay(duration) { // This should pull the duration from the animation but this is just for compatibility so we'll hard-code since there's no good way to pull the duration from the animation.
-                completion()
+                main { // force back on the main actor since delay doesn't seem to want to have a version to support this
+                    completion()
+                }
             }
             
             return results
