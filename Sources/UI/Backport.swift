@@ -255,7 +255,7 @@ public extension Backport where Content: View {
     }
     
     enum Visibility : Hashable, CaseIterable {
-
+        
         /// The element may be visible or hidden depending on the policies of the
         /// component accepting the visibility configuration.
         ///
@@ -263,7 +263,7 @@ public extension Backport where Content: View {
         /// depending on factors including the platform, the surrounding container,
         /// user settings, etc.
         case automatic
-
+        
         /// The element may be visible.
         ///
         /// Some APIs may use this value to represent a hint or preference, rather
@@ -273,7 +273,7 @@ public extension Backport where Content: View {
         /// result in any visible separators, especially for list styles that do not
         /// include separators as part of their design.
         case visible
-
+        
         /// The element may be hidden.
         ///
         /// Some APIs may use this value to represent a hint or preference, rather
@@ -283,7 +283,7 @@ public extension Backport where Content: View {
         /// modifier may not always hide the dialog title, which is required on
         /// some platforms.
         case hidden
-
+        
         @available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
         var swiftuiValue: SwiftUI.Visibility {
             switch self {
@@ -292,6 +292,16 @@ public extension Backport where Content: View {
             case .hidden: return .hidden
             }
         }
+        
+#if canImport(UIKit) && !os(watchOS) && !os(tvOS)
+        var legacyColor: UIColor {
+            if self == .hidden {
+                return .clear
+            } else {
+                return .systemGroupedBackground
+            }
+        }
+#endif
     }
 
     /// Specifies the visibility of the background for scrollable views within
@@ -323,8 +333,18 @@ public extension Backport where Content: View {
             if #available(iOS 16, macOS 13, watchOS 9, *) {
                 content.scrollContentBackground(visibility.swiftuiValue)
             } else {
+#if canImport(UIKit) && !os(watchOS) && !os(tvOS)
                 // Fallback on earlier versions
+                content
+                    .onAppear {
+                        UITableView.appearance().backgroundColor = visibility.legacyColor
+                    }
+                    .onDisappear {
+                        UITableView.appearance().backgroundColor = .systemGroupedBackground
+                    }
+#else
                 content // ignore
+#endif
             }
         }
 #endif

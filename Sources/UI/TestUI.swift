@@ -95,6 +95,9 @@ public struct AllTestsListView: View {
                 Text("Compatibility v\(Compatibility.version) © 2024 Kudit LLC").font(.caption).padding()
             }
         }
+        // test replacing background
+        .backport.scrollContentBackground(.hidden)
+        .background(.linearGradient(colors: [.red, .yellow, .green, .blue], startPoint: .topLeading, endPoint: .bottomTrailing))
     }
 }
 

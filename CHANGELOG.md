@@ -6,6 +6,8 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
+v1.4.11 11/26/2024 Fixed so `scrollContentBackground` works on iOS 15.  Added a test to demonstrate.
+
 v1.4.10 11/26/2024 Addressing additional conversion issues that might be issues with Swift 6 for Swift Playgrounds iPad.  Added some additional `@MainActor` annotations for compatibility in Swift Playgrounds iPad.
 
 v1.4.9 11/25/2024 Addressing Swift 6 errors with using sync from non-isolated context.  Reduced requirement to Swift 5.8 to see if we can now pass additional Swift Package Index tests.
