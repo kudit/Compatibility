@@ -69,9 +69,11 @@ public struct MenuTest: View {
     }
 }
 
+#if swift(>=5.9)
 @available(iOS 14, macOS 12, tvOS 17, watchOS 7, *)
 #Preview("Watch Menu test") {
     MenuTest().navigationWrapper()
 }
+#endif
 
 #endif

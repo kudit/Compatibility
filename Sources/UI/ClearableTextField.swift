@@ -100,9 +100,11 @@ struct TestClearer: View {
     }
 }
 
+#if swift(>=5.9)
 @available(iOS 17, macOS 14, tvOS 17, watchOS 10, *)
 #Preview("Test Clearer") {
     TestClearer()
 }
+#endif
 
 #endif

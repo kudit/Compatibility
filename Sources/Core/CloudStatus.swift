@@ -23,7 +23,7 @@ public enum CloudStatus: CustomStringConvertible, Sendable, CaseIterable {
     }
 }
 
-#if canImport(SwiftUI)
+#if canImport(SwiftUI) && swift(>=5.9)
 import SwiftUI
 @available(iOS 13, macOS 11, tvOS 13, watchOS 6, *)
 #Preview {

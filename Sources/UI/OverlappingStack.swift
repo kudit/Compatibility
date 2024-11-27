@@ -226,6 +226,7 @@ extension [Color] {
     }
 }
 
+#if swift(>=5.9)
 @available(iOS 13, tvOS 13, watchOS 6, *)
 #Preview("OverlappingHStack") {
     VStack {
@@ -281,5 +282,6 @@ extension [Color] {
         .frame(height: 200)
     }
 }
+#endif
 
 #endif

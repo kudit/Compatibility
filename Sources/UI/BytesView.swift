@@ -47,8 +47,11 @@ public struct RandomBytesTestView: View {
     }
 }
 
+#if swift(>=5.9)
 @available(iOS 13, tvOS 13, watchOS 6, *)
 #Preview {
     RandomBytesTestView()
 }
+#endif
+
 #endif

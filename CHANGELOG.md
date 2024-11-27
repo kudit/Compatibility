@@ -6,6 +6,9 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
+// IF THIS PASSES, GO BACK AND UPDATE COLOR & DEVICE & PARTICLEEFFECTS.
+v1.5.1 11/26/2024 Added `#if swift(>=5.9)` checks around `#Preview` macros which aren't supported in Swift 5.8.  If this doesn't work, try replacing `#if swift(` with `#if compiler(`.
+
 v1.5.0 11/26/2024 Removed duplicate `delay` code to fix errors with Swift 6.  Does mean that some code may not work and will need to be adjusted (if you need `delay { @MainActor in`, simply do `delay { main {` instead).
 
 v1.4.11 11/26/2024 Fixed so `scrollContentBackground` works on iOS 15.  Added a test to demonstrate.

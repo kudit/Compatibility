@@ -93,10 +93,12 @@ public struct ClosureTestView: View {
     }
 }
 
+#if swift(>=5.9)
 @available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
 #Preview("Closure Test") {
     ClosureTestView()
 }
+#endif
 
 
 // MARK: - For sliders with Ints (and other binding conversions)
@@ -157,10 +159,12 @@ public struct ConvertTestView: View {
         .padding()
     }
 }
+#if swift(>=5.9)
 @available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
 #Preview("Convert Test") {
     ConvertTestView()
 }
+#endif
 
 // Support fill and stroke
 @available(iOS 13, tvOS 13, watchOS 6, *)
@@ -245,10 +249,12 @@ public struct FillAndStrokeTest: View {
     }
 }
 
+#if swift(>=5.9)
 @available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
 #Preview("Fill & Stroke") {
     FillAndStrokeTest()
 }
+#endif
 
 
 // MARK: - Material
@@ -297,10 +303,12 @@ public struct MaterialTestView: View {
     }
 }
 
+#if swift(>=5.9)
 @available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
 #Preview("Material Test") {
     MaterialTestView()
 }
+#endif
 
 // MARK: - Wrappers
 @available(iOS 13, tvOS 13, watchOS 7, *)

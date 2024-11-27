@@ -8,7 +8,7 @@
 
 public enum Compatibility {
     /// The version of the Compatibility Library since cannot get directly from Package.swift.
-    public static let version: Version = "1.5.0"
+    public static let version: Version = "1.5.1"
 }
 
 @_exported import Foundation
@@ -219,6 +219,7 @@ public struct TestCheck: View {
     }
 }
 
+#if swift(>=5.9)
 @available(iOS 14, macOS 11, tvOS 14, watchOS 7, *)
 #Preview("Test Checks") {
     List {
@@ -228,6 +229,7 @@ public struct TestCheck: View {
         Label("False", systemImage: "x.square.fill").backport.foregroundStyle(.gray)
     }
 }
+#endif
 
 @available(iOS 15, macOS 12, tvOS 15, watchOS 9, *)
 public struct CompatibilityEnvironmentTestView: View {
@@ -274,11 +276,13 @@ public struct CompatibilityEnvironmentTestView: View {
     }
 }
 
+#if swift(>=5.9)
 @available(iOS 15, macOS 12, tvOS 15, watchOS 9, *)
 #Preview {
     CompatibilityEnvironmentTestView()
         .backport.scrollContentBackground(.hidden)
         .background(.red)
 }
+#endif
 
 #endif

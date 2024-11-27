@@ -95,7 +95,7 @@ public extension Test {
     }
 }
 
-#if canImport(SwiftUI)
+#if canImport(SwiftUI) && swift(>=5.9)
 import SwiftUI
 @available(iOS 13, tvOS 13, watchOS 6, *)
 #Preview {

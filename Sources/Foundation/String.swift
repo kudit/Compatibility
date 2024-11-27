@@ -217,7 +217,7 @@ public extension HTML {
     """
 }
 
-#if canImport(SwiftUI) && (canImport(Combine) || canImport(NSAttributedString))
+#if canImport(SwiftUI) && (canImport(Combine) || canImport(NSAttributedString)) && swift(>=5.9)
 @available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
 #Preview("HTML") {
     ScrollView {
@@ -820,14 +820,6 @@ public extension Optional where Wrapped == any Numeric {
     }
 }
 
-#if canImport(SwiftUI)
-import SwiftUI
-@available(iOS 13, tvOS 13, watchOS 6, *)
-#Preview("Tests") {
-    TestsListView(tests: String.tests)
-}
-#endif
-
 @MainActor
 let testTextReversal: TestClosure = {
     let text = """
@@ -906,7 +898,7 @@ extension String {
     var containsEmoji: Bool { contains { $0.isEmoji } }
 }
 
-#if canImport(SwiftUI)
+#if canImport(SwiftUI) && swift(>=5.9)
 import SwiftUI
 @available(iOS 13, tvOS 13, watchOS 6, *)
 #Preview("Tests") {

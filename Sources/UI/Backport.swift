@@ -952,6 +952,7 @@ public extension Backport where Content: View {
 
 // https://stackoverflow.com/questions/78472655/swiftui-tabview-safe-area
 // Apparently this doesn't work easily.  May need to custom develop a PageView.
+#if swift(>=5.9)
 @available(iOS 13, tvOS 13, watchOS 7, *)
 #Preview("Page Backgrounds") {
     TabView {
@@ -960,6 +961,7 @@ public extension Backport where Content: View {
         Color.blue
     }.backport.tabViewStyle(.page)
 }
+#endif
 //
 //
 //#if os(macOS) && !targetEnvironment(macCatalyst)
@@ -1044,7 +1046,7 @@ public struct NavigationStack<Root: View>: View {
     }
 }
 
-
+#if swift(>=5.9)
 @available(iOS 13, tvOS 13, watchOS 6, *)
 #Preview("Page Tabs") {
     Backport.TabView {
@@ -1068,5 +1070,6 @@ public struct NavigationStack<Root: View>: View {
 //        Color.blue
 //    }.backport.tabViewStyle(.verticalPage)
 //}
+#endif
 
 #endif

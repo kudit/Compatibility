@@ -101,9 +101,11 @@ public struct AllTestsListView: View {
     }
 }
 
+#if swift(>=5.9)
 @available(iOS 15, macOS 12, tvOS 17, watchOS 8, *)
 #Preview("Tests") {
     AllTestsListView()
 }
+#endif
 
 #endif
