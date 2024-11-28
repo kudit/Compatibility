@@ -7,7 +7,7 @@
 
 import PackageDescription
 
-let version = "1.5.1"
+let version = "1.5.2"
 let packageLibraryName = "Compatibility"
 
 // Products define the executables and libraries a package produces, making them visible to other packages.
@@ -53,10 +53,12 @@ platforms += [
 ]
 #endif
 
+#if compiler(>=5.9)
 #if os(visionOS)
 platforms += [
     .visionOS("1.0"), // unavailable in Swift Playgrounds so has to be separate
 ]
+#endif
 #endif
 
 #if canImport(AppleProductTypes) // swift package dump-package fails because of this

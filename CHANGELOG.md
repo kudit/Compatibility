@@ -7,6 +7,10 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Update changelog and tag with matching version in GitHub.
 
 // IF THIS PASSES, GO BACK AND UPDATE COLOR & DEVICE & PARTICLEEFFECTS.
+
+v1.5.2 11/28/2024 #Preview isn't the issue, it's literally the @available checks we need to filter out.  `swift(` doesn't seem to work so trying replacing them all with `compiler(`.
+
+*PASSES ALL SWIFTPACKAGEINDEX TESTS*
 v1.5.1 11/26/2024 Added `#if swift(>=5.9)` checks around `#Preview` macros which aren't supported in Swift 5.8.  If this doesn't work, try replacing `#if swift(` with `#if compiler(`.
 
 v1.5.0 11/26/2024 Removed duplicate `delay` code to fix errors with Swift 6.  Does mean that some code may not work and will need to be adjusted (if you need `delay { @MainActor in`, simply do `delay { main {` instead).

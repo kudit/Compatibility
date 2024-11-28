@@ -217,7 +217,7 @@ public extension HTML {
     """
 }
 
-#if canImport(SwiftUI) && (canImport(Combine) || canImport(NSAttributedString)) && swift(>=5.9)
+#if canImport(SwiftUI) && (canImport(Combine) || canImport(NSAttributedString)) && compiler(>=5.9)
 @available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
 #Preview("HTML") {
     ScrollView {
@@ -898,7 +898,7 @@ extension String {
     var containsEmoji: Bool { contains { $0.isEmoji } }
 }
 
-#if canImport(SwiftUI) && swift(>=5.9)
+#if canImport(SwiftUI) && compiler(>=5.9)
 import SwiftUI
 @available(iOS 13, tvOS 13, watchOS 6, *)
 #Preview("Tests") {

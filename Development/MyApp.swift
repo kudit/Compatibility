@@ -1,4 +1,4 @@
-#if canImport(SwiftUI)
+#if canImport(SwiftUI) && compiler(>=5.9)
 import SwiftUI
 #if canImport(Compatibility) // since this is needed in XCode but is unavailable in Playgrounds.
 import Compatibility
@@ -42,11 +42,9 @@ struct MyApp: App {
     }
 }
 
-#if swift(>=5.9)
 @available(iOS 15, macOS 12, tvOS 17, watchOS 8, *)
 #Preview {
     CompatibilityDemoView()
 }
-#endif
 
 #endif

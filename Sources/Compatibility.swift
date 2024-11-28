@@ -8,7 +8,7 @@
 
 public enum Compatibility {
     /// The version of the Compatibility Library since cannot get directly from Package.swift.
-    public static let version: Version = "1.5.1"
+    public static let version: Version = "1.5.2"
 }
 
 @_exported import Foundation
@@ -104,7 +104,7 @@ public enum Compatibility {
      visionOS 1.0+
      SF Symbols 4.0
 
- 2023 Swift 5.8 (March), Swift 5.9 (September) (added #Preview syntax)
+ 2023 Swift 5.8 (March), Swift 5.9 (September) (added #Preview syntax and @availability syntax)
  canImport(SwiftData)
      iOS 17+
      iPadOS 17.0+
@@ -219,7 +219,7 @@ public struct TestCheck: View {
     }
 }
 
-#if swift(>=5.9)
+#if compiler(>=5.9)
 @available(iOS 14, macOS 11, tvOS 14, watchOS 7, *)
 #Preview("Test Checks") {
     List {
@@ -276,7 +276,7 @@ public struct CompatibilityEnvironmentTestView: View {
     }
 }
 
-#if swift(>=5.9)
+#if compiler(>=5.9)
 @available(iOS 15, macOS 12, tvOS 15, watchOS 9, *)
 #Preview {
     CompatibilityEnvironmentTestView()

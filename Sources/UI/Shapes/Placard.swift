@@ -87,7 +87,7 @@ HStack {
     }
 }
 
-#if swift(>=5.9)
+#if compiler(>=5.9)
 @available(iOS 14, macOS 11, tvOS 14, watchOS 7, *)
 #Preview("Showcase") {
     PlacardShowcaseView()

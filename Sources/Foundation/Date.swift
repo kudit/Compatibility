@@ -280,7 +280,7 @@ public extension Date {
     ]
 }
 
-#if canImport(SwiftUI) && swift(>=5.9)
+#if canImport(SwiftUI) && compiler(>=5.9)
 import SwiftUI
 @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
 #Preview {

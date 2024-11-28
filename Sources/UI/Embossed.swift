@@ -22,7 +22,7 @@ public extension View {
     }
 }
 
-#if swift(>=5.9)
+#if compiler(>=5.9)
 @available(iOS 13, tvOS 13, watchOS 6, *)
 #Preview("Embossed") {
     ZStack {

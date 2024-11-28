@@ -93,7 +93,7 @@ public struct ClosureTestView: View {
     }
 }
 
-#if swift(>=5.9)
+#if compiler(>=5.9)
 @available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
 #Preview("Closure Test") {
     ClosureTestView()
@@ -159,7 +159,7 @@ public struct ConvertTestView: View {
         .padding()
     }
 }
-#if swift(>=5.9)
+#if compiler(>=5.9)
 @available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
 #Preview("Convert Test") {
     ConvertTestView()
@@ -249,7 +249,7 @@ public struct FillAndStrokeTest: View {
     }
 }
 
-#if swift(>=5.9)
+#if compiler(>=5.9)
 @available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
 #Preview("Fill & Stroke") {
     FillAndStrokeTest()
@@ -303,7 +303,7 @@ public struct MaterialTestView: View {
     }
 }
 
-#if swift(>=5.9)
+#if compiler(>=5.9)
 @available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
 #Preview("Material Test") {
     MaterialTestView()

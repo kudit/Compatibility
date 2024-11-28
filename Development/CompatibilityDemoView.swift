@@ -5,6 +5,7 @@
 //  Created by Ben Ku on 7/13/24.
 //
 
+#if canImport(SwiftUI) && compiler(>=5.9)
 import SwiftUI
 import Compatibility
 
@@ -84,7 +85,6 @@ struct CompatibilityDemoView: View {
     }
 }
 
-#if swift(>=5.9)
 @available(iOS 15, macOS 12, tvOS 17, watchOS 8, *)
 #Preview {
     CompatibilityDemoView()
