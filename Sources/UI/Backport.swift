@@ -142,9 +142,21 @@ public extension Backport where Content: View {
     ) -> some View where V : Equatable {
         Group {
             if #available(iOS 17, macOS 14, tvOS 17, watchOS 10, *) {
+#if compiler(>=5.9)
                 content.onChange(of: value, initial: initial) { oldState, newState in
                     action(oldState, newState)
                 }
+#else
+                // probably never can be executed but just in case
+                content.onChange(of: value) { newState in
+                    action(value, newState) // in the closure, `value` will be the old value.
+                }
+                .onAppear {
+                    if initial {
+                        action(value, value)
+                    }
+                }
+#endif
             } else {
                 content.onChange(of: value) { newState in
                     action(value, newState) // in the closure, `value` will be the old value.
@@ -245,11 +257,11 @@ public extension Backport where Content: View {
         public var convert: SwiftUI.SafeAreaRegions {
             switch self {
             case .all:
-                    .all
+                return .all
             case .container:
-                    .container
+                return .container
             case .keyboard:
-                    .keyboard
+                return .keyboard
             }
         }
     }
@@ -654,6 +666,7 @@ public extension Backport where Content: View {
         /// complete.
         case removed
         
+#if compiler(>=5.9)
         @available(iOS 17, macOS 14, tvOS 17, watchOS 10, *)
         var swiftUIAnimationCompletion: SwiftUI.AnimationCompletionCriteria {
             switch self {
@@ -663,6 +676,7 @@ public extension Backport where Content: View {
                 return .removed
             }
         }
+#endif
     }
     /// Returns the result of recomputing the view's body with the provided
     /// animation, and runs the completion when all animations are complete.
@@ -675,22 +689,23 @@ public extension Backport where Content: View {
     /// animations are created by the changes in `body`, then the callback will be
     /// called immediately after `body`.
     func withAnimation<Result>(_ animation: Animation? = .default, completionCriteria: AnimationCompletionCriteria = .logicallyComplete, duration: TimeInterval = 0.35, _ body: () throws -> Result, completion: @MainActor @Sendable @escaping () -> Void) rethrows -> Result {
+#if compiler(>=5.9)
         if #available(iOS 17, macOS 14, tvOS 17, watchOS 10, *) {
             return try SwiftUI.withAnimation(animation, completionCriteria: completionCriteria.swiftUIAnimationCompletion, body, completion: completion)
-        } else {
-            // Fallback on earlier versions
-            let results = try SwiftUI.withAnimation(animation) {
-                try body()
-            }
-            
-            delay(duration) { // This should pull the duration from the animation but this is just for compatibility so we'll hard-code since there's no good way to pull the duration from the animation.
-                main { // force back on the main actor since delay doesn't seem to want to have a version to support this
-                    completion()
-                }
-            }
-            
-            return results
         }
+#endif
+        // Fallback on earlier versions
+        let results = try SwiftUI.withAnimation(animation) {
+            try body()
+        }
+        
+        delay(duration) { // This should pull the duration from the animation but this is just for compatibility so we'll hard-code since there's no good way to pull the duration from the animation.
+            main { // force back on the main actor since delay doesn't seem to want to have a version to support this
+                completion()
+            }
+        }
+        
+        return results
     }
     
 
@@ -709,9 +724,9 @@ public extension Backport where Content: View {
 #else
                 switch style {
                 case .automatic:
-                    content.productViewStyle(.automatic)
+                    content.productViewStyle(AutomaticProductViewStyle.automatic)
                 case .compact:
-                    content.productViewStyle(.compact)
+                    content.productViewStyle(CompactProductViewStyle.compact)
                 }
 #endif
             } else {
@@ -896,6 +911,7 @@ public enum BackportTabViewStyle: Sendable {
   // 2024 cases
 //    case grouped, sidebarAdaptable, tabBarOnly
 }
+#if compiler(>=5.9)
 @available(iOS 13, tvOS 13, watchOS 6, *)
 public extension Backport where Content: View {
     /// Sets the style for the tab view within the current environment.
@@ -952,7 +968,6 @@ public extension Backport where Content: View {
 
 // https://stackoverflow.com/questions/78472655/swiftui-tabview-safe-area
 // Apparently this doesn't work easily.  May need to custom develop a PageView.
-#if compiler(>=5.9)
 @available(iOS 13, tvOS 13, watchOS 7, *)
 #Preview("Page Backgrounds") {
     TabView {
@@ -961,7 +976,6 @@ public extension Backport where Content: View {
         Color.blue
     }.backport.tabViewStyle(.page)
 }
-#endif
 //
 //
 //#if os(macOS) && !targetEnvironment(macCatalyst)
@@ -1046,7 +1060,6 @@ public struct NavigationStack<Root: View>: View {
     }
 }
 
-#if compiler(>=5.9)
 @available(iOS 13, tvOS 13, watchOS 6, *)
 #Preview("Page Tabs") {
     Backport.TabView {

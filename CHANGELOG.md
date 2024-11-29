@@ -6,8 +6,9 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
-// IF THIS PASSES, GO BACK AND UPDATE COLOR & DEVICE & PARTICLEEFFECTS.
+v1.5.3 11/29/2024 Attempted additional fixes to support Swift 5.8.  Assumed returns are made explicit.  Apparently neither `swift(` or `compiler(` work in linux with swift 5.8 for SPI, so giving up again.
 
+*PASSES ALL SWIFTPACKAGEINDEX TESTS*
 v1.5.2 11/28/2024 #Preview isn't the issue, it's literally the @available checks we need to filter out.  `swift(` doesn't seem to work so trying replacing them all with `compiler(`.
 
 *PASSES ALL SWIFTPACKAGEINDEX TESTS*

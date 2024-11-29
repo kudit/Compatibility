@@ -3,11 +3,11 @@ public enum CloudStatus: CustomStringConvertible, Sendable, CaseIterable {
     public var description: String {
         switch self {
         case .notSupported:
-            "Not Supported"
+            return "Not Supported"
         case .available:
-            "Available"
+            return "Available"
         case .unavailable:
-            "Unavailable"
+            return "Unavailable"
         }
     }
     /// Returns an SFSymbolName for the given status.

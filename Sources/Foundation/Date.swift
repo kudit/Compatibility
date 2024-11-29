@@ -30,17 +30,17 @@ public extension DateFormatter.Style {
     var dateStyle: Date.FormatStyle.DateStyle {
         switch self {
         case .none:
-                .omitted
+            return .omitted
         case .short:
-                .abbreviated
+            return .abbreviated
         case .medium:
-                .numeric
+            return .numeric
         case .long:
-                .long
+            return .long
         case .full:
-                .complete
+            return .complete
         @unknown default:
-                .complete
+            return .complete
         }
     }
 }

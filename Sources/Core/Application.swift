@@ -240,10 +240,10 @@ public class Application: ObservableObject { // cannot automatically conform to 
     /// List of all versions that have been run since install.  Checks iCloud and reports versions run on other devices.
     public var versionsRun: [Version] {
         if #available(iOS 13, tvOS 13, watchOS 9, *) {
-            [Version](rawValue: _cloudVersionsRun ?? version.rawValue)
+            return [Version](rawValue: _cloudVersionsRun ?? version.rawValue)
         } else {
             // for older platforms, fallback to legacy behavior
-            (UserDefaults.standard.object(forKey: .localAppVersionsRunKey) as? [String])?.map { Version(rawValue: $0) } ?? [version] // newer support (still local)
+            return (UserDefaults.standard.object(forKey: .localAppVersionsRunKey) as? [String])?.map { Version(rawValue: $0) } ?? [version] // newer support (still local)
         }
     }
     
