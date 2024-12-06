@@ -255,3 +255,27 @@ extension CloudStorage where Value == Data? {
             syncSet: { newValue in sync.set(newValue, for: key) })
     }
 }
+
+public protocol MySQLDateString {
+    init(string: String)
+    var stringValue: String { get }
+}
+extension Date: MySQLDateString {
+    /// Creates a date from a MySQLDateTimeFormat string (for use in CloudStorage of dates automatically).
+    public init(string: String) {
+        self = Date(from: string, format: .mysqlDateTimeFormat) ?? .nowBackport
+    }
+    /// MySQL DateTime Format string
+    public var stringValue: String {
+        self.formatted(withFormat: .mysqlDateTimeFormat)
+    }
+}
+@available(iOS 13, tvOS 13, watchOS 6, *)
+extension CloudStorage where Value: MySQLDateString {
+    public init(wrappedValue: Value, _ key: String) {
+        self.init(
+            keyName: key,
+            syncGet: { CloudStorageSync.shared.string(for: key).flatMap(Value.init) ?? wrappedValue },
+            syncSet: { newValue in CloudStorageSync.shared.set(newValue.stringValue, for: key) })
+    }
+}

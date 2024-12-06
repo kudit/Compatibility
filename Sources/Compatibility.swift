@@ -8,7 +8,7 @@
 
 public enum Compatibility {
     /// The version of the Compatibility Library since cannot get directly from Package.swift.
-    public static let version: Version = "1.5.3"
+    public static let version: Version = "1.5.4"
 }
 
 @_exported import Foundation
@@ -239,7 +239,7 @@ public struct CompatibilityEnvironmentTestView: View {
         List {
 //            Text("Double values: \(String(describing: CGFloat(0.2)))")
             Section("Application") {
-                Text("App Version: \(Application.main.debugVersion)")
+                Backport.LabeledContent("App Version:", value: Application.main.debugVersion)
                 TestCheck("is first run", Application.main.isFirstRun)
                 let previousVersions = Application.main.previouslyRunVersions
                 if previousVersions.count > 0 {
@@ -248,7 +248,7 @@ public struct CompatibilityEnvironmentTestView: View {
                 }
             }
             Section("Compatibility") {
-                Text("Compatibility Version: \(Compatibility.version)")
+                Backport.LabeledContent("Compatibility Version:", value: Compatibility.version.description)
                 TestCheck("is Debug", Application.isDebug)
                 if previouslyRunCompatibilityVersions != "" && previouslyRunCompatibilityVersions != "\(Compatibility.version.rawValue)" {
                     Text("Previously run Compatibility versions:")

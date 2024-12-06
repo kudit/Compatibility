@@ -579,6 +579,7 @@ public struct DataStoreTestView: View {
     @ObservedObject var model = DataStoreTestModel.shared
     @CloudStorage(.string2Key) var string2 = String.string2Initial
     @CloudStorage(.appVersionsRunKey) var appVersionsRun: String?
+    @CloudStorage(.appTestLastRunKey) var appTestLastRun = Date.nowBackport
     public init() {}
     public var body: some View {
         List {
@@ -588,6 +589,15 @@ public struct DataStoreTestView: View {
                     appVersionsRun
                 }, set: {
                     appVersionsRun = $0
+                }))
+                ClearableTextField(label: "App First Run", text: Binding(get: {
+                    appTestLastRun.stringValue
+                }, set: { newValue in
+                    if let newValue {
+                        appTestLastRun = Date(string: newValue)
+                    } else {
+                        appTestLastRun = .nowBackport
+                    }
                 }))
                 Text("Debug tests:")
                 ClearableTextField(label: "Label String 1", text: Binding(get: {

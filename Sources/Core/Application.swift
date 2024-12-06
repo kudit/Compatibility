@@ -11,6 +11,8 @@ extension String {
     static let localAppVersionsRunKey = "kuditVersions" // previous for compatibility (also only ever stored in UserDefaults)
     static let appVersionsRunKey = "appVersionsRun" // modern support
 
+    static let appTestLastRunKey = "appTestLastRun"
+
     public static let unknownAppIdentifier = "com.unknown.unknown"
 }
 

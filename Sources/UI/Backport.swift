@@ -21,7 +21,7 @@ public extension View {
 @available(iOS 13, tvOS 13, watchOS 6, *)
 extension Backport where Content == Any {
     /// Usage: Backport.AsyncImage(url: URL)
-    @ViewBuilder static func AsyncImage(url: URL?) -> some View {
+    @ViewBuilder public static func AsyncImage(url: URL?) -> some View {
         if #available(iOS 14, macOS 11, tvOS 14, watchOS 7, *) {
             if #available(iOS 15, macOS 12, tvOS 15, watchOS 8, *) {
                 SwiftUI.AsyncImage(url: url)
@@ -31,6 +31,17 @@ extension Backport where Content == Any {
             }
         } else {
             Text(url?.lastPathComponent ?? "?")
+        }
+    }
+}
+
+@available(iOS 13, macOS 11, tvOS 13, watchOS 6, *)
+extension Backport where Content == Any {
+    @ViewBuilder public static func LabeledContent(_ titleKey: LocalizedStringKey, value: some StringProtocol) -> some View {
+        if #available(iOS 16, macOS 13, tvOS 16, watchOS 9, *) {
+            SwiftUI.LabeledContent(titleKey, value: value)
+        } else {
+            Text("\(titleKey): \(value)")
         }
     }
 }

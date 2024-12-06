@@ -6,6 +6,8 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
+v1.5.4 12/6/2024 Added Backport.LabeledContent().  Added Date support to @CloudStorage.
+
 v1.5.3 11/29/2024 Attempted additional fixes to support Swift 5.8.  Assumed returns are made explicit.  Apparently neither `swift(` or `compiler(` work in linux with swift 5.8 for SPI, so giving up again.
 
 *PASSES ALL SWIFTPACKAGEINDEX TESTS*
