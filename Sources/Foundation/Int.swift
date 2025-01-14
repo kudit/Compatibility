@@ -101,6 +101,22 @@ internal let ordinalTests: TestClosure = {
     try expect(allPass, failedMessages.joined(separator: ", "))
 }
 
+// MARK: - Pluralization utility
+public extension Int {
+    /// Adds an "s" (or specified ending) if the value is anything other than 1.
+    /// If you need a completely different term, you can specify the versions like this:
+    /// ```swift
+    /// number.pluralEnding("teeth", singularEnding: "tooth")
+    /// ```
+    func pluralEnding(_ pluralEnding: String = "s", singularEnding: String = "") -> String {
+        if self == 1 {
+            return singularEnding
+        } else {
+            return pluralEnding
+        }
+    }
+}
+
 // MARK: - Byte strings
 /// Add byte functions to all integer types. (Int64, Int, and UInt64 all automatically conform)
 public extension BinaryInteger {
