@@ -93,7 +93,7 @@ public extension HTML {
         }
         return cleaned
     }
-
+    
 #if canImport(Combine) || canImport(NSAttributedString)
     /// Generate an NSAttributedString from the HTML content enclosed
     var attributedString: NSAttributedString {
@@ -107,10 +107,10 @@ public extension HTML {
 #endif
     
     /// Encode a string using the typical HTML entities syntax according to https://www.w3.org/wiki/Common_HTML_entities_used_for_typography
-    // TODO: Do we want to convert this to a map and for loop?
+    /// Ampersands are always encoded first but the order of everything else is not guaranteed.
+    /// Double quotes `"` are escaped to `&quot;`.
     var htmlEncoded: String {
         let entities = [
-            "&": "&amp;",
             "¢": "&cent;",
             "£": "&pound;",
             "§": "&sect;",
@@ -142,6 +142,7 @@ public extension HTML {
             "‘": "&lsquo;",
             "’": "&rsquo;",
             "‚": "&sbquo;",
+            "\"": "&quot;",
             "“": "&ldquo;",
             "”": "&rdquo;",
             "„": "&bdquo;",
@@ -188,33 +189,58 @@ public extension HTML {
             //            .replacingOccurrences(of: "{", with: "&lbrace;")
             // accented characters we're going to not replace.
         ]
-        var encodedString = self
+        var encodedString = self.replacingOccurrences(of: "&", with: "&amp;") // ensure & is done first so we don't ever double-encode.
         for (symbol, entity) in entities {
             encodedString = encodedString.replacingOccurrences(of: symbol, with: entity)
         }
         return encodedString
     }
-
+    
     internal static let testHTML = """
-    <html>
-    <head>
-    <title>Title</title>
-    <style>
-    body {
-        text-decoration: underline;
-        font-size: x-large;
-        font-family: sans-serif;
-        border: 5px solid blue; /* Not supported */
-        padding: 20px; /* Not supported */
+<html>
+<head>
+<title>Title</title>
+<style>
+body {
+    text-decoration: underline;
+    font-size: x-large;
+    font-family: sans-serif;
+    border: 5px solid blue; /* Not supported */
+    padding: 20px; /* Not supported */
+}
+</style>
+</head>
+<body>
+<h1>Header</h1>
+<p>The quick <strong style="color: brown;">bold</strong> <span style="color: orange;">fox</span> <span style="color: green;">jumped</span> over the <em>italic</em> dog.</p>
+</body>
+</html>
+"""
+    
+    @MainActor
+    internal static let testHTMLEncoded: TestClosure = {
+        let encoded = """
+        &lt;html&gt;
+        &lt;head&gt;
+        &lt;title&gt;Title&lt;/title&gt;
+        &lt;style&gt;
+        body {
+            text-decoration: underline;
+            font-size: x-large;
+            font-family: sans-serif;
+            border: 5px solid blue; /* Not supported */
+            padding: 20px; /* Not supported */
+        }
+        &lt;/style&gt;
+        &lt;/head&gt;
+        &lt;body&gt;
+        &lt;h1&gt;Header&lt;/h1&gt;
+        &lt;p&gt;The quick &lt;strong style=&quot;color: brown;&quot;&gt;bold&lt;/strong&gt; &lt;span style=&quot;color: orange;&quot;&gt;fox&lt;/span&gt; &lt;span style=&quot;color: green;&quot;&gt;jumped&lt;/span&gt; over the &lt;em&gt;italic&lt;/em&gt; dog.&lt;/p&gt;
+        &lt;/body&gt;
+        &lt;/html&gt;
+        """
+        try expect(testHTML.htmlEncoded == encoded, testHTML.htmlEncoded)
     }
-    </style>
-    </head>
-    <body>
-    <h1>Header</h1>
-    <p>The quick <strong style="color: brown;">bold</strong> <span style="color: orange;">fox</span> <span style="color: green;">jumped</span> over the <em>italic</em> dog.</p>
-    </body>
-    </html>
-    """
 }
 
 #if canImport(SwiftUI) && (canImport(Combine) || canImport(NSAttributedString)) && compiler(>=5.9)
@@ -804,7 +830,8 @@ public extension String {
         Test("extract nil end", testExtractNilEnd),
         Test("extract missing start", testExtractMissingStart),
         Test("extract missing end", testExtractMissingEnd),
-        Test("Line Reversal", testTextReversal)
+        Test("Line Reversal", testTextReversal),
+        Test("HTML Encoding", testHTMLEncoded),
     ]
 }
 
