@@ -873,7 +873,7 @@ public extension Backport where Content: View {
         Group {
             if #available(iOS 14, macOS 11, tvOS 16, watchOS 7, *) {
                 content.onTapGesture(count: count, perform: action)
-            } else if #available(iOS 14, macOS 11, tvOS 14, watchOS 6, *) { // 10.15 but macOS 11 required for availability checks.  Same with iOS 14.
+            } else if #available(iOS 14, macOS 11, tvOS 14, watchOS 7, *) { // 10.15 but macOS 11 required for availability checks.  Same with iOS 14.  Same with watchOS 7.
                 // Fallback on earlier versions
                 content.onLongPressGesture(minimumDuration: 0.01, pressing: { _ in }) {
                     action()

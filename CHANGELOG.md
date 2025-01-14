@@ -6,6 +6,8 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
+v1.6.1 1/14/2025 Fixed build limited availablility issue with watchOS.
+
 v1.6.0 1/14/2025 Added `pluralEnding()`.  Added `.backport.onTapGesture {}`.
 
 *PASSES ALL SWIFTPACKAGEINDEX TESTS*
