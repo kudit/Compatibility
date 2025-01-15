@@ -6,6 +6,9 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
+v1.6.3 1/15/2025 Added some documentation to `asJSON()` function.  Fixed internal definition of Triangle initializer.
+
+*PASSES ALL SWIFTPACKAGEINDEX TESTS*
 v1.6.2 1/14/2025 Fixed double encoding of ampersands in `htmlEncoded` strings due to random access nature of dictionaries.  Added test.  Added double quote `"` to `&quot;` encoding. 
 
 v1.6.1 1/14/2025 Fixed build limited availablility issue with watchOS.

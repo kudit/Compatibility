@@ -11,6 +11,9 @@ import SwiftUI
 @available(iOS 13, tvOS 13, watchOS 6, *)
 public struct Triangle: Shape {
     public var flatEdge: Edge
+    public init(flatEdge: Edge) {
+        self.flatEdge = flatEdge
+    }
     public func path(in rect: CGRect) -> Path {
         var path = Path()
         

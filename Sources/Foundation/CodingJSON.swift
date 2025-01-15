@@ -1,6 +1,13 @@
 // MARK: - JSON management (simplified)
 
 public extension Encodable {
+    /**
+     Use to output the encodable object as a JSON representation.
+     ex:
+     ```swift
+     return self.asJSON(outputFormatting: [.prettyPrinted, .sortedKeys])
+     ```
+     */
     func asJSON(outputFormatting: JSONEncoder.OutputFormatting? = nil) -> String {
         // really should never error since we conform to Encodable
         // Don't need to do this check since we should conform to Encodable
