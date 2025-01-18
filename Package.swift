@@ -7,7 +7,7 @@
 
 import PackageDescription
 
-let version = "1.6.3"
+let version = "1.6.4"
 let packageLibraryName = "Compatibility"
 
 // Products define the executables and libraries a package produces, making them visible to other packages.
@@ -68,6 +68,7 @@ products += [
 	.iOSApplication(
 		name: packageLibraryName, // needs to match package name to open properly in Swift Playgrounds
 		targets: ["\(packageLibraryName)TestAppModule"],
+//        bundleIdentifier: "com.kudit.compatibility", // ignored in playgrounds
 		teamIdentifier: "3QPV894C33",
 		displayVersion: version,
 		bundleVersion: "1",

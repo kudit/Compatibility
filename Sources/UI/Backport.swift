@@ -871,12 +871,15 @@ public extension Backport where Content: View {
     ///    - action: The action to perform.
     func onTapGesture(count: Int = 1, perform action: @escaping () -> Void) -> some View {
         Group {
-            if #available(iOS 14, macOS 11, tvOS 16, watchOS 7, *) {
-                content.onTapGesture(count: count, perform: action)
-            } else if #available(iOS 14, macOS 11, tvOS 14, watchOS 7, *) { // 10.15 but macOS 11 required for availability checks.  Same with iOS 14.  Same with watchOS 7.
-                // Fallback on earlier versions
-                content.onLongPressGesture(minimumDuration: 0.01, pressing: { _ in }) {
-                    action()
+            if #available(iOS 14, macOS 11, tvOS 14, watchOS 7, *) { // 10.15 but macOS 11 required for availability checks.  Same with iOS 13.  Same with watchOS 6.  Gives warning on Swift Playgrounds.
+                // have to re-order this way because apparently `else if #available` creates weird warnings.
+                if #available(tvOS 16, *) {
+                    content.onTapGesture(count: count, perform: action)
+                } else {
+                    // Fallback on earlier versions
+                    content.onLongPressGesture(minimumDuration: 0.01, pressing: { _ in }) {
+                        action()
+                    }
                 }
             } else {
                 // Fallback on earlier versions

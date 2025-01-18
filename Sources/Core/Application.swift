@@ -41,13 +41,18 @@ public class Application: ObservableObject { // cannot automatically conform to 
 #endif
     
     @MainActor
+    private static var iCloudPlaygroundPreviewNoticed = false
+
+    @MainActor
     public static var iCloudIsEnabled: Bool {
         guard iCloudSupported else {
             debug("iCloud is not supported by this app.", level: .DEBUG)
             return false
         }
         if isPlayground || isPreview {
-            debug("iCloud works oddly in playgrounds and previews so don't actually support.", level: .DEBUG)
+            debug("iCloud works oddly in playgrounds and previews so don't actually support.", level: iCloudPlaygroundPreviewNoticed ? .SILENT : .DEBUG)
+            // only output once per session otherwise this is very chatty
+            iCloudPlaygroundPreviewNoticed = true
             return false
         }
 #if !canImport(Combine)
@@ -159,16 +164,23 @@ public class Application: ObservableObject { // cannot automatically conform to 
         guard var identifier = Bundle.main.bundleIdentifier else {
             return .unknownAppIdentifier
         }
-        // when running in preview, identifier may be: swift-playgrounds-dev-previews.swift-playgrounds-app.hdqfptjlmwifrrakcettacbhdkhn.501.KuditFramework
+        // when running in playgrounds preview, identifier may be: swift-playgrounds-dev-previews.swift-playgrounds-app.hdqfptjlmwifrrakcettacbhdkhn.501.KuditFramework
+        // swift-playgrounds-dev-previews.swift-playgrounds-app.cmofpjkqydaoovajzscjkvydowkt.501.Compatibility
         // when running from playgrounds, identifier may be: swift-playgrounds-dev-run.swift-playgrounds-app.hdqfptjlmwifrrakcettacbhdkhn.501.KuditFrameworksApp
+
         // convert to normal identifier (assumes will be com.kudit.<lastcomponent>
         // for testing, if this is KuditFrameworks, we should pull the unknown identifier FAQs
         let lastComponent = identifier.components(separatedBy: ".").last // should never really be nil
         if let lastComponent, identifier.contains("swift-playgrounds-dev") {
-            identifier = "\(Application.baseDomain).\(lastComponent)"
+            let originalIdentifier = identifier // save since we're about to change the identifier and delayed code gets the new value not the original captured value
+            Compatibility.main { // required or will not actually print
+                debug("Swift Playgrounds Dev environment.  Replacing identifier: \(originalIdentifier)", level: .DEBUG)
+            }
+            identifier = "\(Application.baseDomain).\(lastComponent.replacingOccurrences(of: "-", with: ""))"
         }
         // NEXT: expose this so other frameworks can check for test frameworks as this is KUDIT specific.  TODO: create a list that this can check to return unknown app identifier?
         if lastComponent == "KuditFramework" || identifier.contains("com.kudit.KuditFrameworksTest") {
+            // replace with unknown for KuditFrameworks test output.
             return .unknownAppIdentifier
         }
         return identifier
@@ -213,6 +225,8 @@ public class Application: ObservableObject { // cannot automatically conform to 
             // persist back to cloud for other devices and future runs or re-installs (do with delay in case of launch issue where the crash happens at launch)
             delay(0.5) { // technically should still be on the main thread.  Would do @MainActor in but Swift 6 has issues with that
                 debug("Setting versions run to: \(allVersions.rawValue)", level: .DEBUG)
+//                debug("Bundle Identifier: \(Bundle.main.identifier)")
+//                debug("Application Identifier: \(Application.main.appIdentifier)")
                 // setting Application.main so don't capture mutating self.
                 Compatibility.main { // but need to add this to guarantee for compiler issues.
                     Application.main._cloudVersionsRun = allVersions.rawValue
