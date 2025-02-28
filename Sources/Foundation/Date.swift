@@ -151,15 +151,11 @@ public extension Date {
     var pretty: String {
         if #available(iOS 15, macOS 12, tvOS 15, watchOS 8, *) {
             #if canImport(Combine) // not supported in Linux
-            self.formatted(date: .abbreviated, time: .shortened)
-            #else
-            // Fallback on earlier versions
-            self.formatted(withFormat: .mysqlDateTimeFormat)
+            return self.formatted(date: .abbreviated, time: .shortened)
             #endif
-        } else {
-            // Fallback on earlier versions
-            self.formatted(withFormat: .mysqlDateTimeFormat)
         }
+        // Fallback on earlier versions
+        return self.mysqlDateTime
     }
     @MainActor
     internal static let testPretty: TestClosure = {
