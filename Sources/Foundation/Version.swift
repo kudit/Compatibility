@@ -31,7 +31,7 @@ public typealias Version = Compatibility.Version
 
 extension Version: Swift.CustomStringConvertible { // @retroactive in Swift 6?
     /// equivalent to Version("0.0.0")
-    static let zero: Version = "0.0.0"
+    public static let zero: Version = "0.0.0"
 
     // For CustomStringConvertible conformance
     /// SemVer string (format of "*major*.*minor*.*patch*")

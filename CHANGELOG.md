@@ -6,6 +6,8 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
+v1.6.6 2/28/2025 Fixed internal `Version.zero` (doh!).
+
 v1.6.5 2/28/2025 Cleaned up redundant code for `Date.pretty()`.  Works fine under Swift Playgrounds 4.5.1 but not under Swift Playgrounds 4.6.2 (and 4.6?).  Added `Version.zero`. 
 
 *PASSES ALL SWIFTPACKAGEINDEX TESTS*
