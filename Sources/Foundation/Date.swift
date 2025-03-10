@@ -96,7 +96,17 @@ public extension Date {
             Date()
         }
     }
+
+    /// Gets a date 24 hours from today in the future.  If for some reason this can't be calculated, will return `.now` (but this should never happen).
+    static var tomorrow: Date {
+        return Calendar.current.date(byAdding: .day, value: 1, to: nowBackport) ?? .nowBackport
+    }
     
+    /// Return the first moment of the date for tomorrow.  Useful for setting notifications that are day-specific.
+    static var tomorrowMidnight: Date {
+        return Calendar.current.startOfDay(for: tomorrow)
+    }
+
     // MARK: - Formatting using format strings and styles
     /// format using DateFormatter.dateFormat string.  Not PHP Date format string.  For reference: https://www.advancedswift.com/date-formatter-cheatsheet-formulas-swift/#date-format-cheatsheet
     // TODO: Create a conversion from PHP Date String format to Swift Date format strings and vice versa?

@@ -35,13 +35,19 @@ extension Backport where Content == Any {
     }
 }
 
-@available(iOS 13, macOS 11, tvOS 13, watchOS 6, *)
+@available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
 extension Backport where Content == Any {
-    @ViewBuilder public static func LabeledContent(_ titleKey: LocalizedStringKey, value: some StringProtocol) -> some View {
+    @ViewBuilder public static func LabeledContent(_ titleKey: String, value: some StringProtocol) -> some View {
         if #available(iOS 16, macOS 13, tvOS 16, watchOS 9, *) {
-            SwiftUI.LabeledContent(titleKey, value: value)
+            SwiftUI.LabeledContent(LocalizedStringKey(titleKey), value: value)
         } else {
-            Text("\(titleKey): \(value)")
+            HStack {
+                Text(titleKey)
+                Spacer()
+                Text(value)
+                    .backport.foregroundStyle(.gray)
+                    .multilineTextAlignment(.trailing)
+            }
         }
     }
 }
@@ -991,8 +997,8 @@ public extension Backport where Content: View {
     /// - Parameter style: The style to apply to this tab view.
     @ViewBuilder func tabViewStyle(_ style: BackportTabViewStyle) -> some View {
         Group {
-            #if os(macOS)
-                content
+            #if os(macOS) || os(tvOS) // no longer supported in tvOS 17.2+?
+            content
             #else
             if #available(iOS 14, tvOS 14, watchOS 7, *) {
                 switch style {

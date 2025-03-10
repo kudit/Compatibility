@@ -30,9 +30,6 @@ public extension Compatibility {
 public typealias Version = Compatibility.Version
 
 extension Version: Swift.CustomStringConvertible { // @retroactive in Swift 6?
-    /// equivalent to Version("0.0.0")
-    public static let zero: Version = "0.0.0"
-
     // For CustomStringConvertible conformance
     /// SemVer string (format of "*major*.*minor*.*patch*")
     ///
@@ -126,6 +123,9 @@ extension Version: Swift.Comparable { // @retroactive in Swift 6?
 extension Version: Swift.Hashable {}
 
 public extension Version {
+    /// equivalent to Version("0.0.0")
+    static let zero: Version = "0.0.0"
+
     // For legacy code compatibility
     var components: [Int] {
         return [majorVersion, minorVersion, patchVersion]

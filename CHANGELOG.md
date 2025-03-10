@@ -6,6 +6,13 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
+TODO: Adapt Package.swift to figure out how to get working.  Start with a project, then split out library, then work back to the submitted code to figure out why it's not working.  Reported and reproduced in FB16509699.
+
+TODO: Figure out why menus don't work at all in tvOS.  Figure out how to backport.
+
+v1.6.7 3/10/2025 Shifted around `Version.zero` to non-constrained extension to make more sense.  Added `resetVersionsRun()` for testing.  Fixed internal scoping of String versions run keys just in case we need to use outside the framework.  Added `tomorrow` and `tomorrowMidnight` date values.  Added test section for output formats.  Improved `Backport.LabeledContent` for compatibility with older devices (but now requires iOS 15 to use).  Removed pageViewStyle from TabViews on tvOS since it doesn't really work. 
+
+*PASSES ALL SWIFTPACKAGEINDEX TESTS*
 v1.6.6 2/28/2025 Fixed internal `Version.zero` (doh!).
 
 v1.6.5 2/28/2025 Cleaned up redundant code for `Date.pretty()`.  Works fine under Swift Playgrounds 4.5.1 but not under Swift Playgrounds 4.6.2 (and 4.6?).  Added `Version.zero`. 

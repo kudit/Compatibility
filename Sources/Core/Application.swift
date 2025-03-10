@@ -7,9 +7,9 @@
 //
 
 extension String {
-    static let legacyLastRunVersionKey = "last_run_version" // legacy (single version string) - only ever stored in UserDefaults.
-    static let localAppVersionsRunKey = "kuditVersions" // previous for compatibility (also only ever stored in UserDefaults)
-    static let appVersionsRunKey = "appVersionsRun" // modern support
+    public static let legacyLastRunVersionKey = "last_run_version" // legacy (single version string) - only ever stored in UserDefaults.
+    public static let localAppVersionsRunKey = "kuditVersions" // previous for compatibility (also only ever stored in UserDefaults)
+    public static let appVersionsRunKey = "appVersionsRun" // modern support
 
     static let appTestLastRunKey = "appTestLastRun"
 
@@ -238,6 +238,13 @@ public class Application: ObservableObject { // cannot automatically conform to 
             UserDefaults.standard.removeObject(forKey: .legacyLastRunVersionKey)
             // UserDefaults.synchronize // don't save in case launch issue where it will crash on launch
         }
+    }
+    
+    /// For debugging, reset all the previously run version information including the cloud versions.  This shouldn't be run on production devices or you risk data loss.
+    public func resetVersionsRun() {
+        UserDefaults.standard.removeObject(forKey: .legacyLastRunVersionKey)
+        UserDefaults.standard.removeObject(forKey: .localAppVersionsRunKey)
+        Application.main._cloudVersionsRun = nil
     }
         
     // MARK: - Version information
