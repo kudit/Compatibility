@@ -468,6 +468,25 @@ public extension Backport where Content: View {
     }
 }
 
+@available(iOS 13, tvOS 13, watchOS 6, *)
+extension Backport where Content: View {
+    /// Specifies if the view is focusable.
+    ///
+    /// - Parameter isFocusable: A Boolean value that indicates whether this
+    ///   view is focusable.
+    ///
+    /// - Returns: A view that sets whether a view is focusable.
+    public func focusable(_ isFocusable: Bool = true) -> some View {
+        Group {
+            if #available(iOS 17, macOS 12, tvOS 15, watchOS 8, *) {
+                content.focusable(isFocusable)
+            } else {
+                content // ignore - okay to do nothing since this is all really just for tvOS anyways and all tvOS supports tvOS 15. (NOTE: the documentation says tvOS 17+ but the actual code has availability tvOS 15)
+            }
+        }
+    }
+}
+
 // MARK: scrollClipDisabled()
 @available(iOS 13, tvOS 13, watchOS 6, *)
 extension Backport where Content: View {
