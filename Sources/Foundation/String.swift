@@ -576,14 +576,14 @@ public extension String {
     }
     
     /// normalized version of string for comparisons and database lookups.  If normalization fails or results in an empty string, original string is returned.
-    var normalized: String? {
+    var normalized: String {
         // expand ligatures and other joined characters and flatten to simple ascii (æ => ae, etc.) by converting to ascii data and back
         guard let data = self.data(using: String.Encoding.ascii, allowLossyConversion: true) else {
-            print("WARNING: Unable to convert string to ASCII Data: \(self)")
+            debug("Unable to convert string to ASCII Data: \(self)", level: .WARNING)
             return self
         }
         guard let processed = String(data: data, encoding: String.Encoding.ascii) else {
-            print("WARNING: Unable to decode ASCII Data normalizing stirng: \(self)")
+            debug("Unable to decode ASCII Data normalizing stirng: \(self)", level: .WARNING)
             return self
         }
         var normalized = processed

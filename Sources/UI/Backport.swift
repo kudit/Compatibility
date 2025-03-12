@@ -560,6 +560,137 @@ extension Backport where Content: View {
     }
 }
 
+// MARK: - Navigation Destination
+@available(iOS 13, tvOS 13, watchOS 6, *)
+public extension Backport where Content: View {
+
+    /// Associates a destination view with a binding that can be used to push
+    /// the view onto a ``NavigationStack``.
+    ///
+    /// In general, favor binding a path to a navigation stack for programmatic
+    /// navigation. Add this view modifier to a view inside a ``NavigationStack``
+    /// to programmatically push a single view onto the stack. This is useful
+    /// for building components that can push an associated view. For example,
+    /// you can present a `ColorDetail` view for a particular color:
+    ///
+    ///     @State private var showDetails = false
+    ///     var favoriteColor: Color
+    ///
+    ///     NavigationStack {
+    ///         VStack {
+    ///             Circle()
+    ///                 .fill(favoriteColor)
+    ///             Button("Show details") {
+    ///                 showDetails = true
+    ///             }
+    ///         }
+    ///         .navigationDestination(isPresented: $showDetails) {
+    ///             ColorDetail(color: favoriteColor)
+    ///         }
+    ///         .navigationTitle("My Favorite Color")
+    ///     }
+    ///
+    /// Do not put a navigation destination modifier inside a "lazy" container,
+    /// like ``List`` or ``LazyVStack``. These containers create child views
+    /// only when needed to render on screen. Add the navigation destination
+    /// modifier outside these containers so that the navigation stack can
+    /// always see the destination.
+    ///
+    /// - Parameters:
+    ///   - isPresented: A binding to a Boolean value that indicates whether
+    ///     `destination` is currently presented.
+    ///   - destination: A view to present.
+    func navigationDestination<V: View>(isPresented: Binding<Bool>, @ViewBuilder destination: () -> V) -> some View {
+        Group {
+            if #available(iOS 16, macOS 13.0, tvOS 16, watchOS 9, *) {
+                content.navigationDestination(isPresented: isPresented, destination: destination)
+            } else {
+                // Fallback on earlier versions (bury in the background)
+                ZStack {
+                    NavigationLink(isActive: isPresented, destination: destination) { EmptyView() }
+                    content
+                }
+            }
+        }
+    }
+}
+
+// MARK: - TextSelectability
+public enum BackportTextSelectability {
+    case enabled
+    case disabled
+}
+
+@available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
+public extension Backport where Content: View {
+    /// Controls whether people can select text within this view.
+    ///
+    /// People sometimes need to copy useful information from ``Text`` views ---
+    /// including error messages, serial numbers, or IP addresses --- so they
+    /// can then paste the text into another context. Enable text selection
+    /// to let people select text in a platform-appropriate way.
+    ///
+    /// You can apply this method to an individual text view, or to a
+    /// container to make each contained text view selectable. In the following
+    /// example, the person using the app can select text that shows the date of
+    /// an event or the name or email of any of the event participants:
+    ///
+    ///     var body: some View {
+    ///         VStack {
+    ///             Text("Event Invite")
+    ///                 .font(.title)
+    ///             Text(invite.date.formatted(date: .long, time: .shortened))
+    ///                 .textSelection(.enabled)
+    ///
+    ///             List(invite.recipients) { recipient in
+    ///                 VStack (alignment: .leading) {
+    ///                     Text(recipient.name)
+    ///                     Text(recipient.email)
+    ///                         .foregroundStyle(.secondary)
+    ///                 }
+    ///             }
+    ///             .textSelection(.enabled)
+    ///         }
+    ///         .navigationTitle("New Invitation")
+    ///     }
+    ///
+    /// On macOS, people use the mouse or trackpad to select a range of text,
+    /// which they can quickly copy by choosing Edit > Copy, or with the
+    /// standard keyboard shortcut.
+    ///
+    /// ![A macOS window titled New Invitation, with header Event Invite and
+    /// the date and time of the event below it. The date --- July 31, 2022 ---
+    /// is selected. Below this, a list of invitees by name and
+    /// email.](View-textSelection-1)
+    ///
+    /// On iOS, the person using the app touches and holds on a selectable
+    /// `Text` view, which brings up a system menu with menu items appropriate
+    /// for the current context. These menu items operate on the entire contents
+    /// of the `Text` view; the person can't select a range of text like they
+    /// can on macOS.
+    ///
+    /// ![A portion of an iOS view, with header Event Invite and
+    /// the date and time of the event below it. Below the date and time, a
+    /// menu shows two items: Copy and Share. Below this, a list of invitees by
+    /// name and email.](View-textSelection-2)
+    ///
+    /// - Note: ``Button`` views don't support text selection.
+    /// - Note: This is completely ignored in watchOS and tvOS but is here for simplified code compatibility.
+    func textSelection(_ selectability: BackportTextSelectability) -> some View {
+        Group {
+#if os(watchOS) || os(tvOS)
+            content
+#else
+            switch selectability {
+            case .enabled:
+                content.textSelection(.enabled)
+            case .disabled:
+                content.textSelection(.disabled)
+            }
+#endif
+        }
+    }
+}
 
 // MARK: Navigation Title
 @available(iOS 13, tvOS 13, watchOS 6, *)
@@ -1124,9 +1255,9 @@ public extension ContainerView {
 }
 
 // Try just re-definiing NavigationStack here and in this, do the check and show the appropriate SwiftUI implementation if that makes sense.
-@available(iOS 13, tvOS 13, watchOS 7, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 @MainActor
-public struct NavigationStack<Root: View>: View {
+public struct BackportNavigationStack<Root: View>: View {
     var root: () -> Root
 
     @MainActor
@@ -1137,17 +1268,19 @@ public struct NavigationStack<Root: View>: View {
     public var body: some View {
         Group {
             if #available(iOS 16, macOS 13, tvOS 16, watchOS 9, *) {
-                SwiftUI.NavigationStack {
+                NavigationStack { // SwiftUI.NavigationStack
                     root()
                 }
-            } else {
+            } else if #available(iOS 14, macOS 11, tvOS 14, watchOS 7, *) {
                 // Fallback on earlier versions
                 NavigationView {
                     root()
                 }
-#if !os(macOS)
-                .navigationViewStyle(.stack)
-#endif
+//#if !os(macOS)
+//                .navigationViewStyle(.stack) // seems to cause crash on iOS 15 (also leads to undefined behavior...)
+//#endif
+            } else {
+                root() // forget about wrapping...
             }
         }
 #if os(macOS)

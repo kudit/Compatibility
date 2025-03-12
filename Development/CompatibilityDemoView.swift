@@ -45,7 +45,7 @@ struct CompatibilityDemoView: View {
                         }
                         try expect(success, "Availability check failed!  Should not be possible to run on older than iOS 11.")
                     },
-                ]
+                 ]
             ])
                 .tabItem {
                     Text("All Tests")
@@ -62,6 +62,10 @@ struct CompatibilityDemoView: View {
                 .tabItem {
                     Text("Convert")
                 }
+            TriangleShowcaseView()
+                .tabItem {
+                    Text("Triangle Showcase")
+                }
             FillAndStrokeTest()
                 .tabItem {
                     Text("Fill & Stroke")
@@ -69,10 +73,6 @@ struct CompatibilityDemoView: View {
             PlacardShowcaseView()
                 .tabItem {
                     Text("Placard Showcase")
-                }
-            TriangleShowcaseView()
-                .tabItem {
-                    Text("Triangle Showcase")
                 }
             MaterialTestView()
                 .tabItem {

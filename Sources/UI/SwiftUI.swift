@@ -311,11 +311,11 @@ public struct MaterialTestView: View {
 #endif
 
 // MARK: - Wrappers
-@available(iOS 13, tvOS 13, watchOS 7, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 public extension View {
     @MainActor
     func navigationWrapper() -> some View {
-        NavigationStack { // possibly BackportNavigationStack if there is a conflict
+        BackportNavigationStack { // possibly BackportNavigationStack to avoid naming confusion and unintended conflicts
             self
         }
     }
