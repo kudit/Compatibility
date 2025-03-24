@@ -969,7 +969,7 @@ public extension ToolbarItemPlacement {
 #if os(tvOS)
         return .automatic // won't actually show up
 #elseif os(macOS)
-        return .status
+        return .confirmationAction
 #else
         if #available(iOS 1, watchOS 10, *) {
             return .bottomBar

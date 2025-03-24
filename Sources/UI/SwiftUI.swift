@@ -298,6 +298,14 @@ public struct MaterialTestView: View {
                         Color.green
                     }.padding()
                 }
+                .toolbar {
+                    ToolbarItem(placement: .bottomBackport) {
+                        Button("Close") {
+                            showSheet = false
+                        }
+                    }
+                }
+                .navigationWrapper()
                 .backport.presentationDetents([.fraction(1/3), .medium, .large])
             }
     }

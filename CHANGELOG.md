@@ -8,7 +8,9 @@ NOTE: Version needs to be updated in the following places:
 
 TODO: Figure out why menus don't work at all in tvOS.  Figure out how to backport.
 
-v1.7.0 3/12/2025 Changed so `normalized` returns a non-optional.  This is technically a breaking change (hence the minor version increment) but hopefully usage is minimal (plus the fix is easy by simply removing any forced unwraps or checks).  Added backport `navigationDestination` and `textSelection`.  Moved Triangle Showcase up so can test on Apple TV (seems to cut tabs after this).  Fixed crashing issue with iOS 15 and `BackportNavigationStack`/`.navigationWrapper()` code.
+v1.7.1 3/24/2025 Added `bottomBackport` test and fixed so works on macOS.  Re-worked `tomorrow` to use new `nextDay` and `firstMoment` functions.
+
+v1.7.0 3/12/2025 Changed so `normalized` returns a non-optional.  This is technically a breaking change (hence the minor version increment) but hopefully usage is minimal (plus the fix is easy by simply removing any forced unwraps or checks).  Added backport `navigationDestination` and `textSelection`.  Moved Triangle Showcase up so can test on Apple TV (seems to cut tabs after this).  Fixed crashing issue with iOS 15 and `BackportNavigationStack`/`.navigationWrapper()` code. (Renamed NavigationStack to BackportNavigationStack to prevent unintented naming conflicts.)
 
 *PASSES ALL SWIFTPACKAGEINDEX TESTS*
 v1.6.8 3/10/2025 Fixed since `.focusable` is not available in iOS < 17.  Fixed missing package version update in v1.6.7.  Found a fix for packages and Swift Playgrounds v4.6+ (the iOSApplication name needs to be DIFFERENT whereas previous versions required it to be the SAME).
