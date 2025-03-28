@@ -682,7 +682,33 @@ public extension String {
     var fileExtension: String {
         return self.replacingOccurrences(of: "\(self.fileBasename).", with: "")
     }
-    
+
+    @MainActor
+    internal static let testEncoding: TestClosure = {
+        let unsafeFilename = "My /=\\?%*|'\"<>: File"
+        let safeFileName = unsafeFilename.fileSafe
+        try expect(safeFileName == "My ____________ File", "Unexpected safe filename: \(safeFileName)")
+        let urlEncodedFilename = unsafeFilename.urlEncoded
+        try expect(urlEncodedFilename == "My%20%2F%3D%5C%3F%25*%7C%27%22%3C%3E%3A%20File", "Unexpected url encoding: \(urlEncodedFilename)")
+        let urlString = "http://plickle.com/pd+foo%20bar.php?test=Foo+bar%20baz"
+        let webURL = URL(string: urlString)
+        try expect(webURL != nil, "String to URL: \(String(describing: webURL))")
+        let webPath = webURL?.backportPath(percentEncoded: false)
+        try expect(webPath == "/pd+foo bar.php", "Unexpected path: \(String(describing: webPath))")
+        let urlEncoded = webPath?.urlEncoded
+        try expect(urlEncoded == "%2Fpd%2Bfoo%20bar.php", "Unexpected url encoding: \(String(describing: urlEncoded))")
+        let webPathEncoded = webURL?.backportPath()
+        try expect(webPathEncoded == "/pd+foo%20bar.php", "Unexpected path: \(String(describing: webPathEncoded))")
+        let path = "file:///Volumes/Inception Drive/InMotion Backups/2020-01-01 something"
+        let url = URL(string: path)
+        let name = url?.lastPathComponent
+        try expect(name == "2020-01-01 something", "Expected file name with space: \(String(describing: name))")
+        let directory = url?.deletingLastPathComponent().backportPath(percentEncoded: false) // used in MoveInMotionBackup script
+        try expect(directory == "/Volumes/Inception Drive/InMotion Backups/", "Expected path without encoding: \(String(describing: directory))")
+        let encodedPath = url?.backportPath()
+        try expect(encodedPath == "/Volumes/Inception%20Drive/InMotion%20Backups/2020-01-01%20something", "Expected encoded path: \(String(describing: encodedPath))")
+    }
+
     // MARK: - HTML Tools
     /// String with XML style tags removed.
     var tagsStripped: String {
@@ -832,6 +858,7 @@ public extension String {
         Test("extract missing end", testExtractMissingEnd),
         Test("Line Reversal", testTextReversal),
         Test("HTML Encoding", testHTMLEncoded),
+        Test("URL & File Encoding", testEncoding),
     ]
 }
 

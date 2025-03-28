@@ -20,6 +20,28 @@ public extension URL {
     var fileExists: Bool {
         FileManager.default.fileExists(atPath: self.path)
     }
+    
+    /// Returns the path component of the URL if present, otherwise returns an empty string.
+    /// - note: This function will resolve against the base `URL`.  It will include a trailing slash if this is a directory.
+    /// - Parameter percentEncoded: Whether the path should be percent encoded,
+    ///   defaults to `true`.
+    /// - Returns: The path component of the URL.
+    func backportPath(percentEncoded: Bool = true) -> String {
+        if #available(iOS 16, macOS 13, tvOS 16, watchOS 9, *) {
+            return self.path(percentEncoded: percentEncoded)
+        } else {
+            // Fallback on earlier versions
+            return self.path
+        }
+    }
+
+    /// Returns `true` if this is a directory, `false` if not, or `nil` if this cannot be determined
+    var isDirectory: Bool? {
+        guard let isDirectory = (try? resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory else {
+            return nil
+        }
+        return isDirectory
+    }
 }
 
 

@@ -96,20 +96,20 @@ public extension PostData {
     @MainActor
     internal static let testFetchGwinnettCheck: TestClosure = {
         let results = try await fetchURL(urlString: "https://www.GwinnettCounty.com")
-        debug("RESULTS: \(results)", level: .DEBUG)
+//        debug("RESULTS: \(results)", level: .DEBUG)
         try expect(results.contains("Gwinnett"), results)
     }
     @MainActor
     internal static let testFetchGETCheck: TestClosure = {
         let query = TEST_DATA.queryString ?? "ERROR"
         let results = try await fetchURL(urlString: "https://plickle.com/pd.php?\(query)")
-        debug("RESULTS: \(results)", level: .DEBUG)
+//        debug("RESULTS: \(results)", level: .DEBUG)
         try expect(results.contains("[name] => Jack & \"Jill\""), results)
     }
     @MainActor
     internal static let testFetchPOSTCheck: TestClosure = {
         let results = try await fetchURL(urlString: "https://plickle.com/pd.php", postData:TEST_DATA)
-        debug("RESULTS: \(results)", level: .DEBUG)
+//        debug("RESULTS: \(results)", level: .DEBUG)
         try expect(results.contains("'name' => 'Jack & \\\"Jill\\\"',"), results)
     }
     @MainActor

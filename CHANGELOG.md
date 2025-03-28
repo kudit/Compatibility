@@ -8,6 +8,9 @@ NOTE: Version needs to be updated in the following places:
 
 TODO: Figure out why menus don't work at all in tvOS.  Figure out how to backport.
 
+v1.8.0 3/28/2025 Added `backportPath` on URLs and added encoding tests.  Added `isDirectory` to URLs.  Added `safeShell()` method of shell execution (only available in macOS).
+
+*PASSES ALL SWIFTPACKAGEINDEX TESTS*
 v1.7.1 3/24/2025 Added `bottomBackport` test and fixed so works on macOS.  Re-worked `tomorrow` to use new `nextDay` and `firstMoment` functions.
 
 v1.7.0 3/12/2025 Changed so `normalized` returns a non-optional.  This is technically a breaking change (hence the minor version increment) but hopefully usage is minimal (plus the fix is easy by simply removing any forced unwraps or checks).  Added backport `navigationDestination` and `textSelection`.  Moved Triangle Showcase up so can test on Apple TV (seems to cut tabs after this).  Fixed crashing issue with iOS 15 and `BackportNavigationStack`/`.navigationWrapper()` code. (Renamed NavigationStack to BackportNavigationStack to prevent unintented naming conflicts.)

@@ -197,6 +197,13 @@ public extension Compatibility {
 @available(iOS 13, tvOS 13, watchOS 6, *)
 @MainActor
 internal let testMain: TestClosure = {
+    #if os(macOS)
+    // test shell script
+    let volumesOutput = try safeShell("ls -la /Volumes")
+//    debug(volumesOutput)
+    try expect(volumesOutput.contains("Macintosh HD"), "Unexpected shell output: \(volumesOutput)")
+    #endif
+    
     let runOnMainThread = await withCheckedContinuation { continuation in
         main {
             let isMainThread = Thread.isMainThread
