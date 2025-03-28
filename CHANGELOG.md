@@ -8,6 +8,8 @@ NOTE: Version needs to be updated in the following places:
 
 TODO: Figure out why menus don't work at all in tvOS.  Figure out how to backport.
 
+v1.8.1 3/28/2025 Fixed so `safeShell()` is on `Compatibility` and is public.
+
 v1.8.0 3/28/2025 Added `backportPath` on URLs and added encoding tests.  Added `isDirectory` to URLs.  Added `safeShell()` method of shell execution (only available in macOS).
 
 *PASSES ALL SWIFTPACKAGEINDEX TESTS*
