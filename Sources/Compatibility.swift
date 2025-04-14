@@ -8,7 +8,7 @@
 
 public enum Compatibility {
     /// The version of the Compatibility Library since cannot get directly from Package.swift.
-    public static let version: Version = "1.8.1"
+    public static let version: Version = "1.9.0"
 }
 
 @_exported import Foundation
@@ -127,6 +127,35 @@ canImport(Testing)
     SF Symbols 6.0
 
  */
+// MARK: - Configuration
+
+public extension Compatibility {
+    // https://medium.com/@aliyasirali/understanding-nonisolated-unsafe-in-swift-incremental-adoption-of-strict-concurrency-2cbb61c9adf4
+    private static var lock = NSLock()
+    private static var _settings = CompatibilityConfiguration()
+    static var settings: CompatibilityConfiguration {
+        get {
+            lock.lock()
+            defer { lock.unlock() }
+            return _settings
+        }
+        set {
+            lock.lock()
+            defer { lock.unlock() }
+            _settings = newValue
+        }
+    }
+//
+//    nonisolated(unsafe)
+//    static var settings = CompatibilityConfiguration()
+}
+
+// for flags in swift packages: https://stackoverflow.com/questions/38813906/swift-how-to-use-preprocessor-flags-like-if-debug-to-implement-api-keys
+//swiftSettings: [
+//    .define("VAPOR")
+//]
+// https://medium.com/@ytyubox/xcode-preprocessing-with-custom-flags-in-swift-4bfde6e7a608
+
 // MARK: - legacy compatibility code deprecations and support
 public extension Compatibility { // for brief period where Application wasn't available
     @available(*, deprecated, renamed: "Application.isDebug")
@@ -195,7 +224,6 @@ public extension Compatibility { // for brief period where Application wasn't av
 #endif
     }
 }
-
 
 #if !canImport(CoreML) // this isn't available on linux!
 extension FileManager {

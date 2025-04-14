@@ -8,6 +8,27 @@ import Compatibility
 @main
 struct MyApp: App {
     init() {
+        /* Copy these settings at the beginning of your init() code to configure Compatibility debug behavior.
+        // Configure debug settings
+        Compatibility.settings.debugLevelCurrent = .SILENT
+        Compatibility.settings.debugLevelDefault = DebugLevel.ERROR
+        Compatibility.settings.debugEmojiSupported = false
+        Compatibility.settings.debugLevelsToIncludeContext = DebugLevels.all
+        Compatibility.settings.debugIncludeTimestamp = true
+        let defaultImplementation = Compatibility.settings.debugFormat
+        Compatibility.settings.debugFormat = { (message: String, level: DebugLevel, isMainThread: Bool, emojiSupported: Bool, includeContext: Bool, includeTimestamp: Bool, file: String, function: String, line: Int, column: Int) -> String in
+            let formatted = defaultImplementation(
+                message,
+                level,
+                isMainThread,
+                emojiSupported,
+                includeContext,
+                includeTimestamp,
+                file, function, line, column)
+            return "🔹\(formatted)"
+        }
+         */
+
         //Application.iCloudSupported = false
         Application.track() // ensures Application.main.isFirstRun and Application.main.versions variables are properly set.
         if Application.main.isFirstRun {

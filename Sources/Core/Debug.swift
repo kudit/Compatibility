@@ -1,7 +1,46 @@
-// for flags in swift packages: https://stackoverflow.com/questions/38813906/swift-how-to-use-preprocessor-flags-like-if-debug-to-implement-api-keys
-//swiftSettings: [
-//    .define("VAPOR")
-//]
+
+// Here since all releated to Debug code.
+/// DEFAULT BEHAVIOR (can be overridden by a custom CompatibilitySettings assigned to Compatibilty.settings in an extension.  If `COMPATIBILITY_CUSTOM_SETTINGS` SwiftSetting flag  is not set, this is the behavior that will be used.
+public struct CompatibilityConfiguration {
+    /// Override to change the which debug levels are output.  This level and higher (more important) will be output.
+    public var debugLevelCurrent: DebugLevel = {
+        if #available(iOS 13, tvOS 13, watchOS 6, *) {
+            return Application.isDebug ? .DEBUG : .WARNING
+        } else {
+            return .DEBUG
+        }
+    }()
+    
+    /// Override to change the level of debug statments without a level parameter.
+    public var debugLevelDefault = DebugLevel.DEBUG
+    
+    /// Override to use the level symbol rather than the emoji (if we're outputting in an environment that does not support emoji).
+    public var debugEmojiSupported = true
+    
+    /// Set this to a set of levels where we should include the context info.  Defaults to `.important` so that `NOTICE` and `DEBUG` messages are less noisy and easier to see.  Set this to `.none` to make `debug()` act exactly like `print()` at all levels.
+    public var debugLevelsToIncludeContext = DebugLevels.important
+    
+    /// Set whether timestamps should be included in debug messages.  If you need to customize the format of timestamps, use the `debugFormat()` override.
+    public var debugIncludeTimestamp = false
+    
+    /// Generates string with context.  Set level to `.OFF` to just return the context without the message portion.
+    public var debugFormat = { (message: String, level: DebugLevel, isMainThread: Bool, emojiSupported: Bool, includeContext: Bool, includeTimestamp: Bool, file: String, function: String, line: Int, column: Int) -> String in
+        let message = "\(emojiSupported ? level.emoji : level.symbol) \(message)"
+        if includeContext {
+            let threadInfo = isMainThread ? "" : "^"
+            let simplerFile = URL(fileURLWithPath: file).lastPathComponent
+            let simplerFunction = function.replacingOccurrences(of: "__preview__", with: "_p_")
+            var timestamp = ""
+            if includeTimestamp {
+                timestamp = "\(Date.nowBackport.mysqlDateTime): "
+            }
+            return "\(timestamp)\(simplerFile)(\(line)) : \(simplerFunction)\(threadInfo)\(level == .OFF ? "" : "\n\(message)")"
+        } else {
+            return message
+        }
+    }
+}
+
 public func checkBreakpoint(level: DebugLevel) {
     // Enable setting breakpoints for various debug levels.
     switch level {
@@ -36,26 +75,48 @@ public func checkBreakpoint(level: DebugLevel) {
  - Parameter message: The message
   */
 // Formerly KuError but this seems more applicable and memorable and less specific.
-public enum CustomError: Error, Sendable {
-    case custom(String)
-    public init(_ message: String, level: DebugLevel = .SILENT /* Do not warn by default.  Can't be DebugLevel.defaultLevel because that needs to be on the main thread and this may not be. */, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) {
-        
-        self = .custom(message).debug(level: level, file: file, function: function, line: line, column: column)
-    }
-    public var localizedDescription: String {
-        switch self {
-        case .custom(let string):
-            return string
+public struct CustomError: Error, Sendable {
+    var message: String
+    var level: DebugLevel?
+    var file: String
+    var function: String
+    var line: Int
+    var column: Int
+    
+    /// NOTE: This will only automatically warn if a debug level is provided.
+    public init(_ message: String, level: DebugLevel? = nil /* Do not warn by default even if default debug level is set. */, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) {
+        self.message = message
+        self.level = level
+        self.file = file
+        self.function = function
+        self.line = line
+        self.column = column
+        if level != nil {
+            self.debug()
         }
+    }
+    @discardableResult
+    func debug() -> String {
+        Compatibility.debug(description, level: level ?? DebugLevel.defaultLevel, file: file, function: function, line: line, column: column)
+    }
+}
+extension CustomError: CustomStringConvertible {
+    public var description: String {
+        message
     }
 }
 extension CustomError: LocalizedError {
+    public var localizedDescription: String {
+        message
+    }
     public var errorDescription: String? {
-        localizedDescription
+        message
     }
 }
 
-public extension Set<DebugLevel> {
+public typealias DebugLevels = Set<DebugLevel>
+public extension DebugLevels {
+    static let none: Self = []
     static let all: Self = [.ERROR, .WARNING, .NOTICE, .DEBUG]
     static let important: Self = [.ERROR, .WARNING]
     static let informational: Self = [.NOTICE, .WARNING]
@@ -68,21 +129,15 @@ public enum DebugLevel: Comparable, CustomStringConvertible, CaseIterable, Senda
     case WARNING // Unlikely but could be possible error if there is bad user data or network corruption.
     case NOTICE // Informational
     case DEBUG // Lots of detailed info for debugging.  Unnecessary in production.
-    case SILENT
-    /// Change this value in production to DebugLevvel.ERROR to minimize logging.
-    // set default debugging level to .DEBUG (use manual controls to turn OFF if not debug during app tracking since previews do not have app tracking set up nor does it have compiler flags or app init.
+    case SILENT // Use to silence a message but keep the debug code in case it's needed in the future or for documentation.
+    
+    /// Change this value in production to `DebugLevel.ERROR` or `.OFF` to minimize logging.  Can be changed using the `debugLevelCurrent` setting.
     @available(iOS 13, tvOS 13, watchOS 6, *)
-    public static let currentLevel: DebugLevel = Application.isDebug ? .DEBUG : .WARNING
+    public static let currentLevel = Compatibility.settings.debugLevelCurrent
     
-    /// Set to change the level of debug statments without a level parameter.
-    public static let defaultLevel = DebugLevel.DEBUG // needs to be a let in order for this to be concurrency safe without restricting to @MainActor.  Fork the project and change if you must.  Using .DEBUG since, well, it is a `debug()` call...
-    
-    /// Set this to a set of levels where we should include the context info.  Defaults to `.important` so that Notices and Debug messages are less noisy and easier to see.
-    public static let levelsToIncludeContext: Set<DebugLevel> = .important // again, needs to be let in order for concurrency safety.  Unfortunately this means forking the project if you want to change but typically won't need to be changed at runtime anyway.
-        
-    /// setting this to false will make debug() act exactly like print()
-    public static let includeContext = true // unfortunately again needs to be let for concurrency.  Can also be passed as a parameter to override.
-    
+    /// Set to change the level of debug statments without a level parameter.  Default is `.DEBUG`.  Can be changed using the `debugLevelDefault` setting.
+    public static let defaultLevel = Compatibility.settings.debugLevelDefault
+                
     public var emoji: String {
         switch self {
         case .OFF:
@@ -147,13 +202,16 @@ public enum DebugLevel: Comparable, CustomStringConvertible, CaseIterable, Senda
 }
 
 /// Generates context string
+@available(*, deprecated, renamed: "Compatibility.settings.debugFormat()")
 public func debugContext(isMainThread: Bool, file: String, function: String, line: Int, column: Int) -> String {
-    let threadInfo = isMainThread ? "" : "^"
-    let simplerFile = URL(fileURLWithPath: file).lastPathComponent
-    let simplerFunction = function.replacingOccurrences(of: "__preview__", with: "_p_")
-    // TODO: Add timestamps to debug calls so we can see how long things take?  Have a debug format static string so we can propertly interleave or customize.
-    let context = "\(simplerFile)(\(line)) : \(simplerFunction)\(threadInfo)\n"
-    return context
+    Compatibility.settings.debugFormat(
+        "",
+        .OFF,
+        isMainThread,
+        Compatibility.settings.debugEmojiSupported,
+        true,
+        Compatibility.settings.debugIncludeTimestamp,
+        file, function, line, column)
 }
 
 // MARK: - Debug
@@ -169,20 +227,25 @@ public extension Compatibility {
      - Parameter column: For bubbling down the #column number from a call site. (Not used currently but here for completeness).
      */
     @discardableResult
-    static func debug(_ message: Any, level: DebugLevel? = nil, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) -> String {
+    static func debug(_ message: Any, level: DebugLevel = .defaultLevel, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) -> String {
         let isMainThread = Thread.isMainThread // capture before we switch to main thread for printing
         let message = String(describing: message) // convert to sendable item to avoid any thread issues.
 
-        let resolvedLevel = level ?? .defaultLevel
-        checkBreakpoint(level: resolvedLevel)
+        checkBreakpoint(level: level)
         
-        guard DebugLevel.isAtLeast(resolvedLevel) else {
+        guard DebugLevel.isAtLeast(level) else {
             return "" // don't actually print
         }
         var debugMessage = message
-        if DebugLevel.includeContext {
-            let context = debugContext(isMainThread: isMainThread, file: file, function: function, line: line, column: column)
-            debugMessage = "\(DebugLevel.levelsToIncludeContext.contains(resolvedLevel) ? context : "")\(resolvedLevel.emoji) \(message)"
+        if Compatibility.settings.debugLevelsToIncludeContext != .none {
+            debugMessage = Compatibility.settings.debugFormat(
+                message,
+                level,
+                isMainThread,
+                Compatibility.settings.debugEmojiSupported,
+                Compatibility.settings.debugLevelsToIncludeContext.contains(level),
+                Compatibility.settings.debugIncludeTimestamp,
+                file, function, line, column)
         }
         print(debugMessage)
         return debugMessage
@@ -200,23 +263,23 @@ public extension Compatibility {
  - Parameter column: For bubbling down the #column number from a call site. (Not used currently but here for completeness).
  */
 //@discardableResult
-public func debug(_ message: Any, level: DebugLevel? = nil, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) {
+public func debug(_ message: Any, level: DebugLevel = .defaultLevel, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) {
     Compatibility.debug(message, level: level, file: file, function: function, line: line, column: column)
 }
 
 // MARK: Debug(error)
+// This is to provide debugging at calltime when creating errors.
 public extension Error {
     /**
      Outputs the error's localized description at the specified debug level and return.  Can append to errors to debug output at the throwing location rather than the caught location.
      
-     - Parameter error: The error to throw.
      - Parameter level: The logging level to use.
      - Parameter file: For bubbling down the #file name from a call site.
      - Parameter function: For bubbling down the #function name from a call site.
      - Parameter line: For bubbling down the #line number from a call site.
      - Parameter column: For bubbling down the #column number from a call site. (Not used currently but here for completeness).
      */
-    func debug(level: DebugLevel? = nil, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) -> Self {
+    func debug(level: DebugLevel = .defaultLevel, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) -> Self {
         Compatibility.debug(self.localizedDescription, level: level, file: file, function: function, line: line, column: column)
         return self
     }

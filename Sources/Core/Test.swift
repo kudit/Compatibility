@@ -16,7 +16,15 @@ public func expect(_ condition: Bool, _ debugString: String? = nil, file: String
         if let debugString {
             throw CustomError(debugString)
         } else {
-            let context = debugContext(isMainThread: Thread.isMainThread, file: file, function: function, line: line, column: column)
+            let context = Compatibility.settings.debugFormat(
+                "",
+                .OFF,
+                Thread.isMainThread,
+                Compatibility.settings.debugEmojiSupported,
+                true,
+                Compatibility.settings.debugIncludeTimestamp,
+                file, function, line, column)
+
             throw CustomError(context)
         }
     }

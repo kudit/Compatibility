@@ -8,6 +8,9 @@ NOTE: Version needs to be updated in the following places:
 
 TODO: Figure out why menus don't work at all in tvOS.  Figure out how to backport.
 
+v1.9.0 4/14/2025 Crafted entire settings override framework for package configuration settings. Created method for customizing Compatibility settings (and other package settings) using SwiftSettings flag.  Added instructions to the README.  Changed CustomErrors to be structs instead of enums so we can include contextual information for custom handling.  Added ability to add timestamp to `debug()` calls for scripts.
+
+*PASSES ALL SWIFTPACKAGEINDEX TESTS*
 v1.8.1 3/28/2025 Fixed so `safeShell()` is on `Compatibility` and is public.
 
 v1.8.0 3/28/2025 Added `backportPath` on URLs and added encoding tests.  Added `isDirectory` to URLs.  Added `safeShell()` method of shell execution (only available in macOS).
