@@ -1,6 +1,6 @@
 // This has been a godsend!  Backport instructions https://davedelong.com/blog/2021/10/09/simplifying-backwards-compatibility-in-swift/
 
-#if canImport(SwiftUI)
+#if canImport(SwiftUI) && compiler(>=5.9)
 import SwiftUI
 
 @MainActor // for swift6 compliance and since this is SwiftUI, should be @MainActor anyways.

@@ -77,7 +77,7 @@ extension NetworkError: LocalizedError {
     }
 }
 
-#if canImport(Combine)// || canImport(FoundationNetworking) // for Linux support of URLRequest - apparently still doesn't work even if we were to include that, so gate this to not be available on linux :(
+#if compiler(>=5.9) && canImport(Combine)// || canImport(FoundationNetworking) // for Linux support of URLRequest - apparently still doesn't work even if we were to include that, so gate this to not be available on linux :(
 //#if canImport(FoundationNetowrking)
 //import FoundationNetworking
 //#endif
@@ -250,7 +250,7 @@ public extension URL {
     }
 }
 
-#if canImport(SwiftUI) && compiler(>=5.9)
+#if canImport(SwiftUI)
 import SwiftUI
 @available(iOS 13, macOS 11, tvOS 13, watchOS 6, *)
 #Preview {

@@ -1,4 +1,4 @@
-#if canImport(SwiftUI)
+#if canImport(SwiftUI) && compiler(>=5.9)
 import SwiftUI
 // from https://www.sgade.de/blog/2023-02-28-swift-layout-overlapping-hstack/
 
@@ -226,7 +226,6 @@ extension [Color] {
     }
 }
 
-#if compiler(>=5.9)
 @available(iOS 13, tvOS 13, watchOS 6, *)
 #Preview("OverlappingHStack") {
     VStack {
@@ -282,6 +281,4 @@ extension [Color] {
         .frame(height: 200)
     }
 }
-#endif
-
 #endif

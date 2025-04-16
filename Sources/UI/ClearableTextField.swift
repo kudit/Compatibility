@@ -4,7 +4,8 @@
 //
 //  Created by Ben Ku on 7/30/24.
 //
-#if canImport(SwiftUI) && canImport(Combine)
+#if canImport(SwiftUI) && canImport(Combine) && compiler(>=5.9)
+
 import SwiftUI
 import Combine
 
@@ -100,11 +101,9 @@ struct TestClearer: View {
     }
 }
 
-#if compiler(>=5.9)
 @available(iOS 17, macOS 14, tvOS 17, watchOS 10, *)
 #Preview("Test Clearer") {
     TestClearer()
 }
-#endif
 
 #endif

@@ -173,12 +173,14 @@ public extension Version {
         try expect(json == expected, "unexpected json coding conversion: \(json)")
     }
 
+#if compiler(>=5.9)
     @available(iOS 13, tvOS 13, watchOS 6, *)
     @MainActor
     static var tests: [Test] = [
         Test("Version Comparison Tests", testVersions),
         Test("Version Codable Tests", versionCodableTest),
     ]
+#endif
 }
 
 //// For collection convenience
@@ -220,7 +222,7 @@ extension [Version]: Swift.RawRepresentable {
 
 
 
-#if canImport(SwiftUI)
+#if canImport(SwiftUI) && compiler(>=5.9)
 // Don't know why this is necessary.  CustomStringConvertible should have covered this.
 import SwiftUI
 @available(iOS 13, tvOS 13, watchOS 6, *)
@@ -230,10 +232,8 @@ public extension LocalizedStringKey.StringInterpolation {
     }
 }
 
-#if compiler(>=5.9)
 @available(iOS 13, tvOS 13, watchOS 6, *)
 #Preview("Tests") {
     TestsListView(tests: Version.tests)
 }
-#endif
 #endif

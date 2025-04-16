@@ -1,4 +1,5 @@
-#if canImport(SwiftUI)
+#if canImport(SwiftUI) && compiler(>=5.9)
+
 import SwiftUI
 
 // Used in Monetization
@@ -60,7 +61,6 @@ public struct RadialLayout: Layout {
     }
 }
 
-#if compiler(>=5.9)
 @available(macOS 13.0, iOS 16.0, tvOS 20.0, watchOS 9.0, *)
 #Preview("Radial") {
     RadialLayout {
@@ -86,6 +86,4 @@ public struct RadialLayout: Layout {
         .frame(size: 80)
     }
 }
-#endif
-
 #endif

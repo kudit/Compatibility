@@ -5,7 +5,8 @@
 //  Created by Ben Ku on 10/30/20.
 //
 
-#if canImport(SwiftUI)
+#if canImport(SwiftUI) && compiler(>=5.9)
+
 import SwiftUI
 
 @available(iOS 13, tvOS 13, watchOS 6, *)
@@ -87,11 +88,8 @@ HStack {
     }
 }
 
-#if compiler(>=5.9)
 @available(iOS 14, macOS 11, tvOS 14, watchOS 7, *)
 #Preview("Showcase") {
     PlacardShowcaseView()
 }
-#endif
-
 #endif

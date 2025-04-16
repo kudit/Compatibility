@@ -7,7 +7,8 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Update changelog and tag with matching version in GitHub.
 
 TODO: Figure out why menus don't work at all in tvOS.  Figure out how to backport.
-TODO: Figure out what is generating the warnings in Swift Playgrounds for AppIcon and Content unassigned assets...
+
+v1.9.3 4/16/2025 Reordered keywords for `nonisolated(unsafe)` and added conditional compilation to hopefully prevent errors in Swift 5.9.  Attempted to better handle compiler checks for Swift 5.8 to maintain compatibility.  Now requires Swift 5.9 for anything that might have an @available check (so most UI code).
 
 v1.9.2 4/16/2025 Updated year in copyright and forced so copyright stays current.  Fixed Swift Playground asset warnings (Xcode as playgrounds still has duplicate build warnings).  This was helpful: https://sarunw.com/posts/how-to-fix-duplicate-references-warning/
 

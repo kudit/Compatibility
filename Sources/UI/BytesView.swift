@@ -1,4 +1,4 @@
-#if canImport(SwiftUI)
+#if canImport(SwiftUI) && compiler(>=5.9)
 import SwiftUI
 
 @available(iOS 13, tvOS 13, watchOS 6, *)
@@ -47,11 +47,9 @@ public struct RandomBytesTestView: View {
     }
 }
 
-#if compiler(>=5.9)
 @available(iOS 13, tvOS 13, watchOS 6, *)
 #Preview {
     RandomBytesTestView()
 }
-#endif
 
 #endif

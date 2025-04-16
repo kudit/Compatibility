@@ -1,5 +1,6 @@
 // TODO: Do we want to restrict DataStore to the main thread?
 
+#if compiler(>=5.9)
 @available(iOS 13, tvOS 13, watchOS 6, *)
 public enum DataStoreType: Sendable {
     case local
@@ -668,7 +669,6 @@ public struct DataStoreTestView: View {
     }
 }
 
-#if compiler(>=5.9)
 @available(iOS 15, macOS 12, tvOS 15, watchOS 9, *)
 #Preview {
     DataStoreTestView()

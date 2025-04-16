@@ -1,4 +1,4 @@
-#if canImport(SwiftUI)
+#if canImport(SwiftUI) && compiler(>=5.9)
 import SwiftUI
 
 @available(iOS 13, tvOS 13, watchOS 6, *)
@@ -22,7 +22,6 @@ public extension View {
     }
 }
 
-#if compiler(>=5.9)
 @available(iOS 13, tvOS 13, watchOS 6, *)
 #Preview("Embossed") {
     ZStack {
@@ -40,6 +39,4 @@ public extension View {
         }
     }
 }
-#endif
-
 #endif

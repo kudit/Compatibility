@@ -5,7 +5,7 @@
 //  Created by Ben Ku on 7/5/24.
 //
 
-#if canImport(SwiftUI)
+#if canImport(SwiftUI) && compiler(>=5.9)
 import SwiftUI
 
 // MARK: - Menu compatibility for watchOS
@@ -69,11 +69,8 @@ public struct MenuTest: View {
     }
 }
 
-#if compiler(>=5.9)
 @available(iOS 14, macOS 12, tvOS 17, watchOS 7, *)
 #Preview("Watch Menu test") {
     MenuTest().navigationWrapper()
 }
-#endif
-
 #endif

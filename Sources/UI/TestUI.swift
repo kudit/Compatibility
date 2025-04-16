@@ -1,4 +1,4 @@
-#if canImport(SwiftUI)
+#if canImport(SwiftUI) && compiler(>=5.9)
 import SwiftUI
 
 // MARK: - Test UI
@@ -101,11 +101,8 @@ public struct AllTestsListView: View {
     }
 }
 
-#if compiler(>=5.9)
 @available(iOS 15, macOS 12, tvOS 17, watchOS 8, *)
 #Preview("Tests") {
     AllTestsListView()
 }
-#endif
-
 #endif

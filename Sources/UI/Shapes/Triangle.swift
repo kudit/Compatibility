@@ -5,7 +5,7 @@
 //  Created by Ben Ku on 7/19/24.
 //
 
-#if canImport(SwiftUI)
+#if canImport(SwiftUI) && compiler(>=5.9)
 import SwiftUI
 
 @available(iOS 13, tvOS 13, watchOS 6, *)
@@ -77,11 +77,8 @@ public struct TriangleShowcaseView: View {
     }
 }
 
-#if compiler(>=5.9)
 @available(iOS 13, tvOS 13, watchOS 6, *)
 #Preview("Triangles") {
     TriangleShowcaseView()
 }
-#endif
-
 #endif
