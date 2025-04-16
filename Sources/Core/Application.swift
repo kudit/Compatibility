@@ -64,10 +64,11 @@ public class Application: ObservableObject { // cannot automatically conform to 
             return false
         }
         debug("iCloud logged in with token `\(token)`", level: .SILENT)
-#else
-        debug("watchOS can't get the ubiquityIdentityToken but can support cloud storage.")
-#endif
         return true
+#else
+        debug("watchOS can't get the ubiquityIdentityToken but can support cloud storage.", level: .NOTICE)
+        return true
+#endif
     }
     
     @MainActor

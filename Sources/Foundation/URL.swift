@@ -27,12 +27,13 @@ public extension URL {
     ///   defaults to `true`.
     /// - Returns: The path component of the URL.
     func backportPath(percentEncoded: Bool = true) -> String {
+#if canImport(Combine)
         if #available(iOS 16, macOS 13, tvOS 16, watchOS 9, *) {
             return self.path(percentEncoded: percentEncoded)
-        } else {
-            // Fallback on earlier versions
-            return self.path
         }
+#endif
+        // Fallback on earlier versions & Linux
+        return self.path
     }
 
     /// Returns `true` if this is a directory, `false` if not, or `nil` if this cannot be determined

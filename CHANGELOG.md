@@ -7,6 +7,9 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Update changelog and tag with matching version in GitHub.
 
 TODO: Figure out why menus don't work at all in tvOS.  Figure out how to backport.
+TODO: Figure out what is generating the warnings in Swift Playgrounds for AppIcon and Content unassigned assets...
+
+v1.9.1 4/15/2025 Fix concurrency errors and Linux errors.
 
 v1.9.0 4/14/2025 Crafted entire settings override framework for package configuration settings. Created method for customizing Compatibility settings (and other package settings) using SwiftSettings flag.  Added instructions to the README.  Changed CustomErrors to be structs instead of enums so we can include contextual information for custom handling.  Added ability to add timestamp to `debug()` calls for scripts.
 
