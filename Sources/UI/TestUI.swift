@@ -92,7 +92,7 @@ public struct AllTestsListView: View {
             Section {
                 Divider()
             } footer: {
-                Text("Compatibility v\(Compatibility.version) © 2024 Kudit LLC").font(.caption).padding()
+                Text("Compatibility v\(Compatibility.version) © \(String(Date.now.year)) Kudit LLC").font(.caption).padding()
             }
         }
         // test replacing background

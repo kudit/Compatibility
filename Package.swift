@@ -7,7 +7,7 @@
 
 import PackageDescription
 
-let version = "1.9.1"
+let version = "1.9.2"
 let packageLibraryName = "Compatibility"
 
 // Products define the executables and libraries a package produces, making them visible to other packages.
@@ -100,10 +100,10 @@ targets += [
 			.init(stringLiteral: packageLibraryName), // have to use init since normally would be assignable by string literal but we're not using a string literal
 		],
 		path: "Development"
-//		,exclude: ["Device.xcodeproj/*"]
+		,exclude: ["Resources"]
 		// Include test app resources.
 		,resources: [
-			.process("Resources")
+//            .process("PlaygroundsAssets.xcassets")
 		]
 //		,swiftSettings: [
 //            .define("COMPATIBILITY_CUSTOM_SETTINGS"),
