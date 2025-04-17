@@ -442,6 +442,7 @@ extension DataStore {
     }
 }*/
 
+#if compiler(>=5.9)
 @available(iOS 15, macOS 12, tvOS 15, watchOS 9, *)
 @MainActor
 class DataStoreTestModel: ObservableObject {
@@ -674,5 +675,5 @@ public struct DataStoreTestView: View {
     DataStoreTestView()
 }
 #endif
-
+#endif
 #endif

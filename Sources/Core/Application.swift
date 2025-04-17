@@ -192,7 +192,9 @@ public class Application: ObservableObject { // cannot automatically conform to 
     /// `true`  if this is the first time the app has been run, `false` otherwise
     public private(set) var isFirstRun = true // can't be let since self._cloudVersionsRun check requires self access, but basically should only ever set once.
     
+#if compiler(>=5.9)
     @CloudStorage(.appVersionsRunKey) private var _cloudVersionsRun: String?
+#endif
     private init() {
         // this actually does the tracking
 
@@ -203,6 +205,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
         
         let localFirstRun = legacyLastRunVersion == nil && kuditPreviouslyRunVersions == nil
         // if all nil, then isFirstRun is true (cache for the duration of the app running)
+#if compiler(>=5.9)
         if #available(watchOS 9, *) {
             // check for previous versions run in cloud store
             isFirstRun = localFirstRun && _cloudVersionsRun == nil
@@ -210,20 +213,26 @@ public class Application: ObservableObject { // cannot automatically conform to 
             // for older platforms, fallback to legacy behavior
             isFirstRun = localFirstRun
         }
+#else
+        isFirstRun = localFirstRun
+#endif
         if isFirstRun {
             debug("First Run!", level: .NOTICE)
         }
         
         // join all versions run (the beauty of this is it doesn't matter if legacyLastRunVersion is a comma-separated list or a single value - both will work)
         var allVersionsString = "\(legacyLastRunVersion ?? ""),\(kuditPreviouslyRunVersions?.joined(separator: ",") ?? ""),\(version)"
+#if compiler(>=5.9)
         if #available(watchOS 9, *) {
             allVersionsString += ",\(_cloudVersionsRun ?? "")"
         }
+#endif
         // legacy last_run_version should come before new versions since the rawValue init should sort the values
         let allVersions = [Version](rawValue: allVersionsString)
         if !isFirstRun {
             debug("All versions run: \(allVersions.rawValue)", level: .NOTICE)
         }
+#if compiler(>=5.9)
         if #available(watchOS 9, *) {
             // persist back to cloud for other devices and future runs or re-installs (do with delay in case of launch issue where the crash happens at launch)
             delay(0.5) { // technically should still be on the main thread.  Would do @MainActor in but Swift 6 has issues with that
@@ -235,19 +244,22 @@ public class Application: ObservableObject { // cannot automatically conform to 
                     Application.main._cloudVersionsRun = allVersions.rawValue
                 }
             }
-        } else {
-            // Since future versions will use the cloud version, modifying UserDefaults won't ever be necessary with new versions.  However, if we are building for an old platform, go ahead and use local UserDefaults to store.
-            UserDefaults.standard.set(allVersions.map { $0.rawValue }, forKey: .localAppVersionsRunKey)
-            UserDefaults.standard.removeObject(forKey: .legacyLastRunVersionKey)
-            // UserDefaults.synchronize // don't save in case launch issue where it will crash on launch
+            return
         }
+#endif
+        // Since future versions will use the cloud version, modifying UserDefaults won't ever be necessary with new versions.  However, if we are building for an old platform, go ahead and use local UserDefaults to store.
+        UserDefaults.standard.set(allVersions.map { $0.rawValue }, forKey: .localAppVersionsRunKey)
+        UserDefaults.standard.removeObject(forKey: .legacyLastRunVersionKey)
+        // UserDefaults.synchronize // don't save in case launch issue where it will crash on launch
     }
     
     /// For debugging, reset all the previously run version information including the cloud versions.  This shouldn't be run on production devices or you risk data loss.
     public func resetVersionsRun() {
         UserDefaults.standard.removeObject(forKey: .legacyLastRunVersionKey)
         UserDefaults.standard.removeObject(forKey: .localAppVersionsRunKey)
+#if compiler(>=5.9)
         Application.main._cloudVersionsRun = nil
+#endif
     }
         
     // MARK: - Version information
@@ -265,12 +277,13 @@ public class Application: ObservableObject { // cannot automatically conform to 
         
     /// List of all versions that have been run since install.  Checks iCloud and reports versions run on other devices.
     public var versionsRun: [Version] {
+#if compiler(>=5.9)
         if #available(iOS 13, tvOS 13, watchOS 9, *) {
             return [Version](rawValue: _cloudVersionsRun ?? version.rawValue)
-        } else {
-            // for older platforms, fallback to legacy behavior
-            return (UserDefaults.standard.object(forKey: .localAppVersionsRunKey) as? [String])?.map { Version(rawValue: $0) } ?? [version] // newer support (still local)
         }
+#endif
+        // for older platforms, fallback to legacy behavior
+        return (UserDefaults.standard.object(forKey: .localAppVersionsRunKey) as? [String])?.map { Version(rawValue: $0) } ?? [version] // newer support (still local)
     }
     
     /// List of all versions that have been run since install.  Excludes the current version run.
