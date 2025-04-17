@@ -37,8 +37,9 @@ public enum NetworkError: Error, Sendable {
     case invalidResponse(code: Int? = nil)
     
     /// Throw when the server data cannot be converted to a String
+#if compiler(>=5.9)
     case dataError(_ data: Data)
-    
+#endif
     /// Missing a required network capability in the package or entitlement for the app.
     case missingEntitlement
         
@@ -50,8 +51,10 @@ public enum NetworkError: Error, Sendable {
             return "Post Data could not be encoded from: \(String(describing: postData))"
         case .invalidResponse(let code):
             return "Invalid HTTP Response: (\(code != nil ? "\(code!)" : "No code")) received from the server"
+#if compiler(>=5.9)
         case .dataError(let data):
             return "Unable to parse string out of data: \(String(describing: data))"
+#endif
         case .missingEntitlement:
             return """
                 DEVELOPER: Check your configuration!
@@ -210,7 +213,11 @@ extension Compatibility {
 
         // convert result data to string
         guard let responseString = String(data: data, encoding: encoding) else {
+#if compiler(>=5.9)
             throw NetworkError.dataError(data).debug(level: .ERROR, file: file, function: function, line: line, column: column)
+#else
+            throw CustomError("Data error: \(data)", level: .ERROR, file: file, function: function, line: line, column: column)
+#endif
         }
         //debug("Response String:\n\(responseString)", level: .SILENT) // this could be way too chatty if happens all the time.  Just debug at the calling site if needed.
         return responseString

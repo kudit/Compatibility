@@ -10,6 +10,7 @@ import SwiftUI
 import Combine
 #endif
 
+#if compiler(>=5.9)
 // Static stored properites are not supported in generic types so we have to use a global var.
 @available(iOS 13, tvOS 13, watchOS 6, *)
 @MainActor
@@ -279,3 +280,4 @@ extension CloudStorage where Value: MySQLDateString {
             syncSet: { newValue in CloudStorageSync.shared.set(newValue.stringValue, for: key) })
     }
 }
+#endif

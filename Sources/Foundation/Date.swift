@@ -90,10 +90,10 @@ public extension Date {
     /// Equivalent to `Date.now` but supported on iOS < 15
     static var nowBackport: Date {
         if #available(iOS 15, macOS 12, tvOS 15, watchOS 8, *) {
-            Date.now
+            return Date.now
         } else {
             // Fallback on earlier versions
-            Date()
+            return Date()
         }
     }
 

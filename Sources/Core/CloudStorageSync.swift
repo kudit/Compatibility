@@ -12,6 +12,7 @@ import Combine
 import UIKit
 #endif
 
+#if compiler(>=5.9)
 @available(iOS 13, tvOS 13, watchOS 6, *)
 @MainActor
 public class CloudStorageSync: ObservableObject {
@@ -272,3 +273,4 @@ private let statusDateFormatter: DateFormatter = {
     formatter.timeStyle = .medium
     return formatter
 }()
+#endif
