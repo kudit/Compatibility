@@ -185,6 +185,8 @@ internal let byteTests: TestClosure = {
 
 // MARK: - Tests
 
+// Testing is only supported with Swift 5.9+
+#if compiler(>=5.9)
 @available(iOS 13, tvOS 13, watchOS 6, *)
 extension Int {
     @MainActor
@@ -196,7 +198,7 @@ extension Int {
     ]
 }
 
-#if canImport(SwiftUI) && compiler(>=5.9)
+#if canImport(SwiftUI)
 import SwiftUI
 @available(iOS 13, tvOS 13, watchOS 6, *)
 #Preview("Ordinals") {
@@ -211,4 +213,4 @@ import SwiftUI
     TestsListView(tests: Int.tests)
 }
 #endif
-
+#endif

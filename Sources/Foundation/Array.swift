@@ -159,13 +159,14 @@ public extension Collection {
         try expect(array[nth: 7] == 2, "Should be looped value")
     }
 }
+// Testing is only supported with Swift 5.9+
+#if compiler(>=5.9)
 @available(iOS 13, tvOS 13, watchOS 6, *)
 @MainActor
 let collectionTests: [Test] = [
     Test("safety", [Int].safeTests),
     Test("nth", [Int].nthTests),
 ]
-
 
 // Array Identifiable
 @available(iOS 13, tvOS 13, watchOS 6, *)
@@ -187,6 +188,7 @@ public extension Array where Element: Identifiable {
         }
     }
 }
+#endif
 
 // let arrayOfIdentifiables = []
 // let itemWithId = arrayOfIdentifiables[id]

@@ -30,12 +30,15 @@ public extension LosslessStringConvertible {
     }
 }
 
+// Testing is only supported with Swift 5.9+
+#if compiler(>=5.9)
 @available(iOS 13, tvOS 13, watchOS 6, *)
 extension CharacterSet {
     @MainActor public static let tests = [
         Test("character strings", testCharacterStrings),
     ]
 }
+#endif
 public extension CharacterSet {
     /// Returns the character set as an array of strings. (ONLY ASCII Characters!)
     var characterStrings: [String] {
@@ -848,6 +851,8 @@ public extension String {
     }
 #endif
     
+// Testing is only supported with Swift 5.9+
+#if compiler(>=5.9)
     @available(iOS 13, tvOS 13, watchOS 6, *)
     @MainActor
     static let tests = [
@@ -864,6 +869,7 @@ public extension String {
         Test("HTML Encoding", testHTMLEncoded),
         Test("URL & File Encoding", testEncoding),
     ]
+#endif
 }
 
 // TODO: See where we can use @autoclosure in Kudit Frameworks to delay execution (particularly in test frameworks!)

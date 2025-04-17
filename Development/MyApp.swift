@@ -41,7 +41,11 @@ struct MyApp: App {
     }
     var body: some Scene {
         WindowGroup {
+#if compiler(>=5.9)
             CompatibilityDemoView()
+#else
+            Text("Please upgrade to Swift 5.9 for demo app.")
+#endif
         }
 
         #if os(macOS)
@@ -63,9 +67,10 @@ struct MyApp: App {
     }
 }
 
+#if compiler(>=5.9)
 @available(iOS 15, macOS 12, tvOS 17, watchOS 8, *)
 #Preview {
     CompatibilityDemoView()
 }
-
+#endif
 #endif

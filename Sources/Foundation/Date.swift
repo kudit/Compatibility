@@ -296,6 +296,8 @@ public extension Date {
     }
 }
 
+// Testing is only supported with Swift 5.9+
+#if compiler(>=5.9)
 @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
 public extension Date {
     @MainActor
@@ -308,7 +310,7 @@ public extension Date {
     ]
 }
 
-#if canImport(SwiftUI) && compiler(>=5.9)
+#if canImport(SwiftUI)
 import SwiftUI
 @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
 #Preview {
@@ -323,4 +325,5 @@ import SwiftUI
 #Preview("Tests") {
     TestsListView(tests: Date.tests)
 }
+#endif
 #endif

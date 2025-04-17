@@ -30,6 +30,8 @@ public func expect(_ condition: Bool, _ debugString: String? = nil, file: String
     }
 }
 
+// Testing is only supported with Swift 5.9+
+#if compiler(>=5.9)
 // Test Handlers
 @available(iOS 13, tvOS 13, watchOS 6, *) // due to ObservableObject
 @MainActor
@@ -105,22 +107,29 @@ public extension Test {
 
 @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
 public extension Test {
-    static let namedTests: OrderedDictionary = [
-        "Version Tests": Version.tests,
-        "Int Tests": Int.tests,
-        "Collection Tests": collectionTests,
-        "Date Tests": Date.tests,
-        "String Tests": String.tests,
-        "CharacterSet Tests": CharacterSet.tests,
-        "Threading Tests": KuThreading.tests,
-        "Network Tests": PostData.tests,
-    ]
+    static let namedTests: OrderedDictionary = {
+        var tests: OrderedDictionary = [
+            "Version Tests": Version.tests,
+            "Int Tests": Int.tests,
+            "Collection Tests": collectionTests,
+            "Date Tests": Date.tests,
+            "String Tests": String.tests,
+            "CharacterSet Tests": CharacterSet.tests,
+            "Threading Tests": KuThreading.tests,
+        ]
+#if canImport(Combine)
+        // unavailable on Linux
+        tests["Network Tests"] = PostData.tests
+#endif
+        return tests
+    }()
 }
 
-#if canImport(SwiftUI) && compiler(>=5.9)
+#if canImport(SwiftUI)
 import SwiftUI
 @available(iOS 13, tvOS 13, watchOS 6, *)
 #Preview {
     TestsListView(tests: KuThreading.tests + Int.tests)
 }
+#endif
 #endif

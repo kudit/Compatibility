@@ -7,6 +7,8 @@
 //#if canImport(Testing) && compiler(>=6.0)
 
 // @testable // fails to include package module for testing.
+// Testing is only supported with Swift 5.9+
+#if compiler(>=5.9)
 import Compatibility
 import Testing
 
@@ -47,4 +49,4 @@ struct CompatibilityTests {
         }
     }
 }
-//#endif
+#endif

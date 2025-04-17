@@ -279,6 +279,8 @@ internal let testDelay: TestClosure = {
     try timeTolerance(start: start, end: end, expected: delayTime)
 }
 
+// Testing is only supported with Swift 5.9+
+#if compiler(>=5.9)
 @available(iOS 13, tvOS 13, watchOS 6, *)
 struct KuThreading {
     @MainActor
@@ -291,10 +293,11 @@ struct KuThreading {
     ]
 }
 
-#if canImport(SwiftUI) && compiler(>=5.9)
+#if canImport(SwiftUI)
 import SwiftUI
 @available(iOS 13, tvOS 13, watchOS 6, *)
 #Preview("Tests") {
     TestsListView(tests: KuThreading.tests)
 }
+#endif
 #endif
