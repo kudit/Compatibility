@@ -7,10 +7,12 @@
 //
 
 public extension Dictionary where Value: AnyObject {
+#if !DEBUG
     @available(*, deprecated, renamed: "firstKey")
     func key(for value: AnyObject) -> Key? {
         return firstKey(for: value)
     }
+#endif
     /// return the first encountered key for the given class object.
     func firstKey(for value: AnyObject) -> Key? {
         for (key, val) in self {
@@ -22,10 +24,12 @@ public extension Dictionary where Value: AnyObject {
     }
 }
 public extension Dictionary where Value: Equatable {
+#if !DEBUG
     @available(*, deprecated, renamed: "firstKey")
     func key(for value: Value) -> Key? {
         return firstKey(for: value)
     }
+#endif
     /// return the first encountered key for the given equatable value.
     func firstKey(for value: Value) -> Key? {
         for (key, val) in self {

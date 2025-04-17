@@ -24,10 +24,20 @@
 			<key>orderHint</key>
 			<integer>0</integer>
 		</dict>
+		<key>CompatibilityTests.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>2</integer>
+		</dict>
 	</dict>
 	<key>SuppressBuildableAutocreation</key>
 	<dict>
 		<key>B58B5C3E2C38F98800689837</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>B5965FE32DB0B4FA00784140</key>
 		<dict>
 			<key>primary</key>
 			<true/>

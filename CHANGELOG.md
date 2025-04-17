@@ -8,6 +8,10 @@ NOTE: Version needs to be updated in the following places:
 
 TODO: Figure out why menus don't work at all in tvOS.  Figure out how to backport.
 
+TODO: Add more tests for improved code coverage.
+
+v1.9.5 4/17/2025 Added Swift Testing so we can check code coverage.  Removed all deprecated functions from testing by adding `#if !DEBUG`.  Moved `namedTests` to `Tests` rather than UI.
+
 v1.9.4 4/16/2025 Fixed build issues for Linux under Swift 5.8.  Added explicit `return`s since assumed returns and simplified syntax isn't available until Swift 5.9.  `CloudStorage` now requires Swift 5.9.
 
 *PASSES ALL SWIFTPACKAGEINDEX TESTS*

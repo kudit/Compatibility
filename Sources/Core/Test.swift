@@ -103,6 +103,20 @@ public extension Test {
     }
 }
 
+@available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
+public extension Test {
+    static let namedTests: OrderedDictionary = [
+        "Version Tests": Version.tests,
+        "Int Tests": Int.tests,
+        "Collection Tests": collectionTests,
+        "Date Tests": Date.tests,
+        "String Tests": String.tests,
+        "CharacterSet Tests": CharacterSet.tests,
+        "Threading Tests": KuThreading.tests,
+        "Network Tests": PostData.tests,
+    ]
+}
+
 #if canImport(SwiftUI) && compiler(>=5.9)
 import SwiftUI
 @available(iOS 13, tvOS 13, watchOS 6, *)

@@ -124,10 +124,12 @@ public extension BinaryInteger {
     var bytes: Int64 {
         Int64(self)
     }
+#if !DEBUG
     @available(*, deprecated, renamed: "byteString(countStyle:)", message: "use byteString(countStyle) instead so we know whether to convert with 1000 or 1024 division")
     var byteString: String {
         return byteString(.file)
     }
+#endif
     func byteString(_ countStyle: ByteCountFormatter.CountStyle) -> String {
         return ByteCountFormatter.string(fromByteCount: bytes, countStyle: countStyle)
     }

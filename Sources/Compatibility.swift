@@ -8,7 +8,7 @@
 
 public enum Compatibility {
     /// The version of the Compatibility Library since cannot get directly from Package.swift.
-    public static let version: Version = "1.9.4"
+    public static let version: Version = "1.9.5"
 }
 
 @_exported import Foundation
@@ -162,12 +162,15 @@ public extension Compatibility {
 
 // MARK: - legacy compatibility code deprecations and support
 public extension Compatibility { // for brief period where Application wasn't available
+#if !DEBUG
     @available(*, deprecated, renamed: "Application.isDebug")
     static let isDebug = _isDebugAssertConfiguration()
+#endif
 }
 @available(iOS 13, tvOS 13, watchOS 6, *)
 public extension Compatibility { // for brief period where Application wasn't available.  Static computed properties apparently aren't supported in extensions in iOS <13?
     // MARK: - Entitlements Information
+#if !DEBUG
     @available(*, deprecated, renamed: "Application.iCloudSupported")
     @MainActor
     static var iCloudSupported: Bool {
@@ -227,6 +230,7 @@ public extension Compatibility { // for brief period where Application wasn't av
         return false
 #endif
     }
+#endif
 }
 
 #if !canImport(CoreML) // this isn't available on linux!

@@ -667,6 +667,7 @@ public extension String {
     var fileSafe: String {
         return self.replacingCharacters(in: "/=\\?%*|'\"<>:", with:"_")
     }
+#if !DEBUG
     /// get the basename of the file without the extension (returns entire string if no extension)
     @available(*, deprecated, message: "use fileBasename method on NSURL") // TODO: see where used and adapt.
     var fileBasename: String {
@@ -682,6 +683,7 @@ public extension String {
     var fileExtension: String {
         return self.replacingOccurrences(of: "\(self.fileBasename).", with: "")
     }
+#endif
 
     @MainActor
     internal static let testEncoding: TestClosure = {
@@ -832,6 +834,7 @@ public extension String {
 """
     }
     
+#if !DEBUG
     /// Return an object extracted from the JSON data in this string or nil if this is not a valid JSON string.
     @available(*, deprecated, message: "Is this used by anyone/anything?  If not, remove.  Deprecated in version 1.0.13")
     var JSONObject: Any? {
@@ -843,6 +846,7 @@ public extension String {
             return nil
         }
     }
+#endif
     
     @available(iOS 13, tvOS 13, watchOS 6, *)
     @MainActor

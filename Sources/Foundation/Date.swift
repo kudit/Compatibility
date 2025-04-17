@@ -68,6 +68,7 @@ public extension Date {
             return nil
         }
     }
+#if !DEBUG
     /// create a date from a `dateString` in the specified `format`
     /// If there is a bad format or this can't happen, will set to reference date.  Use the failable init instead for better checking.`
     @available(*, deprecated, renamed: "init(from:format:)")
@@ -78,6 +79,7 @@ public extension Date {
             self = .init(timeIntervalSinceReferenceDate: 0)
         }
     }
+#endif
     @MainActor
     internal static let testInit: TestClosure = {
         let date = Date(from: "2023-01-02 17:12:00", format: .mysqlDateTimeFormat)
@@ -127,6 +129,7 @@ public extension Date {
         printFormatter.dateFormat = formatString
         return printFormatter.string(from: self)
     }
+#if !DEBUG
     /// Return the date formmated using the `formatString`.  See NSDateFormatter for format information.
     @available(*, deprecated, renamed: "formatted(withFormat:)")
     func string(withFormat formatString: String) -> String {
@@ -147,6 +150,7 @@ public extension Date {
         return self.formatted(date: dateFormatterStyle.dateStyle, time: .omitted)
     }
     #endif
+#endif
     
     @available(macOS 12, *)
     @MainActor
@@ -249,27 +253,33 @@ public extension Date {
     func isOlderThan(days: Double) -> Bool {
         return self.isOlderThan(hours: days * 24)
     }
+#if !DEBUG
     @available(*, deprecated, renamed: "isOlderThan(days:)", message: "renamed")
     func isOlderThanDays(_ days: Double) -> Bool {
         return self.isOlderThan(days: days)
     }
+#endif
     
     func isOlderThan(hours: Double) -> Bool {
         return self.isOlderThan(seconds: hours * 60 * 60)
     }
+#if !DEBUG
     @available(*, deprecated, renamed: "isOlderThan(hours:)", message: "renamed")
     func isOlderThanHours(_ hours: Double) -> Bool {
         return isOlderThan(hours: hours)
     }
+#endif
     
     func isOlderThan(seconds: Double) -> Bool {
         let delta = -self.timeIntervalSinceNow
         return delta > seconds
     }
+#if !DEBUG
     @available(*, deprecated, renamed: "isOlderThan(seconds:)", message: "renamed")
     func isOlderThanSeconds(_ seconds: Double) -> Bool {
         return isOlderThan(seconds: seconds)
     }
+#endif
     // TODO: add hasBeen(days:, etc?  Or does hasPassed take care of this?  Is there a default method that handles the above cases too?  Perhaps elapsedTime with a TimeInterval?
     
     /// Unix timestamp

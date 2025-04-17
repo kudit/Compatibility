@@ -131,6 +131,7 @@ public extension Version {
         return [majorVersion, minorVersion, patchVersion]
     }
     
+#if !DEBUG
     @available(*, deprecated, message: "Versions are now typealiases of OperatingSystemVersion so no need to convert.")
     init(operatingSystemVersion osv: OperatingSystemVersion) {
         self.init(rawValue: osv.rawValue)
@@ -140,6 +141,7 @@ public extension Version {
     var operatingSystemVersion: OperatingSystemVersion {
         return self
     }
+#endif
     
     // TODO: Convert to Swift Testing
     @MainActor
@@ -183,9 +185,10 @@ public extension Version {
 #endif
 }
 
+#if !DEBUG
 //// For collection convenience
 public extension [Version] {
-    @available(*, deprecated, renamed: "rawValue")
+    @available(*, deprecated, renamed: "rawValue") // unnecessary now that Version has a RawRepresentable conversion to String automatically.
     var asStringArray: [String] {
         self.map { $0.rawValue }
     }
@@ -194,6 +197,7 @@ public extension [Version] {
 //        asStringArray.joined(separator: separator)
 //    }
 }
+#endif
 
 public extension [Version] {
     /// Pretty output like "v0.0.0, v1.0.2, v3.4.2"

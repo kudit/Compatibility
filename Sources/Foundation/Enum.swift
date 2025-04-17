@@ -8,8 +8,10 @@ public extension CaseIterable where Self: Equatable { // equatable required to f
         e = allCases[next == allCases.endIndex ? allCases.startIndex : next]
     }
     
+#if !DEBUG // for excluding from Testing code coverage https://www.christopherthiebaut.com/posts/exclude_swiftui_previews_from_code_coverage/
     @available(*, deprecated, renamed: "++")
     mutating func rotate() {
         self++
     }
+#endif
 }

@@ -19,6 +19,7 @@ public extension Collection {
             return array
         }
     }
+#if !DEBUG
     /// Returns a randomly selected item from the collection.
     @available(*, deprecated, message: "Use native randomElement() method")
     var randomItem: Iterator.Element {
@@ -26,6 +27,7 @@ public extension Collection {
             return self.randomElement()!
         }
     }
+#endif
 }
 
 
@@ -117,11 +119,14 @@ public extension Array where Element: Comparable {
 }
 
 public extension Array where Element: Equatable {
+#if !DEBUG
     /// like indexOf but with just the element instead of having to construct a predicate.
     @available(*, deprecated, message: "Use new native firstIndex(of:) method")
     func indexOf(item: Element) -> Int? {
         return self.firstIndex(of: item)
     }
+#endif
+    
     /// remove the object from the array if it exists
     mutating func remove(_ item: Element) {
         while let index = firstIndex(of: item) {

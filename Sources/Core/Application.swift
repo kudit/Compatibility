@@ -137,12 +137,14 @@ public class Application: ObservableObject { // cannot automatically conform to 
     }
 
     
+#if !DEBUG
     @MainActor
     @available(*, deprecated, renamed: "Compatibility.isDebug")
     public static var DEBUG: Bool {
         return DebugLevel.currentLevel == .DEBUG
     }
-    
+#endif
+
     /// Place `Application.track()` in `application(_:didFinishLaunchingWithOptions:)` or @main struct init() function to enable version tracking.
     @MainActor
     public static func track(file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) {

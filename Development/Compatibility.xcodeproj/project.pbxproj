@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -15,6 +15,7 @@
 		B52C8E0F2C38CA76008EBD2D /* MyApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5E5FC3A2C3860EC004F2009 /* MyApp.swift */; };
 		B579D4A52C46FF1A009A037A /* Compatibility Library in Frameworks */ = {isa = PBXBuildFile; productRef = B579D4A42C46FF1A009A037A /* Compatibility Library */; };
 		B58B5C452C38F98800689837 /* (null) in Sources */ = {isa = PBXBuildFile; };
+		B594CFB72DB0BACA001E8658 /* Compatibility Library in Frameworks */ = {isa = PBXBuildFile; productRef = B594CFB62DB0BACA001E8658 /* Compatibility Library */; };
 		B5CB1E3C2C6BB1D300CF542B /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = B51B70C42C5D6DBF001F7DCF /* PrivacyInfo.xcprivacy */; };
 		B5E1B6A62C3C6C3B00B92573 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B5E5FC822C3863B9004F2009 /* Assets.xcassets */; };
 		B5E5FC832C3863B9004F2009 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B5E5FC822C3863B9004F2009 /* Assets.xcassets */; };
@@ -27,6 +28,7 @@
 		B52C8E082C386F2D008EBD2D /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Package.swift; path = ../Package.swift; sourceTree = "<group>"; };
 		B52C8E0C2C3886E6008EBD2D /* Compatibility.swiftpm */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = Compatibility.swiftpm; path = ..; sourceTree = "<group>"; };
 		B58B5C3F2C38F98800689837 /* CompatibilityTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CompatibilityTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B594CFA92DB0B838001E8658 /* CompatibilityTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CompatibilityTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B5E5FC3A2C3860EC004F2009 /* MyApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyApp.swift; sourceTree = "<group>"; };
 		B5E5FC3E2C3860EC004F2009 /* CHANGELOG.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; name = CHANGELOG.md; path = ../CHANGELOG.md; sourceTree = "<group>"; };
 		B5E5FC442C3860EC004F2009 /* LICENSE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; name = LICENSE.txt; path = ../LICENSE.txt; sourceTree = "<group>"; };
@@ -35,12 +37,34 @@
 		B5E5FC822C3863B9004F2009 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		B594CFB92DB0BBC4001E8658 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				CompatibilityTests.swift,
+			);
+			target = B594CFA82DB0B838001E8658 /* CompatibilityTests */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		B5965FE52DB0B4FD00784140 /* CompatibilityTests */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (B594CFB92DB0BBC4001E8658 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = CompatibilityTests; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
+
 /* Begin PBXFrameworksBuildPhase section */
 		B58B5C3C2C38F98800689837 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				B5198A102C38FAEB00CEA720 /* Compatibility Library in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B594CFA62DB0B838001E8658 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B594CFB72DB0BACA001E8658 /* Compatibility Library in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -74,6 +98,7 @@
 			children = (
 				B5E5FC512C386144004F2009 /* CompatibilityTest.app */,
 				B58B5C3F2C38F98800689837 /* CompatibilityTest.app */,
+				B594CFA92DB0B838001E8658 /* CompatibilityTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -88,6 +113,7 @@
 		B5E5FC3B2C3860EC004F2009 /* Development */ = {
 			isa = PBXGroup;
 			children = (
+				B5965FE52DB0B4FD00784140 /* CompatibilityTests */,
 				B5E5FC812C38638B004F2009 /* Resources */,
 				B5E5FC3A2C3860EC004F2009 /* MyApp.swift */,
 				B5209EE22C431CF800FBA30B /* CompatibilityDemoView.swift */,
@@ -128,6 +154,26 @@
 			productReference = B58B5C3F2C38F98800689837 /* CompatibilityTest.app */;
 			productType = "com.apple.product-type.application";
 		};
+		B594CFA82DB0B838001E8658 /* CompatibilityTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B594CFAF2DB0B838001E8658 /* Build configuration list for PBXNativeTarget "CompatibilityTests" */;
+			buildPhases = (
+				B594CFA52DB0B838001E8658 /* Sources */,
+				B594CFA62DB0B838001E8658 /* Frameworks */,
+				B594CFA72DB0B838001E8658 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = CompatibilityTests;
+			packageProductDependencies = (
+				B594CFB62DB0BACA001E8658 /* Compatibility Library */,
+			);
+			productName = CompatibilityTests;
+			productReference = B594CFA92DB0B838001E8658 /* CompatibilityTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		B5E5FC502C386144004F2009 /* CompatibilityTest */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = B5E5FC5D2C386145004F2009 /* Build configuration list for PBXNativeTarget "CompatibilityTest" */;
@@ -155,11 +201,14 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1540;
+				LastSwiftUpdateCheck = 1630;
 				LastUpgradeCheck = 1630;
 				TargetAttributes = {
 					B58B5C3E2C38F98800689837 = {
 						CreatedOnToolsVersion = 15.4;
+					};
+					B594CFA82DB0B838001E8658 = {
+						CreatedOnToolsVersion = 16.3;
 					};
 					B5E5FC502C386144004F2009 = {
 						CreatedOnToolsVersion = 15.4;
@@ -181,6 +230,7 @@
 			targets = (
 				B5E5FC502C386144004F2009 /* CompatibilityTest */,
 				B58B5C3E2C38F98800689837 /* CompatibilityTest Watch App */,
+				B594CFA82DB0B838001E8658 /* CompatibilityTests */,
 			);
 		};
 /* End PBXProject section */
@@ -192,6 +242,13 @@
 			files = (
 				B5CB1E3C2C6BB1D300CF542B /* PrivacyInfo.xcprivacy in Resources */,
 				B5E1B6A62C3C6C3B00B92573 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B594CFA72DB0B838001E8658 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -214,6 +271,13 @@
 				B58B5C452C38F98800689837 /* (null) in Sources */,
 				B5198A0E2C38FAD300CEA720 /* MyApp.swift in Sources */,
 				B5209EE42C431CF800FBA30B /* CompatibilityDemoView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B594CFA52DB0B838001E8658 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -288,7 +352,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
-				MARKETING_VERSION = 1.9.4;
+				MARKETING_VERSION = 1.9.5;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -357,7 +421,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
-				MARKETING_VERSION = 1.9.4;
+				MARKETING_VERSION = 1.9.5;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
@@ -425,6 +489,47 @@
 				TARGETED_DEVICE_FAMILY = 4;
 				VALIDATE_PRODUCT = YES;
 				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Release;
+		};
+		B594CFAD2DB0B838001E8658 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3QPV894C33;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kudit.CompatibilityTest.Tests;
+				"PRODUCT_BUNDLE_IDENTIFIER[sdk=iphoneos*]" = com.kudit.CompatibilityTest;
+				"PRODUCT_BUNDLE_IDENTIFIER[sdk=macosx*]" = com.kudit.CompatibilityTest;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		B594CFAE2DB0B838001E8658 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3QPV894C33;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kudit.CompatibilityTest.Tests;
+				"PRODUCT_BUNDLE_IDENTIFIER[sdk=iphoneos*]" = com.kudit.CompatibilityTest;
+				"PRODUCT_BUNDLE_IDENTIFIER[sdk=macosx*]" = com.kudit.CompatibilityTest;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
 		};
@@ -525,6 +630,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		B594CFAF2DB0B838001E8658 /* Build configuration list for PBXNativeTarget "CompatibilityTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B594CFAD2DB0B838001E8658 /* Debug */,
+				B594CFAE2DB0B838001E8658 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		B5E5FC5D2C386145004F2009 /* Build configuration list for PBXNativeTarget "CompatibilityTest" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -542,6 +656,10 @@
 			productName = "Compatibility Library";
 		};
 		B579D4A42C46FF1A009A037A /* Compatibility Library */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = "Compatibility Library";
+		};
+		B594CFB62DB0BACA001E8658 /* Compatibility Library */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = "Compatibility Library";
 		};
