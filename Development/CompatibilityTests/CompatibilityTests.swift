@@ -8,7 +8,7 @@
 
 // @testable // fails to include package module for testing.
 // Testing is only supported with Swift 5.9+
-#if compiler(>=5.9)
+#if compiler(>=5.9) && canImport(Compatibility) && canImport(Testing)
 import Compatibility
 import Testing
 

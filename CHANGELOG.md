@@ -10,6 +10,9 @@ TODO: Figure out why menus don't work at all in tvOS.  Figure out how to backpor
 
 TODO: Add more tests for improved code coverage.
 
+v1.9.8 4/20/2025 Fixed issues with running in Swift Playgrounds (Testing code was being included and we needed to condition out).  Consolidated duplicate `#if` statements in Package.swift for clarity. 
+
+*PASSES ALL SWIFTPACKAGEINDEX TESTS (including Swift 5.8!)*
 v1.9.7 4/17/2025 Fixed visibility issue with tests being inaccessible in conditional compilation.  Moved tests outside availability checks.
 
 v1.9.6 4/17/2025 Fixed issues where @CloudStorage was unavailable due to conditional removal.
