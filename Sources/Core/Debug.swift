@@ -97,7 +97,7 @@ public struct CustomError: Error, Sendable {
     }
     @discardableResult
     func debug() -> String {
-        Compatibility.debug(description, level: level ?? DebugLevel.defaultLevel, file: file, function: function, line: line, column: column)
+        return Compatibility.debug(description, level: level ?? DebugLevel.defaultLevel, file: file, function: function, line: line, column: column)
     }
 }
 extension CustomError: CustomStringConvertible {
@@ -264,9 +264,9 @@ public extension Compatibility {
  - Parameter line: For bubbling down the #line number from a call site.
  - Parameter column: For bubbling down the #column number from a call site. (Not used currently but here for completeness).
  */
-//@discardableResult
-public func debug(_ message: Any, level: DebugLevel = .defaultLevel, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) {
-    Compatibility.debug(message, level: level, file: file, function: function, line: line, column: column)
+@discardableResult
+public func debug(_ message: Any, level: DebugLevel = .defaultLevel, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) -> String {
+    return Compatibility.debug(message, level: level, file: file, function: function, line: line, column: column)
 }
 
 // MARK: Debug(error)

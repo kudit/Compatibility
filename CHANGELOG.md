@@ -6,10 +6,9 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
-TODO: Figure out why menus don't work at all in tvOS.  Figure out how to backport.
+v1.9.9 4/24/2025 Added @discardableResult wrapper to debug wrapper.  Tested old package format for swift playgrounds (still needs to be different now).  Renamed `MySQLDateString` to `MySQLDateTimeString`.  Added `Date.mysqlDate` (separate from `mysqlDateTime`).  Added additional Date tests for code coverage.
 
-TODO: Add more tests for improved code coverage.
-
+*PASSES ALL SWIFTPACKAGEINDEX TESTS (including Swift 5.8!)*
 v1.9.8 4/20/2025 Fixed issues with running in Swift Playgrounds (Testing code was being included and we needed to condition out).  Consolidated duplicate `#if` statements in Package.swift for clarity. 
 
 *PASSES ALL SWIFTPACKAGEINDEX TESTS (including Swift 5.8!)*
@@ -206,13 +205,14 @@ v1.0 7/6/2024 Initial code and features pulled from KuditFrameworks.  Converted 
 
 ## Bugs to fix:
 Known issues that need to be addressed.
-- [ ] Menu buttons in tvOS do not work at all.
+- [ ] Menu buttons in tvOS do not work at all.  Figure out why menus don't work at all in tvOS.  Figure out how to backport
 - [ ] pagination in tvOS works but after pagination, view content isn't accessible.
 - [ ] Placard view looks weird in macOS.
 - [ ] Background tasks can cause crash issues when run from SwiftUI in iOS 15.  Guessing this has to do with threading and background tasks attempting to update values that may have been released?  Can reproduce by switching between All tests view and another view quickly on iPhone 7 simulator.  Fix by having the tests stored in a global singleton rather than as part of the view state?
 
 ## Roadmap:
 Planned features and anticipated API changes.  If you want to contribute, this is a great place to start.
+- [ ] Add more tests for improved code coverage.
 - [ ] Add option to pad function to allow padding on left and use this in function for prefixing with a number of 0s.  Left padding function: https://stackoverflow.com/questions/32338137/padding-a-swift-string-for-printing
 - [ ] Add isFirstRunOnDevice to differentiate from isFirstRun (across devices).
 - [ ] Update tab view to use backport version that can extend content into safe area but still respects safe area for scrolling and clearing (for Color test app).  Have content of tab view extend into safe area but the contents not completely ignore safe area.

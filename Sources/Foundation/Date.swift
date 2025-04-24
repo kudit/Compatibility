@@ -20,7 +20,8 @@ import Glibc
 #endif
 
 public extension String {
-    static let mysqlDateTimeFormat = "yyyy-MM-dd HH:mm:ss"
+    static let mysqlDateFormat = "yyyy-MM-dd"
+    static let mysqlDateTimeFormat = "\(mysqlDateFormat) HH:mm:ss"
     static let numericDateFormat = "yyyyMMddHHmmss"
 }
 
@@ -49,9 +50,9 @@ public extension DateFormatter.Style {
 public extension Date {
     //    Legacy.  Use String constant instead.
     //static let MySQLTimestampFormat = "yyyy-MM-dd HH:mm:ss"
-
+    
     // TODO: add a conversion from PHP format string to Swift ISO Format string
-
+    
     // MARK: - Initialization with string and format
     /// create a date `from` a date String in the specified `format` String
     /// see NSDateFormatter dateFormat string for information on symbols and formatting
@@ -98,7 +99,7 @@ public extension Date {
             return Date()
         }
     }
-
+    
     /// Gets a date 24 hours from today in the future.  If for some reason this can't be calculated, will return `.now` (but this should never happen).
     static var tomorrow: Date {
         return .nowBackport.nextDay
@@ -108,7 +109,7 @@ public extension Date {
     static var tomorrowMidnight: Date {
         return .tomorrow.firstMoment
     }
-
+    
     // MARK: - Convenience date shifting
     /// Gets the next date from the specified date in the future (usually 24 hours but may be off if across daylight savings time boundaries).  If for some reason this can't be calculated, will return the original date (but this should never happen).
     var nextDay: Date {
@@ -143,13 +144,13 @@ public extension Date {
     }
     
     /// Use date formatter style to create localized string version of the date.
-    #if canImport(Combine)
+#if canImport(Combine)
     @available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
     @available(*, deprecated, renamed: "formatted(date:time:)")
     func string(withStyle dateFormatterStyle:DateFormatter.Style) -> String {
         return self.formatted(date: dateFormatterStyle.dateStyle, time: .omitted)
     }
-    #endif
+#endif
 #endif
     
     @available(macOS 12, *)
@@ -164,9 +165,14 @@ public extension Date {
     var mysqlDateTime: String {
         self.formatted(withFormat: .mysqlDateTimeFormat)
     }
+    /// the date in a format designed for MySQL DateTime
+    var mysqlDate: String {
+        self.formatted(withFormat: .mysqlDateFormat)
+    }
     @MainActor
     internal static let testMysql: TestClosure = {
         try expect(String.mysqlDateTimeFormat == "yyyy-MM-dd HH:mm:ss", String.mysqlDateTimeFormat)
+        try expect(String.mysqlDateFormat == "yyyy-MM-dd", String.mysqlDateFormat)
     }
     
     /// a flat date and time format for use in file names or build numbers
@@ -176,9 +182,9 @@ public extension Date {
     
     var pretty: String {
         if #available(iOS 15, macOS 12, tvOS 15, watchOS 8, *) {
-            #if canImport(Combine) // not supported in Linux
+#if canImport(Combine) // not supported in Linux
             return self.formatted(date: .abbreviated, time: .shortened)
-            #endif
+#endif
         }
         // Fallback on earlier versions
         return self.mysqlDateTime
@@ -294,6 +300,23 @@ public extension Date {
         let time = Date.unixTimestamp
         try expect(interval == time, "\(interval) != \(time)")
     }
+    
+    @MainActor
+    internal static let testTimes: TestClosure = {
+        let nowTest: Date
+        if #available(iOS 15, macOS 12, tvOS 15, watchOS 8, *) {
+            nowTest = now
+        } else {
+            // Fallback on earlier versions
+            nowTest = nowBackport
+        }
+        try expect(nowBackport.mysqlDateTime == nowTest.mysqlDateTime, "\(nowBackport) != \(nowTest)")
+        // tests without expectations
+        let results = "\(tomorrow.mysqlDate), \(tomorrowMidnight.mysqlDateTime)"
+        try expect(results == results, "\(results)")
+        try expect(tomorrow.isSameDate(as: tomorrowMidnight), "\(tomorrow.numericDateTime) DATE MISMATCH \(tomorrowMidnight.numericDateTime)")
+        try expect(tomorrowMidnight.isOlderThan(days: -1), "\(tomorrowMidnight.numericDateTime) DATE is not older than -1 days")
+    }
 }
 
 // Testing is only supported with Swift 5.9+
@@ -307,6 +330,7 @@ public extension Date {
         Test("formatted", testFormatted),
         Test("pretty", testPretty),
         Test("timestamp", testTime),
+        Test("times", testTimes),
     ]
 }
 

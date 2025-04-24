@@ -257,11 +257,11 @@ extension CloudStorage where Value == Data? {
     }
 }
 
-public protocol MySQLDateString {
+public protocol MySQLDateTimeString {
     init(string: String)
     var stringValue: String { get }
 }
-extension Date: MySQLDateString {
+extension Date: MySQLDateTimeString {
     /// Creates a date from a MySQLDateTimeFormat string (for use in CloudStorage of dates automatically).
     public init(string: String) {
         self = Date(from: string, format: .mysqlDateTimeFormat) ?? .nowBackport
@@ -272,7 +272,7 @@ extension Date: MySQLDateString {
     }
 }
 @available(iOS 13, tvOS 13, watchOS 6, *)
-extension CloudStorage where Value: MySQLDateString {
+extension CloudStorage where Value: MySQLDateTimeString {
     public init(wrappedValue: Value, _ key: String) {
         self.init(
             keyName: key,
