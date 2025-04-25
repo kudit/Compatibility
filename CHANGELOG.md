@@ -6,6 +6,8 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
+v1.10.1 4/25/2025 Added `Sendable` conformance to `DateString` and `DateTimeString`.
+
 v1.10.0 4/25/2025 Added `DateTimeString` and `DateString` types (structs with underlying String backing) for clearer storage of Date strings.  Moved all date formatting code to `DateString.swift` so formatting can be used on `Date` or `DateString` or `DateTimeString`.  Changed `numericDateFormat` to `numericDateTimeFormat` for consistency and clarity.  NOTE: This is a breaking change but if you're using `Date.numericDateTime` this won't change.  Improved tests so that failing tests will fail testing.  Added several additional test coverage.
 
 *PASSES ALL SWIFTPACKAGEINDEX TESTS (including Swift 5.8!)*

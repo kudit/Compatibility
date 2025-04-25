@@ -211,7 +211,7 @@ public extension Date {
 }
 
 /// A string representation of a date time.  When getting this as a date, it will attempt to parse various formats the string could be in to allow a variety of formats.  You can add other formats here to expand the support.  Add mappings in the date initializer if you need other formats supported.
-public protocol DateStringRepresentation: RawRepresentable, Codable, Comparable, DateRepresentable, ExpressibleByStringLiteral, ExpressibleByStringInterpolation, LosslessStringConvertible where RawValue == String {
+public protocol DateStringRepresentation: RawRepresentable, Sendable, Hashable, Codable, Comparable, DateRepresentable, ExpressibleByStringLiteral, ExpressibleByStringInterpolation, LosslessStringConvertible where RawValue == String {
     var date: Date? { get }
     var rawValue: String { get set }
 }
