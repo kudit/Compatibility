@@ -257,27 +257,49 @@ extension CloudStorage where Value == Data? {
     }
 }
 
-public protocol MySQLDateTimeString {
-    init(string: String)
+// Enable CloudStorage for Date type objects (by default, stores as a mysqlDateTime string)
+public protocol DefaultDateCloudStorage {
+    init?(parse string: String)
     var stringValue: String { get }
 }
-extension Date: MySQLDateTimeString {
-    /// Creates a date from a MySQLDateTimeFormat string (for use in CloudStorage of dates automatically).
+extension Date: DefaultDateCloudStorage {
+    @available(*, deprecated, renamed: "init(parse:)", message: "use failable init instead")
     public init(string: String) {
-        self = Date(from: string, format: .mysqlDateTimeFormat) ?? .nowBackport
+        guard let date = Self(parse: string) else {
+            self = .nowBackport
+            return
+        }
+        self = date
     }
-    /// MySQL DateTime Format string
+
     public var stringValue: String {
-        self.formatted(withFormat: .mysqlDateTimeFormat)
+        return mysqlDateTime // change to alter the default storage format of dates.  IF you change this, will probably need to add additional parsing checks so that this format is still supported.
     }
 }
+extension DateStringRepresentation {
+    public var stringValue: String {
+        return self.rawValue
+    }
+    
+    public init?(parse string: String) {
+        self.init(string)
+    }
+}
+extension DateString: DefaultDateCloudStorage {}
+extension DateTimeString: DefaultDateCloudStorage {}
 @available(iOS 13, tvOS 13, watchOS 6, *)
-extension CloudStorage where Value: MySQLDateTimeString {
+extension CloudStorage where Value: DefaultDateCloudStorage {
     public init(wrappedValue: Value, _ key: String) {
         self.init(
             keyName: key,
-            syncGet: { CloudStorageSync.shared.string(for: key).flatMap(Value.init) ?? wrappedValue },
-            syncSet: { newValue in CloudStorageSync.shared.set(newValue.stringValue, for: key) })
+            syncGet: {
+                // do the conversion of a string to a date using all the strategies available in Date.
+                guard let string = sync.string(for: key), let date = Value(parse: string) else {
+                    return wrappedValue
+                }
+                return date
+            },
+            syncSet: { newValue in sync.set(newValue.stringValue, for: key) })
     }
 }
 #endif

@@ -19,76 +19,11 @@ import Darwin
 import Glibc
 #endif
 
-public extension String {
-    static let mysqlDateFormat = "yyyy-MM-dd"
-    static let mysqlDateTimeFormat = "\(mysqlDateFormat) HH:mm:ss"
-    static let numericDateFormat = "yyyyMMddHHmmss"
-}
-
-#if canImport(Combine) // not available in Linux
-@available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
-public extension DateFormatter.Style {
-    var dateStyle: Date.FormatStyle.DateStyle {
-        switch self {
-        case .none:
-            return .omitted
-        case .short:
-            return .abbreviated
-        case .medium:
-            return .numeric
-        case .long:
-            return .long
-        case .full:
-            return .complete
-        @unknown default:
-            return .complete
-        }
-    }
-}
-#endif
-
 public extension Date {
     //    Legacy.  Use String constant instead.
     //static let MySQLTimestampFormat = "yyyy-MM-dd HH:mm:ss"
     
     // TODO: add a conversion from PHP format string to Swift ISO Format string
-    
-    // MARK: - Initialization with string and format
-    /// create a date `from` a date String in the specified `format` String
-    /// see NSDateFormatter dateFormat string for information on symbols and formatting
-    // http://www.unicode.org/reports/tr35/tr35-dates.html#Date_Format_Patterns
-    // https://www.php.net/manual/en/datetime.format.php
-    init?(from dateString: String, format: String) {
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = format
-        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
-        if let date = dateFormatter.date(from: dateString) {
-            self = date
-            // alternatively: self.init(timeInterval:0, since:date)
-        } else {
-            return nil
-        }
-    }
-#if !DEBUG
-    /// create a date from a `dateString` in the specified `format`
-    /// If there is a bad format or this can't happen, will set to reference date.  Use the failable init instead for better checking.`
-    @available(*, deprecated, renamed: "init(from:format:)")
-    init(dateString:String, format formatString:String) {
-        if let date = Date(from: dateString, format: formatString) {
-            self = date
-        } else {
-            self = .init(timeIntervalSinceReferenceDate: 0)
-        }
-    }
-#endif
-    @MainActor
-    internal static let testInit: TestClosure = {
-        let date = Date(from: "2023-01-02 17:12:00", format: .mysqlDateTimeFormat)
-        //        let date = Date(from: "January 2, 2023 5:12pm", format: "F j, Y g:ia")
-        let compareDate = Date(from: "1/2/2023 5:12pm", format: "M/d/y h:mma")
-        try expect(date == compareDate, "\(String(describing: date)) != \(String(describing: compareDate))")
-        //        return (date == Date(from: "01/02/2023 17:12", format: "m/d/Y G:i"), String(describing:date))
-    }
     
     /// Equivalent to `Date.now` but supported on iOS < 15
     static var nowBackport: Date {
@@ -120,86 +55,6 @@ public extension Date {
     var firstMoment: Date {
         return Calendar.current.startOfDay(for: self)
     }
-    
-    
-    // MARK: - Formatting using format strings and styles
-    /// format using DateFormatter.dateFormat string.  Not PHP Date format string.  For reference: https://www.advancedswift.com/date-formatter-cheatsheet-formulas-swift/#date-format-cheatsheet
-    // TODO: Create a conversion from PHP Date String format to Swift Date format strings and vice versa?
-    func formatted(withFormat formatString: String) -> String {
-        let printFormatter = DateFormatter()
-        printFormatter.dateFormat = formatString
-        return printFormatter.string(from: self)
-    }
-#if !DEBUG
-    /// Return the date formmated using the `formatString`.  See NSDateFormatter for format information.
-    @available(*, deprecated, renamed: "formatted(withFormat:)")
-    func string(withFormat formatString: String) -> String {
-        return formatted(withFormat: formatString)
-    }
-    /// The date formatted using the provided format string.  This is in Swift Date format NOT PHP Date format string.
-    @available(macOS 12, *)
-    @available(*, deprecated, renamed: "formatted(withFormat:)")
-    func formatted(_ format: String) -> String {
-        return formatted(withFormat: format)
-    }
-    
-    /// Use date formatter style to create localized string version of the date.
-#if canImport(Combine)
-    @available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
-    @available(*, deprecated, renamed: "formatted(date:time:)")
-    func string(withStyle dateFormatterStyle:DateFormatter.Style) -> String {
-        return self.formatted(date: dateFormatterStyle.dateStyle, time: .omitted)
-    }
-#endif
-#endif
-    
-    @available(macOS 12, *)
-    @MainActor
-    internal static let testFormatted: TestClosure = {
-        let date = Date(from: "2023-01-02 17:12:00", format: .mysqlDateTimeFormat)
-        let formatted = date?.formatted(withFormat: "Y-M-d h:m")
-        try expect(formatted == "2023-1-2 5:12", String(describing:formatted))
-    }
-    
-    /// the date in a format designed for MySQL DateTime
-    var mysqlDateTime: String {
-        self.formatted(withFormat: .mysqlDateTimeFormat)
-    }
-    /// the date in a format designed for MySQL DateTime
-    var mysqlDate: String {
-        self.formatted(withFormat: .mysqlDateFormat)
-    }
-    @MainActor
-    internal static let testMysql: TestClosure = {
-        try expect(String.mysqlDateTimeFormat == "yyyy-MM-dd HH:mm:ss", String.mysqlDateTimeFormat)
-        try expect(String.mysqlDateFormat == "yyyy-MM-dd", String.mysqlDateFormat)
-    }
-    
-    /// a flat date and time format for use in file names or build numbers
-    var numericDateTime: String {
-        self.formatted(withFormat: .numericDateFormat)
-    }
-    
-    var pretty: String {
-        if #available(iOS 15, macOS 12, tvOS 15, watchOS 8, *) {
-#if canImport(Combine) // not supported in Linux
-            return self.formatted(date: .abbreviated, time: .shortened)
-#endif
-        }
-        // Fallback on earlier versions
-        return self.mysqlDateTime
-    }
-    @MainActor
-    internal static let testPretty: TestClosure = {
-        let date = Date(from: "2023-01-02 17:12:00", format: .mysqlDateTimeFormat)
-        let pretty = date?.pretty ?? "FAILED"
-        if #available(iOS 16, *) {
-            try expect(pretty == "Jan 2, 2023 at 5:12 PM", String(describing:pretty))
-        } else {
-            try expect(pretty == "Jan 2, 2023, 5:12 PM", String(describing:pretty))
-        }
-    }
-    
     
     
     // MARK: - Midnight relative functions
@@ -303,19 +158,31 @@ public extension Date {
     
     @MainActor
     internal static let testTimes: TestClosure = {
-        let nowTest: Date
-        if #available(iOS 15, macOS 12, tvOS 15, watchOS 8, *) {
-            nowTest = now
-        } else {
-            // Fallback on earlier versions
-            nowTest = nowBackport
-        }
+        let nowTest = nowBackport
         try expect(nowBackport.mysqlDateTime == nowTest.mysqlDateTime, "\(nowBackport) != \(nowTest)")
         // tests without expectations
+        let tomorrow = Self.tomorrow
+        let tomorrowMidnight = Self.tomorrowMidnight
         let results = "\(tomorrow.mysqlDate), \(tomorrowMidnight.mysqlDateTime)"
         try expect(results == results, "\(results)")
         try expect(tomorrow.isSameDate(as: tomorrowMidnight), "\(tomorrow.numericDateTime) DATE MISMATCH \(tomorrowMidnight.numericDateTime)")
         try expect(tomorrowMidnight.isOlderThan(days: -1), "\(tomorrowMidnight.numericDateTime) DATE is not older than -1 days")
+
+        let midnightIntervaled = Date(timeIntervalSinceMidnight: 0)
+        let midnight = Self.nowBackport.midnight
+        try expect(midnightIntervaled == midnight, "Time mismatch \(midnightIntervaled) != \(midnight)")
+        try expect(midnight.timeIntervalSinceMidnight == 0, "\(midnight.timeIntervalSinceMidnight) != 0")
+        let epoch = Date(timeIntervalSince1970: 0)
+        
+        try expect(epoch.hasPassed, "epoch should have passed")
+        
+        try expect(midnight.isToday, "midnight should be today")
+        
+        let yesterday = Date(timeIntervalSinceNow: -60*60*24)
+        try expect(yesterday.midnight.isYesterday, "yesterday midnight should be yesterday")
+        try expect(epoch.year == 1969, "\(epoch.year) != 1969") // since epoch is technically the moment before midnight 1/1/1970
+        
+        try expect(yesterday.nextDay.isToday, "yesterday.nextDay should be today")
     }
 }
 
@@ -325,7 +192,7 @@ public extension Date {
 public extension Date {
     @MainActor
     static let tests = [
-        Test("MySQL DateTime format string", testMysql),
+        Test("MySQL DateTime format string", testFormatStrings),
         Test("init with format", testInit),
         Test("formatted", testFormatted),
         Test("pretty", testPretty),

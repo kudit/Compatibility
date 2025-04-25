@@ -6,6 +6,9 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
+v1.10.0 4/25/2025 Added `DateTimeString` and `DateString` types (structs with underlying String backing) for clearer storage of Date strings.  Moved all date formatting code to `DateString.swift` so formatting can be used on `Date` or `DateString` or `DateTimeString`.  Changed `numericDateFormat` to `numericDateTimeFormat` for consistency and clarity.  NOTE: This is a breaking change but if you're using `Date.numericDateTime` this won't change.  Improved tests so that failing tests will fail testing.  Added several additional test coverage.
+
+*PASSES ALL SWIFTPACKAGEINDEX TESTS (including Swift 5.8!)*
 v1.9.9 4/24/2025 Added @discardableResult wrapper to debug wrapper.  Tested old package format for swift playgrounds (still needs to be different now).  Renamed `MySQLDateString` to `MySQLDateTimeString`.  Added `Date.mysqlDate` (separate from `mysqlDateTime`).  Added additional Date tests for code coverage.
 
 *PASSES ALL SWIFTPACKAGEINDEX TESTS (including Swift 5.8!)*
@@ -213,6 +216,7 @@ Known issues that need to be addressed.
 ## Roadmap:
 Planned features and anticipated API changes.  If you want to contribute, this is a great place to start.
 - [ ] Add more tests for improved code coverage.
+- [ ] TODO: Add a failable initializer so that there is a way to init a date with a string but the format must be one of the supported formats.
 - [ ] Add option to pad function to allow padding on left and use this in function for prefixing with a number of 0s.  Left padding function: https://stackoverflow.com/questions/32338137/padding-a-swift-string-for-printing
 - [ ] Add isFirstRunOnDevice to differentiate from isFirstRun (across devices).
 - [ ] Update tab view to use backport version that can extend content into safe area but still respects safe area for scrolling and clearing (for Color test app).  Have content of tab view extend into safe area but the contents not completely ignore safe area.

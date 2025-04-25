@@ -164,6 +164,7 @@ public extension Version {
         let one = Version("2")
         let two = Version("12.1")
         let three: Version = "2.12.1"
+        let four = Version(rawValue: "4")
         let a: Version = "1.0.0"
         let b: Version = "2.0"
         let c: Version = "3.0.1"
@@ -173,6 +174,13 @@ public extension Version {
 ["2.0","12.1","2.12.1","1.0","2.0","3.0.1"]
 """
         try expect(json == expected, "unexpected json coding conversion: \(json)")
+        let decoded = try [Version].init(fromJSON: json)
+        try expect(decoded.asJSON() == expected, "json decoding failed.")
+        let intVersion = """
+            [{"majorVersion": 5, "minorVersion":3, "patchVersion": 10}]
+            """
+        let intDecoded = try [Version].init(fromJSON: intVersion)
+        try expect(intDecoded.first == "5.3.10", "int json decoding failed.")
     }
 
 #if compiler(>=5.9)

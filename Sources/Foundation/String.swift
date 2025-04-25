@@ -690,11 +690,17 @@ public extension String {
 
     @MainActor
     internal static let testEncoding: TestClosure = {
+        let tags = "<p>Hello</p>"
+        try expect(tags.tagsStripped == "Hello", "Unexpected stripped tags: \(tags.tagsStripped)")
+        try expect(tags.reversed == ">p/<olleH>p<", "Unexpected reversed string: \(tags.reversed)")
+        try expect(tags.repeated(2) == "<p>Hello</p><p>Hello</p>", "Unexpected repeated string: \(tags.repeated(2))")
+        try expect(tags.banana.contains("Banana-fana fo-f<p>Hello</p>"), "Unexpected banana string: \(tags.banana)")
         let unsafeFilename = "My /=\\?%*|'\"<>: File"
         let safeFileName = unsafeFilename.fileSafe
         try expect(safeFileName == "My ____________ File", "Unexpected safe filename: \(safeFileName)")
         let urlEncodedFilename = unsafeFilename.urlEncoded
         try expect(urlEncodedFilename == "My%20%2F%3D%5C%3F%25*%7C%27%22%3C%3E%3A%20File", "Unexpected url encoding: \(urlEncodedFilename)")
+        try expect(unsafeFilename.normalized == "my file", "Unexpected normalized string: \(unsafeFilename.normalized)")
         let urlString = "http://plickle.com/pd+foo%20bar.php?test=Foo+bar%20baz"
         let webURL = URL(string: urlString)
         try expect(webURL != nil, "String to URL: \(String(describing: webURL))")
@@ -704,7 +710,7 @@ public extension String {
         try expect(urlEncoded == "%2Fpd%2Bfoo%20bar.php", "Unexpected url encoding: \(String(describing: urlEncoded))")
         let webPathEncoded = webURL?.backportPath()
         try expect(webPathEncoded == "/pd+foo%20bar.php", "Unexpected path: \(String(describing: webPathEncoded))")
-        let path = "file:///Volumes/Inception Drive/InMotion Backups/2020-01-01 something"
+        let path = "file:///Volumes/Inception Drive/InMotion Backups/2020-01-01 something".addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)!
         let url = URL(string: path)
         let name = url?.lastPathComponent
         try expect(name == "2020-01-01 something", "Expected file name with space: \(String(describing: name))")

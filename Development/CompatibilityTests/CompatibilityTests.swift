@@ -39,12 +39,28 @@ struct CompatibilityTests {
     @Test
     @MainActor
     @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
-    func testTests() {
+    func testTests() async throws {
         let namedTests = Test.namedTests
+        var ongoingTests = Date.tests // because can't just do = [Test]() for some reason...
+        ongoingTests.removeAll()
         for (name, tests) in namedTests {
             debug("Running \(name) tests...")
             for test in tests {
                 test.run()
+                if !test.isFinished() {
+                    ongoingTests.append(test)
+                } else {
+                    #expect(test.succeeded())
+                }
+            }
+        }
+        while ongoingTests.count > 0 {
+            await sleep(seconds: 0.01)
+            for ongoingTest in ongoingTests {
+                if ongoingTest.isFinished() {
+                    ongoingTests.removeAll { $0 === ongoingTest }
+                    #expect(ongoingTest.succeeded())
+                }
             }
         }
     }

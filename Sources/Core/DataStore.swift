@@ -595,8 +595,8 @@ public struct DataStoreTestView: View {
                 ClearableTextField(label: "App First Run", text: Binding(get: {
                     appTestLastRun.stringValue
                 }, set: { newValue in
-                    if let newValue {
-                        appTestLastRun = Date(string: newValue)
+                    if let newValue, let date = Date(parse: newValue) {
+                        appTestLastRun = date
                     } else {
                         appTestLastRun = .nowBackport
                     }

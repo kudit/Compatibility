@@ -87,6 +87,24 @@ public final class Test: ObservableObject {
         }
     }
     
+    public func isFinished() -> Bool {
+        switch progress {
+        case .pass, .fail:
+            return true
+        default:
+            return false
+        }
+    }
+
+    public func succeeded() -> Bool {
+        switch progress {
+        case .pass:
+            return true
+        default:
+            return false
+        }
+    }
+
     public var errorMessage: String? {
         progress.errorMessage
     }
