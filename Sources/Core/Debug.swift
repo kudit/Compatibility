@@ -1,7 +1,7 @@
 
 // Here since all releated to Debug code.
 /// DEFAULT BEHAVIOR (can be overridden by a custom CompatibilitySettings assigned to Compatibilty.settings in an extension.  If `COMPATIBILITY_CUSTOM_SETTINGS` SwiftSetting flag  is not set, this is the behavior that will be used.
-public struct CompatibilityConfiguration {
+public struct CompatibilityConfiguration: PropertyIterable {
     /// Override to change the which debug levels are output.  This level and higher (more important) will be output.
     public var debugLevelCurrent: DebugLevel = {
         if #available(iOS 13, tvOS 13, watchOS 6, *) {

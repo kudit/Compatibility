@@ -15,3 +15,14 @@ public extension CaseIterable where Self: Equatable { // equatable required to f
     }
 #endif
 }
+
+public protocol CaseNameConvertible {
+    var caseName: String { get }
+}
+public extension CaseNameConvertible {
+    // exposes the case name for an enum without having to have a string rawValue
+    var caseName: String {
+        // for enums
+        (Mirror(reflecting: self).children.first?.label ?? String(describing: self))
+    }
+}

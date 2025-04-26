@@ -12,6 +12,8 @@
 import Compatibility
 import Testing
 
+extension CloudStatus: @retroactive CaseNameConvertible {}
+
 @Suite
 struct CompatibilityTests {
 
@@ -34,6 +36,22 @@ struct CompatibilityTests {
         let application = Application.main
         #expect(application.appIdentifier == "com.apple.dt.xctest.tool")
         #expect(application.version == "16.0")
+    }
+    
+    @Test
+    func testIntrospection() {
+        let dictionary = ["a": 1, "b": 2]
+        #expect("a" == dictionary.firstKey(for: 1))
+        #expect("b" == dictionary.firstKey(for: 2))
+        
+        for c in CloudStatus.allCases {
+            #expect(String(describing: c).contains(c.caseName))
+        }
+
+        let config = Compatibility.settings
+        for (key, value) in config.allProperties {
+            #expect(String(describing: config.allProperties[key]).contains(String(describing: value)), "property \(key) mismatch (should never happen)")
+        }
     }
     
     @Test

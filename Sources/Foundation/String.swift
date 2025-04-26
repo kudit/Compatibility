@@ -64,6 +64,24 @@ public extension CharacterSet {
         return CharacterSet(charactersIn: validCharacterString)
     }
 }
+public extension CharacterSet {
+    /// Returns the set as an array of Characters.
+    var allCharacters: [Character] {
+        var result: [Character] = []
+        for plane: UInt8 in 0...16 where self.hasMember(inPlane: plane) {
+            for unicode in UInt32(plane) << 16 ..< UInt32(plane + 1) << 16 {
+                if let uniChar = UnicodeScalar(unicode), self.contains(uniChar) {
+                    result.append(Character(uniChar))
+                }
+            }
+        }
+        return result
+    }
+    /// Returns the CharacterSet as a string containing all the characters.
+    var asString: String {
+        return String(self.allCharacters)
+    }
+}
 
 // MARK: - HTML
 #if canImport(NSAttributedString)
@@ -508,6 +526,17 @@ public extension String {
     }
     
     // MARK: - Condensing
+    /// Collapse repeated occurrences of `string` with a single occurrance.  Ex: `"tooth".collapse("o") == "toth"`
+    func collapse(_ string: String) -> String {
+        var returnString = self
+        // collapse runs
+        let double = string + string
+        while returnString.contains(double) {
+            returnString = returnString.replacingOccurrences(of: double, with: string)
+        }
+        return returnString
+    }
+
     /// Returns a trimmed string with all double spaces collapsed to single spaces and multiple line breaks collapsed to a single line break.  Removes non-breaking spaces.  Designed for making text compact.  (Note: for compatibility with KuditFrameworks.php, not used currently in any swift code).
     var whitespaceCollapsed: String {
         // replace non-breaking space with normal space (seems to not be included in whitespaces)
@@ -517,13 +546,9 @@ public extension String {
         // replace newline characters with new lines
         returnString = returnString.replacingOccurrences(of: CharacterSet.newlines.characterStrings, with: "\n")
         // collapse runs of spaces
-        while returnString.contains("  ") {
-            returnString = returnString.replacingOccurrences(of: "  ", with: " ")
-        }
+        returnString = returnString.collapse(" ")
         // collapse runs of line breaks with a single line break
-        while returnString.contains("\n\n") {
-            returnString = returnString.replacingOccurrences(of: "\n\n", with: "\n")
-        }
+        returnString = returnString.collapse("\n")
         return returnString.trimmed
     }
     // - (NSString *)
@@ -553,8 +578,17 @@ public extension String {
     var duplicateCharactersRemoved: String {
         return self.characterStrings.unique.joined(separator: "")
     }
-    
+
+    /// remove all characters in `.whitespacesAndNewLines`
+    var whitespaceStripped: String {
+        replacingCharacters(in: .whitespacesAndNewlines, with: "")
+    }
+
     // MARK: - Transformed
+    /// Return an arry of lines of the string.  If no line breaks, will be an array with the original string as the only entry.
+    var lines: [String] {
+        return self.components(separatedBy: "\n")
+    }
     /// version of string with first letter of each sentence capitalized
     var sentenceCapitalized: String {
         let sentences = self.components(separatedBy: ".")
@@ -918,7 +952,7 @@ v1.0.29 9/14/2022 Fixed problem with Readme comments continually reverting.  Add
 v1.0.30 9/14/2022 Fixed issue where last two updates were the wrong major version number!
 v1.0.31 9/14/2022 Updated KuColor protocol to apply to SwiftUI Color.  Removed old UIImage code that could cause crashes.  Added .frame(size:) method.  Fixed issue with RGBA parsing and HSV calculations.  Re-worked SwiftUI color conformance to KuColor protocols to simplify.  Added some test methods.  Reversed order of versioning to make easier to find changes.
 """
-    var lines = text.components(separatedBy: "\n")
+    var lines = text.lines
     lines.reverse()
     let reversed = lines.joined(separator: "\n")
 //    print(reversed)
