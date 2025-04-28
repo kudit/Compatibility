@@ -168,9 +168,10 @@ internal let byteTests: TestClosure = {
     var failedMessages = [String]()
     var allPass = true
     
-    let runTestsClosure: (ByteCountFormatter.CountStyle, [UInt64: String]) -> Void = { style, tests in
+    let runTestsClosure: (ByteCountFormatter.CountStyle, [UInt64: String]) throws -> Void = { style, tests in
         for (count, expected) in tests {
             let parts = count.byteParts(style)
+            try expect(Double(parts.count) == count.byteCount(style))
             let craftedString = "\(parts.count) \(parts.units)"
             if expected != craftedString {
                 failedMessages.append("\(count.byteString(style)) does not equal \(expected) (\(style == .file ? "file" : "memory"))")
@@ -178,8 +179,8 @@ internal let byteTests: TestClosure = {
             }
         }
     }
-    runTestsClosure(.memory, memoryTests)
-    runTestsClosure(.file, fileTests)
+    try runTestsClosure(.memory, memoryTests)
+    try runTestsClosure(.file, fileTests)
     try expect(allPass, failedMessages.joined(separator: ", "))
 }
 

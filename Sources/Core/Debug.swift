@@ -232,8 +232,6 @@ public extension Compatibility {
     static func debug(_ message: Any, level: DebugLevel = .defaultLevel, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) -> String {
         let isMainThread = Thread.isMainThread // capture before we switch to main thread for printing
         let message = String(describing: message) // convert to sendable item to avoid any thread issues.
-
-        checkBreakpoint(level: level)
         
         guard DebugLevel.isAtLeast(level) else {
             return "" // don't actually print
@@ -250,6 +248,10 @@ public extension Compatibility {
                 file, function, line, column)
         }
         print(debugMessage)
+        
+        // do this AFTER Printing so we can see what the message is in the console
+        checkBreakpoint(level: level)
+        
         return debugMessage
     }
 }

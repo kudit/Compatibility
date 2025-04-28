@@ -20,7 +20,7 @@ public protocol CaseNameConvertible {
     var caseName: String { get }
 }
 public extension CaseNameConvertible {
-    // exposes the case name for an enum without having to have a string rawValue
+    /// exposes the case name for an enum without having to have a string rawValue.
     var caseName: String {
         // for enums
         (Mirror(reflecting: self).children.first?.label ?? String(describing: self))

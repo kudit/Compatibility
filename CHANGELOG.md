@@ -6,32 +6,28 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
-TODO: Need to re-work so can be included in Swift Playgrounds again.  Fails in Swift Playgrounds 4.6.4.
+NOTE: Need to re-work so can be included in Swift Playgrounds again.  Fails in Swift Playgrounds 4.6.4 (FB17377610). 
 
-v1.10.2 4/25/2025 Added `String.collapse()`.  Added `allCharacters` and `asString` to `CharacterSet`.  Added `String.lines`.  Added `String.whitespaceStripped`.  Added additional tests.
+v1.10.3 4/28/2025 Fixed typo with date of 1.10.2. Moved where the breakpoint check happens in `debug()` so that it happens AFTER printing the error to the console for easier debugging. Added documentation for `caseName`.  Added additional Int tests.  Only flag if packages fail tests from now on.  Otherwise, assume all swift package index tests pass (removing *PASSES ALL SWIFTPACKAGEINDEX TESTS (including Swift 5.8 - 6.1!)* from below to clean up change log).
 
-*PASSES ALL SWIFTPACKAGEINDEX TESTS (including Swift 5.8 - 6.1!)*
+v1.10.2 4/26/2025 Added `String.collapse()`.  Added `allCharacters` and `asString` to `CharacterSet`.  Added `String.lines`.  Added `String.whitespaceStripped`.  Added additional tests.
+
 v1.10.1 4/25/2025 Added `Sendable` conformance to `DateString` and `DateTimeString`.
 
 v1.10.0 4/25/2025 Added `DateTimeString` and `DateString` types (structs with underlying String backing) for clearer storage of Date strings.  Moved all date formatting code to `DateString.swift` so formatting can be used on `Date` or `DateString` or `DateTimeString`.  Changed `numericDateFormat` to `numericDateTimeFormat` for consistency and clarity.  NOTE: This is a breaking change but if you're using `Date.numericDateTime` this won't change.  Improved tests so that failing tests will fail testing.  Added several additional test coverage.
 
-*PASSES ALL SWIFTPACKAGEINDEX TESTS (including Swift 5.8!)*
 v1.9.9 4/24/2025 Added @discardableResult wrapper to debug wrapper.  Tested old package format for swift playgrounds (still needs to be different now).  Renamed `MySQLDateString` to `MySQLDateTimeString`.  Added `Date.mysqlDate` (separate from `mysqlDateTime`).  Added additional Date tests for code coverage.
 
-*PASSES ALL SWIFTPACKAGEINDEX TESTS (including Swift 5.8!)*
 v1.9.8 4/20/2025 Fixed issues with running in Swift Playgrounds (Testing code was being included and we needed to condition out).  Consolidated duplicate `#if` statements in Package.swift for clarity. 
 
-*PASSES ALL SWIFTPACKAGEINDEX TESTS (including Swift 5.8!)*
 v1.9.7 4/17/2025 Fixed visibility issue with tests being inaccessible in conditional compilation.  Moved tests outside availability checks.
 
 v1.9.6 4/17/2025 Fixed issues where @CloudStorage was unavailable due to conditional removal.
 
 v1.9.5 4/17/2025 Added Swift Testing so we can check code coverage.  Removed all deprecated functions from testing by adding `#if !DEBUG`.  Moved `namedTests` to `Tests` rather than UI.
 
-*PASSES ALL SWIFTPACKAGEINDEX TESTS*
 v1.9.4 4/16/2025 Fixed build issues for Linux under Swift 5.8.  Added explicit `return`s since assumed returns and simplified syntax isn't available until Swift 5.9.  `CloudStorage` now requires Swift 5.9.
 
-*PASSES ALL SWIFTPACKAGEINDEX TESTS*
 v1.9.3 4/16/2025 Reordered keywords for `nonisolated(unsafe)` and added conditional compilation to hopefully prevent errors in Swift 5.9.  Attempted to better handle compiler checks for Swift 5.8 to maintain compatibility.  Now requires Swift 5.9 for anything that might have an @available check (so most UI code).
 
 v1.9.2 4/16/2025 Updated year in copyright and forced so copyright stays current.  Fixed Swift Playground asset warnings (Xcode as playgrounds still has duplicate build warnings).  This was helpful: https://sarunw.com/posts/how-to-fix-duplicate-references-warning/
@@ -40,48 +36,38 @@ v1.9.1 4/15/2025 Fix concurrency errors and Linux errors.
 
 v1.9.0 4/14/2025 Crafted entire settings override framework for package configuration settings. Created method for customizing Compatibility settings (and other package settings) using SwiftSettings flag.  Added instructions to the README.  Changed CustomErrors to be structs instead of enums so we can include contextual information for custom handling.  Added ability to add timestamp to `debug()` calls for scripts.
 
-*PASSES ALL SWIFTPACKAGEINDEX TESTS*
 v1.8.1 3/28/2025 Fixed so `safeShell()` is on `Compatibility` and is public.
 
 v1.8.0 3/28/2025 Added `backportPath` on URLs and added encoding tests.  Added `isDirectory` to URLs.  Added `safeShell()` method of shell execution (only available in macOS).
 
-*PASSES ALL SWIFTPACKAGEINDEX TESTS*
 v1.7.1 3/24/2025 Added `bottomBackport` test and fixed so works on macOS.  Re-worked `tomorrow` to use new `nextDay` and `firstMoment` functions.
 
 v1.7.0 3/12/2025 Changed so `normalized` returns a non-optional.  This is technically a breaking change (hence the minor version increment) but hopefully usage is minimal (plus the fix is easy by simply removing any forced unwraps or checks).  Added backport `navigationDestination` and `textSelection`.  Moved Triangle Showcase up so can test on Apple TV (seems to cut tabs after this).  Fixed crashing issue with iOS 15 and `BackportNavigationStack`/`.navigationWrapper()` code. (Renamed NavigationStack to BackportNavigationStack to prevent unintented naming conflicts.)
 
-*PASSES ALL SWIFTPACKAGEINDEX TESTS*
 v1.6.8 3/10/2025 Fixed since `.focusable` is not available in iOS < 17.  Fixed missing package version update in v1.6.7.  Found a fix for packages and Swift Playgrounds v4.6+ (the iOSApplication name needs to be DIFFERENT whereas previous versions required it to be the SAME).
 
 v1.6.7 3/10/2025 Shifted around `Version.zero` to non-constrained extension to make more sense.  Added `resetVersionsRun()` for testing.  Fixed internal scoping of String versions run keys just in case we need to use outside the framework.  Added `tomorrow` and `tomorrowMidnight` date values.  Added test section for output formats.  Improved `Backport.LabeledContent` for compatibility with older devices (but now requires iOS 15 to use).  Removed pageViewStyle from TabViews on tvOS since it doesn't really work. 
 
-*PASSES ALL SWIFTPACKAGEINDEX TESTS*
 v1.6.6 2/28/2025 Fixed internal `Version.zero` (doh!).
 
 v1.6.5 2/28/2025 Cleaned up redundant code for `Date.pretty()`.  Works fine under Swift Playgrounds 4.5.1 but not under Swift Playgrounds 4.6.2 (and 4.6?).  Added `Version.zero`. 
 
-*PASSES ALL SWIFTPACKAGEINDEX TESTS*
 v1.6.4 1/17/2025 Added debugging output when replacing the identifier in preview/playground environment to fix issue with Score identifier being com.kudit.Score-.  Added check to prevent preview output alerting that iCloud doesn't work from spamming the logs.  Added in app name and identifier to compatibility info.  Fixed unnecessary check for iOS warning in Backport.
 
-*PASSES ALL SWIFTPACKAGEINDEX TESTS*
 v1.6.3 1/15/2025 Added some documentation to `asJSON()` function.  Fixed internal definition of Triangle initializer.
 
-*PASSES ALL SWIFTPACKAGEINDEX TESTS*
 v1.6.2 1/14/2025 Fixed double encoding of ampersands in `htmlEncoded` strings due to random access nature of dictionaries.  Added test.  Added double quote `"` to `&quot;` encoding. 
 
 v1.6.1 1/14/2025 Fixed build limited availablility issue with watchOS.
 
 v1.6.0 1/14/2025 Added `pluralEnding()`.  Added `.backport.onTapGesture {}`.
 
-*PASSES ALL SWIFTPACKAGEINDEX TESTS*
 v1.5.4 12/6/2024 Added Backport.LabeledContent().  Added Date support to @CloudStorage.
 
 v1.5.3 11/29/2024 Attempted additional fixes to support Swift 5.8.  Assumed returns are made explicit.  Apparently neither `swift(` or `compiler(` work in linux with swift 5.8 for SPI, so giving up again.
 
-*PASSES ALL SWIFTPACKAGEINDEX TESTS*
 v1.5.2 11/28/2024 #Preview isn't the issue, it's literally the @available checks we need to filter out.  `swift(` doesn't seem to work so trying replacing them all with `compiler(`.
 
-*PASSES ALL SWIFTPACKAGEINDEX TESTS*
 v1.5.1 11/26/2024 Added `#if swift(>=5.9)` checks around `#Preview` macros which aren't supported in Swift 5.8.  If this doesn't work, try replacing `#if swift(` with `#if compiler(`.
 
 v1.5.0 11/26/2024 Removed duplicate `delay` code to fix errors with Swift 6.  Does mean that some code may not work and will need to be adjusted (if you need `delay { @MainActor in`, simply do `delay { main {` instead).
@@ -94,15 +80,12 @@ v1.4.9 11/25/2024 Addressing Swift 6 errors with using sync from non-isolated co
 
 v1.4.8 11/22/2024 Added `.fraction` option for backport `presentationDetents` and added test in `MaterialTestView`.  Also fixed missing version update in Compatibility.swift.
 
-*PASSES ALL SWIFTPACKAGEINDEX TESTS*
 v1.4.7 11/21/2024 Fixed issue with watchOS failing due to lack of `compact` product style.
 
 v1.4.6 11/20/2024 Restored package version to Swift 5.9 since 5.8 doesn't seem to work in SPI.  Added documentation to fill(strokeWidth:) function to be clear this is the Compatibility version.  Added synchronization button for DataStore test UI.  Added additional backports.  Added UIRequiresFullScreen key to info to silence warning when building iPad versions. 
 
-*PASSES ALL SWIFTPACKAGEINDEX TESTS*
 v1.4.5 11/5/2024 Changed package version to Swift 5.8 to see if this will work to get all checks in Swift Package Index (does not).  Restored URL comparison but deprecated for transition assistance.
 
-*PASSES ALL SWIFTPACKAGEINDEX TESTS*
 v1.4.4 11/4/2024 Removed circular dependancy on Color.
 
 v1.4.3 11/4/2024 Added import of Color when available in Radial Layout previews.
@@ -113,34 +96,26 @@ v1.4.1 11/4/2024 Added compiler check for Threading `background` tasks so that w
 
 v1.4.0 11/4/2024 Fixed some preview issues with legacy deprecated compatibility code.  Added `scrollContentBackground` backport.  Added `safeAreaPadding` backport.  Added `disableSmartQuotes` view modifier.  Can simulate @CloudStorage acting like UserDefaults by setting `Application.iCloudSupported = false`.  Removed cloud monitoring notifications when using UserDefaults.  Added `.precision(significantFigures)` output for Doubles.
 
-*PASSES ALL SWIFTPACKAGEINDEX TESTS*
 v1.3.16 10/23/2024 Updated Compatibility version key to include SF Symbol versions.  Added `debugVersion` string to `Application` so can add debug flag if compiled for debug and don't have to use version.rawValue to use in string interpolation.  Added `numericFormat` as another `Date` format and `numericDateTime` as a quick value.  Added `buildNumber` and `buildDate` features to `Bundle`.  Extracted `Bundle` extension to it's own file.
 
-*PASSES ALL SWIFTPACKAGEINDEX TESTS*
 v1.3.15 10/13/2024 Attempting to fix Linux issue by refactoring HTML entities to use a loop rather than a long concatenation.
 
 v1.3.14 10/13/2024 Attempting to fix Linux issue.  Possibly related to warnings since Swift 6?  We can't address those until Swift Playgrounds updates for Swift 6.  Tried a conditional compile but Xcode still sees as Swift 5.10 (but maybe this will fix enough for Linux?).
 
-*PASSES ALL SWIFTPACKAGEINDEX TESTS - except Linux!*
 v1.3.13 10/13/2024 Fixed so HTML entities doesn't encode ASCII characters and orders ampersand encoding first so we don't end up with duplicate encodings of encodings.
 
-*PASSES ALL SWIFTPACKAGEINDEX TESTS*
 v1.3.12 10/12/2024 Added HTML entities conversion.
 
-*PASSES ALL SWIFTPACKAGEINDEX TESTS*
 v1.3.11 10/9/2024 Fixed missing availability check on `fetchURL`.
 
 v1.3.10 10/9/2024 Improved error checking to report missing entitlements for network connectivity.  Added `Data` return version of `fetchURL` that works similarly with the same error checking that is used under the hood by `fetchURL`.  Added ability to easily log an error at the throwing site rather than having to debug at the catching site.  Changed errors from having a description to having a localizedDescription to better conform to the error protocol.  Should still work for output.
 
 v1.3.9 10/9/2024 Fixed so builds run from Playgrounds app returns the proper identifier for Kudit Connect.  Also noticed that the version number previously was not updated anywhere!
 
-*PASSES ALL SWIFTPACKAGEINDEX TESTS*
 v1.3.8 10/7/2024 Fixed issue with Placard initializer being internal.  Has several issues with Swift 6 that can't be fixed until Swift Playgrounds is updated as the fixes are errors in Swift Playgrounds.  Added example Settings for macOS.
 
-*PASSES ALL SWIFTPACKAGEINDEX TESTS*
 v1.3.7 8/16/2024 Added automatic mapping for `@CloudStorage` where value is a `RawRepresentable` type that is a Double.  Added instructions for automatic mapping to custom types.
 
-*PASSES ALL SWIFTPACKAGEINDEX TESTS*
 v1.3.6 8/14/2024 Specified `.description` for issues with Swift 5.9 not being able to interpolate.  Added more fault-tolerance to `Version` parsing by trimming any non-numeric characters.  Added pretty output of `[Version]` for display.  Changed `Application` to a `@MainActor class` and removed `CustomStringConvertible` conformance since realistically, we'll want the same instance not a copy.  Hopefully this will address the last of the data race and Swift 5.9 errors.
 
 v1.3.5 8/13/2024 Tweaked threading code to hopefully fix all data race errors.
