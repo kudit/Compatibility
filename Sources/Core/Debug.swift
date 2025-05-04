@@ -1,6 +1,5 @@
 
 // Here since all releated to Debug code.
-/// DEFAULT BEHAVIOR (can be overridden by a custom CompatibilitySettings assigned to Compatibilty.settings in an extension.  If `COMPATIBILITY_CUSTOM_SETTINGS` SwiftSetting flag  is not set, this is the behavior that will be used.
 public struct CompatibilityConfiguration: PropertyIterable {
     /// Override to change the which debug levels are output.  This level and higher (more important) will be output.
     public var debugLevelCurrent: DebugLevel = {
@@ -21,22 +20,31 @@ public struct CompatibilityConfiguration: PropertyIterable {
     public var debugLevelsToIncludeContext = DebugLevels.important
     
     /// Set whether timestamps should be included in debug messages.  If you need to customize the format of timestamps, use the `debugFormat()` override.
-    public var debugIncludeTimestamp = false
+    @available(*, deprecated, renamed: "debugLevelsToIncludeContext", message: "Set `debugLevelsToIncludeContext` instead.")
+    public var debugIncludeTimestamp: Bool {
+        get {
+            debugLevelsToIncludeTimestamp != .none
+        }
+        set {
+            debugLevelsToIncludeTimestamp = newValue ? .all : .none
+        }
+    }
+    public var debugLevelsToIncludeTimestamp = DebugLevels.none
     
     /// Generates string with context.  Set level to `.OFF` to just return the context without the message portion.
     public var debugFormat = { (message: String, level: DebugLevel, isMainThread: Bool, emojiSupported: Bool, includeContext: Bool, includeTimestamp: Bool, file: String, function: String, line: Int, column: Int) -> String in
         let message = "\(emojiSupported ? level.emoji : level.symbol) \(message)"
+        var timestamp = ""
+        if includeTimestamp {
+            timestamp = "\(Date.nowBackport.mysqlDateTime): "
+        }
         if includeContext {
             let threadInfo = isMainThread ? "" : "^"
             let simplerFile = URL(fileURLWithPath: file).lastPathComponent
             let simplerFunction = function.replacingOccurrences(of: "__preview__", with: "_p_")
-            var timestamp = ""
-            if includeTimestamp {
-                timestamp = "\(Date.nowBackport.mysqlDateTime): "
-            }
             return "\(timestamp)\(simplerFile)(\(line)) : \(simplerFunction)\(threadInfo)\(level == .OFF ? "" : "\n\(message)")"
         } else {
-            return message
+            return "\(timestamp)\(message)"
         }
     }
 }
@@ -133,11 +141,25 @@ public enum DebugLevel: Comparable, CustomStringConvertible, CaseIterable, Senda
     
     /// Change this value in production to `DebugLevel.ERROR` or `.OFF` to minimize logging.  Can be changed using the `debugLevelCurrent` setting.
     @available(iOS 13, tvOS 13, watchOS 6, *)
-    public static let currentLevel = Compatibility.settings.debugLevelCurrent
+    public static var currentLevel: DebugLevel {
+        get {
+            Compatibility.settings.debugLevelCurrent
+        }
+        set {
+            Compatibility.settings.debugLevelCurrent = newValue
+        }
+    }
     
     /// Set to change the level of debug statments without a level parameter.  Default is `.DEBUG`.  Can be changed using the `debugLevelDefault` setting.
-    public static let defaultLevel = Compatibility.settings.debugLevelDefault
-                
+    public static var defaultLevel: DebugLevel {
+        get {
+            Compatibility.settings.debugLevelDefault
+        }
+        set {
+            Compatibility.settings.debugLevelDefault = newValue
+        }
+    }
+
     public var emoji: String {
         switch self {
         case .OFF:
@@ -233,20 +255,17 @@ public extension Compatibility {
         let isMainThread = Thread.isMainThread // capture before we switch to main thread for printing
         let message = String(describing: message) // convert to sendable item to avoid any thread issues.
         
-        guard DebugLevel.isAtLeast(level) else {
+        guard DebugLevel.isAtLeast(level) else { // check current debug level from settings
             return "" // don't actually print
         }
-        var debugMessage = message
-        if Compatibility.settings.debugLevelsToIncludeContext != .none {
-            debugMessage = Compatibility.settings.debugFormat(
-                message,
-                level,
-                isMainThread,
-                Compatibility.settings.debugEmojiSupported,
-                Compatibility.settings.debugLevelsToIncludeContext.contains(level),
-                Compatibility.settings.debugIncludeTimestamp,
-                file, function, line, column)
-        }
+        let debugMessage = Compatibility.settings.debugFormat(
+            message,
+            level,
+            isMainThread,
+            Compatibility.settings.debugEmojiSupported,
+            Compatibility.settings.debugLevelsToIncludeContext.contains(level),
+            Compatibility.settings.debugLevelsToIncludeTimestamp.contains(level),
+            file, function, line, column)
         print(debugMessage)
         
         // do this AFTER Printing so we can see what the message is in the console
@@ -288,3 +307,52 @@ public extension Error {
         return self
     }
 }
+
+
+// Testing is only supported with Swift 5.9+
+#if compiler(>=5.9)
+@available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
+public extension DebugLevel {
+    @MainActor
+    internal static let testDebug: TestClosure = {
+        DebugLevel.defaultLevel = .WARNING // testing override default level
+        DebugLevel.currentLevel = .NOTICE // testing override current level
+
+        try expect(Compatibility.settings.debugLevelDefault == .WARNING, "expected default debug level to be .WARNING but found \(Compatibility.settings.debugLevelDefault)")
+
+        Compatibility.settings.debugEmojiSupported = false // testing symbols
+//        Compatibility.settings.debugIncludeTimestamp = true // test deprecated code
+        Compatibility.settings.debugLevelsToIncludeTimestamp = .all // test timestamps
+        let defaultFormat = Compatibility.settings.debugFormat
+        Compatibility.settings.debugFormat = { (message: String, level: DebugLevel, isMainThread: Bool, emojiSupported: Bool, includeContext: Bool, includeTimestamp: Bool, file: String, function: String, line: Int, column: Int) -> String in
+
+            let defaultOutput = defaultFormat(message, level, isMainThread, emojiSupported, includeContext, includeTimestamp, file, function, line, column)
+            return """
+Message: \(message)
+Level: \(level)
+isMainThread: \(isMainThread)
+emojiSupported: \(emojiSupported)
+includeContext: \(includeContext)
+includeTimestamp: \(includeTimestamp)
+file: \(file)
+Normal output: \(defaultOutput)
+"""
+        }
+        
+        let debugError = CustomError("test custom error").debug(level: .WARNING) // to test
+
+        let timestamp = Date.nowBackport.mysqlDateTime
+        let debugText = debug("Test return output")
+        
+        try expect(debugText.contains("!"), "expected debug warning symbol to be ! but found \(debugText)")
+        try expect(debugText.contains(timestamp), "expected \(timestamp) but found \(debugText)")
+
+        let blankText = debug("Test return output", level: .DEBUG) // less than the current level so should be silent
+        try expect(blankText == "", "expected empty string but found \(blankText)")
+    }
+    @MainActor
+    static let tests = [
+        Test("debug tests", testDebug),
+    ]
+}
+#endif

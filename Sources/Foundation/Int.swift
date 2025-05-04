@@ -41,7 +41,19 @@ internal let testMinusMinus: TestClosure = {
 public extension Int {
     /// Generates a uniformly random integer between 0 and `max` - 1 (including 0 but not including `max`).  Convenience for built-in `.random(in: 0..<max)`
     static func random(max: Int) -> Int {
+        guard max > 0 else {
+            return 0
+        }
         return .random(in: 0..<max)
+    }
+}
+@MainActor
+internal let randomTests: TestClosure = {
+    try expect(Int.random(max: -2) == 0)
+    try expect(Int.random(max: 0) == 0)
+    for i in 1..<5 {
+        let num = Int.random(max: i)
+        try expect(num >= 0 && num < i)
     }
 }
 
@@ -116,6 +128,13 @@ public extension Int {
         }
     }
 }
+@MainActor
+internal let pluralTests: TestClosure = {
+    try expect(0.pluralEnding() == "s")
+    try expect(1.pluralEnding("teeth", singularEnding: "tooth") == "tooth")
+    try expect(2.pluralEnding("teeth", singularEnding: "tooth") == "teeth")
+}
+
 
 // MARK: - Byte strings
 /// Add byte functions to all integer types. (Int64, Int, and UInt64 all automatically conform)
@@ -195,6 +214,8 @@ extension Int {
         Test("plusplus", testPlusPlus),
         Test("minusminus", testMinusMinus),
         Test("ordinals", ordinalTests),
+        Test("random", randomTests),
+        Test("strings", pluralTests),
         Test("bytes", byteTests)
     ]
 }

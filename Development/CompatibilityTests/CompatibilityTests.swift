@@ -4,7 +4,6 @@
 //
 //  Created by Ben Ku on 4/17/25.
 //
-//#if canImport(Testing) && compiler(>=6.0)
 
 // @testable // fails to include package module for testing.
 // Testing is only supported with Swift 5.9+

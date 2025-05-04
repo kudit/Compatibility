@@ -8,7 +8,9 @@ NOTE: Version needs to be updated in the following places:
 
 NOTE: Need to re-work so can be included in Swift Playgrounds again.  Fails in Swift Playgrounds 4.6.4 (FB17377610). 
 
-v1.10.3 4/28/2025 Fixed typo with date of 1.10.2. Moved where the breakpoint check happens in `debug()` so that it happens AFTER printing the error to the console for easier debugging. Added documentation for `caseName`.  Added additional Int tests.  Only flag if packages fail tests from now on.  Otherwise, assume all swift package index tests pass (removing *PASSES ALL SWIFTPACKAGEINDEX TESTS (including Swift 5.8 - 6.1!)* from below to clean up change log).
+v1.10.4 5/4/2025 Updated so that levels that include timestamps can be customized.  Added debug tests.  Fixed so setting the default debug level AFTER being set actually changes the value.  Changed so `DebugLevel.currentLevel` and `.defaultLevel` reference the settings and aren't set at init so they can be changed by tests.  Need to ensure this doesn't violate any concurrency issues... Additional tests added bringing code coverage to 35%.  Added `.backport.scrollViewDisabled()`.  Added Pasteboard manipulation.  Fixed bug in `trimming([String])` where it was only trimmed once rather than repeatedly for all terms until finished.
+
+v1.10.3 4/28/2025 Fixed typo with date of 1.10.2. Moved where the breakpoint check happens in `debug()` so that it happens AFTER printing the error to the console for easier debugging. Added documentation for `caseName`.  Added additional Int tests.  Only flag if packages fail tests from now on.  Otherwise, assume all swift package index tests pass (removing *PASSES ALL SWIFTPACKAGEINDEX TESTS (including Swift 5.8 - 6.1!)* from below to clean up change log).  Still fails in Swift Playgrounds 4.6.4  (FB17377610) but should work in 4.6.0—3.
 
 v1.10.2 4/26/2025 Added `String.collapse()`.  Added `allCharacters` and `asString` to `CharacterSet`.  Added `String.lines`.  Added `String.whitespaceStripped`.  Added additional tests.
 
@@ -224,6 +226,8 @@ Add in layout backport:
 // TODO: #warning("Create ViewThatFitsBackport that will use ViewThatFits in new version or will use Geometry readers to determine in older iOS < 16.  https://useyourloaf.com/blog/swiftui-view-that-fits/")
 Consider adding compatibility layout changes to address presentation on Apple Watch and small screens: https://github.com/sampettersson/Placement.
 
+Use @autoclosures to create protocols for Defaultable that can be initialized with a default value (like Color) whenever they have failable initializers.
+https://www.swiftbysundell.com/articles/using-autoclosure-when-designing-swift-apis/
 
 ## Reminders:
 Static class vars/lets are done lazily.

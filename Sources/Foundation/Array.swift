@@ -117,6 +117,17 @@ public extension Array where Element: Comparable {
         }
     }
 }
+public extension Collection where Element: Comparable {
+    /// Returns `true` iff the array contains one of the values.
+    func containsAny(_ needles: [Element]) -> Bool {
+        for needle in needles {
+            if self.contains(needle) {
+                return true
+            }
+        }
+        return false
+    }
+}
 
 public extension Array where Element: Equatable {
 #if !DEBUG
@@ -153,6 +164,34 @@ public extension Collection {
         return self[index]
     }
     @Sendable
+    static func modificationTests() throws {
+        var array = ["apple", "pear", "orange"]
+        let original = array
+        array.appendUnique("apple")
+        try expect(original == array)
+        array.appendUnique("zoo")
+        try expect(original != array)
+        try expect(array.count == 4)
+        
+        try expect(!array.containsAny(["foo", "bar"]))
+        try expect(array.containsAny(["foo", "zoo"]))
+        array.append("zoo")
+        try expect(array.count == 5)
+        let unique = array.unique
+        array.removeDuplicates()
+        try expect(array.count == 4)
+        try expect(unique == array)
+        
+        let repeated = array.repeated(3)
+        let chunked = repeated.chunked(into: 2)
+        var chunk = chunked[5]
+        try expect(chunk == ["orange", "zoo"])
+        chunk.pad(to: 5, with: "x")
+        try expect(chunk == ["orange", "zoo", "x", "x", "x"])
+        let copy = chunk.shuffled
+        try expect(copy != chunk, "should be randomized but there is a chance this could fail due to random chance")
+    }
+    @Sendable
     static func nthTests() throws {
         let array = [1,2,3]
         try expect(array[nth: 0] == 1, "Basic functionality fails")
@@ -164,6 +203,7 @@ public extension Collection {
 @available(iOS 13, tvOS 13, watchOS 6, *)
 @MainActor
 let collectionTests: [Test] = [
+    Test("modification", [String].modificationTests),
     Test("safety", [Int].safeTests),
     Test("nth", [Int].nthTests),
 ]

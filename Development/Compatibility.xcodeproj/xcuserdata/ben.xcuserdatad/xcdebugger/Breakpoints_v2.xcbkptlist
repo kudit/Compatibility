@@ -18,36 +18,6 @@
             endingLineNumber = "230"
             landmarkName = "init?(rawValue:)"
             landmarkType = "7">
-            <Locations>
-               <Location
-                  uuid = "1718C4F3-7D24-47E8-BAF4-CF511DE98252 - ba7c389b76225ba2"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "Compatibility.CloudStorageSync.ChangeReason.init(rawValue: Swift.Int) -&gt; Swift.Optional&lt;Compatibility.CloudStorageSync.ChangeReason&gt;"
-                  moduleName = "CompatibilityTests"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/ben/Documents/Kudit/Kudits/Library/Compatibility.swiftpm/Sources/Core/CloudStorageSync.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "230"
-                  endingLineNumber = "230">
-               </Location>
-               <Location
-                  uuid = "1718C4F3-7D24-47E8-BAF4-CF511DE98252 - b9b81f0bf3a75053"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "Compatibility.CloudStorageSync.ChangeReason.init(rawValue: Swift.Int) -&gt; Swift.Optional&lt;Compatibility.CloudStorageSync.ChangeReason&gt;"
-                  moduleName = "CompatibilityTest.debug.dylib"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/ben/Documents/Kudit/Kudits/Library/Compatibility.swiftpm/Sources/Core/CloudStorageSync.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "230"
-                  endingLineNumber = "230">
-               </Location>
-            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -64,36 +34,6 @@
             endingLineNumber = "268"
             landmarkName = "formatted(withFormat:)"
             landmarkType = "7">
-            <Locations>
-               <Location
-                  uuid = "5A66FFAF-F5CF-4279-8901-36CBE882B3FB - 87e548a36c686e0d"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "Compatibility.DateRepresentable.formatted(withFormat: Swift.String) -&gt; Swift.String"
-                  moduleName = "CompatibilityTests"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/ben/Documents/Kudit/Kudits/Library/Compatibility.swiftpm/Sources/Foundation/DateString.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "268"
-                  endingLineNumber = "268">
-               </Location>
-               <Location
-                  uuid = "5A66FFAF-F5CF-4279-8901-36CBE882B3FB - 84216f33e9ed65fc"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "Compatibility.DateRepresentable.formatted(withFormat: Swift.String) -&gt; Swift.String"
-                  moduleName = "CompatibilityTest.debug.dylib"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/ben/Documents/Kudit/Kudits/Library/Compatibility.swiftpm/Sources/Foundation/DateString.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "268"
-                  endingLineNumber = "268">
-               </Location>
-            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -110,43 +50,13 @@
             endingLineNumber = "284"
             landmarkName = "pretty"
             landmarkType = "24">
-            <Locations>
-               <Location
-                  uuid = "F9758060-9212-4EF8-BA2E-7BBC62B80B84 - a27f35ef3e64e82c"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "Compatibility.DateRepresentable.pretty.getter : Swift.String"
-                  moduleName = "CompatibilityTests"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/ben/Documents/Kudit/Kudits/Library/Compatibility.swiftpm/Sources/Foundation/DateString.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "284"
-                  endingLineNumber = "284">
-               </Location>
-               <Location
-                  uuid = "F9758060-9212-4EF8-BA2E-7BBC62B80B84 - a1bb127fbbe1e3dd"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "Compatibility.DateRepresentable.pretty.getter : Swift.String"
-                  moduleName = "CompatibilityTest.debug.dylib"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/ben/Documents/Kudit/Kudits/Library/Compatibility.swiftpm/Sources/Foundation/DateString.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "284"
-                  endingLineNumber = "284">
-               </Location>
-            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "3A5533BB-0A4F-41E0-9C87-8A482CCC2B3B"
-            shouldBeEnabled = "Yes"
+            uuid = "ED1B698D-A4C3-4B07-A5F3-C6914A4C2736"
+            shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "../Sources/Foundation/DateString.swift"
@@ -156,36 +66,6 @@
             endingLineNumber = "307"
             landmarkName = "pretty"
             landmarkType = "24">
-            <Locations>
-               <Location
-                  uuid = "3A5533BB-0A4F-41E0-9C87-8A482CCC2B3B - 3c102cf0c976a6d6"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "Compatibility.DateTimeRepresentable.pretty.getter : Swift.String"
-                  moduleName = "CompatibilityTests"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/ben/Documents/Kudit/Kudits/Library/Compatibility.swiftpm/Sources/Foundation/DateString.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "307"
-                  endingLineNumber = "307">
-               </Location>
-               <Location
-                  uuid = "3A5533BB-0A4F-41E0-9C87-8A482CCC2B3B - 3fd40b604cf3ad27"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "Compatibility.DateTimeRepresentable.pretty.getter : Swift.String"
-                  moduleName = "CompatibilityTest.debug.dylib"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/ben/Documents/Kudit/Kudits/Library/Compatibility.swiftpm/Sources/Foundation/DateString.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "307"
-                  endingLineNumber = "307">
-               </Location>
-            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

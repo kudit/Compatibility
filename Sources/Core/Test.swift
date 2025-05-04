@@ -1,4 +1,4 @@
-// TODO: Once Swift Testing is available, can re-write all this code into test classes that conform to Swift Testing so that we can also run code in Previews and Test Applications?
+// TODO: Once Swift Testing is available, can re-write all this code into test classes that conform to Swift Testing so that we can also run code in Previews and Test Applications?  Use macros to duplicate #expect( functionality syntax?  Or can we use somehow in UI still?
 public typealias TestClosure = @Sendable () async throws -> Void
 
 // This could be anything, not necessary a struct or class, so if we need this, have a list of tests rather than a Testable object
@@ -22,7 +22,7 @@ public func expect(_ condition: Bool, _ debugString: String? = nil, file: String
                 Thread.isMainThread,
                 Compatibility.settings.debugEmojiSupported,
                 true,
-                Compatibility.settings.debugIncludeTimestamp,
+                true,
                 file, function, line, column)
 
             throw CustomError(context)
@@ -129,11 +129,13 @@ public extension Test {
         var tests: OrderedDictionary = [
             "Version Tests": Version.tests,
             "Int Tests": Int.tests,
+            "Double Tests": Double.tests,
             "Collection Tests": collectionTests,
             "Date Tests": Date.tests,
             "String Tests": String.tests,
             "CharacterSet Tests": CharacterSet.tests,
             "Threading Tests": KuThreading.tests,
+            "Debug Tests": DebugLevel.tests,
         ]
 #if canImport(Combine)
         // unavailable on Linux

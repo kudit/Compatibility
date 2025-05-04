@@ -50,6 +50,22 @@ public extension CharacterSet {
     internal static let testCharacterStrings: TestClosure = {
         let array = "hello".characterStrings
         try expect(array == ["h","e","l","l","o"], String(describing:array))
+
+        // emoji tests
+        let emoji = "😀👨🏻‍💻"
+        
+        let simple = emoji.first!
+        try expect(simple.isSimpleEmoji)
+        try expect(!simple.isCombinedIntoEmoji)
+        try expect(simple.isEmoji)
+        
+        let complex = emoji.last!
+        try expect(complex.isCombinedIntoEmoji)
+        try expect(complex.isEmoji)
+        
+        for i in 0..<10 {
+            try expect(Self.numerics.allCharacters.contains(Character(string: "\(i)", defaultValue: "x")))
+        }
     }
 
     /// Returns a character set containing all numeric digits.
@@ -261,6 +277,11 @@ body {
         &lt;/html&gt;
         """
         try expect(testHTML.htmlEncoded == encoded, testHTML.htmlEncoded)
+        
+        try expect(testHTML.cleaned == testHTML, .INVALID_ENCODING) // this is already cleaned so should do nothing
+        
+        let cleaned = "Foo bar".cleaned
+        try expect(cleaned == "<html>\n<body>\nFoo bar\n</body>\n</html>", "expected a cleaned string but got `\(cleaned)`")
     }
 }
 
@@ -410,7 +431,57 @@ public extension String {
         return characters
         //return Array(self.characters).map { String($0) }
     }
-    
+
+    @MainActor
+    internal static let testIntrospection: TestClosure = {
+        try expect(!"a1923".isNumeric)
+        try expect(!"a19x23".isNumeric)
+        try expect(!"a1923".isPostIndustrialYear)
+        try expect(!"1000".isPostIndustrialYear)
+        try expect(!"3214".isPostIndustrialYear)
+        try expect("1923".isPostIndustrialYear)
+        try expect("\(Date.nowBackport.year)".isPostIndustrialYear)
+        
+        var test = "the/quick/brown/fix.txt"
+        try expect(test.lastPathComponent == "fix.txt")
+        try expect(test.asURL == nil)
+        try expect(!test.isURL)
+        test = "file:///\(test)"
+        try expect(test.asURL != nil)
+        try expect(test.isURL)
+
+        // data detectors
+        try expect("foo@bar.com".isEmail)
+        try expect("foo+sdf@bar.com".isEmail)
+        try expect(!"foo sdf@bar.com".isEmail)
+        try expect(!"foo".isPhoneNumber)
+        try expect("867-5309".isPhoneNumber)
+        try expect("404-867-5309".isPhoneNumber)
+        try expect("404.867.5309".isPhoneNumber)
+        try expect("404 867 5309".isPhoneNumber)
+        try expect("4048675309".isPhoneNumber)
+        try expect("1 Infinite Loop, Cupertino, CA".isAddress)
+        
+        try expect(uuid() != uuid(), "generating two UUIDs should never be identical")
+        
+        try expect(!"asfdsdf".asBool)
+        try expect("t".asBool)
+        try expect(!"f".asBool)
+        try expect("true".asBool)
+        try expect(!"false".asBool)
+        try expect("T".asBool)
+        try expect(!"fAlse".asBool)
+        try expect("yes".asBool)
+        try expect(!"no".asBool)
+        try expect("1".asBool)
+        try expect(!"0".asBool)
+        try expect("5".asBool)
+
+        try expect(!"".hasContent)
+        try expect(" ".hasContent)
+        try expect(!" \n\t".whitespaceStripped.hasContent)
+    }
+
     // MARK: - Trimming
     /// Returns a new string made by removing whitespace from both ends of the `String`.
     var trimmed: String {
@@ -448,9 +519,13 @@ public extension String {
     /// Returns a new string made by removing from both ends of the `String` instances of any of the given strings.
     func trimming(_ trimStrings: [String]) -> String {
         var returnString = self
-        for string in trimStrings {
-            returnString = returnString.trimming(string)
-        }
+        var lastReturn: String
+        repeat {
+            lastReturn = returnString
+            for string in trimStrings {
+                returnString = returnString.trimming(string)
+            }
+        } while (returnString != lastReturn)
         return returnString
     }
     /// Removes the given strings from both ends of the `String`.
@@ -465,11 +540,17 @@ public extension String {
     
     @MainActor
     internal static let testTriming: TestClosure = {
-        let long = "ExampleWorld/world.json"
-        let trim = "world.json"
-        let trimmed = long.trimming(trim)
-        // assert
-        try expect(trimmed == "ExampleWorld/", "Trimmed: \(trimmed)")
+        var long = "ExampleWorld/world.json  "
+            .trimmed
+        try expect(long == "ExampleWorld/world.json", "Trimmed: \(long)")
+        var trim = "world.json"
+        long.trim(trim)
+        try expect(long == "ExampleWorld/", "Trimmed: \(long)")
+        trim.trim([".", "json", "w"])
+        try expect(trim == "orld", "expected `\(trim)` to equal `orld`")
+        trim = "    orld \n \t "
+        trim.trim()
+        try expect(trim.trimmingCharacters(in: "dol") == "r")
     }
     @MainActor
     internal static let testTrimingEmpty: TestClosure = {
@@ -898,6 +979,7 @@ public extension String {
     static let tests = [
         Test("sentence capitalized", testSentenceCapitalized),
         Test("substring", testSubstring),
+        Test("introspection", testIntrospection),
         Test("trimming", testTriming),
         Test("trimming empty", testTrimingEmpty),
         Test("extract tags", testExtractTags),

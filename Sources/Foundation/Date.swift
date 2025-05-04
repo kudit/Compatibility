@@ -172,17 +172,21 @@ public extension Date {
         let midnight = Self.nowBackport.midnight
         try expect(midnightIntervaled == midnight, "Time mismatch \(midnightIntervaled) != \(midnight)")
         try expect(midnight.timeIntervalSinceMidnight == 0, "\(midnight.timeIntervalSinceMidnight) != 0")
-        let epoch = Date(timeIntervalSince1970: 0)
-        
-        try expect(epoch.hasPassed, "epoch should have passed")
         
         try expect(midnight.isToday, "midnight should be today")
         
         let yesterday = Date(timeIntervalSinceNow: -60*60*24)
         try expect(yesterday.midnight.isYesterday, "yesterday midnight should be yesterday")
+        try expect(yesterday.nextDay.isToday, "yesterday.nextDay should be today")
+
+        let epoch = Date(timeIntervalSince1970: 0)
+        
+        try expect(epoch.hasPassed, "epoch should have passed")
+        
         try expect(epoch.year == 1969, "\(epoch.year) != 1969") // since epoch is technically the moment before midnight 1/1/1970
         
-        try expect(yesterday.nextDay.isToday, "yesterday.nextDay should be today")
+        let next = epoch.nextDay
+        try expect(next.mysqlDate == "1970-01-01", "\(next.mysqlDate) != 1970-01-01") // note using mysqlDateTime gives unexpected value of 19:00 hours for some reason...
     }
 }
 
