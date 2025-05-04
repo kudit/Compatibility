@@ -8,7 +8,9 @@ NOTE: Version needs to be updated in the following places:
 
 NOTE: Need to re-work so can be included in Swift Playgrounds again.  Fails in Swift Playgrounds 4.6.4 (FB17377610). 
 
-v1.10.4 5/4/2025 Updated so that levels that include timestamps can be customized.  Added debug tests.  Fixed so setting the default debug level AFTER being set actually changes the value.  Changed so `DebugLevel.currentLevel` and `.defaultLevel` reference the settings and aren't set at init so they can be changed by tests.  Need to ensure this doesn't violate any concurrency issues... Additional tests added bringing code coverage to 35%.  Added `.backport.scrollViewDisabled()`.  Added Pasteboard manipulation.  Fixed bug in `trimming([String])` where it was only trimmed once rather than repeatedly for all terms until finished.
+v1.10.5 5/4/2025 Fixing bug with Linux SPI Test.  Added `Date.yesterday` and `Date().previousDay`.  Added `Double().isInteger` test.  Added additional tests bringing code coverage to 42%.  Noted that adding OrderedDictionaries does not seem to work...
+
+v1.10.4 5/4/2025 Updated so that levels that include timestamps can be customized.  Added debug tests.  Fixed so setting the default debug level AFTER being set actually changes the value.  Changed so `DebugLevel.currentLevel` and `.defaultLevel` reference the settings and aren't set at init so they can be changed by tests.  Need to ensure this doesn't violate any concurrency issues... Additional tests added bringing code coverage to 35%.  Added `.backport.scrollViewDisabled()`.  Added Pasteboard manipulation.  Fixed bug in `trimming([String])` where it was only trimmed once rather than repeatedly for all terms until finished. *FAILS LINUX SPI TEST*
 
 v1.10.3 4/28/2025 Fixed typo with date of 1.10.2. Moved where the breakpoint check happens in `debug()` so that it happens AFTER printing the error to the console for easier debugging. Added documentation for `caseName`.  Added additional Int tests.  Only flag if packages fail tests from now on.  Otherwise, assume all swift package index tests pass (removing *PASSES ALL SWIFTPACKAGEINDEX TESTS (including Swift 5.8 - 6.1!)* from below to clean up change log).  Still fails in Swift Playgrounds 4.6.4  (FB17377610) but should work in 4.6.0—3.
 
@@ -199,6 +201,7 @@ Known issues that need to be addressed.
 
 ## Roadmap:
 Planned features and anticipated API changes.  If you want to contribute, this is a great place to start.
+- [ ] Standardize test formats and creations.  Add #if canImport(Testing) to add as actual testable things instead of `try expect(` do `#expect(` so that we can get exactly where the tests fail.  Then see if we can sub-class into the tests.  See if we can still run in the UI as part of the app?
 - [ ] Add more tests for improved code coverage.
 - [ ] TODO: Add a failable initializer so that there is a way to init a date with a string but the format must be one of the supported formats.
 - [ ] Add option to pad function to allow padding on left and use this in function for prefixing with a number of 0s.  Left padding function: https://stackoverflow.com/questions/32338137/padding-a-swift-string-for-printing
@@ -239,3 +242,5 @@ Static class vars/lets are done lazily.
 If get error TypeAlias is not available in Module.Module, convert to struct and seems to fix it.  Public top-level typealiases seem to cause issues. 
 
 Test including capabilities for compatibility in a project that doesn't have entitlements that doesn't use the user default
+
+

@@ -297,6 +297,24 @@ body {
 public extension String {
     static let INVALID_ENCODING = "INVALID_ENCODING"
     
+    @MainActor
+    internal static let testCodable: TestClosure = {
+        let parameters = "id=12345&foo=bar&baz=true"
+        let urlBase = "http://plickle.com/pd.php"
+        let getString = "\(urlBase)?\(parameters)"
+        let url = getString.asURL!
+        let dictionary = url.queryDictionary
+        try expect(dictionary["id"] == "12345")
+        try expect(dictionary["foo"] == "bar")
+        try expect(dictionary["baz"] == "true")
+        let encoded = try ParameterEncoder().encode(dictionary) // may be in different order than original parameters.
+        let dictionaryTwo = try? ParameterDecoder().decode([String:String].self, from: encoded)
+        try expect(dictionaryTwo == dictionary, "expected `\(dictionary)` but got `\(String(describing: dictionaryTwo))`")
+        // test for optional numeric ?? with String
+        let opDouble: Double? = 2.34
+        try expect("\(opDouble ?? "nil")" == "2.34")
+    }
+
     // MARK: - UUID Generation
     static func uuid() -> String {
         return UUID().uuidString
@@ -385,7 +403,8 @@ public extension String {
     var isAddress: Bool {
         return matchesDataDetector(type: .address)
     }
-    
+#endif
+
     /// Returns a URL if the String can be converted to URL.  `nil` otherwise.
     var asURL: URL? {
         // make sure data matches detector so "world.json" isn't seen as a valid URL.  must be fully qualified.
@@ -394,7 +413,6 @@ public extension String {
         }
         return URL(string: self)
     }
-#endif
 
     /// Get last "path" component of a string (basically everything from the last `/` to the end)
     var lastPathComponent: String {
@@ -443,6 +461,7 @@ public extension String {
         try expect("\(Date.nowBackport.year)".isPostIndustrialYear)
         
         var test = "the/quick/brown/fix.txt"
+#if canImport(Combine)
         try expect(test.lastPathComponent == "fix.txt")
         try expect(test.asURL == nil)
         try expect(!test.isURL)
@@ -461,6 +480,7 @@ public extension String {
         try expect("404 867 5309".isPhoneNumber)
         try expect("4048675309".isPhoneNumber)
         try expect("1 Infinite Loop, Cupertino, CA".isAddress)
+#endif
         
         try expect(uuid() != uuid(), "generating two UUIDs should never be identical")
         
@@ -480,6 +500,28 @@ public extension String {
         try expect(!"".hasContent)
         try expect(" ".hasContent)
         try expect(!" \n\t".whitespaceStripped.hasContent)
+        
+        try expect(test.containsAny([".txt", "brown"]))
+        let slashCount = test.occurrences(of: "/")
+        try expect(slashCount == 6, "expected 3 slashes but found \(slashCount)")
+        try expect(!test.repeated(100).isLarge)
+        try expect(test.replacingCharacters(in: test.startIndex..<test.index(test.startIndex, offsetBy: 5), with: "foo") == "foo///the/quick/brown/fix.txt")
+        try expect(test.removing(characters: "thequickbrownfoxjumpsoverthelazydog") == "://////.")
+        try expect(test.preserving(characters: "abcde") == "eecb")
+        try expect(test.duplicateCharactersRemoved == "file:/thquckbrownx.")
+        
+        try expect("h\"\\ello".addSlashes() == "h\\\"\\\\ello")
+        let json = "foo".asErrorJSON()
+        struct ErrorTest: Codable, Equatable {
+            var success: Bool
+            var errorMessage: String
+        }
+        let error = try ErrorTest(fromJSON: json)
+        try expect(!error.success)
+        try expect(error.errorMessage == "foo")
+        let dict = error.asDictionary()
+        let roundTrip = ErrorTest(fromDictionary: dict!)
+        try expect(error == roundTrip)
     }
 
     // MARK: - Trimming
@@ -989,6 +1031,7 @@ public extension String {
         Test("extract missing end", testExtractMissingEnd),
         Test("Line Reversal", testTextReversal),
         Test("HTML Encoding", testHTMLEncoded),
+        Test("Codable", testCodable),
         Test("URL & File Encoding", testEncoding),
     ]
 #endif

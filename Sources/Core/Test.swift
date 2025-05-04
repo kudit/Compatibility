@@ -127,6 +127,7 @@ public extension Test {
 public extension Test {
     static let namedTests: OrderedDictionary = {
         var tests: OrderedDictionary = [
+            "Bundle Tests": Bundle.tests,
             "Version Tests": Version.tests,
             "Int Tests": Int.tests,
             "Double Tests": Double.tests,
@@ -135,6 +136,8 @@ public extension Test {
             "String Tests": String.tests,
             "CharacterSet Tests": CharacterSet.tests,
             "Threading Tests": KuThreading.tests,
+            "URL Tests": URL.tests,
+            "Dictionary Tests": dictionaryTests,
             "Debug Tests": DebugLevel.tests,
         ]
 #if canImport(Combine)

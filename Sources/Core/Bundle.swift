@@ -23,9 +23,9 @@ public extension Bundle {
     
     /** A unique identifier for a bundle.
      A bundle ID uniquely identifies a single app throughout the system. The bundle ID string must contain only alphanumeric characters (A–Z, a–z, and 0–9), hyphens (-), and periods (.). Typically, you use a reverse-DNS format for bundle ID strings. Bundle IDs are case-insensitive.
-**/
+     **/
     var identifier: String { getInfo("CFBundleIdentifier") ?? "unknown.bundle.identifier"}
-
+    
     /// A human-readable copyright notice for the bundle.
     var copyright: String { getInfo("NSHumanReadableCopyright")?.replacingOccurrences(of: "\\\\n", with: "\n") ?? "©⚠️" }
     
@@ -38,8 +38,8 @@ public extension Bundle {
     /// Returns the time that this was built
     var buildDate: Date {
         if let infoPath = Bundle.main.path(forResource: "Info", ofType: "plist"),
-            let infoAttr = try? FileManager.default.attributesOfItem(atPath: infoPath),
-            let infoDate = infoAttr[.modificationDate] as? Date {
+           let infoAttr = try? FileManager.default.attributesOfItem(atPath: infoPath),
+           let infoDate = infoAttr[.modificationDate] as? Date {
             return infoDate
         }
         return Date()
@@ -51,6 +51,29 @@ public extension Bundle {
     }
     
     fileprivate func getInfo(_ str: String) -> String? { infoDictionary?[str] as? String }
+    
+#if compiler(>=5.9)
+    @MainActor
+    internal static var bundleTests: TestClosure = {
+        try expect(!Bundle.main.name.isEmpty, "Expected bundle name but got: \(Bundle.main.name)")
+        try expect(!Bundle.main.displayName.isEmpty, "Expected bundle display name but got: \(Bundle.main.displayName)")
+        try expect(!Bundle.main.appName.isEmpty, "Expected bundle app name but got: \(Bundle.main.appName)")
+        try expect(!Bundle.main.language.isEmpty, "Expected bundle language but got: \(Bundle.main.language)")
+        try expect(!Bundle.main.identifier.isEmpty, "Expected bundle identifier but got: \(Bundle.main.identifier)")
+        try expect(!Bundle.main.copyright.isEmpty, "Expected bundle copyright but got: \(Bundle.main.copyright)")
+        try expect(!Bundle.main.build.isEmpty, "Expected bundle build but got: \(Bundle.main.build)")
+        try expect(Bundle.main.version > "0.1", "Expected bundle version but got: \(Bundle.main.version)")
+        try expect(Bundle.main.buildDate > Date.yesterday && Bundle.main.buildDate < Date.tomorrow)
+        try expect(Bundle.main.buildNumber > 0)
+        try expect(!String.appIconName.isEmpty, "Expected app icon name but got: \(String.appIconName)")
+    }
+
+    @available(iOS 13, tvOS 13, watchOS 6, *)
+    @MainActor
+    static var tests: [Test] = [
+        Test("Bundle Tests", bundleTests),
+    ]
+#endif
 }
 
 public extension String {

@@ -70,4 +70,25 @@ public extension URL {
         }
         return secureURL
     }
+    
+    
+#if compiler(>=5.9)
+    @MainActor
+    internal static var urlTests: TestClosure = {
+        let url = "http://plickle.com".asURL!
+        let secured = url.secured.secured
+        try expect(secured.scheme == "https")
+        
+        let fileUrl = "file:///Users/Shared".asURL!
+        try expect(fileUrl.isDirectory == true)
+        try expect(fileUrl.fileExists)
+        try expect(fileUrl.fileBasename == "Shared")
+    }
+
+    @available(iOS 13, tvOS 13, watchOS 6, *)
+    @MainActor
+    static var tests: [Test] = [
+        Test("URL Tests", urlTests),
+    ]
+#endif
 }

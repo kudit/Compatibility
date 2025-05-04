@@ -25,13 +25,23 @@ extension Double: DoubleConvertible {
 }
 
 public extension Double {
-    /// Creates a string version of this Double value without ".0" if this contains an integer number.
+    /// `true` if this value is an integer (rounding does nothing to the value).
+    var isInteger: Bool {
+        let rounded = self.rounded()
+        return rounded == self
+    }
+    
+    /// Creates a string version of this Double value without ".0" if this contains an integer number.  Otherwise, returns the normal value description.
     var withoutZeros: String {
-        let formatter = NumberFormatter()
-        let number = NSNumber(value: self)
-        formatter.minimumFractionDigits = 0
-        formatter.maximumFractionDigits = 16 //maximum digits in Double after dot (maximum precision)
-        return String(formatter.string(from: number) ?? "")
+        if self.isInteger {
+            let formatter = NumberFormatter()
+            let number = NSNumber(value: self)
+            formatter.minimumFractionDigits = 0
+            formatter.maximumFractionDigits = 0 //maximum digits in Double after dot (maximum precision)
+            return String(formatter.string(from: number)!)
+        } else {
+            return "\(self)"
+        }
     }
     
     /// Rounds decimals to the specified number of places.
@@ -50,11 +60,12 @@ public extension Double {
         let two = Float(2).doubleValue
         try expect(two.withoutZeros == "2")
 
-        let pi = 3.141592653589793
+        let pi = 3.14159265358979323846
         try expect(pi.precision(2) == 3.14)
         try expect(pi.precision(3) == 3.142)
         try expect(pi.precision(4) == 3.1416)
         try expect(pi.precision(5) == 3.14159)
+        try expect(pi.withoutZeros == "\(pi)")
     }
 }
 

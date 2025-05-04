@@ -35,6 +35,11 @@ public extension Date {
         }
     }
     
+    /// Gets a date 24 hours before now in the past.  If for some reason this can't be calculated, will return `.now` (but this should never happen).
+    static var yesterday: Date {
+        return .nowBackport.previousDay
+    }
+
     /// Gets a date 24 hours from today in the future.  If for some reason this can't be calculated, will return `.now` (but this should never happen).
     static var tomorrow: Date {
         return .nowBackport.nextDay
@@ -50,7 +55,12 @@ public extension Date {
     var nextDay: Date {
         return Calendar.current.date(byAdding: .day, value: 1, to: self) ?? self
     }
-    
+
+    /// Gets the previous date from the specified date in the past (usually 24 hours but may be off if across daylight savings time boundaries).  If for some reason this can't be calculated, will return the original date (but this should never happen).
+    var previousDay: Date {
+        return Calendar.current.date(byAdding: .day, value: -1, to: self) ?? self
+    }
+
     /// Return the first moment of the date.  Useful for setting notifications that are day-specific.
     var firstMoment: Date {
         return Calendar.current.startOfDay(for: self)
