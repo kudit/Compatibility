@@ -33,7 +33,16 @@ public extension URL {
         }
 #endif
         // Fallback on earlier versions & Linux
-        return self.path
+        var path = self.path
+        // make sure this doesn't strip off the trailing slash
+        if self.description.last == "/" {
+            path += "/"
+        }
+        if percentEncoded {
+            return path.addingPercentEncoding(withAllowedCharacters: .urlAllowed) ?? path
+        } else {
+            return path
+        }
     }
 
     /// Returns `true` if this is a directory, `false` if not, or `nil` if this cannot be determined

@@ -5,12 +5,10 @@
 //  Created by Tom Lokhorst on 2020-07-05.
 //
 
-#if canImport(SwiftUI) && canImport(Combine)
+#if canImport(SwiftUI) && canImport(Combine) && compiler(>=5.9)
 import SwiftUI
 import Combine
-#endif
 
-#if compiler(>=5.9)
 // Static stored properites are not supported in generic types so we have to use a global var.
 @available(iOS 13, tvOS 13, watchOS 6, *)
 @MainActor

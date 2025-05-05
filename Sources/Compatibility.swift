@@ -8,7 +8,7 @@
 
 public enum Compatibility {
     /// The version of the Compatibility Library since cannot get directly from Package.swift.
-    public static let version: Version = "1.10.6"
+    public static let version: Version = "1.10.7"
 }
 
 @_exported import Foundation
@@ -267,7 +267,7 @@ public struct TestCheck: View {
 
 @available(iOS 15, macOS 12, tvOS 15, watchOS 9, *)
 public struct CompatibilityEnvironmentTestView: View {
-#if compiler(>=5.9)
+#if compiler(>=5.9) && canImport(Combine)
     @CloudStorage(.compatibilityVersionsRunKey) var previouslyRunCompatibilityVersions = Compatibility.version.rawValue
 #endif
     public init() {}
@@ -289,7 +289,7 @@ public struct CompatibilityEnvironmentTestView: View {
             Section("Compatibility") {
                 Backport.LabeledContent("Compatibility Version:", value: Compatibility.version.description)
                 TestCheck("is Debug", Application.isDebug)
-#if compiler(>=5.9)
+#if compiler(>=5.9) && canImport(Combine)
                 if previouslyRunCompatibilityVersions != "" && previouslyRunCompatibilityVersions != "\(Compatibility.version.rawValue)" {
                     Text("Previously run Compatibility versions:")
                     Text("\(previouslyRunCompatibilityVersions)")

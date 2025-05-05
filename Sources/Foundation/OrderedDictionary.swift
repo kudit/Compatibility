@@ -1197,6 +1197,7 @@ internal var orderedDictionaryTests: TestClosure = {
     try expect(ordered["c", default: 4] == 4)
     try expect(manipulated == ordered)
     let unordered = ordered.shuffled().dictionaryValue.dictionaryValue
+    try expect(unordered.firstKey(for: 1) == "a")
     try expect(ordered.dictionaryValue == unordered)
 // TODO: Figure out why this doesn't work.  It should given the extensions above!
 //    ordered += unordered

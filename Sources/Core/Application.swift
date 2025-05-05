@@ -192,7 +192,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
     /// `true`  if this is the first time the app has been run, `false` otherwise
     public private(set) var isFirstRun = true // can't be let since self._cloudVersionsRun check requires self access, but basically should only ever set once.
     
-#if compiler(>=5.9)
+#if compiler(>=5.9) && canImport(Combine)
     @CloudStorage(.appVersionsRunKey) private var _cloudVersionsRun: String?
 #endif
     private init() {
@@ -205,7 +205,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
         
         let localFirstRun = legacyLastRunVersion == nil && kuditPreviouslyRunVersions == nil
         // if all nil, then isFirstRun is true (cache for the duration of the app running)
-#if compiler(>=5.9)
+#if compiler(>=5.9) && canImport(Combine)
         if #available(watchOS 9, *) {
             // check for previous versions run in cloud store
             isFirstRun = localFirstRun && _cloudVersionsRun == nil
@@ -222,7 +222,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
         
         // join all versions run (the beauty of this is it doesn't matter if legacyLastRunVersion is a comma-separated list or a single value - both will work)
         var allVersionsString = "\(legacyLastRunVersion ?? ""),\(kuditPreviouslyRunVersions?.joined(separator: ",") ?? ""),\(version)"
-#if compiler(>=5.9)
+#if compiler(>=5.9) && canImport(Combine)
         if #available(watchOS 9, *) {
             allVersionsString += ",\(_cloudVersionsRun ?? "")"
         }
@@ -232,7 +232,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
         if !isFirstRun {
             debug("All versions run: \(allVersions.rawValue)", level: .NOTICE)
         }
-#if compiler(>=5.9)
+#if compiler(>=5.9) && canImport(Combine)
         if #available(watchOS 9, *) {
             // persist back to cloud for other devices and future runs or re-installs (do with delay in case of launch issue where the crash happens at launch)
             delay(0.5) { // technically should still be on the main thread.  Would do @MainActor in but Swift 6 has issues with that
@@ -257,7 +257,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
     public func resetVersionsRun() {
         UserDefaults.standard.removeObject(forKey: .legacyLastRunVersionKey)
         UserDefaults.standard.removeObject(forKey: .localAppVersionsRunKey)
-#if compiler(>=5.9)
+#if compiler(>=5.9) && canImport(Combine)
         Application.main._cloudVersionsRun = nil
 #endif
     }
@@ -277,7 +277,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
         
     /// List of all versions that have been run since install.  Checks iCloud and reports versions run on other devices.
     public var versionsRun: [Version] {
-#if compiler(>=5.9)
+#if compiler(>=5.9) && canImport(Combine)
         if #available(iOS 13, tvOS 13, watchOS 9, *) {
             return [Version](rawValue: _cloudVersionsRun ?? version.rawValue)
         }

@@ -189,11 +189,13 @@ public extension Date {
         try expect(date.numericDate == "20230102", String(describing:date.numericDate))
         try expect(date.numericDateTime == "20230102171201", String(describing:date.numericDateTime))
         let pretty = date.pretty
-        if #available(iOS 16, *) {
-            try expect(pretty == "Jan 2, 2023 at 5:12 PM", String(describing:pretty))
-        } else {
-            try expect(pretty == "Jan 2, 2023, 5:12 PM", String(describing:pretty))
+        var expectedPretty = "January 2, 2023 5:12:01 PM"
+        if #available(iOS 15, macOS 12, tvOS 15, watchOS 8, *) {
+#if canImport(Combine)
+            expectedPretty = "Jan 2, 2023 at 5:12 PM"
+#endif
         }
+        try expect(pretty == expectedPretty, "Unexpected pretty string.  Expected \(expectedPretty) but got \(pretty)")
     }
 }
 

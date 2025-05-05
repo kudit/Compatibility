@@ -8,9 +8,11 @@ NOTE: Version needs to be updated in the following places:
 
 NOTE: Need to re-work so can be included in Swift Playgrounds again.  Fails in Swift Playgrounds 4.6.4 (FB17377610). 
 
+v1.10.7 5/4/2025 Fixed bug with Linux SPI Test missing isURL in asURL function.  Fixed some bugs with differences in Linux code.  Tests came in handy here.  Added better backport for `backportPath`.
+
 v1.10.6 5/4/2025 Added Int.string to quickly do String(value) so that it can be output without commas.  Added `containsAll` to String and Collections.
 
-v1.10.5 5/4/2025 Fixing bug with Linux SPI Test.  Added `Date.yesterday` and `Date().previousDay`.  Added `Double().isInteger` test.  Added additional tests bringing code coverage to 42%.  Noted that adding OrderedDictionaries does not seem to work...
+v1.10.5 5/4/2025 Fixing bug with Linux SPI Test.  Added `Date.yesterday` and `Date().previousDay`.  Added `Double().isInteger` test.  Added additional tests bringing code coverage to 42%.  Noted that adding OrderedDictionaries does not seem to work... *FAILS LINUX SPI TEST*
 
 v1.10.4 5/4/2025 Updated so that levels that include timestamps can be customized.  Added debug tests.  Fixed so setting the default debug level AFTER being set actually changes the value.  Changed so `DebugLevel.currentLevel` and `.defaultLevel` reference the settings and aren't set at init so they can be changed by tests.  Need to ensure this doesn't violate any concurrency issues... Additional tests added bringing code coverage to 35%.  Added `.backport.scrollViewDisabled()`.  Added Pasteboard manipulation.  Fixed bug in `trimming([String])` where it was only trimmed once rather than repeatedly for all terms until finished. *FAILS LINUX SPI TEST*
 
@@ -245,4 +247,4 @@ If get error TypeAlias is not available in Module.Module, convert to struct and 
 
 Test including capabilities for compatibility in a project that doesn't have entitlements that doesn't use the user default
 
-
+Can test Linux by changing `canImport(Combine)` to `canImport(CombineBAD)` 

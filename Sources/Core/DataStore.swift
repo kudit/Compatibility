@@ -442,7 +442,7 @@ extension DataStore {
     }
 }*/
 
-#if compiler(>=5.9)
+#if compiler(>=5.9) && canImport(Combine)
 @available(iOS 15, macOS 12, tvOS 15, watchOS 9, *)
 @MainActor
 class DataStoreTestModel: ObservableObject {

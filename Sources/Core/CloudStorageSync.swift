@@ -5,14 +5,12 @@
 //  Created by Tom Lokhorst on 2020-07-05.
 //
 
-#if canImport(Combine)
+#if canImport(Combine) && compiler(>=5.9)
 import Combine
-#endif
 #if canImport(UIKit)
 import UIKit
 #endif
 
-#if compiler(>=5.9)
 @available(iOS 13, tvOS 13, watchOS 6, *)
 @MainActor
 public class CloudStorageSync: ObservableObject {

@@ -72,12 +72,19 @@ public extension CharacterSet {
     // NOTE: Can't use static let because CharacterSet is not Sendable :(
     static var numerics: CharacterSet { CharacterSet(charactersIn: "0123456789")
     }
-
+    
     /// Returns a character set containing the characters allowed in an URL's parameter subcomponent.
     static var urlParameterAllowed: CharacterSet {
         var validCharacterString = CharacterSet.alphanumerics.characterStrings.joined()
-        validCharacterString += "-_.!~*()" // alphanumeric plus some additional valid characters
+        validCharacterString += "-_.!~*()" // alphanumeric plus some additional valid characters (not including + or ,
         return CharacterSet(charactersIn: validCharacterString)
+    }
+    
+    /// Returns a character set containing the characters allowed in a URL
+    static var urlAllowed: CharacterSet {
+        // https://stackoverflow.com/questions/7109143/what-characters-are-valid-in-a-url
+        return urlHostAllowed.union(urlUserAllowed.union(urlPasswordAllowed.union(urlFragmentAllowed.union(urlPathAllowed.union(urlQueryAllowed.union(urlFragmentAllowed))))))
+//        urlParameterAllowed.union(.init(charactersIn: "/?&:;=#%[]@!$'"))
     }
 }
 public extension CharacterSet {
@@ -414,12 +421,14 @@ public extension String {
     }
 #endif
 
-    /// Returns a URL if the String can be converted to URL.  `nil` otherwise.
+    /// Returns a URL if the String can be converted to URL.  `nil` otherwise.  If this is linux or don't have access to data detectors, will not validate the url other than URL creation validation.
     var asURL: URL? {
         // make sure data matches detector so "world.json" isn't seen as a valid URL.  must be fully qualified.
+#if canImport(Combine)
         guard isURL else {
             return nil
         }
+#endif
         return URL(string: self)
     }
 
@@ -471,11 +480,13 @@ public extension String {
         
         var test = "the/quick/brown/fix.txt"
 #if canImport(Combine)
+        try expect(test.asURL == nil) // this will pass on Linux pretty much regardless if it's a valid URL or not.
         try expect(test.lastPathComponent == "fix.txt")
-        try expect(test.asURL == nil)
         try expect(!test.isURL)
+#endif
         test = "file:///\(test)"
         try expect(test.asURL != nil)
+#if canImport(Combine)
         try expect(test.isURL)
 
         // data detectors
@@ -513,7 +524,7 @@ public extension String {
         try expect(test.containsAny([".txt", "brown", "boy"]))
         try expect(test.containsAll([".txt", "brown"]))
         let slashCount = test.occurrences(of: "/")
-        try expect(slashCount == 6, "expected 3 slashes but found \(slashCount)")
+        try expect(slashCount == 6, "expected 6 slashes but found \(slashCount)")
         try expect(!test.repeated(100).isLarge)
         try expect(test.replacingCharacters(in: test.startIndex..<test.index(test.startIndex, offsetBy: 5), with: "foo") == "foo///the/quick/brown/fix.txt")
         try expect(test.removing(characters: "thequickbrownfoxjumpsoverthelazydog") == "://////.")
