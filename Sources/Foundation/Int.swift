@@ -113,6 +113,14 @@ internal let ordinalTests: TestClosure = {
     try expect(allPass, failedMessages.joined(separator: ", "))
 }
 
+// MARK: - String output support
+public extension Int {
+    /// convenience for String(self) so that can be included in string interpolation without commas. (Instead of 1,999 it will display 1999).
+    var string: String {
+        return String(self)
+    }
+}
+
 // MARK: - Pluralization utility
 public extension Int {
     /// Adds an "s" (or specified ending) if the value is anything other than 1.
@@ -133,6 +141,9 @@ internal let pluralTests: TestClosure = {
     try expect(0.pluralEnding() == "s")
     try expect(1.pluralEnding("teeth", singularEnding: "tooth") == "tooth")
     try expect(2.pluralEnding("teeth", singularEnding: "tooth") == "teeth")
+    
+//    try expect("\(1999)" == "1,999") only seems to happen in SwiftUI.Text("\(1999)")
+    try expect(1999.string == "1999")
 }
 
 

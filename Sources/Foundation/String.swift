@@ -352,6 +352,15 @@ public extension String {
         }
         return false
     }
+    /// Returns `true` iff the `String` contains all of the `strings` by case-sensitive, non-literal search.
+    func containsAll(_ strings: [String]) -> Bool {
+        for string in strings {
+            if !self.contains(string) {
+                return false
+            }
+        }
+        return true
+    }
     /// Returns the number of times a string is included in the `String`.  Does not count overlaps.
     func occurrences(of substring: String) -> Int {
         let components = self.components(separatedBy: substring)
@@ -501,7 +510,8 @@ public extension String {
         try expect(" ".hasContent)
         try expect(!" \n\t".whitespaceStripped.hasContent)
         
-        try expect(test.containsAny([".txt", "brown"]))
+        try expect(test.containsAny([".txt", "brown", "boy"]))
+        try expect(test.containsAll([".txt", "brown"]))
         let slashCount = test.occurrences(of: "/")
         try expect(slashCount == 6, "expected 3 slashes but found \(slashCount)")
         try expect(!test.repeated(100).isLarge)

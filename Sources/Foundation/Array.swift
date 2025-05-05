@@ -127,6 +127,16 @@ public extension Collection where Element: Comparable {
         }
         return false
     }
+    
+    /// Returns `true` iff the array contains all of the values.
+    func containsAll(_ needles: [Element]) -> Bool {
+        for needle in needles {
+            if !self.contains(needle) {
+                return false
+            }
+        }
+        return true
+    }
 }
 
 public extension Array where Element: Equatable {
@@ -175,6 +185,8 @@ public extension Collection {
         
         try expect(!array.containsAny(["foo", "bar"]))
         try expect(array.containsAny(["foo", "zoo"]))
+        try expect(!array.containsAll(["zoo", "bar"]))
+        try expect(array.containsAll(["zoo", "pear"]))
         array.append("zoo")
         try expect(array.count == 5)
         let unique = array.unique
