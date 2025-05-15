@@ -6,12 +6,12 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
-NOTE: Need to re-work so can be included in Swift Playgrounds again.  Fails in Swift Playgrounds 4.6.4 (FB17377610).
-
 // TODO: 1.11.0: Remove Version from OperatingSystemVersion typealias so we don't have to do retroactive conformances?  Is there someplace where OperatingSystemVersion is used where a custom Version type would need to be bridged?
 // TODO: Have debugSuppress suppress all messages except expect debug messages which should always print normally.
 
-v1.10.8 5/14/2025 Pulled `swfitVersion` to `Application` from `Device.CurrentDevice` so we can show what version the Playground is running.  Find a way to expose swift Playgrounds version.)  Added tests and added `debugSuppress` closure.  Added `debugLog` function for changing how messages are output.  Test coverage increased to 45%.  Updated conditionalized Playground code in Package (starting in 4.6, `#if SwiftPlaygrounds` is available).
+v1.10.9 5/14/2025 re-worked compiler directives to fix issues with Linux visibility.
+
+v1.10.8 5/14/2025 Pulled `swfitVersion` to `Application` from `Device.CurrentDevice` so we can show what version the Playground is running.  Find a way to expose swift Playgrounds version.)  Added tests and added `debugSuppress` closure.  Added `debugLog` function for changing how messages are output.  Test coverage increased to 45%.  Updated conditionalized Playground code in Package (starting in 4.6, `#if SwiftPlaygrounds` is available).  Now does seem to work in Swift Playgrounds 4.6.4 again!
 
 v1.10.7 5/4/2025 Fixed bug with Linux SPI Test missing isURL in asURL function.  Fixed some bugs with differences in Linux code.  Tests came in handy here.  Added better backport for `backportPath`. *PASSES ALL SWIFTPACKAGEINDEX TESTS (including Swift 5.8 - 6.1!)*
 

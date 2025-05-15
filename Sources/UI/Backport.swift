@@ -1139,7 +1139,7 @@ public enum BackportTabViewStyle: Sendable {
   // 2024 cases
 //    case grouped, sidebarAdaptable, tabBarOnly
 }
-#if compiler(>=5.9)
+
 @available(iOS 13, tvOS 13, watchOS 6, *)
 public extension Backport where Content: View {
     /// Sets the style for the tab view within the current environment.
@@ -1313,12 +1313,6 @@ public struct BackportNavigationStack<Root: View>: View {
 //        Color.blue
 //    }.backport.tabViewStyle(.verticalPage)
 //}
-#endif
-
-#endif
-
-#if canImport(SwiftUI)
-import SwiftUI
 
 @available(iOS 13, tvOS 13, watchOS 6, *)
 @MainActor
@@ -1368,4 +1362,5 @@ public extension Backport where Content: View {
     }
     
 }
+
 #endif
