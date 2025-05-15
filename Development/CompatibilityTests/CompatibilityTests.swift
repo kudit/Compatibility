@@ -32,9 +32,11 @@ struct CompatibilityTests {
     @MainActor
     @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
     func testValidIdentifier() {
-        let application = Application.main
-        #expect(application.appIdentifier == "com.apple.dt.xctest.tool")
-        #expect(application.version == "16.0")
+        debugSuppress {
+            _ = Application.main
+        }
+        #expect(Application.main.appIdentifier == "com.apple.dt.xctest.tool")
+        #expect(Application.main.version == "16.0")
     }
     
     @Test
@@ -56,7 +58,7 @@ struct CompatibilityTests {
     @Test
     @MainActor
     @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
-    func testTests() async throws {
+    func testNamedTests() async throws {
         let namedTests = Test.namedTests
         var ongoingTests = Date.tests // because can't just do = [Test]() for some reason...
         ongoingTests.removeAll()

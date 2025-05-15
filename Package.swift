@@ -7,7 +7,7 @@
 
 import PackageDescription
 
-let version = "1.10.7"
+let version = "1.10.8"
 let packageLibraryName = "Compatibility"
 
 // Products define the executables and libraries a package produces, making them visible to other packages.
@@ -43,7 +43,7 @@ var platforms: [SupportedPlatform] = [
 	.watchOS("4"), // 6 minimum for SwiftUI, watchOS 7 typically needed for most UI, 8 for Date.now, however (for #buildAvailability) so really should be watchOS 9+.
 ]
 
-#if canImport(PlaygroundSupport)
+#if SwiftPlaygrounds || canImport(PlaygroundSupport)
 platforms += [
 	.iOS("15.2"), // minimum for Swift Playgrounds support (maximum version for test iPhone 7)
 ]
@@ -64,9 +64,15 @@ import AppleProductTypes
 
 let executableTargetName = "\(packageLibraryName)TestAppModule"
 
+#if SwiftPlaygrounds || canImport(PlaygroundSupport)
+let appName = "\(packageLibraryName) Playground"
+#else
+let appName = "\(packageLibraryName) App"
+#endif
+
 products += [
 	.iOSApplication(
-		name: "\(packageLibraryName) App", // needs to match package name to open properly in Swift Playgrounds <v4.5, but must be different to run in v4.6 and greater.
+		name: appName, // needs to match package name to open properly in Swift Playgrounds <v4.5, but must be different to run in v4.6 and greater.
 		targets: [executableTargetName],
 //		bundleIdentifier: "com.kudit.compatibility", // ignored in playgrounds
 		teamIdentifier: "3QPV894C33",
@@ -98,7 +104,7 @@ targets += [
 			.init(stringLiteral: packageLibraryName), // have to use init since normally would be assignable by string literal but we're not using a string literal
 		],
 		path: "Development"
-		,exclude: ["Resources"]
+		,exclude: ["Resources", "CompatibilityTests"]
 		// Include test app resources.
 		,resources: [
 //            .process("PlaygroundsAssets.xcassets")

@@ -85,10 +85,12 @@ public extension URL {
     @MainActor
     internal static var urlTests: TestClosure = {
         let url = "http://plickle.com".asURL!
-        let secured = url.secured.secured
-        try expect(secured.scheme == "https")
-        
+        var secured = url
+        debugSuppress {
+            secured = url.secured.secured
+        }
         let fileUrl = "file:///Users/Shared".asURL!
+        try expect(secured.scheme == "https")
         try expect(fileUrl.isDirectory == true)
         try expect(fileUrl.fileExists)
         try expect(fileUrl.fileBasename == "Shared")

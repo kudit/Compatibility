@@ -8,7 +8,7 @@
 
 public enum Compatibility {
     /// The version of the Compatibility Library since cannot get directly from Package.swift.
-    public static let version: Version = "1.10.7"
+    public static let version: Version = "1.10.8"
 }
 
 @_exported import Foundation
@@ -307,6 +307,7 @@ public struct CompatibilityEnvironmentTestView: View {
                 }
             }
             Section("Environment") {
+                Backport.LabeledContent("Swift Version:", value: Application.swiftVersion)
                 TestCheck("isSimulator", Application.isSimulator)
                     .backport.focusable(true) // to allow scrolling in tvOS
                 TestCheck("isPlayground", Application.isPlayground)

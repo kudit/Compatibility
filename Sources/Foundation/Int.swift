@@ -102,15 +102,10 @@ public extension Int {
 @MainActor
 internal let ordinalTests: TestClosure = {
     var failedMessages = [String]()
-    var allPass = true
     for (num, suffix) in Int.ordinalTestMap {
         let expected = "\(num)\(suffix)"
-        if expected != num.ordinal {
-            failedMessages.append("\(num.ordinal) does not equal \(expected)")
-            allPass = false
-        }
+        try expect(expected == num.ordinal, "\(num.ordinal) does not equal \(expected)")
     }
-    try expect(allPass, failedMessages.joined(separator: ", "))
 }
 
 // MARK: - String output support
@@ -203,15 +198,11 @@ internal let byteTests: TestClosure = {
             let parts = count.byteParts(style)
             try expect(Double(parts.count) == count.byteCount(style))
             let craftedString = "\(parts.count) \(parts.units)"
-            if expected != craftedString {
-                failedMessages.append("\(count.byteString(style)) does not equal \(expected) (\(style == .file ? "file" : "memory"))")
-                allPass = false
-            }
+            try expect(expected == craftedString, "`\(craftedString)` does not equal `\(expected)` (\(style == .file ? "file" : "memory"))")
         }
     }
     try runTestsClosure(.memory, memoryTests)
     try runTestsClosure(.file, fileTests)
-    try expect(allPass, failedMessages.joined(separator: ", "))
 }
 
 // MARK: - Tests

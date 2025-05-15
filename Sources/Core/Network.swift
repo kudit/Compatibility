@@ -98,22 +98,39 @@ public extension PostData {
     }
     @MainActor
     internal static let testFetchGwinnettCheck: TestClosure = {
-        let results = try await fetchURL(urlString: "https://www.GwinnettCounty.com")
+        var results = "NONE"
+        try await debugSuppress {
+            results = try await fetchURL(urlString: "https://www.GwinnettCounty.com")
+        }
 //        debug("RESULTS: \(results)", level: .DEBUG)
         try expect(results.contains("Gwinnett"), results)
     }
     @MainActor
     internal static let testFetchGETCheck: TestClosure = {
         let query = TEST_DATA.queryString ?? "ERROR"
-        let results = try await fetchURL(urlString: "https://plickle.com/pd.php?\(query)")
+        var results = "NONE"
+        try await debugSuppress {
+            results = try await fetchURL(urlString: "https://plickle.com/pd.php?\(query)")
+        }
 //        debug("RESULTS: \(results)", level: .DEBUG)
         try expect(results.contains("[name] => Jack & \"Jill\""), results)
     }
     @MainActor
     internal static let testFetchPOSTCheck: TestClosure = {
-        let results = try await fetchURL(urlString: "https://plickle.com/pd.php", postData:TEST_DATA)
+        var results = "NONE"
+        try await debugSuppress {
+            results = try await fetchURL(urlString: "https://plickle.com/pd.php", postData:TEST_DATA)
+        }
 //        debug("RESULTS: \(results)", level: .DEBUG)
         try expect(results.contains("'name' => 'Jack & \\\"Jill\\\"',"), results)
+    }
+    @MainActor
+    internal static let testNetworkErrors: TestClosure = {
+        try expect(NetworkError.urlParsing(urlString: "invalid url").localizedDescription.contains("invalid url"))
+        try expect(NetworkError.postDataEncoding(["foo":"bar"]).localizedDescription == "Post Data could not be encoded from: [\"foo\": \"bar\"]", NetworkError.postDataEncoding(["foo":"bar"]).localizedDescription)
+        try expect(NetworkError.invalidResponse(code: 404).localizedDescription.contains("404"))
+        try expect(NetworkError.dataError(Data()).localizedDescription.contains("Unable to parse string"))
+        try expect(NetworkError.missingEntitlement.localizedDescription.contains("DEVELOPER: Check your configuration"))
     }
     @MainActor
     static let tests = [
@@ -121,6 +138,7 @@ public extension PostData {
         Test("fetchURL Gwinnett check", testFetchGwinnettCheck),
         Test("fetchURL GET check", testFetchGETCheck),
         Test("fetchURL POST check", testFetchPOSTCheck),
+        Test("Network Errors", testNetworkErrors),
     ]
 }
 

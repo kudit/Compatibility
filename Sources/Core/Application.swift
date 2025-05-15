@@ -26,7 +26,48 @@ public class Application: ObservableObject { // cannot automatically conform to 
     /// will be true if we're in a debug configuration and false if we're building for release
     nonisolated // Not @MainActor
     public static let isDebug = _isDebugAssertConfiguration()
-
+    
+    /// Returns the version number of Swift being used to compile
+    public static var swiftVersion: String {
+#if swift(>=9.0)
+        "X.x"
+#elseif swift(>=8.0)
+        "8.x"
+#elseif swift(>=7.0)
+        "7.x"
+#elseif swift(>=6.3)
+        "6.x"
+#elseif swift(>=6.2)
+        "6.2"
+#elseif swift(>=6.1)
+        "6.1"
+#elseif swift(>=6.0)
+        "6.0"
+#elseif swift(>=5.12)
+        "5.12"
+#elseif swift(>=5.11)
+        "5.11"
+#elseif swift(>=5.10)
+        "5.10"
+#elseif swift(>=5.9)
+        "5.9"
+#elseif swift(>=5.8)
+        "5.8"
+#elseif swift(>=5.7)
+        "5.7"
+#elseif swift(>=4.0)
+        "4.x"
+#elseif swift(>=3.0)
+        "3.x"
+#elseif swift(>=2.0)
+        "2.x"
+#elseif swift(>=1.0)
+        "1.x"
+#else
+        "Unsupported"
+#endif
+    }
+    
     // MARK: - iCloud Support
     /// Use before tracking to disable iCloud checks to prevent crashes if we can't check for iCloud or for simulating behavior without iCloud support for CloudStorage.
     @MainActor
@@ -42,7 +83,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
     
     @MainActor
     private static var iCloudPlaygroundPreviewNoticed = false
-
+    
     @MainActor
     public static var iCloudIsEnabled: Bool {
         guard iCloudSupported else {
@@ -104,6 +145,10 @@ public class Application: ObservableObject { // cannot automatically conform to 
     /// Returns `true` if running in Swift Playgrounds.
     nonisolated // Not @MainActor
     public static var isPlayground: Bool {
+#if SwiftPlaygrounds
+        debug("New Swift Playgrounds test!", level: .WARNING)
+        return true
+#else
         //print("Testing inPlayground: Bundles", Bundle.allBundles.map { $0.bundleIdentifier }.description)")
         if Bundle.allBundles.contains(where: { ($0.bundleIdentifier ?? "").contains("swift-playgrounds") }) {
             //print("in playground")
@@ -112,6 +157,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
             //print("not in playground")
             return false
         }
+#endif
     }
     
     /// Returns `true` if running in an XCode or Swift Playgrounds #Preview macro.
@@ -135,7 +181,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
         return false
 #endif
     }
-
+    
     
 #if !DEBUG
     @MainActor
@@ -144,7 +190,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
         return DebugLevel.currentLevel == .DEBUG
     }
 #endif
-
+    
     /// Place `Application.track()` in `application(_:didFinishLaunchingWithOptions:)` or @main struct init() function to enable version tracking.
     @MainActor
     public static func track(file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) {
@@ -155,13 +201,13 @@ public class Application: ObservableObject { // cannot automatically conform to 
     // MARK: - Application information
     @MainActor
     public static let main = Application()
-
+    
     /// Human readable display name for the application.
     public let name = Bundle.main.name
-
+    
     /// Name that appears on the Home Screen
     public let appName = Bundle.main.appName
-
+    
     /// The fully qualified reverse dot notation from Bundle.main.bundleIdentifier like com.kudit.appName
     public let appIdentifier: String = {
         guard var identifier = Bundle.main.bundleIdentifier else {
@@ -170,7 +216,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
         // when running in playgrounds preview, identifier may be: swift-playgrounds-dev-previews.swift-playgrounds-app.hdqfptjlmwifrrakcettacbhdkhn.501.KuditFramework
         // swift-playgrounds-dev-previews.swift-playgrounds-app.cmofpjkqydaoovajzscjkvydowkt.501.Compatibility
         // when running from playgrounds, identifier may be: swift-playgrounds-dev-run.swift-playgrounds-app.hdqfptjlmwifrrakcettacbhdkhn.501.KuditFrameworksApp
-
+        
         // convert to normal identifier (assumes will be com.kudit.<lastcomponent>
         // for testing, if this is KuditFrameworks, we should pull the unknown identifier FAQs
         let lastComponent = identifier.components(separatedBy: ".").last // should never really be nil
@@ -188,7 +234,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
         }
         return identifier
     }()
-
+    
     /// `true`  if this is the first time the app has been run, `false` otherwise
     public private(set) var isFirstRun = true // can't be let since self._cloudVersionsRun check requires self access, but basically should only ever set once.
     
@@ -197,7 +243,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
 #endif
     private init() {
         // this actually does the tracking
-
+        
         // check for previous versions run in user defaults (legacy)
         // if last_run_version set, add that to preserve legacy format
         let legacyLastRunVersion = UserDefaults.standard.object(forKey: .legacyLastRunVersionKey) as? String // legacy support
@@ -237,8 +283,8 @@ public class Application: ObservableObject { // cannot automatically conform to 
             // persist back to cloud for other devices and future runs or re-installs (do with delay in case of launch issue where the crash happens at launch)
             delay(0.5) { // technically should still be on the main thread.  Would do @MainActor in but Swift 6 has issues with that
                 debug("Setting versions run to: \(allVersions.rawValue)", level: .DEBUG)
-//                debug("Bundle Identifier: \(Bundle.main.identifier)")
-//                debug("Application Identifier: \(Application.main.appIdentifier)")
+                //                debug("Bundle Identifier: \(Bundle.main.identifier)")
+                //                debug("Application Identifier: \(Application.main.appIdentifier)")
                 // setting Application.main so don't capture mutating self.
                 Compatibility.main { // but need to add this to guarantee for compiler issues.
                     Application.main._cloudVersionsRun = allVersions.rawValue
@@ -255,13 +301,14 @@ public class Application: ObservableObject { // cannot automatically conform to 
     
     /// For debugging, reset all the previously run version information including the cloud versions.  This shouldn't be run on production devices or you risk data loss.
     public func resetVersionsRun() {
+        debug("Resetting Versions Run!", level: .WARNING)
         UserDefaults.standard.removeObject(forKey: .legacyLastRunVersionKey)
         UserDefaults.standard.removeObject(forKey: .localAppVersionsRunKey)
 #if compiler(>=5.9) && canImport(Combine)
         Application.main._cloudVersionsRun = nil
 #endif
     }
-        
+    
     // MARK: - Version information
     // NOTE: in Objective C, the key was kCFBundleVersionKey, but that returns the build number in Swift.
     /// Current app version string (not including build)
@@ -274,7 +321,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
         }
         return string
     }
-        
+    
     /// List of all versions that have been run since install.  Checks iCloud and reports versions run on other devices.
     public var versionsRun: [Version] {
 #if compiler(>=5.9) && canImport(Combine)
@@ -292,7 +339,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
         versionsRun.remove(version)
         return versionsRun
     }
-
+    
     public func hasRunVersion(before testVersion: Version) -> Bool {
         for versionRun in versionsRun {
             if versionRun < testVersion {
@@ -303,8 +350,8 @@ public class Application: ObservableObject { // cannot automatically conform to 
     }
     
     /// Vendor ID (may not be used anywhere since not very helpful)
-//    public var vendorID = UIDevice.current.identifierForVendor.UUIDString
-
+    //    public var vendorID = UIDevice.current.identifierForVendor.UUIDString
+    
     // Note that cannot do conformance to CustomStringConvertible since it requires isolation...
     public var description: String {
         var description = "\(name) (v\(debugVersion))"
@@ -317,7 +364,42 @@ public class Application: ObservableObject { // cannot automatically conform to 
         description += "\nIdentifier: \(Application.main.appIdentifier)"
         // so we can disable on simple apps and still do tracking without issues.
         description += "\niCloud Status: \(Application.iCloudStatus.description)"
+        description += "\nSwift Version: \(Application.swiftVersion)"
         description += "\nCompatibility Version: \(Compatibility.version)"
         return description
     }
+    
+#if compiler(>=5.9)
+    @MainActor
+    internal static var applicationTests: TestClosure = {
+        try expect(Application.isDebug, "App should not be running in debug mode")
+        try expect(Application.isPreview == Application.isPreview, "App Preview test")
+        try expect(Application.isSimulator == Application.isSimulator, "App Simulator test")
+        try expect(Application.isPlayground == Application.isPlayground, "App Playground test")
+        try expect(Application.isRealDevice == Application.isRealDevice, "App Real Device test")
+        try expect(Application.isMacCatalyst == Application.isMacCatalyst, "App Mac Catalyst test")
+        await debugSuppress {
+            await Application.main.resetVersionsRun()
+            await Application.track()
+        }
+        try await expect(Application.main.isFirstRun == Application.main.isFirstRun, "First Run test")
+        try await expect(Application.main.versionsRun.count == 1, "Versions Run test")
+        try await expect(Application.main.hasRunVersion(before: Application.main.version) == false, "Has Run Version test")
+        try await expect(Application.main.previouslyRunVersions.count == 0, "Previously Run Versions test")
+        let expectedDescription = await """
+\(Application.main.name) (v\(Application.main.debugVersion))\(Application.main.isFirstRun ? " **First Run!**" : "")
+Identifier: \(Application.main.appIdentifier)
+iCloud Status: \(Application.iCloudStatus.description)
+Swift Version: \(Application.swiftVersion)
+Compatibility Version: \(Compatibility.version)
+"""
+        try await expect(Application.main.description == expectedDescription, "Unexpected app description: \(Application.main.description) (expected: \(expectedDescription))")
+    }
+
+    @available(iOS 13, tvOS 13, watchOS 6, *)
+    @MainActor
+    static var tests: [Test] = [
+        Test("Application Tests", applicationTests),
+    ]
+#endif
 }

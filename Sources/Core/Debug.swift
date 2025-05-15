@@ -1,4 +1,5 @@
 
+
 // Here since all releated to Debug code.
 public struct CompatibilityConfiguration: PropertyIterable {
     /// Override to change the which debug levels are output.  This level and higher (more important) will be output.
@@ -46,6 +47,11 @@ public struct CompatibilityConfiguration: PropertyIterable {
         } else {
             return "\(timestamp)\(message)"
         }
+    }
+    
+    /// Function to handle how the debug messages are logged.  Can change to have the messages logged to a file or a string.  Default is to print to the console.
+    public var debugLog = { (message: String) in
+        print(message)
     }
 }
 
@@ -266,7 +272,9 @@ public extension Compatibility {
             Compatibility.settings.debugLevelsToIncludeContext.contains(level),
             Compatibility.settings.debugLevelsToIncludeTimestamp.contains(level),
             file, function, line, column)
-        print(debugMessage)
+        
+        // log message
+        Compatibility.settings.debugLog(debugMessage)
         
         // do this AFTER Printing so we can see what the message is in the console
         checkBreakpoint(level: level)
@@ -314,9 +322,17 @@ public extension Error {
 @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
 public extension DebugLevel {
     @MainActor
-    internal static let testDebug: TestClosure = {
+    internal static let testDebugConfig: TestClosure = {
+        // NOTE: This might happen concurrently with other tests so could cause issues with output...
+        // preserve original settings
+        let previousSettings = Compatibility.settings
         DebugLevel.defaultLevel = .WARNING // testing override default level
         DebugLevel.currentLevel = .NOTICE // testing override current level
+
+        var concurrentOutput = ""
+        Compatibility.settings.debugLog = { message in
+            concurrentOutput.append(message)
+        } // don't output anything into console during these tests
 
         try expect(Compatibility.settings.debugLevelDefault == .WARNING, "expected default debug level to be .WARNING but found \(Compatibility.settings.debugLevelDefault)")
 
@@ -339,19 +355,38 @@ Normal output: \(defaultOutput)
 """
         }
         
-        let debugError = CustomError("test custom error").debug(level: .WARNING) // to test
-
         let timestamp = Date.nowBackport.mysqlDateTime
         let debugText = debug("Test return output")
-        
+                
         try expect(debugText.contains("!"), "expected debug warning symbol to be ! but found \(debugText)")
         try expect(debugText.contains(timestamp), "expected \(timestamp) but found \(debugText)")
 
         let blankText = debug("Test return output", level: .DEBUG) // less than the current level so should be silent
         try expect(blankText == "", "expected empty string but found \(blankText)")
+        
+        // reset settings for other tests
+        Compatibility.settings = previousSettings
+        // output messages that happened concurrently
+//        Compatibility.settings.debugLog(concurrentOutput)
+//        debug("TEST OUTPUT", level: .ERROR)
+    }
+    @MainActor
+    internal static let testDebug: TestClosure = {
+        var debugError = CustomError("NOT OUTPUT")
+        var output = "OVERWRITE"
+        debugSuppress {
+            debugError = CustomError("test custom error").debug(level: .WARNING) // to test
+            output = debugError.debug()
+        }
+        try expect(output.contains("custom error"), "expected custom error to be in the output but found \(output)")
+        output = debugError.localizedDescription
+        try expect(output.contains("custom error"), "expected custom error to be in the output but found \(output)")
+        output = debugError.description
+        try expect(output.contains("custom error"), "expected custom error to be in the output but found \(output)")
     }
     @MainActor
     static let tests = [
+        Test("debug configuration tests", testDebugConfig),
         Test("debug tests", testDebug),
     ]
 }

@@ -532,7 +532,10 @@ public extension String {
         try expect(test.duplicateCharactersRemoved == "file:/thquckbrownx.")
         
         try expect("h\"\\ello".addSlashes() == "h\\\"\\\\ello")
-        let json = "foo".asErrorJSON()
+        var json = ""
+        debugSuppress {
+            json = "foo".asErrorJSON() // outputs debug message
+        }
         struct ErrorTest: Codable, Equatable {
             var success: Bool
             var errorMessage: String

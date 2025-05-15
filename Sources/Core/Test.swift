@@ -30,6 +30,35 @@ public func expect(_ condition: Bool, _ debugString: String? = nil, file: String
     }
 }
 
+// NOTE: Really wish there was a way of writing a possibly async function or doing this using a generic so we don't have to duplicate code.
+// TODO: Find a way to prevent conflicts here when run simultaneously.  This really should only be used for testing.
+/// Suppress debug messages during this execution block.  Allows fetching the debug string as normal.
+public func debugSuppress(_ block: () throws -> Void) rethrows {
+    let log = Compatibility.settings.debugLog
+    let suppressThread = Thread.current // restrict the silencing to this thread/closure assuming no background tasks are doing printing
+    Compatibility.settings.debugLog = { message in
+        if Thread.current != suppressThread {
+            log(message) // do normal logging
+        }
+    }
+    defer {
+        Compatibility.settings.debugLog = log
+    }
+    try block()
+}
+/// Suppress debug messages during this async execution block.  Allows fetching the debug string as normal.
+@available(iOS 13, tvOS 13, watchOS 6, *) // due to Concurrency
+@MainActor
+public func debugSuppress(_ block: () async throws -> Void) async rethrows {
+    let log = Compatibility.settings.debugLog
+    // unable to get thread in async functions so just ignore and hope it doesn't run concurrently interrupting other debug messages.
+    Compatibility.settings.debugLog = { _ in }
+    defer {
+        Compatibility.settings.debugLog = log
+    }
+    try await block()
+}
+
 // Testing is only supported with Swift 5.9+
 #if compiler(>=5.9)
 // Test Handlers
@@ -81,6 +110,7 @@ public final class Test: ObservableObject {
                 }
             } catch {
                 main {
+                    debug(error.localizedDescription, level: .ERROR)
                     self.progress = .fail("\(error.localizedDescription)")
                 }
             }
@@ -127,6 +157,7 @@ public extension Test {
 public extension Test {
     static let namedTests: OrderedDictionary = {
         var tests: OrderedDictionary = [
+            "Application Tests": Application.tests,
             "Bundle Tests": Bundle.tests,
             "Version Tests": Version.tests,
             "Int Tests": Int.tests,
