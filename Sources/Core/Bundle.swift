@@ -32,7 +32,7 @@ public extension Bundle {
     /// The version of the build that identifies an iteration of the bundle. (1-3 period separated integer notation.  only integers and periods supported).  In Swift, this may return the build number.
     var build: String { getInfo("CFBundleVersion") ?? "⚠️"}
     /// The version of the build that identifies an iteration of the bundle. (1-3 period separated integer notation.  only integers and periods supported)
-    var version: Version { Version(getInfo("CFBundleShortVersionString") ?? "⚠️.⚠️") }
+    var version: Version { Version(string: getInfo("CFBundleShortVersionString"), defaultValue: .zero) } // "⚠️.⚠️" - not a valid version
     //public var appVersionShort: String { getInfo("CFBundleShortVersion") }
     
     /// Returns the time that this was built

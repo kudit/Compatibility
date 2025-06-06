@@ -43,6 +43,11 @@ extension Version: Swift.CustomStringConvertible { // @retroactive in Swift 6?
         }
         return osVersion
     }
+    
+    /// Fully qualified major.minor.patch string, not the default pretty version
+    public var full: String {
+        return "\(majorVersion).\(minorVersion).\(patchVersion)"
+    }
 }
 
 // MARK: - Codable conformance so stored as string rather than as a structure of values.
@@ -77,12 +82,7 @@ extension Version: Swift.ExpressibleByStringLiteral, Swift.ExpressibleByStringIn
     // For ExpressibleByStringLiteral conformance
     /// Any non-numeric text will be ignored, so if you have something like `23b123` it will be converted to `23123`.
     public init(stringLiteral: String) {
-        let cleaned = stringLiteral.trimmingCharacters(in: CharacterSet(charactersIn: "0123456789.").inverted)
-        let components = cleaned.components(separatedBy: ".")
-        let major = Int(components.first ?? "0") ?? 0
-        let minor: Int = components.count > 1 ? Int(components[1]) ?? 0 : 0
-        let patch: Int = components.count > 2 ? Int(components[2]) ?? 0 : 0
-        self.init(majorVersion: major, minorVersion: minor, patchVersion: patch)
+        self.init(forcing: stringLiteral)
     }
 }
 extension Version: Swift.RawRepresentable { // @retroactive in Swift 6?
@@ -96,9 +96,45 @@ extension Version: Swift.RawRepresentable { // @retroactive in Swift 6?
     }
 }
 extension Version: Swift.LosslessStringConvertible { // @retroactive in Swift 6?
-    // For LosslessStringConvertible conformance
+    // For LosslessStringConvertible conformance and failable init option.
     public init(_ rawValue: String) {
         self.init(stringLiteral: rawValue)
+    }
+}
+
+extension Version {
+    init(string: String?, defaultValue: Self) {
+        guard let string else {
+            self = defaultValue
+            return
+        }
+        guard let converted = Self(parsing: string) else {
+            self = defaultValue
+            return
+        }
+        self = converted
+    }
+    public static let validCharacters = CharacterSet(charactersIn: "0123456789.")
+    /// Create a version ignoring any text.  If a component contains non-numerics, it will force it to 0 and additional pieces (like 1.0.0.2) will be ignored.
+    public init(forcing: String) {
+        // TODO: See if there is a better/faster way of stripping characters
+        let cleaned = forcing.replacingCharacters(in: Self.validCharacters.inverted, with: "")
+        let components = cleaned.components(separatedBy: ".")
+        let major = Int(components.first ?? "0") ?? 0
+        let minor: Int = components.count > 1 ? Int(components[1]) ?? 0 : 0
+        let patch: Int = components.count > 2 ? Int(components[2]) ?? 0 : 0
+        self.init(majorVersion: major, minorVersion: minor, patchVersion: patch)
+    }
+    /// A failable initializer in case the parsing doesn't match exactly.
+    public init?(parsing: String) {
+        // 1.0.1b5 should actually give us a valid version of 1.0.15 (will only fail if completely fails to give any numbers)
+        let trimmed = parsing.trimmed // possibly 0, 0.0, or 0.0.0
+        let forced = Version(forcing: trimmed)
+        if !forced.full.contains(trimmed) {
+            // there were other characters or something in the version that had to be assumed or stripped.  Mark this as not perfectly convertible.
+            return nil
+        }
+        self = forced
     }
 }
 extension Version: Swift.Comparable { // @retroactive in Swift 6?
@@ -124,7 +160,7 @@ extension Version: Swift.Hashable {}
 
 public extension Version {
     /// equivalent to Version("0.0.0")
-    static let zero: Version = "0.0.0"
+    static let zero = Version(majorVersion: 0, minorVersion: 0, patchVersion: 0)
 
     // For legacy code compatibility
     var components: [Int] {
@@ -146,14 +182,37 @@ public extension Version {
     // TODO: Convert to Swift Testing
     @MainActor
     internal static var testVersions: TestClosure = {
+        let defaulted = Version(string: nil, defaultValue: "1.2.3")
+        try expect(defaulted == Version("1.2.3"))
+        let zero = Version("0.0.0")
+        try expect(zero == Version("a.b.c"))
+        let okay: Version = "2b.5.s"
+        try expect(okay == "2.5.0")
+        let forced: Version = "2b.5.s"
+        try expect(forced == "2.5.0")
+        let expanded: Version = "1.2.3b4"
+        try expect(expanded == "1.2.34")
+        let bad: Version = "alphabet soup"
+        try expect(bad == .zero)
+        try expect(Version(parsing: "alphabet") == nil)
+        let forcedBad: Version = "alphabet soup"
+        try expect(forcedBad == .zero)
         let first = Version("2")
         let second = Version("12.1")
         let third: Version = "2.12.1"
         let fourth: Version = "12.1.0"
+        let fifth: Version = "2.2.0"
+        let sixth: Version = "2.1"
         try expect(first < second)
         try expect(third > first)
         try expect(fourth == second)
         try expect(third < fourth)
+        try expect(sixth < fifth)
+        try expect(fifth < third)
+        let list = [first, second, third, fourth, fifth, sixth]
+        try expect(list.sorted() == [first, sixth, fifth, third, second, fourth])
+        let req: [Version] = .init(rawValue: "1,2.1.2,3", required: "4.3")
+        try expect(req.pretty == "v1.0, v2.1.2, v3.0, v4.3")
     }
 
     @MainActor
@@ -208,9 +267,9 @@ public extension [Version] {
 #endif
 
 public extension [Version] {
-    /// Pretty output like "v0.0.0, v1.0.2, v3.4.2"
+    /// Pretty output like "v0.0, v1.0.2, v2.3, v1.0, v3.4.2"
     var pretty: String {
-        return self.map { "v\($0.rawValue)" }.joined(separator: ", ")
+        return self.map { "v\($0.description)" }.joined(separator: ", ")
     }
 }
 
@@ -218,7 +277,7 @@ public extension [Version] {
 extension [Version]: Swift.RawRepresentable {
     public init(rawValue: String) {
         // remove duplicates and convert invalid values to 0.0.0
-        let versions = Set(rawValue.split(separator: ",").map { Version(String($0)) })
+        let versions = Set(rawValue.split(separator: ",").map { Version(string: String($0), defaultValue: .zero) })
         // order
         self = versions.sorted()
     }

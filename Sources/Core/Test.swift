@@ -13,6 +13,7 @@ public typealias TestClosure = @Sendable () async throws -> Void
 /// Sets an expectation for testing.  In the future, convert to Swift #expect calls so we get better context without specifying a debugString.
 public func expect(_ condition: Bool, _ debugString: String? = nil, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) throws {
     guard condition else {
+        // set breakpoint on this line if we want to debug/inspect errors (note that this slows enough to mess with time stamp checks so disable once we know everything is working).
         if let debugString {
             throw CustomError(debugString)
         } else {

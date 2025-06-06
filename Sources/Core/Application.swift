@@ -379,7 +379,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
         try expect(Application.isRealDevice == Application.isRealDevice, "App Real Device test")
         try expect(Application.isMacCatalyst == Application.isMacCatalyst, "App Mac Catalyst test")
         await debugSuppress {
-            await Application.main.resetVersionsRun()
+            await Application.main.resetVersionsRun() // throws a warning in Swift Playgrounds that this isn't async.
             await Application.track()
         }
         try await expect(Application.main.isFirstRun == Application.main.isFirstRun, "First Run test")

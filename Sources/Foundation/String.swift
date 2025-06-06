@@ -63,6 +63,9 @@ public extension CharacterSet {
         try expect(complex.isCombinedIntoEmoji)
         try expect(complex.isEmoji)
         
+        let letter = Character("a")
+        try expect(letter.isEmoji == false)
+        
         for i in 0..<10 {
             try expect(Self.numerics.allCharacters.contains(Character(string: "\(i)", defaultValue: "x")))
         }
@@ -306,6 +309,12 @@ public extension String {
     
     @MainActor
     internal static let testCodable: TestClosure = {
+        let defaultString = String(string: nil, defaultValue: "default")
+        try expect(Version(string: "a.b.c", defaultValue: "1.0.3") == "1.0.3")
+        
+        let urlCharactersAllowed = CharacterSet(charactersIn: "!$&\'()*+,-./0123456789:;=?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]_abcdefghijklmnopqrstuvwxyz~")
+        let urlCharactersString = CharacterSet.urlAllowed.asString
+        try expect(urlCharactersAllowed == CharacterSet.urlAllowed, "Mismatch in characters in urlAllowed character set.  Found: \(urlCharactersString), Expected: \(urlCharactersAllowed.asString)")
         let parameters = "id=12345&foo=bar&baz=true"
         let urlBase = "http://plickle.com/pd.php"
         let getString = "\(urlBase)?\(parameters)"

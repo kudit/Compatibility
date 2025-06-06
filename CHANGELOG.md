@@ -6,8 +6,8 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
-// TODO: 1.11.0: Remove Version from OperatingSystemVersion typealias so we don't have to do retroactive conformances?  Is there someplace where OperatingSystemVersion is used where a custom Version type would need to be bridged?
-// TODO: Have debugSuppress suppress all messages except expect debug messages which should always print normally.
+
+v1.10.10 6/6/2025 Added public visibility of Visibility backport.  Added `persistentSystemOverlays` backport.  Added tests to bring test coverage to 46%.  Updated Version string parsing.  Added a failable initializer for parsing strings.  Updated the implementation of the `string:defaultValue:` initializer.  Fixed so version character stripping isn't just trimming.
 
 v1.10.9 5/14/2025 re-worked compiler directives to fix issues with Linux visibility.
 
@@ -228,6 +228,8 @@ Planned features and anticipated API changes.  If you want to contribute, this i
 
 ## Proposals:
 This is where proposals can be discussed for potential movement to the roadmap.
+- [ ] 1.11.0: Remove Version from OperatingSystemVersion typealias so we don't have to do retroactive conformances?  Is there someplace where OperatingSystemVersion is used where a custom Version type would need to be bridged?
+- [ ] Have debugSuppress suppress all messages except expect debug messages which should always print normally.
 - [ ] should we rename `background {}` to `Background {}` and `Main {}` and `Delay(#) {}` to match `Task {}`?
 - [ ] Debug: see if there's a way to add interpolation as a parameter to customize the output format.  Perhaps using a debug output formatter object that can be set?
 - [ ] Debug: allow setting a closure that will pre-process debug statements to allow for injection in debug statements?

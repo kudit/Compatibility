@@ -375,6 +375,7 @@ Normal output: \(defaultOutput)
         var debugError = CustomError("NOT OUTPUT")
         var output = "OVERWRITE"
         debugSuppress {
+            debugError = CustomError("test custom error", level: .WARNING) // to test
             debugError = CustomError("test custom error").debug(level: .WARNING) // to test
             output = debugError.debug()
         }
@@ -383,6 +384,13 @@ Normal output: \(defaultOutput)
         try expect(output.contains("custom error"), "expected custom error to be in the output but found \(output)")
         output = debugError.description
         try expect(output.contains("custom error"), "expected custom error to be in the output but found \(output)")
+        
+        // go through symbols for testing
+        for level in DebugLevel.allCases {
+            try expect(level.symbol == "\(level.symbol)")
+            try expect(level.emoji == "\(level.emoji)")
+            try expect(level.description == "\(level)")
+        }
     }
     @MainActor
     static let tests = [
