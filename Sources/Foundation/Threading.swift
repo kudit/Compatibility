@@ -7,12 +7,40 @@
 //
 
 #if os(iOS) || os(macOS) || os(tvOS) || os(watchOS) || os(visionOS) || os(Linux) // Don't run on WASM or Android
-// Use built-in Thread
+// Use built-in Thread and Dispatch
 #else // not supported on WASM or Android
 // Backport Thread for code on WASM or Android
-public struct Thread {
+// None of this is public since this is just for internal supports.
+struct Thread: Sendable, Equatable {
     static let isMainThread = true
     static let current = Thread()
+}
+struct DispatchTime : Sendable, CustomStringConvertible {
+    var time = Date.nowBackport
+    static func now() -> DispatchTime {
+        return DispatchTime()
+    }
+    var description: String {
+        return time.description
+    }
+    static func + (lhs: DispatchTime, rhs: Double) -> DispatchTime {
+        return DispatchTime(time: lhs.time + rhs)
+    }
+}
+struct DispatchQueue: Sendable {
+    static let main = DispatchQueue()
+    static func global() -> DispatchQueue {
+        return .main
+    }
+    @preconcurrency func async(execute work: @escaping @Sendable @convention(block) () -> Void) {
+        debug("This code was supposed to be executed asynchronously but will be executed synchronously since async is not supported on this platform.", level: .WARNING)
+        work()
+    }
+    @preconcurrency func asyncAfter(deadline: DispatchTime, execute work: @escaping @Sendable @convention(block) () -> Void) {
+        debug("This code was supposed to be executed at \(deadline) but will be executed immediately instead.", level: .WARNING)
+        // eventually, figure out how to execute delayed, but for now, just execute immediately
+        work()
+    }
 }
 #endif
 

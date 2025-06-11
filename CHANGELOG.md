@@ -6,6 +6,8 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
+v1.10.15 6/11/2025 Addressed Thread Sendable and Dispatch issues by adding a fallback for WASM and Android.
+
 v1.10.14 6/11/2025 Removed circular dependency on Color and reverted to extension.  Color version should be used externally when included since Compatibility rainbow extension is not public.
 
 v1.10.13 6/11/2025 Added Color import when available for RadialLayout preview (so builds when included with Color framework.)
