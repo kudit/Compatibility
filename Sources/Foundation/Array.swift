@@ -215,9 +215,18 @@ public extension Collection {
 @available(iOS 13, tvOS 13, watchOS 6, *)
 @MainActor
 let collectionTests: [Test] = [
+    Test("identity", {
+        let testSequence = [5, 4, 2, 1, 3]
+        try expect(testSequence.repeated(0) == [])
+        try expect(testSequence.chunked(into: 2) == [[5, 4], [2, 1], [3]])
+        try expect(testSequence.sorted(by: \.self, isAscending: true) == [1, 2, 3, 4, 5])
+        try expect(testSequence.average() == 3)
+        try expect(testSequence.sum() == 15)
+    }),
     Test("modification", [String].modificationTests),
     Test("safety", [Int].safeTests),
     Test("nth", [Int].nthTests),
+    Test("OrderedSet", orderedSetTests),
 ]
 
 // Array Identifiable
@@ -262,7 +271,6 @@ public extension Sequence where Element: AdditiveArithmetic {
     /// calculates the sum of the sequence
     func sum() -> Element {
         return self.reduce(.zero, +)
-        
     }
 }
 

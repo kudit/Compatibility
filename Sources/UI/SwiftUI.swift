@@ -78,6 +78,29 @@ public struct ClosureTestView: View {
                 }
             Text("Open Source projects used include [Compatibility](https://github.com/kudit/Compatibility) v\(Compatibility.version)")
                 .font(.caption)
+            if #available(tvOS 17, *) {
+                MenuTest()
+            } else {
+                // Fallback on earlier versions
+                // toolbars are not shown in tvOS?
+            }
+            
+            if #available(iOS 16, macOS 13, tvOS 16, watchOS 9, *) {
+                RadialLayout {
+                    ForEach(0..<24, id: \.self) { item in
+                        Circle()
+                            .fill([Color].rainbow[nth: item])
+                            .frame(width: 64)
+                            .overlay(Image(systemName: "calendar")
+                                .foregroundColor(.white)
+                            )
+                    }
+                }
+                .aspectRatio(contentMode: .fit)
+            } else {
+                // Fallback on earlier versions
+            }
+
         }
         .toolbar {
             if #available(tvOS 17, *) {

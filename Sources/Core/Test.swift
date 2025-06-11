@@ -49,7 +49,7 @@ public func debugSuppress(_ block: () throws -> Void) rethrows {
 }
 /// Suppress debug messages during this async execution block.  Allows fetching the debug string as normal.
 @available(iOS 13, tvOS 13, watchOS 6, *) // due to Concurrency
-@MainActor
+//@MainActor
 public func debugSuppress(_ block: () async throws -> Void) async rethrows {
     let log = Compatibility.settings.debugLog
     // unable to get thread in async functions so just ignore and hope it doesn't run concurrently interrupting other debug messages.

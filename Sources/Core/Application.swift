@@ -371,29 +371,32 @@ public class Application: ObservableObject { // cannot automatically conform to 
     
 #if compiler(>=5.9)
     @MainActor
-    internal static var applicationTests: TestClosure = {
+    internal static var applicationTests: TestClosure = { @MainActor in // ensure we're running these on the Main Actor so we don't have to worry about Application main actor access.
         try expect(Application.isDebug, "App should not be running in debug mode")
         try expect(Application.isPreview == Application.isPreview, "App Preview test")
         try expect(Application.isSimulator == Application.isSimulator, "App Simulator test")
         try expect(Application.isPlayground == Application.isPlayground, "App Playground test")
         try expect(Application.isRealDevice == Application.isRealDevice, "App Real Device test")
         try expect(Application.isMacCatalyst == Application.isMacCatalyst, "App Mac Catalyst test")
-        await debugSuppress {
-            await Application.main.resetVersionsRun() // throws a warning in Swift Playgrounds that this isn't async.
-            await Application.track()
+        debugSuppress {
+            Compatibility.main {
+                Application.main.resetVersionsRun()
+                // throws a warning in Swift Playgrounds that this isn't async.
+                Application.track()
+            }
         }
-        try await expect(Application.main.isFirstRun == Application.main.isFirstRun, "First Run test")
-        try await expect(Application.main.versionsRun.count == 1, "Versions Run test")
-        try await expect(Application.main.hasRunVersion(before: Application.main.version) == false, "Has Run Version test")
-        try await expect(Application.main.previouslyRunVersions.count == 0, "Previously Run Versions test")
-        let expectedDescription = await """
+        try expect(Application.main.isFirstRun == Application.main.isFirstRun, "First Run test")
+        try expect(Application.main.versionsRun.count == 1, "Versions Run test")
+        try expect(Application.main.hasRunVersion(before: Application.main.version) == false, "Has Run Version test")
+        try expect(Application.main.previouslyRunVersions.count == 0, "Previously Run Versions test")
+        let expectedDescription = """
 \(Application.main.name) (v\(Application.main.debugVersion))\(Application.main.isFirstRun ? " **First Run!**" : "")
 Identifier: \(Application.main.appIdentifier)
 iCloud Status: \(Application.iCloudStatus.description)
 Swift Version: \(Application.swiftVersion)
 Compatibility Version: \(Compatibility.version)
 """
-        try await expect(Application.main.description == expectedDescription, "Unexpected app description: \(Application.main.description) (expected: \(expectedDescription))")
+        try expect(Application.main.description == expectedDescription, "Unexpected app description: \(Application.main.description) (expected: \(expectedDescription))")
     }
 
     @available(iOS 13, tvOS 13, watchOS 6, *)

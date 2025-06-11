@@ -6,11 +6,11 @@
 //  Copyright © 2016 Kudit. All rights reserved.
 //
 
-#if os(Linux)
-import Glibc
-#else
-import Darwin.C
-#endif
+//#if canImport(Darwin)
+//import Darwin.C
+//#elseif os(Linux)
+//import Glibc
+//#endif
 
 // MARK: ++ operator for compatibility functions
 public postfix func ++(x: inout Int) {

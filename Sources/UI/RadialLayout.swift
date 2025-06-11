@@ -23,7 +23,7 @@ public struct RadialStack<Content:View>: View {
         self.content = content
     }
     public var body: some View {
-        if #available(macOS 13.0, iOS 16.0, tvOS 20.0, watchOS 9.0, *) {
+        if #available(iOS 16, macOS 13, tvOS 16, watchOS 9, *) {
             RadialLayout {
                 content()
             }
@@ -35,8 +35,10 @@ public struct RadialStack<Content:View>: View {
     }
 }
 
-@available(macOS 13.0, iOS 16.0, tvOS 20.0, watchOS 9.0, *)
+@available(iOS 16, macOS 13, tvOS 16, watchOS 9, *)
 public struct RadialLayout: Layout {
+    public init() {} // necessary for use outside this?
+    
     public func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
         proposal.replacingUnspecifiedDimensions()
     }
@@ -61,7 +63,7 @@ public struct RadialLayout: Layout {
     }
 }
 
-@available(macOS 13.0, iOS 16.0, tvOS 20.0, watchOS 9.0, *)
+@available(iOS 16, macOS 13, tvOS 16, watchOS 9, *)
 #Preview("Radial") {
     RadialLayout {
         ForEach(0 ..< 24) { item in
@@ -73,9 +75,10 @@ public struct RadialLayout: Layout {
                 )
         }
     }
+    .aspectRatio(contentMode: .fit)
 }
 
-@available(macOS 13.0, iOS 16.0, tvOS 20.0, watchOS 9.0, *)
+@available(iOS 16, macOS 13, tvOS 16, watchOS 9, *)
 #Preview("Colors") {
     RadialStack {
         Group {
@@ -84,6 +87,17 @@ public struct RadialLayout: Layout {
             }
         }
         .frame(size: 80)
+    }
+}
+#endif
+
+// For #Previews
+#if !canImport(Color) // Color framework provides better rainbow variable with 7 colors.  This is 6 colors.
+@available(iOS 13, tvOS 13, watchOS 6, *)
+extension [Color] {
+    /// 6 color ROYGBV(purple for violet)
+    static var rainbow: [Color] {
+        [.red, .orange, .yellow, .green, .blue, .purple]
     }
 }
 #endif

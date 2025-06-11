@@ -6,6 +6,7 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
+v1.10.11 6/10/2025 Extracted `.rainbow` included for previews to use the Color version when available.  Improved RadialLayout preview.  Added public initializer for RadialLayout so can be used outside project.  Removed warnings running in Swift Playgrounds for Application tests.  Note: When building, Swift Playgrounds 4.6.4 currently has a bug where it has trouble choosing the root application target rather than included module app targets which causes issues for #Previews.  Removed requirement of Darwin.C when not Linux and can't import Darwin (was the cause of WASM and Android compile failures).  Removed odd instances of availability checking for tvOS 20 (which now that we have tvOS 26, that passes).  Added Collection conformance to OrderedSet.  Added tests to bring test coverage to 47%.
 
 v1.10.10 6/6/2025 Added public visibility of Visibility backport.  Added `persistentSystemOverlays` backport.  Added tests to bring test coverage to 46%.  Updated Version string parsing.  Added a failable initializer for parsing strings.  Updated the implementation of the `string:defaultValue:` initializer.  Fixed so version character stripping isn't just trimming.
 

@@ -645,7 +645,7 @@ public extension Backport where Content: View {
     ///   - destination: A view to present.
     func navigationDestination<V: View>(isPresented: Binding<Bool>, @ViewBuilder destination: () -> V) -> some View {
         Group {
-            if #available(iOS 16, macOS 13.0, tvOS 16, watchOS 9, *) {
+            if #available(iOS 16, macOS 13, tvOS 16, watchOS 9, *) {
                 content.navigationDestination(isPresented: isPresented, destination: destination)
             } else {
                 // Fallback on earlier versions (bury in the background)

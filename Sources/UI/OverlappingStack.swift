@@ -83,7 +83,7 @@ private struct OverlappingStackContainer<StackContent:View>: View {
         self.content = content
     }
     public var body: some View {
-        if #available(macOS 13.0, iOS 16.0, tvOS 20.0, watchOS 9.0, *) {
+        if #available(iOS 16, macOS 13, tvOS 16, watchOS 9, *) {
             OverlappingStack(orientation: alignment) {
                 content()
             }
@@ -126,7 +126,7 @@ public struct OverlappingVStack<Content:View>: View {
     }
 }
 
-@available(macOS 13.0, iOS 16.0, tvOS 20.0, watchOS 9.0, *)
+@available(iOS 16, macOS 13, tvOS 16, watchOS 9, *)
 private struct OverlappingStack: Layout {
     var orientation: OrientationAlignment
     
@@ -216,13 +216,6 @@ private struct OverlappingStack: Layout {
             // shift anchor
             currentAnchor[keyPath: orientation.alongPointKeypath] += subviewSize[keyPath: orientation.alongKeypath] - overlapBetween
         }
-    }
-}
-
-@available(iOS 13, tvOS 13, watchOS 6, *)
-extension [Color] {
-    static var rainbow: [Color] {
-        [.red, .orange, .yellow, .green, .blue, .purple]
     }
 }
 

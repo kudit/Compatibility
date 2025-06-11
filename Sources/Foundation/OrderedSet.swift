@@ -277,6 +277,20 @@ public struct OrderedSet<Element> where Element: Hashable {
     public var elements: [Element]
 }
 
+extension OrderedSet: Collection {
+    public func index(after i: Int) -> Int {
+        elements.index(after: i)
+    }
+    
+    public var startIndex: Int {
+        elements.startIndex
+    }
+    
+    public var endIndex: Int {
+        elements.endIndex
+    }
+}
+
 extension OrderedSet {
     /// Returns the index of the given element in the set, or `nil` if the element
     /// is not a member of the set.
@@ -522,7 +536,7 @@ extension OrderedSet {
 }
 
 // MARK: - Removal
-extension OrderedSet {
+public extension OrderedSet {
     /// Removes and returns the element at the specified position.
     ///
     /// All the elements following the specified position are moved to close the
@@ -535,8 +549,25 @@ extension OrderedSet {
     /// - Returns: The removed element.
     @inlinable
     @discardableResult
-    public mutating func remove(at index: Int) -> Element {
+    mutating func remove(at index: Int) -> Element {
         return elements.remove(at: index)
+    }
+
+    /// Removes the element if present.
+    ///
+    /// All the elements following the specified position are moved to close the
+    /// resulting gap.
+    ///
+    /// - Parameter item: The element to remove.
+    ///
+    /// - Returns: The removed element or `nil` if the element was not in the set.
+    @inlinable
+    @discardableResult
+    mutating func remove(_ item: Element) -> Element? {
+        guard let index = firstIndex(of: item) else {
+            return nil
+        }
+        return self.remove(at: index)
     }
 }
 
@@ -768,3 +799,40 @@ public extension OrderedSet {
     }
 }
 
+
+// MARK: - TESTING
+// Testing is only supported with Swift 5.9+
+#if compiler(>=5.9)
+@available(iOS 13, tvOS 13, watchOS 6, *)
+let orderedSetTests = { @Sendable in
+    var orderedSet: OrderedSet<Int> = [1,2,3]
+    orderedSet.append(2)
+    orderedSet = orderedSet + [4,5,1]
+    orderedSet[2] = 6
+    try expect(orderedSet[0] == 1, "Basic functionality fails")
+    try expect(!orderedSet.isEmpty, "Should not be empty")
+    try expect(orderedSet.count == 5, "should have 5 elements")
+    orderedSet.subtract([23, 4, 7])
+    try expect(orderedSet == [1,2,6,5], "Should be equal")
+    try expect(orderedSet.isEqualSet(to: [5,1,6,2]))
+    var copiedSet = OrderedSet(orderedSet)
+    try expect(copiedSet == orderedSet)
+    copiedSet.insert(7, at: 1)
+    try expect(copiedSet.insert(7, at: 2).inserted == false)
+    try expect(copiedSet != orderedSet)
+    copiedSet.remove(7)
+    try expect(copiedSet.remove(78) == nil)
+    copiedSet.shuffle()
+    orderedSet.sort()
+    try expect(orderedSet.isEqualSet(to: copiedSet))
+    try expect(!orderedSet.debugDescription.isEmpty)
+    try expect(!orderedSet.description.isEmpty)
+    try expect(orderedSet.filter { $0 % 2 == 0 } == [2, 6])
+    try expect(orderedSet.firstIndex(of: 2) == orderedSet.lastIndex(of: 2))
+    try expect(orderedSet.startIndex == 0)
+    try expect(orderedSet.endIndex == 4)
+    try expect(orderedSet.index(after: 0) == 1)
+    // TODO: Test mirror?
+    // TODO: Test encoding
+}
+#endif

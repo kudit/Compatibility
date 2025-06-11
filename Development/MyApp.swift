@@ -72,5 +72,5 @@ struct MyApp: App {
 #Preview {
     CompatibilityDemoView()
 }
-#endif
-#endif
+#endif // compiler(>=5.9)
+#endif // canImport(SwiftUI) && compiler(>=5.9)

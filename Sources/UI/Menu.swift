@@ -52,10 +52,42 @@ public extension Menu where LabelView == Image {
 }
 #endif
 
+/*
+#if canImport(UIKit)
+import UIKit
+@available(iOS 15, tvOS 17, *)
+class MenuButton: UIButton {
+
+    var onDismissMenu: (() -> Void)?
+    var onShowMenu: (() -> Void)?
+
+    override func contextMenuInteraction(_ interaction: UIContextMenuInteraction, willEndFor configuration: UIContextMenuConfiguration, animator: UIContextMenuInteractionAnimating?) {
+        super.contextMenuInteraction(interaction, willEndFor: configuration, animator: animator)
+
+        onDismissMenu?()
+    }
+
+    override func contextMenuInteraction(_ interaction: UIContextMenuInteraction, willDisplayMenuFor configuration: UIContextMenuConfiguration, animator: UIContextMenuInteractionAnimating?) {
+        super.contextMenuInteraction(interaction, willDisplayMenuFor: configuration, animator: animator)
+
+        onShowMenu?()
+    }
+}
+#endif
+*/
+
 @available(iOS 14, macOS 12, tvOS 17, watchOS 7, *)
 public struct MenuTest: View {
     public var body: some View {
         Menu("Symbols") {
+            Text("Test menu with symbols")
+                .onAppear {
+                    debug("The menu is open! (via Text) - appears when menu first loads (view loads for toolbar, menu is first opened when in content")
+                }
+                .onDisappear {
+                    debug("The menu is closed! (via Text")
+                }
+            
             ForEach(["suit.diamond", "star", "suit.spade.fill","suit.heart","suit.club","star.fill"], id: \.self) { symbol in
                 Button {
                     // Perform an action here.
@@ -66,6 +98,15 @@ public struct MenuTest: View {
                 }
             }
         }
+        .onAppear {
+            debug("The Menu appeared")
+        }
+        .onDisappear {
+            debug("The Menu disappeared")
+        }
+        .simultaneousGesture(TapGesture().onEnded {
+            debug("Menu Simultaneous tap gesture")
+        })
     }
 }
 
@@ -73,4 +114,5 @@ public struct MenuTest: View {
 #Preview("Watch Menu test") {
     MenuTest().navigationWrapper()
 }
-#endif
+
+#endif // canImport(SwiftUI) && compiler(>=5.9)
