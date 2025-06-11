@@ -89,7 +89,6 @@ public struct RadialLayout: Layout {
         .frame(size: 80)
     }
 }
-#endif
 
 // For #Previews
 #if !canImport(Color) // Color framework provides better rainbow variable with 7 colors.  This is 6 colors.
@@ -100,4 +99,6 @@ extension [Color] {
         [.red, .orange, .yellow, .green, .blue, .purple]
     }
 }
+#endif
+
 #endif

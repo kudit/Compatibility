@@ -6,6 +6,16 @@
 //  Copyright © 2016 Kudit. All rights reserved.
 //
 
+#if os(iOS) || os(macOS) || os(tvOS) || os(watchOS) || os(visionOS) || os(Linux) // Don't run on WASM or Android
+// Use built-in Thread
+#else // not supported on WASM or Android
+// Backport Thread for code on WASM or Android
+public struct Thread {
+    static let isMainThread = true
+    static let current = Thread()
+}
+#endif
+
 func timeTolerance(start: TimeInterval, end: TimeInterval, expected: TimeInterval) throws {
     let timeElapsed = end - start
     // should never be negative
@@ -149,6 +159,7 @@ public extension Compatibility {
 internal let testBackground: TestClosure = {
     let start = Date.timeIntervalSinceReferenceDate
     let end: TimeInterval
+#if !os(Android)
     if #available(iOS 13, tvOS 13, watchOS 6, *) {
         end = await withCheckedContinuation { continuation in
             background {
@@ -168,6 +179,7 @@ internal let testBackground: TestClosure = {
         }
     }
     try timeTolerance(start: start, end: end, expected: 4)
+#endif
 }
 
 // MARK: - Main
