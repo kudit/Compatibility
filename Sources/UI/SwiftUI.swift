@@ -308,8 +308,8 @@ public struct MaterialTestView: View {
         }.background(.conicGradient(colors: [.red, .green, .blue], center: .center))
             .sheet(isPresented: $showSheet) {
                 ZStack {
-                    Color.blue
-                    VStack {
+//                    Color.blue
+                    AStack {
                         Color.yellow
                         Color.green
                     }.padding()
@@ -323,6 +323,7 @@ public struct MaterialTestView: View {
                 }
                 .navigationWrapper()
                 .backport.presentationDetents([.fraction(1/3), .medium, .large])
+                .backport.presentationBackground(.ultraThinMaterial)
             }
     }
 }

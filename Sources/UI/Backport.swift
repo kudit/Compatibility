@@ -254,6 +254,7 @@ public extension Backport where Content: View {
             }
         }
     }
+        
     func ignoresSafeArea(_ regions: SafeAreaRegions = .all, edges: Edge.Set = .all) -> some View {
         Group {
             if #available(iOS 14, macOS 11, tvOS 14, watchOS 7, *) {

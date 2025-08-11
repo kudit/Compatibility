@@ -6,7 +6,9 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
-v1.10.15 6/11/2025 Addressed Thread Sendable and Dispatch issues by adding a fallback for WASM and Android.
+v1.10.16 8/11/2025 Added `presentationBackground()` to the demo.  Added `glassEffect()` backport.  Added `AdaptiveLayout` and `AStack` (test in material sheet).
+
+v1.10.15 6/11/2025 Addressed Thread Sendable and Dispatch issues by adding a fallback for WASM and Android.  **Supports all platforms including WASM and Android and passes all Swift Package Index Checks!**
 
 v1.10.14 6/11/2025 Removed circular dependency on Color and reverted to extension.  Color version should be used externally when included since Compatibility rainbow extension is not public.
 
@@ -243,6 +245,68 @@ This is where proposals can be discussed for potential movement to the roadmap.
 - [ ] Debug: see if there's a way to add interpolation as a parameter to customize the output format.  Perhaps using a debug output formatter object that can be set?
 - [ ] Debug: allow setting a closure that will pre-process debug statements to allow for injection in debug statements?
 - [ ] Protocol for a DataStore synced ObservableObject that will automatically add property wrappers for @DataStoreBacked to properties that aren't ignored? may be too difficult (add in a future path perhaps with macros to automatically synthesize code and coding keys etc??  Macros aren't easily able to be written like property wrappers, so this may not happen.)
+
+TODO include configuration to pipe error and warnings to stderror for use in command line applications.
+Create an example Command line app that can be built and run.  Create specialized target?
+/**
+extension CommandLine {
+    
+    static var progName: String {
+        return String(cString: getprogname())
+    }
+    
+    struct File: TextOutputStream {
+        
+        static let stdout = Self(FileHandle.standardOutput)
+        static let stderr = Self(FileHandle.standardError)
+        
+        init(_ file: FileHandle) { self.file = file }
+        
+        let file: FileHandle
+        
+        func write(_ string: String) {
+            self.file.write( .init(string.utf8) )
+        }
+    }
+    
+    enum ToolError : Error {
+        case usage
+        case silent
+    }
+}
+
+extension TextOutputStream where Self == CommandLine.File {
+    static var stdout: CommandLine.File { get { CommandLine.File.stdout } set { } }
+    static var stderr: CommandLine.File { get { CommandLine.File.stderr } set { } }
+}
+
+func mainThrowing() throws {
+    let mode = CommandLine.arguments.dropFirst(1).first
+    let name = CommandLine.arguments.dropFirst(2).first
+    switch mode {
+    case "host": runAsHost(name: name)
+    case "client": runAsClient(name: name)
+    default: throw CommandLine.ToolError.usage
+    }
+}
+
+func main() -> Never {
+    do {
+        try mainThrowing()
+        exit(EXIT_SUCCESS)
+    } catch CommandLine.ToolError.usage {
+        print("usage: \(CommandLine.progName) host <name>", to: &.stderr)
+        print("       \(CommandLine.progName) client <name>", to: &.stderr)
+    } catch CommandLine.ToolError.silent {
+        // do nothing
+    } catch {
+        print("error: \(error)", to: &.stderr)
+    }
+    exit(EXIT_FAILURE)
+}
+
+**/
+
 
 Add in layout backport:
 // TODO: #warning("Create wrapping HStack that can specify the min and max number of items per row and bases on available space/proposed space to determine whether to break up or not.  Have layout that does vertical if not enough horizontal space (can use to flow layout on Apple Watch and tight space vs wider iPad spaces)")

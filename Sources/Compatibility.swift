@@ -8,7 +8,7 @@
 
 public enum Compatibility {
     /// The version of the Compatibility Library since cannot get directly from Package.swift.
-    public static let version: Version = "1.10.15"
+    public static let version: Version = "1.10.16"
 }
 
 @_exported import Foundation
@@ -125,6 +125,16 @@ canImport(Testing)
     watchOS 11+
     visionOS 2+
     SF Symbols 6.0
+ 
+ 2025 Swift 6.1 (March), Swift 6.2 (September)
+    iOS 26+
+    iPadOS 26+
+    macOS 26+
+    Mac Catalyst 26+
+    tvOS 26+
+    watchOS 26+
+    visionOS 26+
+    SF Symbols 7.0
 
  */
 // MARK: - Configuration
