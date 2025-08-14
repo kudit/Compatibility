@@ -31,6 +31,7 @@ public extension Double {
         return rounded == self
     }
     
+    #if canImport(Foundation)
     /// Creates a string version of this Double value without ".0" if this contains an integer number.  Otherwise, returns the normal value description.
     var withoutZeros: String {
         if self.isInteger {
@@ -50,7 +51,6 @@ public extension Double {
         return (self * divisor).rounded() / divisor
     }
     
-    
     @MainActor
     internal static let doubleTests: TestClosure = {
         let five = 5.doubleValue.doubleValue
@@ -67,10 +67,11 @@ public extension Double {
         try expect(pi.precision(5) == 3.14159)
         try expect(pi.withoutZeros == "\(pi)")
     }
+    #endif
 }
 
 // Testing is only supported with Swift 5.9+
-#if compiler(>=5.9)
+#if compiler(>=5.9) && canImport(Foundation)
 @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
 public extension Double {
     @MainActor

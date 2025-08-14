@@ -1,4 +1,4 @@
-#if canImport(SwiftUI) && compiler(>=5.9)
+#if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation)
 import SwiftUI
 // from https://www.sgade.de/blog/2023-02-28-swift-layout-overlapping-hstack/
 

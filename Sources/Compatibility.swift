@@ -8,10 +8,12 @@
 
 public enum Compatibility {
     /// The version of the Compatibility Library since cannot get directly from Package.swift.
-    public static let version: Version = "1.10.16"
+    public static let version: Version = "1.10.17"
 }
 
+#if canImport(Foundation)
 @_exported import Foundation
+#endif
 
 // NOTE: UNAVAILABLE to mark API as unavailabe for specific versions.
 //@available(*, unavailable, message: "use native function rather than backport?")
@@ -136,6 +138,9 @@ canImport(Testing)
     visionOS 26+
     SF Symbols 7.0
 
+ 
+ In Swift 6.2, Foundation is not available in WASM?
+ 
  */
 // MARK: - Configuration
 
@@ -249,7 +254,7 @@ extension FileManager {
 }
 #endif
 
-#if canImport(SwiftUI) && compiler(>=5.9)
+#if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation)
 import SwiftUI
 
 @available(iOS 14, macOS 11, tvOS 14, watchOS 7, *)

@@ -5,7 +5,7 @@
 //  Created by Ben Ku on 7/3/24.
 //
 
-#if !canImport(Combine)
+#if !canImport(Combine) || !canImport(Foundation)
 // Compatibility OperatingSystemVersion for Linux
 public struct OperatingSystemVersion : Sendable {
     /// MAJOR version when you make incompatible API changes
@@ -114,11 +114,17 @@ extension Version {
         }
         self = converted
     }
+    #if canImport(Foundation)
     public static let validCharacters = CharacterSet(charactersIn: "0123456789.")
+    #endif
     /// Create a version ignoring any text.  If a component contains non-numerics, it will force it to 0 and additional pieces (like 1.0.0.2) will be ignored.
     public init(forcing: String) {
         // TODO: See if there is a better/faster way of stripping characters
+        #if canImport(Foundation)
         let cleaned = forcing.replacingCharacters(in: Self.validCharacters.inverted, with: "")
+        #else
+        let cleaned = forcing
+        #endif
         let components = cleaned.components(separatedBy: ".")
         let major = Int(components.first ?? "0") ?? 0
         let minor: Int = components.count > 1 ? Int(components[1]) ?? 0 : 0
@@ -228,6 +234,7 @@ public extension Version {
         let b: Version = "2.0"
         let c: Version = "3.0.1"
         let array = [one, two, three, a, b, c]
+#if canImport(Foundation)
         let json = array.asJSON()
         let expected = """
 ["2.0","12.1","2.12.1","1.0","2.0","3.0.1"]
@@ -240,9 +247,10 @@ public extension Version {
             """
         let intDecoded = try [Version].init(fromJSON: intVersion)
         try expect(intDecoded.first == "5.3.10", "int json decoding failed.")
+#endif
     }
 
-#if compiler(>=5.9)
+#if compiler(>=5.9) && canImport(Foundation)
     @available(iOS 13, tvOS 13, watchOS 6, *)
     @MainActor
     static var tests: [Test] = [
@@ -293,7 +301,7 @@ extension [Version]: Swift.RawRepresentable {
 
 
 
-#if canImport(SwiftUI) && compiler(>=5.9)
+#if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation)
 // Don't know why this is necessary.  CustomStringConvertible should have covered this.
 import SwiftUI
 @available(iOS 13, tvOS 13, watchOS 6, *)

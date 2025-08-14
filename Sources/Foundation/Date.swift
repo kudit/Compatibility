@@ -19,6 +19,9 @@ import Darwin
 import Glibc
 #endif
 
+#if !canImport(Foundation)
+typealias TimeInterval = Double
+#else
 public extension Date {
     //    Legacy.  Use String constant instead.
     //static let MySQLTimestampFormat = "yyyy-MM-dd HH:mm:ss"
@@ -230,5 +233,6 @@ import SwiftUI
 #Preview("Tests") {
     TestsListView(tests: Date.tests)
 }
+#endif
 #endif
 #endif

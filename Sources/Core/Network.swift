@@ -4,6 +4,7 @@
 //
 //  Created by Ben Ku on 7/6/24.
 //
+#if canImport(Foundation)
 
 // Typealias needs to be initially part of another structure or throws compiler errors in Swift Playgrounds.
 public extension Compatibility {
@@ -281,5 +282,6 @@ import SwiftUI
 #Preview {
     TestsListView(tests: PostData.tests)
 }
+#endif
 #endif
 #endif

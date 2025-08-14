@@ -5,6 +5,7 @@
 //  Created by Ben Ku on 10/5/23.
 //
 
+#if canImport(Foundation)
 public class ParameterEncoder {
     public init() {}
     /// Encode an encodable item as a set of keyed parameters designed for a URL.  All values need to be custom string convertable to their value which will be URL encoded.  Returns a String with all the parameters ready to attach to a URL (not including the "?")
@@ -73,3 +74,4 @@ public extension URL {
         return ParameterDecoder().decodeDictionary(query)
     }
 }
+#endif

@@ -13,6 +13,7 @@
 //    import UIKit
 //#endif
 
+#if canImport(Foundation)
 public extension URL {
     var fileBasename: String {
         return self.deletingPathExtension().lastPathComponent
@@ -32,6 +33,9 @@ public extension URL {
             return self.path(percentEncoded: percentEncoded)
         }
 #endif
+        return backportPathLegacy(percentEncoded: percentEncoded)
+    }
+    func backportPathLegacy(percentEncoded: Bool = true) -> String {
         // Fallback on earlier versions & Linux
         var path = self.path
         // make sure this doesn't strip off the trailing slash
@@ -103,3 +107,4 @@ public extension URL {
     ]
 #endif
 }
+#endif

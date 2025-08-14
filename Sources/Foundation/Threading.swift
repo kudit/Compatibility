@@ -6,6 +6,7 @@
 //  Copyright © 2016 Kudit. All rights reserved.
 //
 
+#if canImport(Foundation)
 #if os(iOS) || os(macOS) || os(tvOS) || os(watchOS) || os(visionOS) || os(Linux) // Don't run on WASM or Android
 // Use built-in Thread and Dispatch
 #else // not supported on WASM or Android
@@ -43,6 +44,7 @@ struct DispatchQueue: Sendable {
     }
 }
 #endif
+
 
 func timeTolerance(start: TimeInterval, end: TimeInterval, expected: TimeInterval) throws {
     let timeElapsed = end - start
@@ -339,5 +341,6 @@ import SwiftUI
 #Preview("Tests") {
     TestsListView(tests: KuThreading.tests)
 }
+#endif
 #endif
 #endif

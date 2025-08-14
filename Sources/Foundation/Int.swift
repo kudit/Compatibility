@@ -60,26 +60,26 @@ internal let randomTests: TestClosure = {
 // MARK: - Ordinal display
 public extension Int {
     var ordinal: String {
+        #if canImport(Foundation)
         let ordinalFormatter = NumberFormatter()
         ordinalFormatter.numberStyle = .ordinal
         return ordinalFormatter.string(from: NSNumber(value: self)) ?? "\(self)th"
-        /* Old code:
-        get {
-            var suffix = "th"
-            switch self % 10 {
-            case 1:
-                suffix = "st"
-            case 2:
-                suffix = "nd"
-            case 3:
-                suffix = "rd"
-            default: ()
-            }
-            if 10 < (self % 100) && (self % 100) < 20 {
-                suffix = "th"
-            }
-            return String(self) + suffix
-        }*/
+        #else
+        var suffix = "th"
+        switch self % 10 {
+        case 1:
+            suffix = "st"
+        case 2:
+            suffix = "nd"
+        case 3:
+            suffix = "rd"
+        default: ()
+        }
+        if 10 < (self % 100) && (self % 100) < 20 {
+            suffix = "th"
+        }
+        return String(self) + suffix
+        #endif
     }
     internal static let ordinalTestMap = [
         0: "th",
@@ -155,6 +155,7 @@ public extension BinaryInteger {
         return byteString(.file)
     }
 #endif
+    #if canImport(Foundation)
     func byteString(_ countStyle: ByteCountFormatter.CountStyle) -> String {
         return ByteCountFormatter.string(fromByteCount: bytes, countStyle: countStyle)
     }
@@ -174,6 +175,7 @@ public extension BinaryInteger {
     func byteCount(_ countStyle: ByteCountFormatter.CountStyle) -> Double {
         return Double(byteParts(countStyle).count) ?? 0
     }
+    #endif
 }
 @MainActor
 internal let byteTests: TestClosure = {
@@ -193,6 +195,7 @@ internal let byteTests: TestClosure = {
     var failedMessages = [String]()
     var allPass = true
     
+    #if canImport(Foundation)
     let runTestsClosure: (ByteCountFormatter.CountStyle, [UInt64: String]) throws -> Void = { style, tests in
         for (count, expected) in tests {
             let parts = count.byteParts(style)
@@ -203,12 +206,13 @@ internal let byteTests: TestClosure = {
     }
     try runTestsClosure(.memory, memoryTests)
     try runTestsClosure(.file, fileTests)
+    #endif
 }
 
 // MARK: - Tests
 
-// Testing is only supported with Swift 5.9+
-#if compiler(>=5.9)
+// Testing is only supported with Swift 5.9+ and FoundationX
+#if compiler(>=5.9) && canImport(Foundation)
 @available(iOS 13, tvOS 13, watchOS 6, *)
 extension Int {
     @MainActor

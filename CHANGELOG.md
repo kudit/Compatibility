@@ -6,7 +6,9 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
-v1.10.16 8/11/2025 Added `presentationBackground()` to the demo.  Added `glassEffect()` backport.  Added `AdaptiveLayout` and `AStack` (test in material sheet).
+v1.10.17 8/13/2025 Fixed issues with WASM and Watch OS errors.  Added Backport.Material for bridging when Material is not available.  Added check for Foundation support where needed.  Threading and several other bits of functionality now require Foundation to use.  Several other pieces can still be used without Foundation. Added tests to bring test coverage to 56%.
+
+v1.10.16 8/11/2025 Added `presentationBackground()` to the demo.  Added `glassEffect()` backport.  Added `AdaptiveLayout` and `AStack` (test in material sheet). (Failed watchOS and WASM with Swift 6.2 beta)
 
 v1.10.15 6/11/2025 Addressed Thread Sendable and Dispatch issues by adding a fallback for WASM and Android.  **Supports all platforms including WASM and Android and passes all Swift Package Index Checks!**
 

@@ -31,6 +31,7 @@ public extension LosslessStringConvertible {
 }
 
 // Testing is only supported with Swift 5.9+
+#if canImport(Foundation)
 #if compiler(>=5.9)
 @available(iOS 13, tvOS 13, watchOS 6, *)
 extension CharacterSet {
@@ -108,6 +109,7 @@ public extension CharacterSet {
         return String(self.allCharacters)
     }
 }
+#endif
 
 // MARK: - HTML
 #if canImport(NSAttributedString)
@@ -141,7 +143,7 @@ public extension HTML {
         return cleaned
     }
     
-#if canImport(Combine) || canImport(NSAttributedString)
+#if (canImport(Foundation) && canImport(Combine)) || canImport(NSAttributedString)
     /// Generate an NSAttributedString from the HTML content enclosed
     var attributedString: NSAttributedString {
         let cleaned = self.cleaned
@@ -295,7 +297,7 @@ body {
     }
 }
 
-#if canImport(SwiftUI) && (canImport(Combine) || canImport(NSAttributedString)) && compiler(>=5.9)
+#if canImport(SwiftUI) && ((canImport(Combine) && canImport(Foundation)) || canImport(NSAttributedString)) && compiler(>=5.9)
 @available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
 #Preview("HTML") {
     ScrollView {
@@ -312,6 +314,7 @@ public extension String {
         let defaultString = String(string: nil, defaultValue: "default")
         try expect(Version(string: "a.b.c", defaultValue: "1.0.3") == "1.0.3")
         
+        #if canImport(Foundation)
         let urlCharactersAllowed = CharacterSet(charactersIn: "!$&\'()*+,-./0123456789:;=?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]_abcdefghijklmnopqrstuvwxyz~")
         let urlCharactersString = CharacterSet.urlAllowed.asString
         try expect(urlCharactersAllowed == CharacterSet.urlAllowed, "Mismatch in characters in urlAllowed character set.  Found: \(urlCharactersString), Expected: \(urlCharactersAllowed.asString)")
@@ -326,6 +329,7 @@ public extension String {
         let encoded = try ParameterEncoder().encode(dictionary) // may be in different order than original parameters.
         let dictionaryTwo = try? ParameterDecoder().decode([String:String].self, from: encoded)
         try expect(dictionaryTwo == dictionary, "expected `\(dictionary)` but got `\(String(describing: dictionaryTwo))`")
+        #endif
         // test for optional numeric ?? with String
         let opDouble: Double? = 2.34
         try expect("\(opDouble ?? "nil")" == "2.34")
@@ -333,7 +337,11 @@ public extension String {
 
     // MARK: - UUID Generation
     static func uuid() -> String {
+        #if canImport(Foundation)
         return UUID().uuidString
+        #else
+        return "UUIDFALLBACK" + Int.random(in: 0..<1_000_000).description
+        #endif
     }
     
     // MARK: - Introspection
@@ -397,7 +405,7 @@ public extension String {
     }
     
     // NOTE: NSDataDetector is not available on Linux!
-#if canImport(Combine)
+#if canImport(Combine) && canImport(Foundation)
     /// Helper for various data detector matches.
     /// Returns `true` iff the `String` matches the data detector type for the complete string.
     func matchesDataDetector(type: NSTextCheckingResult.CheckingType, scheme: String? = nil) -> Bool {
@@ -430,6 +438,7 @@ public extension String {
     }
 #endif
 
+    #if canImport(Foundation)
     /// Returns a URL if the String can be converted to URL.  `nil` otherwise.  If this is linux or don't have access to data detectors, will not validate the url other than URL creation validation.
     var asURL: URL? {
         // make sure data matches detector so "world.json" isn't seen as a valid URL.  must be fully qualified.
@@ -440,6 +449,7 @@ public extension String {
 #endif
         return URL(string: self)
     }
+    #endif
 
     /// Get last "path" component of a string (basically everything from the last `/` to the end)
     var lastPathComponent: String {
@@ -485,6 +495,7 @@ public extension String {
         try expect(!"1000".isPostIndustrialYear)
         try expect(!"3214".isPostIndustrialYear)
         try expect("1923".isPostIndustrialYear)
+        #if canImport(Foundation)
         try expect("\(Date.nowBackport.year)".isPostIndustrialYear)
         
         var test = "the/quick/brown/fix.txt"
@@ -555,12 +566,17 @@ public extension String {
         let dict = error.asDictionary()
         let roundTrip = ErrorTest(fromDictionary: dict!)
         try expect(error == roundTrip)
+#endif
     }
 
     // MARK: - Trimming
     /// Returns a new string made by removing whitespace from both ends of the `String`.
     var trimmed: String {
+        #if canImport(Foundation)
         return self.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+        #else
+        return self.trimmingCharacters(in: .init(charactersIn: " \t\n\r"))
+        #endif
     }
     /// Removes whitespace from both ends of the `String`.
     mutating func trim() {
@@ -609,8 +625,12 @@ public extension String {
     }
     /// Returns a new string made by removing from both ends of the `String` characters contained in a given string.
     func trimmingCharacters(in string: String) -> String {
+        #if canImport(Foundation)
         let badSet = CharacterSet(charactersIn: string)
         return self.trimmingCharacters(in: badSet)
+        #else
+        return self.trimming(string.characterStrings)
+        #endif
     }
     
     @MainActor
@@ -638,6 +658,7 @@ public extension String {
     
     
     // MARK: - Replacements
+    #if canImport(Foundation)
     func replacingCharacters(in range: NSRange, with string: String) -> String {
         return (self as NSString).replacingCharacters(in: range, with: string)
     }
@@ -680,7 +701,8 @@ public extension String {
     ) -> String {
         return self.components(separatedBy: characterSet).joined(separator: replacement)
     }
-    
+    #endif
+
     // MARK: - Condensing
     /// Collapse repeated occurrences of `string` with a single occurrance.  Ex: `"tooth".collapse("o") == "toth"`
     func collapse(_ string: String) -> String {
@@ -698,15 +720,21 @@ public extension String {
         // replace non-breaking space with normal space (seems to not be included in whitespaces)
         var returnString = self.replacingOccurrences(of: " ", with: " ");
         // replace whitespace characters with spaces
+        #if canImport(Foundation)
         returnString = returnString.replacingOccurrences(of: CharacterSet.whitespaces.characterStrings, with: " ")
         // replace newline characters with new lines
         returnString = returnString.replacingOccurrences(of: CharacterSet.newlines.characterStrings, with: "\n")
+        #else
+        returnString = returnString.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+        returnString = returnString.replacingOccurrences(of: "\\n+", with: "\n", options: .regularExpression)
+        #endif
         // collapse runs of spaces
         returnString = returnString.collapse(" ")
         // collapse runs of line breaks with a single line break
         returnString = returnString.collapse("\n")
         return returnString.trimmed
     }
+    #if canImport(Foundation)
     // - (NSString *)
     //     stringByRemovingCharactersInString:(NSString *)target
     /// Returns a string with characters in the `characters` string removed.
@@ -730,6 +758,7 @@ public extension String {
         let badCharacterSet = whitelistCharacterSet.inverted
         return self.components(separatedBy: badCharacterSet).joined(separator: "")
     }
+    #endif
     /// string with all duplicate characters removed
     var duplicateCharactersRemoved: String {
         return self.characterStrings.unique.joined(separator: "")
@@ -737,7 +766,11 @@ public extension String {
 
     /// remove all characters in `.whitespacesAndNewLines`
     var whitespaceStripped: String {
+        #if canImport(Foundation)
         replacingCharacters(in: .whitespacesAndNewlines, with: "")
+        #else
+        self.replacingOccurrences(of: "[\\s\\n]", with: "", options: .regularExpression)
+        #endif
     }
 
     // MARK: - Transformed
@@ -787,9 +820,13 @@ public extension String {
         // (probably unnecessary due to the ascii encoding above)
         normalized = normalized.decomposedStringWithCanonicalMapping
         // strip appostrophes
-        normalized = normalized.replacingCharacters(in: "'", with: "")
+        normalized = normalized.replacingOccurrences(of: "'", with: "")
         // replace non-alpha-numeric characters with spaces
+        #if canImport(Foundation)
         normalized = normalized.replacingCharacters(in: CharacterSet.alphanumerics.inverted, with: " ")
+        #else
+        normalized = normalized.replacingOccurrences(of: "[^a-zA-Z0-9 ]", with: " ", options: .regularExpression)
+        #endif
         // lowercase string
         normalized = normalized.lowercased()
         
@@ -848,6 +885,7 @@ public extension String {
     }
     
     // MARK: - Encoded
+#if canImport(Foundation)
     /// URL encoded (% encoded) string or the `String` "`COULD_NOT_ENCODE`" if the `String` is not valid Unicode.
     var urlEncoded: String {
         // http://stackoverflow.com/a/33558934/897883
@@ -860,6 +898,7 @@ public extension String {
     var fileSafe: String {
         return self.replacingCharacters(in: "/=\\?%*|'\"<>:", with:"_")
     }
+#endif
 #if !DEBUG
     /// get the basename of the file without the extension (returns entire string if no extension)
     @available(*, deprecated, message: "use fileBasename method on NSURL") // TODO: see where used and adapt.
@@ -886,6 +925,7 @@ public extension String {
         try expect(tags.repeated(2) == "<p>Hello</p><p>Hello</p>", "Unexpected repeated string: \(tags.repeated(2))")
         try expect(tags.banana.contains("Banana-fana fo-f<p>Hello</p>"), "Unexpected banana string: \(tags.banana)")
         let unsafeFilename = "My /=\\?%*|'\"<>: File"
+        #if canImport(Foundation)
         let safeFileName = unsafeFilename.fileSafe
         try expect(safeFileName == "My ____________ File", "Unexpected safe filename: \(safeFileName)")
         let urlEncodedFilename = unsafeFilename.urlEncoded
@@ -895,10 +935,14 @@ public extension String {
         let webURL = URL(string: urlString)
         try expect(webURL != nil, "String to URL: \(String(describing: webURL))")
         let webPath = webURL?.backportPath(percentEncoded: false)
+        let webPathEncoded = webURL?.backportPath()
+        let webPathLegacy = webURL?.backportPathLegacy(percentEncoded: false)
+        try expect(webPath == webPathLegacy)
+        let webPathLegacyEncoded = webURL?.backportPathLegacy()
+        try expect(webPathEncoded == webPathLegacyEncoded)
         try expect(webPath == "/pd+foo bar.php", "Unexpected path: \(String(describing: webPath))")
         let urlEncoded = webPath?.urlEncoded
         try expect(urlEncoded == "%2Fpd%2Bfoo%20bar.php", "Unexpected url encoding: \(String(describing: urlEncoded))")
-        let webPathEncoded = webURL?.backportPath()
         try expect(webPathEncoded == "/pd+foo%20bar.php", "Unexpected path: \(String(describing: webPathEncoded))")
         let path = "file:///Volumes/Inception Drive/InMotion Backups/2020-01-01 something".addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)!
         let url = URL(string: path)
@@ -908,6 +952,7 @@ public extension String {
         try expect(directory == "/Volumes/Inception Drive/InMotion Backups/", "Expected path without encoding: \(String(describing: directory))")
         let encodedPath = url?.backportPath()
         try expect(encodedPath == "/Volumes/Inception%20Drive/InMotion%20Backups/2020-01-01%20something", "Expected encoded path: \(String(describing: encodedPath))")
+        #endif
     }
 
     // MARK: - HTML Tools
@@ -921,6 +966,7 @@ public extension String {
     }
     
     // MARK: - Parsing
+    #if canImport(Foundation)
     /// Fix to avoid casting String to NSString
     func substring(with range: NSRange) -> String { // TODO: figure out how to replace this...
         return (self as NSString).substring(with: range)
@@ -930,6 +976,7 @@ public extension String {
         let extraction = TEST_STRING.substring(with: NSRange(7...12))
         try expect(extraction == "string" , String(describing:extraction))
     }
+    #endif
     
     /// Parses out a substring from the first occurrence of `start` to the next occurrence of `end`.
     /// If `start` or `end` are `nil`, will parse from the beginning of the `String` or to the end of the `String`.
@@ -1048,7 +1095,7 @@ public extension String {
 #endif
     
 // Testing is only supported with Swift 5.9+
-#if compiler(>=5.9)
+#if compiler(>=5.9) && canImport(Foundation)
     @available(iOS 13, tvOS 13, watchOS 6, *)
     @MainActor
     static let tests = [
@@ -1160,7 +1207,7 @@ extension String {
     var containsEmoji: Bool { contains { $0.isEmoji } }
 }
 
-#if canImport(SwiftUI) && compiler(>=5.9)
+#if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation)
 import SwiftUI
 @available(iOS 13, tvOS 13, watchOS 6, *)
 #Preview("Tests") {

@@ -17,10 +17,15 @@ public func expect(_ condition: Bool, _ debugString: String? = nil, file: String
         if let debugString {
             throw CustomError(debugString)
         } else {
+#if canImport(Foundation)
+            let isMainThread = Thread.isMainThread
+#else
+            let isMainThread = true
+#endif
             let context = Compatibility.settings.debugFormat(
                 "",
                 .OFF,
-                Thread.isMainThread,
+                isMainThread,
                 Compatibility.settings.debugEmojiSupported,
                 true,
                 true,
@@ -36,11 +41,17 @@ public func expect(_ condition: Bool, _ debugString: String? = nil, file: String
 /// Suppress debug messages during this execution block.  Allows fetching the debug string as normal.
 public func debugSuppress(_ block: () throws -> Void) rethrows {
     let log = Compatibility.settings.debugLog
+    #if canImport(Foundation)
     let suppressThread = Thread.current // restrict the silencing to this thread/closure assuming no background tasks are doing printing
+    #endif
     Compatibility.settings.debugLog = { message in
+        #if canImport(Foundation)
         if Thread.current != suppressThread {
             log(message) // do normal logging
         }
+        #else
+        log(message)
+        #endif
     }
     defer {
         Compatibility.settings.debugLog = log
@@ -60,8 +71,8 @@ public func debugSuppress(_ block: () async throws -> Void) async rethrows {
     try await block()
 }
 
-// Testing is only supported with Swift 5.9+
-#if compiler(>=5.9)
+// Testing is only supported with Swift 5.9+ and requires FoundationX
+#if compiler(>=5.9) && canImport(Foundation)
 // Test Handlers
 @available(iOS 13, tvOS 13, watchOS 6, *) // due to ObservableObject
 @MainActor
@@ -154,6 +165,7 @@ public extension Test {
     }
 }
 
+#if canImport(Foundation)
 @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
 public extension Test {
     static let namedTests: OrderedDictionary = {
@@ -179,6 +191,7 @@ public extension Test {
         return tests
     }()
 }
+#endif
 
 #if canImport(SwiftUI)
 import SwiftUI

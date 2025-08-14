@@ -1,6 +1,6 @@
 // This has been a godsend!  Backport instructions https://davedelong.com/blog/2021/10/09/simplifying-backwards-compatibility-in-swift/
 
-#if canImport(SwiftUI) && compiler(>=5.9)
+#if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation)
 import SwiftUI
 
 @MainActor // for swift6 compliance and since this is SwiftUI, should be @MainActor anyways.
@@ -809,6 +809,57 @@ public extension Backport where Content: View {
 import _StoreKit_SwiftUI
 #endif
 
+public extension Backport {
+    enum MaterialEnum: Sendable {
+        /// A material that's somewhat translucent.
+        case regular
+
+        /// A material that's more opaque than translucent.
+        case thick
+
+        /// A material that's more translucent than opaque.
+        case thin
+
+        /// A mostly translucent material.
+        case ultraThin
+
+        /// A mostly opaque material.
+        case ultraThick
+
+        // For some reason, they have both .regular and .regularMaterial shape styles so include both.
+        /// A material that's somewhat translucent.
+        case regularMaterial
+        
+        /// A material that's more opaque than translucent.
+        case thickMaterial
+        
+        /// A material that's more translucent than opaque.
+        case thinMaterial
+        
+        /// A mostly translucent material.
+        case ultraThinMaterial
+        
+        /// A mostly opaque material.
+        case ultraThickMaterial
+        
+        @available(iOS 15, macOS 12, tvOS 15, watchOS 10, *)
+        var swiftUIMaterial: SwiftUI.Material {
+            switch self {
+            case .regular: return .regular
+            case .thick: return .thick
+            case .thin: return .thin
+            case .ultraThin: return .ultraThin
+            case .ultraThick: return .ultraThick
+            case .regularMaterial: return .regularMaterial
+            case .thickMaterial: return .thickMaterial
+            case .thinMaterial: return .thinMaterial
+            case .ultraThinMaterial: return .ultraThinMaterial
+            case .ultraThickMaterial: return .ultraThickMaterial
+            }
+        }
+    }
+}
+
 @available(iOS 13, tvOS 13, watchOS 6, *)
 public extension Backport where Content: View {
     /// Sets the presentation background of the enclosing sheet using a shape
@@ -855,7 +906,18 @@ public extension Backport where Content: View {
             }
         }
     }
-    
+    func presentationBackground(_ style: MaterialEnum) -> some View {
+        Group {
+            if #available(iOS 16.4, macOS 13.3, tvOS 16.4, watchOS 10, *) {
+                content.presentationBackground(style.swiftUIMaterial)
+            } else {
+                // Fallback on earlier versions
+                content // ignore if older and unsupported - likely only on watchOS < 10
+            }
+        }
+    }
+
+
     /// The criteria that determines when an animation is considered finished.
     enum AnimationCompletionCriteria : Sendable {
         

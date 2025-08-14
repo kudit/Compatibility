@@ -1,5 +1,6 @@
 // MARK: - JSON management (simplified)
 
+#if canImport(Foundation)
 public extension Encodable {
     /**
      Use to output the encodable object as a JSON representation.
@@ -43,3 +44,4 @@ public extension Decodable {
 
 // TODO: Add tests!!
 //Swift Kudit Frameworks: Create tests for Json optional including test for bad data types bad Json and compatibility
+#endif

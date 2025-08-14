@@ -5,7 +5,7 @@
 //  Created by Ben Ku on 7/26/25.
 //
 
-#if canImport(SwiftUI) && compiler(>=5.9)
+#if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation)
 
 import SwiftUI
 

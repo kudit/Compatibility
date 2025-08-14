@@ -211,7 +211,7 @@ public extension Collection {
     }
 }
 // Testing is only supported with Swift 5.9+
-#if compiler(>=5.9)
+#if compiler(>=5.9) && canImport(Foundation)
 @available(iOS 13, tvOS 13, watchOS 6, *)
 @MainActor
 let collectionTests: [Test] = [
@@ -281,7 +281,7 @@ public extension Collection where Element: DoubleConvertible & AdditiveArithmeti
     }
 }
 
-#if canImport(SwiftUI) && compiler(>=5.9)
+#if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation)
 import SwiftUI
 @available(iOS 13, tvOS 13, watchOS 6, *)
 #Preview("Tests") {

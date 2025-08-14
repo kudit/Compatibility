@@ -16,7 +16,7 @@ extension String {
     public static let unknownAppIdentifier = "com.unknown.unknown"
 }
 
-
+#if canImport(Foundation)
 @available(iOS 13, tvOS 13, watchOS 6, *)
 @MainActor
 public class Application: ObservableObject { // cannot automatically conform to CustomStringConvertible since it's actor-isolated...
@@ -406,3 +406,4 @@ Compatibility Version: \(Compatibility.version)
     ]
 #endif
 }
+#endif

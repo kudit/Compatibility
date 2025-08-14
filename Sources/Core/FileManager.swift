@@ -5,6 +5,7 @@
 //  Created by Ben Ku on 8/12/22.
 //
 
+#if canImport(Foundation)
 public extension FileManager {
     enum FileError: Error, Sendable {
         case noDirectorySpecified
@@ -24,4 +25,4 @@ public extension FileManager {
         return files
     }
 }
-
+#endif

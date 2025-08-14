@@ -9,6 +9,7 @@
 // Note: Needed to support Data values since JSON doesn't support Data natively
 // TODO: make more generic so works with Arrays: /// Converts a codable object to a foundational representation for storage in UserDefaults or UbiquitousKeyValueStores.
 
+#if canImport(Foundation)
 public class DictionaryEncoder {
     private let encoder = JSONEncoder()
     
@@ -114,3 +115,4 @@ public extension Decodable {
  let decodedComputer = try! DictionaryDecoder().decode(Computer.self, from: dictionary)
  
  */
+#endif

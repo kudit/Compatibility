@@ -4,11 +4,12 @@
 public struct CompatibilityConfiguration: PropertyIterable {
     /// Override to change the which debug levels are output.  This level and higher (more important) will be output.
     public var debugLevelCurrent: DebugLevel = {
+        #if canImport(Foundation)
         if #available(iOS 13, tvOS 13, watchOS 6, *) {
             return Application.isDebug ? .DEBUG : .WARNING
-        } else {
-            return .DEBUG
         }
+        #endif
+        return .DEBUG
     }()
     
     /// Override to change the level of debug statments without a level parameter.
@@ -37,11 +38,19 @@ public struct CompatibilityConfiguration: PropertyIterable {
         let message = "\(emojiSupported ? level.emoji : level.symbol) \(message)"
         var timestamp = ""
         if includeTimestamp {
+            #if canImport(Foundation)
             timestamp = "\(Date.nowBackport.mysqlDateTime): "
+            #else
+            timestamp = "UNABLE TO GET TIMESTAMP WITHOUT Foundation.Date: "
+            #endif
         }
         if includeContext {
             let threadInfo = isMainThread ? "" : "^"
+            #if canImport(Foundation)
             let simplerFile = URL(fileURLWithPath: file).lastPathComponent
+            #else
+            let simplerFile = "\(file)".components(separatedBy: "/").last ?? "UNABLE TO GET LAST PATH COMPONENT WITHOUT Foundation.URL"
+            #endif
             let simplerFunction = function.replacingOccurrences(of: "__preview__", with: "_p_")
             return "\(timestamp)\(simplerFile)(\(line)) : \(simplerFunction)\(threadInfo)\(level == .OFF ? "" : "\n\(message)")"
         } else {
@@ -119,6 +128,7 @@ extension CustomError: CustomStringConvertible {
         message
     }
 }
+#if canImport(Foundation)
 extension CustomError: LocalizedError {
     public var localizedDescription: String {
         message
@@ -127,6 +137,7 @@ extension CustomError: LocalizedError {
         message
     }
 }
+#endif
 
 public typealias DebugLevels = Set<DebugLevel>
 public extension DebugLevels {
@@ -258,7 +269,11 @@ public extension Compatibility {
      */
     @discardableResult
     static func debug(_ message: Any, level: DebugLevel = .defaultLevel, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) -> String {
+        #if canImport(Foundation)
         let isMainThread = Thread.isMainThread // capture before we switch to main thread for printing
+        #else
+        let isMainThread = true
+        #endif
         let message = String(describing: message) // convert to sendable item to avoid any thread issues.
         
         guard DebugLevel.isAtLeast(level) else { // check current debug level from settings
@@ -355,7 +370,11 @@ Normal output: \(defaultOutput)
 """
         }
         
+        #if canImport(Foundation)
         let timestamp = Date.nowBackport.mysqlDateTime
+        #else
+        let timestamp = "UNABLE TO GET TIMESTAMP WITHOUT Foundation.Date"
+        #endif
         let debugText = debug("Test return output")
                 
         try expect(debugText.contains("!"), "expected debug warning symbol to be ! but found \(debugText)")
@@ -392,10 +411,12 @@ Normal output: \(defaultOutput)
             try expect(level.description == "\(level)")
         }
     }
+    #if canImport(Foundation)
     @MainActor
     static let tests = [
         Test("debug configuration tests", testDebugConfig),
         Test("debug tests", testDebug),
     ]
+    #endif
 }
 #endif

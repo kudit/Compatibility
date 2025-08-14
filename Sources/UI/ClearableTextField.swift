@@ -4,7 +4,7 @@
 //
 //  Created by Ben Ku on 7/30/24.
 //
-#if canImport(SwiftUI) && canImport(Combine) && compiler(>=5.9)
+#if canImport(SwiftUI) && canImport(Combine) && compiler(>=5.9) && canImport(Foundation)
 
 import SwiftUI
 import Combine

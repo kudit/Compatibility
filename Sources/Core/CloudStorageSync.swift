@@ -5,7 +5,7 @@
 //  Created by Tom Lokhorst on 2020-07-05.
 //
 
-#if canImport(Combine) && compiler(>=5.9)
+#if canImport(Combine) && compiler(>=5.9) && canImport(Foundation)
 import Combine
 #if canImport(UIKit)
 import UIKit

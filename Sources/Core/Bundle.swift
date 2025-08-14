@@ -6,6 +6,7 @@
 //  Copyright © 2016 Kudit. All rights reserved.
 //
 
+#if canImport(Foundation)
 // get current version:
 // Bundle.main.version
 public extension Bundle {
@@ -94,3 +95,4 @@ public extension String {
         return .defaultAppIconName
     }
 }
+#endif

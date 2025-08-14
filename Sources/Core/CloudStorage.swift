@@ -5,7 +5,7 @@
 //  Created by Tom Lokhorst on 2020-07-05.
 //
 
-#if canImport(SwiftUI) && canImport(Combine) && compiler(>=5.9)
+#if canImport(SwiftUI) && canImport(Combine) && compiler(>=5.9) && canImport(Foundation)
 import SwiftUI
 import Combine
 
@@ -24,11 +24,9 @@ private let sync = CloudStorageSync.shared
         nonmutating set { object.value = newValue }
     }
 
-    #if canImport(SwiftUI)
     public var projectedValue: Binding<Value> {
         Binding { object.value } set: { object.value = $0 }
     }
-    #endif
 
     public init(keyName key: String, syncGet: @escaping () -> Value, syncSet: @escaping (Value) -> Void) {
         self.object = CloudStorageObject(key: key, syncGet: syncGet, syncSet: syncSet)
