@@ -809,6 +809,104 @@ public extension Backport where Content: View {
 import _StoreKit_SwiftUI
 #endif
 
+// MARK: - Glass effects
+@available(iOS 13, tvOS 13, watchOS 6, *)
+public struct BackportGlass : Equatable, Sendable {
+    var color: Color?
+    var isInteractive: Bool?
+
+    /// The regular variant of glass.
+    public static var regular: BackportGlass = BackportGlass()
+
+    /// Returns a copy of the glass with the provided tint color.
+    public func tint(_ color: Color?) -> BackportGlass {
+        var copy = self
+        copy.color = color
+        return copy
+    }
+
+    /// Returns a copy of the glass configured to be interactive.
+    public func interactive(_ isEnabled: Bool = true) -> BackportGlass {
+        var copy = self
+        copy.isInteractive = isEnabled
+        return copy
+    }
+
+    /// Returns a Boolean value indicating whether two values are equal.
+    ///
+    /// Equality is the inverse of inequality. For any values `a` and `b`,
+    /// `a == b` implies that `a != b` is `false`.
+    ///
+    /// - Parameters:
+    ///   - lhs: A value to compare.
+    ///   - rhs: Another value to compare.
+    public static func == (a: BackportGlass, b: BackportGlass) -> Bool {
+        return a.color == b.color && a.isInteractive == b.isInteractive
+    }
+    
+#if compiler(>=6.2)
+    @available(iOS 26, macOS 26, tvOS 26, watchOS 26, *)
+    public var modernGlass: SwiftUI.Glass {
+        if self == .regular {
+            return .regular
+        }
+        var modern = SwiftUI.Glass.regular
+        if let color {
+            modern = modern.tint(color)
+        }
+        if let isInteractive {
+            modern = modern.interactive(isInteractive)
+        }
+        return modern
+    }
+#endif
+}
+
+@available(iOS 13, tvOS 13, watchOS 6, *)
+public extension Backport where Content: View {
+    /// Applies a glass effect to this view.
+    ///
+    /// When you use a glass effect, the platform:
+    ///   - Renders a shape anchored behind this view filled with
+    ///     the physical glass material
+    ///   - Applies the foreground effects of the glass over this view.
+    ///
+    /// For example, you could add a glass effect to a ``Label``:
+    ///
+    ///     Label("Flag", systemImage: "flag.fill")
+    ///         .padding()
+    ///         .glassEffect()
+    ///
+    /// SwiftUI uses the ``Glass/regular`` variant by default along with
+    /// a ``Capsule`` shape.
+    ///
+    /// SwiftUI anchors the glass to the view's bounds. For the example
+    /// above, the physical glass material fills the entirety of the label's
+    /// frame, which includes the padding.
+    ///
+    /// You typically use this modifier with a ``GlassEffectContainer``
+    /// to combine multiple glass shapes into a single shape that
+    /// can morph shapes into one another.
+    func glassEffect(_ glass: BackportGlass = .regular, in shape: some Shape = .capsule, isEnabled: Bool = true) -> some View {
+        Group {
+#if !os(visionOS)
+            if #available(iOS 26, macOS 26, tvOS 26, watchOS 26, *) {
+#if compiler(>=6.2)
+                content.glassEffect(glass.modernGlass, in: shape, isEnabled: isEnabled)
+#else
+                content.backgroundMaterial()
+#endif
+            } else {
+                content.backgroundMaterial()
+            }
+#else
+            content
+#endif
+        }
+    }
+}
+
+// MARK: - Materials
 public extension Backport {
     enum MaterialEnum: Sendable {
         /// A material that's somewhat translucent.
@@ -1068,6 +1166,7 @@ public extension Backport where Content: View {
     }
 }
 
+// MARK: - Toolbar Placement & Status Bar
 @available(iOS 14, macOS 11, tvOS 14, watchOS 7, *)
 public extension ToolbarItemPlacement {
     @MainActor // for swift6 compliance and since this is SwiftUI, should be @MainActor anyways.
@@ -1089,6 +1188,21 @@ public extension ToolbarItemPlacement {
         }
 #endif
     }()
+}
+
+@available(iOS 13, tvOS 13, watchOS 6, *)
+public extension Backport where Content: View {
+    /// Sets the visibility of the status bar.
+    ///
+    /// - Parameter hidden: A Boolean value that indicates whether to hide the
+    ///   status bar.
+    func statusBarHidden(_ hidden: Bool = true) -> some View {
+#if os(iOS)
+        content.statusBarHidden(hidden)
+#else
+        content // do nothing
+#endif
+    }
 }
 
 

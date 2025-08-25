@@ -274,19 +274,19 @@ public struct FillAndStrokeTest: View {
 
 
 // MARK: - Material
-@available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
+@available(iOS 13, tvOS 13, watchOS 6, *)
 public extension View {
     func backgroundMaterial() -> some View {
         self
             .padding()
-            .background {
-                if #available(watchOS 10, *) {
+            .backport.background {
+                if #available(iOS 15, macOS 12, tvOS 15, watchOS 10, *) {
                     RoundedRectangle(cornerRadius: 20)
                         .fill(.regularMaterial)
                 } else {
                     // Fallback on earlier versions
                     RoundedRectangle(cornerRadius: 20)
-                        .fill(.gray)
+                        .fill(.gray.opacity(0.5))
                 }
             }
     }
@@ -299,11 +299,16 @@ public struct MaterialTestView: View {
     public var body: some View {
         ZStack {
             Color.clear
-            Button {
-                showSheet = true
-            } label: {
-                Text("Test Material View")
+            HStack {
+                Text("Material")
                     .backgroundMaterial()
+                Button {
+                    showSheet = true
+                } label: {
+                    Text("Glass")
+                        .padding()
+                }
+                .backport.glassEffect(.regular.interactive())
             }
         }.background(.conicGradient(colors: [.red, .green, .blue], center: .center))
             .sheet(isPresented: $showSheet) {

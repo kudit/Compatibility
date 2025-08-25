@@ -8,7 +8,7 @@
 
 public enum Compatibility {
     /// The version of the Compatibility Library since cannot get directly from Package.swift.
-    public static let version: Version = "1.10.17"
+    public static let version: Version = "1.10.18"
 }
 
 #if canImport(Foundation)
@@ -127,6 +127,9 @@ canImport(Testing)
     watchOS 11+
     visionOS 2+
     SF Symbols 6.0
+    Xcode 16
+ 
+ Swift Playgrounds 4.6.4 - Swift 6.0 Compiler
  
  2025 Swift 6.1 (March), Swift 6.2 (September)
     iOS 26+
@@ -137,6 +140,7 @@ canImport(Testing)
     watchOS 26+
     visionOS 26+
     SF Symbols 7.0
+    Xcode 26
 
  
  In Swift 6.2, Foundation is not available in WASM?
@@ -323,6 +327,7 @@ public struct CompatibilityEnvironmentTestView: View {
             }
             Section("Environment") {
                 Backport.LabeledContent("Swift Version:", value: Application.swiftVersion)
+                Backport.LabeledContent("Compiler Version:", value: Application.compilerVersion)
                 TestCheck("isSimulator", Application.isSimulator)
                     .backport.focusable(true) // to allow scrolling in tvOS
                 TestCheck("isPlayground", Application.isPlayground)

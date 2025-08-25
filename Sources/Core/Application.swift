@@ -28,6 +28,47 @@ public class Application: ObservableObject { // cannot automatically conform to 
     public static let isDebug = _isDebugAssertConfiguration()
     
     /// Returns the version number of Swift being used to compile
+    public static var compilerVersion: String {
+#if compiler(>=9.0)
+        "X.x"
+#elseif compiler(>=8.0)
+        "8.x"
+#elseif compiler(>=7.0)
+        "7.x"
+#elseif compiler(>=6.3)
+        "6.x"
+#elseif compiler(>=6.2)
+        "6.2"
+#elseif compiler(>=6.1)
+        "6.1"
+#elseif compiler(>=6.0)
+        "6.0"
+#elseif compiler(>=5.12)
+        "5.12"
+#elseif compiler(>=5.11)
+        "5.11"
+#elseif compiler(>=5.10)
+        "5.10"
+#elseif compiler(>=5.9)
+        "5.9"
+#elseif compiler(>=5.8)
+        "5.8"
+#elseif compiler(>=5.7)
+        "5.7"
+#elseif compiler(>=4.0)
+        "4.x"
+#elseif compiler(>=3.0)
+        "3.x"
+#elseif compiler(>=2.0)
+        "2.x"
+#elseif compiler(>=1.0)
+        "1.x"
+#else
+        "Unsupported"
+#endif
+    }
+
+    /// Returns the version number of Swift being used to run?
     public static var swiftVersion: String {
 #if swift(>=9.0)
         "X.x"
@@ -365,6 +406,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
         // so we can disable on simple apps and still do tracking without issues.
         description += "\niCloud Status: \(Application.iCloudStatus.description)"
         description += "\nSwift Version: \(Application.swiftVersion)"
+        description += "\nCompiler Version: \(Application.compilerVersion)"
         description += "\nCompatibility Version: \(Compatibility.version)"
         return description
     }
@@ -394,6 +436,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
 Identifier: \(Application.main.appIdentifier)
 iCloud Status: \(Application.iCloudStatus.description)
 Swift Version: \(Application.swiftVersion)
+Compiler Version: \(Application.compilerVersion)
 Compatibility Version: \(Compatibility.version)
 """
         try expect(Application.main.description == expectedDescription, "Unexpected app description: \(Application.main.description) (expected: \(expectedDescription))")
