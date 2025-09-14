@@ -6,6 +6,8 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
+v1.11.1 9/14/2025 Fixed issue with default value string optional being too generic and conflicting with default String implementation.
+
 v1.11.0 9/14/2025 Removed more functions and added fallback for when Foundation is not available (like WASM).  Fixed `.glassEffect()` backport.  Made default value string optional more generic to account for Character? or Numeric?.  Added `prettyJSON` output convenience var.   Added compact version of Version.  Upgraded PropertyIterable to allow for fetching KeyPaths and now when fetching properites, they are an OrderedDictionary rather than an unordered one.  Added `MixedTypeField` for decoding mixed type JSON arrays.  Added tests to bring test coverage to 57%.
 
 v1.10.18 8/25/2025 Apparently forgot to actually add `glassEffect()` backport in v1.10.16. Also added `statusBarHidden()` backport since unavailable in tvOS, etc.  Enabled `backgroundMaterial()` in iOS 13 and adjusted fallback behavior.  Added iOS 26 icon (doesn't work?).  Added `compilerVersion` since this reports differently from `swiftVersion` apparently.

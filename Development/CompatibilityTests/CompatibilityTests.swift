@@ -89,7 +89,7 @@ struct CompatibilityTests {
         let range = json.range(of: "Hello")!
         let foo = json.replacingCharacters(in: range, with: "Goodbye")
         #expect(foo.contains("Goodbye world"))
-        
+                
         let optional: String? = nil
         let bar = Version(string: optional, defaultValue: "1.0")
         #expect(bar == "1.0")

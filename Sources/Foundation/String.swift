@@ -1147,7 +1147,19 @@ public extension String {
 }
 
 // TODO: See where we can use @autoclosure in Kudit Frameworks to delay execution (particularly in test frameworks!)
-public extension Optional { //  where Wrapped == any Numeric Wrapped == Character
+public protocol Defaultable {}
+extension Character: Defaultable {} // necessary to not conflict with default implementation for Strings
+extension Optional where Wrapped == any Numeric {
+    /// Support displaying string as an alternative in nil coalescing for inline \(optionalNum ?? "String description of nil")
+    static func ?? (optional: Wrapped?, defaultValue: @autoclosure () -> String) -> String {
+        if let optional {
+            return String(describing: optional)
+        } else {
+            return defaultValue()
+        }
+    }
+}
+public extension Optional where Wrapped == Defaultable { //  where Wrapped == any Numeric Wrapped == Character
     /// Support displaying string as an alternative in nil coalescing for inline \(optionalNum ?? "String description of nil")
     static func ?? (optional: Wrapped?, defaultValue: @autoclosure () -> String) -> String {
         if let optional {
