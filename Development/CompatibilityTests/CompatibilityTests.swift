@@ -29,6 +29,7 @@ struct CompatibilityTests {
         #expect(e == .notSupported)
     }
     
+#if canImport(Foundation)
     @Test
     @MainActor
     @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
@@ -39,6 +40,7 @@ struct CompatibilityTests {
         #expect(Application.main.appIdentifier == "com.apple.dt.xctest.tool")
         #expect(Application.main.version == "16.0")
     }
+#endif
     
     @Test
     func testIntrospection() {
@@ -51,9 +53,57 @@ struct CompatibilityTests {
         }
         
         let config = Compatibility.settings
+        let propertyKeys = config.allProperties.keys
         for (key, value) in config.allProperties {
             #expect(String(describing: config.allProperties[key]).contains(String(describing: value)), "property \(key) mismatch (should never happen)")
         }
+        
+        let pathKeys = config.allKeyPaths.keys
+        #expect(propertyKeys == pathKeys)
+        for (key, path) in config.allKeyPaths {
+            guard let propertyValue = config.allProperties[key] else {
+                #expect(key == "BAD")
+                continue
+            }
+            let pathValue = config[keyPath: path]
+//            debug("Key: \(key)\n\tProperty: \(String(describing: propertyValue))\n\tPath: \(String(describing: pathValue))")
+            // testing strings since function values might be problematic or not exactly equal.
+            #expect(areEqual(String(describing: propertyValue), String(describing: pathValue)))
+        }
+    }
+        
+#if canImport(Foundation)
+    @Test func testEncoding() async throws {
+        let json = """
+["Hello world", true, false, 1, 2, -2, 2.1, 23.1, 3.14159265, null, {
+    "string": "Hello world",
+    "boolTrue" : true,
+    "boolFalse": false,
+    "int1": 1,
+    "int2" : 2,
+    "intNeg": -2,
+    "double": 2.1,
+    "pi"   : 3.14159265,
+    "null" : null}, [1,2,"skip a few",99, 100.3]]
+"""
+        let range = json.range(of: "Hello")!
+        let foo = json.replacingCharacters(in: range, with: "Goodbye")
+        #expect(foo.contains("Goodbye world"))
+        
+        let optional: String? = nil
+        let bar = Version(string: optional, defaultValue: "1.0")
+        #expect(bar == "1.0")
+
+        let decoded = try [MixedTypeField].init(fromJSON: json)
+        #expect(decoded[0].stringValue == "Hello world")
+        #expect(decoded[2].boolValue == false)
+        #expect(decoded[5].intValue == -2)
+        #expect(decoded[10].dictionaryValue?["double"]?.doubleValue == 2.1)
+        #expect(decoded[11].arrayValue?.count == 5)
+        let pretty = decoded.prettyJSON
+        let redecoded = try [MixedTypeField].init(fromJSON: pretty)
+        #expect(redecoded.prettyJSON == pretty)
+//        debug(pretty)
     }
     
     @Test
@@ -109,6 +159,17 @@ struct CompatibilityTests {
         
         Compatibility.settings.debugLog("hello \(Compatibility.version)")
         
+        let html = "This is <b>bold</b> and this is <i>italic</i>."
+        let markdownString = "This is **bold** and this is *italic*."
+        let attributedString = try? AttributedString(markdown: markdownString)
+        #expect(AttributedString(html.attributedString) != attributedString) // not exact
+        
+        // Check vowels.
+        #expect("foo".first?.isVowel() == false)
+        #expect("yes".first?.isVowel() == false)
+        #expect("yes".first?.isVowel(countY: true) == true)
+        #expect("elephant".first?.isVowel() == true)
+
         for status in CloudStatus.allCases {
             debug("Cloud Status: \(status) (\(status.symbolName))")
         }
@@ -123,5 +184,6 @@ struct CompatibilityTests {
             #expect(files.count > 0)
         }
     }
+#endif
 }
 #endif

@@ -71,7 +71,7 @@ public func debugSuppress(_ block: () async throws -> Void) async rethrows {
     try await block()
 }
 
-// Testing is only supported with Swift 5.9+ and requires FoundationX
+// Testing is only supported with Swift 5.9+ and requires Foundation
 #if compiler(>=5.9) && canImport(Foundation)
 // Test Handlers
 @available(iOS 13, tvOS 13, watchOS 6, *) // due to ObservableObject

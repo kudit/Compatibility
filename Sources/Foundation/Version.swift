@@ -33,9 +33,9 @@ extension Version: Swift.CustomStringConvertible { // @retroactive in Swift 6?
     // For CustomStringConvertible conformance
     /// SemVer string (format of "*major*.*minor*.*patch*")
     ///
-    /// omits patch version number if it is zero
+    /// omits patch version number if it is zero but always shows the minor version.
     ///
-    /// Examples: "13.0.1", "16.1"
+    /// Examples: "13.0.1", "16.1", "12.0"
     public var description: String {
         var osVersion = "\(majorVersion).\(minorVersion)"
         if patchVersion != 0 {
@@ -44,9 +44,19 @@ extension Version: Swift.CustomStringConvertible { // @retroactive in Swift 6?
         return osVersion
     }
     
-    /// Fully qualified major.minor.patch string, not the default pretty version
+    /// Fully qualified major.minor.patch string, not the default pretty version.
+    /// Example: "1.0.0", "12.1.3", "15.5.0"
     public var full: String {
         return "\(majorVersion).\(minorVersion).\(patchVersion)"
+    }
+    
+    /// For the most compact version of the version (will never have .0)
+    /// Example: If the version is 1.0.0, it will show as just "1"
+   public var compact: String {
+        if minorVersion == 0 && patchVersion == 0 {
+            return "\(majorVersion)"
+        }
+        return description // already the pretty version for 1.2.0 -> 1.2
     }
 }
 
@@ -78,6 +88,10 @@ extension Version: Swift.Encodable {
 }
 
 
+#if canImport(Foundation)
+extension OperatingSystemVersion: @retroactive ExpressibleByExtendedGraphemeClusterLiteral {}
+extension OperatingSystemVersion: @retroactive ExpressibleByUnicodeScalarLiteral {}
+#endif
 extension Version: Swift.ExpressibleByStringLiteral, Swift.ExpressibleByStringInterpolation { // @retroactive in Swift 6?
     // For ExpressibleByStringLiteral conformance
     /// Any non-numeric text will be ignored, so if you have something like `23b123` it will be converted to `23123`.
@@ -122,13 +136,33 @@ extension Version {
         // TODO: See if there is a better/faster way of stripping characters
         #if canImport(Foundation)
         let cleaned = forcing.replacingCharacters(in: Self.validCharacters.inverted, with: "")
-        #else
-        let cleaned = forcing
-        #endif
         let components = cleaned.components(separatedBy: ".")
         let major = Int(components.first ?? "0") ?? 0
         let minor: Int = components.count > 1 ? Int(components[1]) ?? 0 : 0
         let patch: Int = components.count > 2 ? Int(components[2]) ?? 0 : 0
+        #else
+        // since Foundation is needed for components and character sets, create a fallback algorithm for WASM.
+        var parts = [0,0,0]
+        var section = 0
+        for character in forcing {
+            if character == "." {
+                section++
+            } else if let num = Int(String(character)) {
+                if parts[section] == 0 {
+                    parts[section] = num
+                } else {
+                    parts[section] *= 10
+                    parts[section] += num
+                }
+            } else {
+                // invalid character.  Just ignore
+                debug("Invalid character when parsing version: \(forcing) (\(character))", level: .WARNING)
+            }
+        }
+        let major = parts[0]
+        let minor = parts[1]
+        let patch = parts[2]
+        #endif
         self.init(majorVersion: major, minorVersion: minor, patchVersion: patch)
     }
     /// A failable initializer in case the parsing doesn't match exactly.
@@ -143,6 +177,9 @@ extension Version {
         self = forced
     }
 }
+#if canImport(Foundation)
+extension OperatingSystemVersion: @retroactive Equatable {}
+#endif
 extension Version: Swift.Comparable { // @retroactive in Swift 6?
     // For Comparable conformance
     /// Return the components of this version as an integer array of length 3 (always length 3 even if minor and patch are 0).

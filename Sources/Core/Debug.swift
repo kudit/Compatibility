@@ -48,10 +48,11 @@ public struct CompatibilityConfiguration: PropertyIterable {
             let threadInfo = isMainThread ? "" : "^"
             #if canImport(Foundation)
             let simplerFile = URL(fileURLWithPath: file).lastPathComponent
+            let simplerFunction = function.replacingOccurrences(of: "__preview__", with: "_p_")
             #else
             let simplerFile = "\(file)".components(separatedBy: "/").last ?? "UNABLE TO GET LAST PATH COMPONENT WITHOUT Foundation.URL"
+            let simplerFunction = function
             #endif
-            let simplerFunction = function.replacingOccurrences(of: "__preview__", with: "_p_")
             return "\(timestamp)\(simplerFile)(\(line)) : \(simplerFunction)\(threadInfo)\(level == .OFF ? "" : "\n\(message)")"
         } else {
             return "\(timestamp)\(message)"

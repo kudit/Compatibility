@@ -224,6 +224,7 @@ public extension Backport where Content: View {
         }
     }
     
+    @MainActor
     func background<V>(alignment: Alignment = .center, @ViewBuilder content: @escaping () -> V) -> some View where V : View {
         Group {
             if #available(iOS 15, macOS 12, tvOS 15, watchOS 8, *) {
@@ -887,12 +888,12 @@ public extension Backport where Content: View {
     /// You typically use this modifier with a ``GlassEffectContainer``
     /// to combine multiple glass shapes into a single shape that
     /// can morph shapes into one another.
-    func glassEffect(_ glass: BackportGlass = .regular, in shape: some Shape = .capsule, isEnabled: Bool = true) -> some View {
+    func glassEffect(_ glass: BackportGlass = .regular, in shape: some Shape = .capsule) -> some View {
         Group {
 #if !os(visionOS)
             if #available(iOS 26, macOS 26, tvOS 26, watchOS 26, *) {
 #if compiler(>=6.2)
-                content.glassEffect(glass.modernGlass, in: shape, isEnabled: isEnabled)
+                content.glassEffect(glass.modernGlass, in: shape)
 #else
                 content.backgroundMaterial()
 #endif

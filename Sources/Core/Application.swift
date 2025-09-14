@@ -27,6 +27,8 @@ public class Application: ObservableObject { // cannot automatically conform to 
     nonisolated // Not @MainActor
     public static let isDebug = _isDebugAssertConfiguration()
     
+    // Documentation on the following compiler directives: https://docs.swift.org/swift-book/documentation/the-swift-programming-language/statements/#Compiler-Control-Statements
+    
     /// Returns the version number of Swift being used to compile
     public static var compilerVersion: String {
 #if compiler(>=9.0)
@@ -35,8 +37,12 @@ public class Application: ObservableObject { // cannot automatically conform to 
         "8.x"
 #elseif compiler(>=7.0)
         "7.x"
-#elseif compiler(>=6.3)
+#elseif compiler(>=6.5)
         "6.x"
+#elseif compiler(>=6.4)
+        "6.4"
+#elseif compiler(>=6.3)
+        "6.3"
 #elseif compiler(>=6.2)
         "6.2"
 #elseif compiler(>=6.1)
@@ -76,8 +82,12 @@ public class Application: ObservableObject { // cannot automatically conform to 
         "8.x"
 #elseif swift(>=7.0)
         "7.x"
-#elseif swift(>=6.3)
+#elseif swift(>=6.5)
         "6.x"
+#elseif swift(>=6.4)
+        "6.4"
+#elseif swift(>=6.3)
+        "6.3"
 #elseif swift(>=6.2)
         "6.2"
 #elseif swift(>=6.1)

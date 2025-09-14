@@ -238,10 +238,35 @@ public extension HTML {
             //            .replacingOccurrences(of: "{", with: "&lbrace;")
             // accented characters we're going to not replace.
         ]
+#if canImport(Foundation)
         var encodedString = self.replacingOccurrences(of: "&", with: "&amp;") // ensure & is done first so we don't ever double-encode.
         for (symbol, entity) in entities {
             encodedString = encodedString.replacingOccurrences(of: symbol, with: entity)
         }
+#else
+        // replace & first
+        var modifiedString = ""
+        var encodedString = self
+        for character in encodedString {
+            if character == "&" {
+                modifiedString.append("&amp;")
+            } else {
+                modifiedString += String(character)
+            }
+        }
+        encodedString = modifiedString
+        modifiedString = ""
+        for character in encodedString {
+            for (entity, expanded) in entities {
+                if String(character) == entity {
+                    modifiedString.append(expanded)
+                } else {
+                    modifiedString += String(character)
+                }
+            }
+        }
+        encodedString = modifiedString
+#endif
         return encodedString
     }
     
@@ -385,11 +410,13 @@ public extension String {
         }
         return true
     }
+    #if canImport(Foundation)
     /// Returns the number of times a string is included in the `String`.  Does not count overlaps.
     func occurrences(of substring: String) -> Int {
         let components = self.components(separatedBy: substring)
         return components.count - 1
     }
+    #endif
     /// `true` if there is only an integer number or double in the `String` and there isn't other letters or spaces.
     var isNumeric: Bool {
         if let _ = Double(self) {
@@ -449,7 +476,6 @@ public extension String {
 #endif
         return URL(string: self)
     }
-    #endif
 
     /// Get last "path" component of a string (basically everything from the last `/` to the end)
     var lastPathComponent: String {
@@ -457,7 +483,8 @@ public extension String {
         let last = parts.last ?? self
         return last
     }
-    
+    #endif
+
     /// `true` if the byte length of the `String` is larger than 100k (the exact threashold may change)
     var isLarge: Bool {
         let bytes = self.lengthOfBytes(using: String.Encoding.utf8)
@@ -701,7 +728,6 @@ public extension String {
     ) -> String {
         return self.components(separatedBy: characterSet).joined(separator: replacement)
     }
-    #endif
 
     // MARK: - Condensing
     /// Collapse repeated occurrences of `string` with a single occurrance.  Ex: `"tooth".collapse("o") == "toth"`
@@ -734,7 +760,6 @@ public extension String {
         returnString = returnString.collapse("\n")
         return returnString.trimmed
     }
-    #if canImport(Foundation)
     // - (NSString *)
     //     stringByRemovingCharactersInString:(NSString *)target
     /// Returns a string with characters in the `characters` string removed.
@@ -774,10 +799,12 @@ public extension String {
     }
 
     // MARK: - Transformed
+#if canImport(Foundation)
     /// Return an arry of lines of the string.  If no line breaks, will be an array with the original string as the only entry.
     var lines: [String] {
         return self.components(separatedBy: "\n")
     }
+#endif
     /// version of string with first letter of each sentence capitalized
     var sentenceCapitalized: String {
         let sentences = self.components(separatedBy: ".")
@@ -801,6 +828,7 @@ public extension String {
         try expect(capitalized == "Hello world. Goodbye world.", String(describing:capitalized))
     }
     
+    #if canImport(Foundation)
     /// normalized version of string for comparisons and database lookups.  If normalization fails or results in an empty string, original string is returned.
     var normalized: String {
         // expand ligatures and other joined characters and flatten to simple ascii (æ => ae, etc.) by converting to ascii data and back
@@ -840,6 +868,7 @@ public extension String {
             return normalized
         }
     }
+    #endif
     /// Returns the `String` reversed.
     var reversed: String {
         return self.characterStrings.reversed().joined(separator: "")
@@ -1118,7 +1147,7 @@ public extension String {
 }
 
 // TODO: See where we can use @autoclosure in Kudit Frameworks to delay execution (particularly in test frameworks!)
-public extension Optional where Wrapped == any Numeric {
+public extension Optional { //  where Wrapped == any Numeric Wrapped == Character
     /// Support displaying string as an alternative in nil coalescing for inline \(optionalNum ?? "String description of nil")
     static func ?? (optional: Wrapped?, defaultValue: @autoclosure () -> String) -> String {
         if let optional {
@@ -1157,6 +1186,7 @@ v1.0.29 9/14/2022 Fixed problem with Readme comments continually reverting.  Add
 v1.0.30 9/14/2022 Fixed issue where last two updates were the wrong major version number!
 v1.0.31 9/14/2022 Updated KuColor protocol to apply to SwiftUI Color.  Removed old UIImage code that could cause crashes.  Added .frame(size:) method.  Fixed issue with RGBA parsing and HSV calculations.  Re-worked SwiftUI color conformance to KuColor protocols to simplify.  Added some test methods.  Reversed order of versioning to make easier to find changes.
 """
+    #if canImport(Foundation)
     var lines = text.lines
     lines.reverse()
     let reversed = lines.joined(separator: "\n")
@@ -1188,9 +1218,10 @@ v1.0.9 8/10/2022 Fixed tests to run in Xcode.  Added watchOS and tvOS support.
 v1.0.8 8/10/2022 Manually created initializers for SwiftUI views to prevent internal protection errors.
 """
     try expect(expected == reversed, reversed)
+    #endif
 }
 
-extension Character {
+public extension Character {
     /// A simple emoji is one scalar and presented to the user as an Emoji
     var isSimpleEmoji: Bool {
         guard let firstScalar = unicodeScalars.first else { return false }
@@ -1201,6 +1232,14 @@ extension Character {
     var isCombinedIntoEmoji: Bool { unicodeScalars.count > 1 && unicodeScalars.first?.properties.isEmoji ?? false }
     
     var isEmoji: Bool { isSimpleEmoji || isCombinedIntoEmoji }
+
+    func isVowel(countY: Bool = false) -> Bool {
+        var vowels = String.vowels
+        if countY {
+            vowels.append("y")
+        }
+        return vowels.contains(self.lowercased())
+    }
 }
 
 extension String {

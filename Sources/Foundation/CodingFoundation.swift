@@ -7,7 +7,7 @@
 // https://github.com/ashleymills/SwiftDictionaryCoding/blob/master/SwiftDictionaryCoding/Classes/DictionaryDecoder.swift
 
 // Note: Needed to support Data values since JSON doesn't support Data natively
-// TODO: make more generic so works with Arrays: /// Converts a codable object to a foundational representation for storage in UserDefaults or UbiquitousKeyValueStores.
+// TODO: make more generic so works with Arrays: /// Converts a codable object to a Foundational representation for storage in UserDefaults or UbiquitousKeyValueStores.
 
 #if canImport(Foundation)
 public class DictionaryEncoder {

@@ -276,6 +276,7 @@ public struct FillAndStrokeTest: View {
 // MARK: - Material
 @available(iOS 13, tvOS 13, watchOS 6, *)
 public extension View {
+    @MainActor
     func backgroundMaterial() -> some View {
         self
             .padding()

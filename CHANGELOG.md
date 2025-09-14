@@ -6,6 +6,8 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
+v1.11.0 9/14/2025 Removed more functions and added fallback for when Foundation is not available (like WASM).  Fixed `.glassEffect()` backport.  Made default value string optional more generic to account for Character? or Numeric?.  Added `prettyJSON` output convenience var.   Added compact version of Version.  Upgraded PropertyIterable to allow for fetching KeyPaths and now when fetching properites, they are an OrderedDictionary rather than an unordered one.  Added `MixedTypeField` for decoding mixed type JSON arrays.  Added tests to bring test coverage to 57%.
+
 v1.10.18 8/25/2025 Apparently forgot to actually add `glassEffect()` backport in v1.10.16. Also added `statusBarHidden()` backport since unavailable in tvOS, etc.  Enabled `backgroundMaterial()` in iOS 13 and adjusted fallback behavior.  Added iOS 26 icon (doesn't work?).  Added `compilerVersion` since this reports differently from `swiftVersion` apparently.
 
 v1.10.17 8/13/2025 Fixed issues with WASM and Watch OS errors.  Added Backport.Material for bridging when Material is not available.  Added check for Foundation support where needed.  Threading and several other bits of functionality now require Foundation to use.  Several other pieces can still be used without Foundation. Added tests to bring test coverage to 56%.   ** ALL SWIFTPACKAGEINDEX TESTS PASSED! ** 

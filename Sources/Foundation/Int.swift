@@ -211,7 +211,7 @@ internal let byteTests: TestClosure = {
 
 // MARK: - Tests
 
-// Testing is only supported with Swift 5.9+ and FoundationX
+// Testing is only supported with Swift 5.9+ and Foundation
 #if compiler(>=5.9) && canImport(Foundation)
 @available(iOS 13, tvOS 13, watchOS 6, *)
 extension Int {
