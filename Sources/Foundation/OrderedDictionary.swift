@@ -1172,21 +1172,26 @@ extension OrderedDictionary: DictionaryConvertible {
 }
 
 // MARK: - Dictionary addition
-extension DictionaryConvertible where Element == (Key, Value) {
+extension DictionaryConvertible {
     /// Adds the right hand dictionary to the left hand dictionary.  If there are matching keys, the right hand side will replace the values in the left hand side.
-    public static func += <Other: DictionaryConvertible>(lhs: inout Self, rhs: Other) where Self.Element == Other.Element {
+    public static func += <Other: DictionaryConvertible>(
+        lhs: inout Self, rhs: Other
+    ) where Self.Key == Other.Key, Self.Value == Other.Value, Other.Element == (key: Key, value: Value) {
         for (key, value) in rhs {
             lhs[key] = value
         }
     }
 
     /// Adds the right hand dictionary to the left hand dictionary and returns the result.  If there are matching keys, the right hand side will replace the values in the left hand side.
-    public static func + <Other: DictionaryConvertible>(lhs: Self, rhs: Other) -> Self where Self.Element == Other.Element {
+    public static func + <Other: DictionaryConvertible>(
+        lhs: Self, rhs: Other
+    ) -> Self where Self.Key == Other.Key, Self.Value == Other.Value, Other.Element == (key: Key, value: Value) {
         var union = lhs
         union += rhs
         return union
     }
 }
+
 
 
 #if compiler(>=5.9) && canImport(Foundation)

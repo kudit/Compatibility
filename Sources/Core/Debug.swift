@@ -400,8 +400,10 @@ Normal output: \(defaultOutput)
             output = debugError.debug()
         }
         try expect(output.contains("custom error"), "expected custom error to be in the output but found \(output)")
+        #if canImport(Foundation)
         output = debugError.localizedDescription
         try expect(output.contains("custom error"), "expected custom error to be in the output but found \(output)")
+        #endif
         output = debugError.description
         try expect(output.contains("custom error"), "expected custom error to be in the output but found \(output)")
         

@@ -247,6 +247,7 @@ public extension HTML {
         // replace & first
         var modifiedString = ""
         var encodedString = self
+        // replace ampersands first
         for character in encodedString {
             if character == "&" {
                 modifiedString.append("&amp;")
@@ -257,12 +258,16 @@ public extension HTML {
         encodedString = modifiedString
         modifiedString = ""
         for character in encodedString {
+            var found = false
             for (entity, expanded) in entities {
                 if String(character) == entity {
                     modifiedString.append(expanded)
-                } else {
-                    modifiedString += String(character)
+                    found = true
+                    break
                 }
+            }
+            if !found {
+                modifiedString += String(character)
             }
         }
         encodedString = modifiedString
@@ -1005,6 +1010,35 @@ public extension String {
         let extraction = TEST_STRING.substring(with: NSRange(7...12))
         try expect(extraction == "string" , String(describing:extraction))
     }
+    #else
+    // alternate implementation of components that doesn't use Foundation
+    func components<T>(separatedBy separator: T) -> [String] where T: StringProtocol {
+        // Check if the separator is empty
+        guard !separator.isEmpty else {
+            return [self] // Return the original string if separator is empty
+        }
+        
+        var components: [String] = []
+        var currentComponent = ""
+        let separatorLength = separator.count
+        
+        // Iterate through each character in the string
+        for character in self {
+            currentComponent.append(character)
+            
+            // Check if the current substring matches the separator
+            if currentComponent.hasSuffix(separator) {
+                // If a match is found, append the current component and reset
+                components.append(currentComponent.dropLast(separatorLength).description)
+                currentComponent = ""
+            }
+        }
+        
+        // Append the last component even if it's empty so if the separator is at the end, we still get an additional empty segment.
+        components.append(currentComponent)
+        
+        return components
+    }
     #endif
     
     /// Parses out a substring from the first occurrence of `start` to the next occurrence of `end`.
@@ -1147,19 +1181,12 @@ public extension String {
 }
 
 // TODO: See where we can use @autoclosure in Kudit Frameworks to delay execution (particularly in test frameworks!)
+
 public protocol Defaultable {}
-extension Character: Defaultable {} // necessary to not conflict with default implementation for Strings
-extension Optional where Wrapped == any Numeric {
-    /// Support displaying string as an alternative in nil coalescing for inline \(optionalNum ?? "String description of nil")
-    static func ?? (optional: Wrapped?, defaultValue: @autoclosure () -> String) -> String {
-        if let optional {
-            return String(describing: optional)
-        } else {
-            return defaultValue()
-        }
-    }
-}
-public extension Optional where Wrapped == Defaultable { //  where Wrapped == any Numeric Wrapped == Character
+extension Bool: Defaultable {}
+extension Int: Defaultable {}
+extension Double: Defaultable {}
+public extension Optional where Wrapped == Defaultable {
     /// Support displaying string as an alternative in nil coalescing for inline \(optionalNum ?? "String description of nil")
     static func ?? (optional: Wrapped?, defaultValue: @autoclosure () -> String) -> String {
         if let optional {
@@ -1236,7 +1263,7 @@ v1.0.8 8/10/2022 Manually created initializers for SwiftUI views to prevent inte
 public extension Character {
     /// A simple emoji is one scalar and presented to the user as an Emoji
     var isSimpleEmoji: Bool {
-        guard let firstScalar = unicodeScalars.first else { return false }
+        let firstScalar = unicodeScalars.first! // apparently can't exist without at least one scalar so we don't need to worry about force unwrapping.
         return firstScalar.properties.isEmoji && firstScalar.value > 0x238C
     }
     
@@ -1254,7 +1281,7 @@ public extension Character {
     }
 }
 
-extension String {
+public extension String {
     var containsEmoji: Bool { contains { $0.isEmoji } }
 }
 

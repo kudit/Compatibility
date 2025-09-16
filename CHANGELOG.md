@@ -6,6 +6,8 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
+v1.11.2 9/15/2025 Fixed some broken code when Foundation is missing.  Added backport of `components(separatedBy:)` in that case.  Removed test using `localizedDescription` when Foundation is missing.  Removed `retroactive` from Swift < 6.0.  Added lots of tests but somehow code coverage was reduced to 49%.
+
 v1.11.1 9/14/2025 Fixed issue with default value string optional being too generic and conflicting with default String implementation.
 
 v1.11.0 9/14/2025 Removed more functions and added fallback for when Foundation is not available (like WASM).  Fixed `.glassEffect()` backport.  Made default value string optional more generic to account for Character? or Numeric?.  Added `prettyJSON` output convenience var.   Added compact version of Version.  Upgraded PropertyIterable to allow for fetching KeyPaths and now when fetching properites, they are an OrderedDictionary rather than an unordered one.  Added `MixedTypeField` for decoding mixed type JSON arrays.  Added tests to bring test coverage to 57%.

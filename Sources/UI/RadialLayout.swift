@@ -91,6 +91,7 @@ public struct RadialLayout: Layout {
 }
 
 // For #Previews
+#if !canImport(Color)
 // Color framework provides better rainbow variable with 7 colors.  This is 6 colors.
 @available(iOS 13, tvOS 13, watchOS 6, *)
 extension [Color] {
@@ -99,5 +100,6 @@ extension [Color] {
         [.red, .orange, .yellow, .green, .blue, .purple]
     }
 }
+#endif
 
 #endif

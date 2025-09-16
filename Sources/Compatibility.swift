@@ -8,7 +8,7 @@
 
 public enum Compatibility {
     /// The version of the Compatibility Library since cannot get directly from Package.swift.
-    public static let version: Version = "1.11.1"
+    public static let version: Version = "1.11.2"
 }
 
 #if canImport(Foundation)
@@ -252,8 +252,8 @@ public extension Compatibility { // for brief period where Application wasn't av
 #endif
 }
 
-#if !canImport(CoreML) // this isn't available on linux!
-extension FileManager {
+#if !canImport(CoreML) && canImport(Foundation) // this isn't available on linux or WASM!
+public extension FileManager {
     var ubiquityIdentityToken: String? { nil }
 }
 #endif

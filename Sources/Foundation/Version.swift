@@ -88,7 +88,7 @@ extension Version: Swift.Encodable {
 }
 
 
-#if canImport(Foundation)
+#if canImport(Foundation) && compiler(>=6.0)
 extension OperatingSystemVersion: @retroactive ExpressibleByExtendedGraphemeClusterLiteral {}
 extension OperatingSystemVersion: @retroactive ExpressibleByUnicodeScalarLiteral {}
 #endif
@@ -177,7 +177,7 @@ extension Version {
         self = forced
     }
 }
-#if canImport(Foundation)
+#if canImport(Foundation) && compiler(>=6.0)
 extension OperatingSystemVersion: @retroactive Equatable {}
 #endif
 extension Version: Swift.Comparable { // @retroactive in Swift 6?

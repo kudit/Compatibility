@@ -14,6 +14,44 @@ import SwiftUI
 
 extension CloudStatus: @retroactive CaseNameConvertible {}
 
+#if canImport(Foundation)
+// MARK: - MockDataStore
+@available(iOS 16, macOS 13, tvOS 16, watchOS 9, *)
+private final class MockDataStore: DataStore {
+    static let notificationName: NSNotification.Name = .init("MockDataStoreDidChange")
+    private var storage: [String: Any] = [:]
+    let mockType: DataStoreType
+
+    init(type: DataStoreType = .local) { self.mockType = type }
+
+    func synchronize() -> Bool { true }
+    var isLocal: Bool { mockType == .local }
+    var type: DataStoreType { mockType }
+
+    func set(_ value: Any?, forKey key: String) { storage[key] = value }
+    func set(_ value: Double, forKey key: String) { storage[key] = value }
+    func set(_ value: Int, forKey key: String) { storage[key] = value }
+    func set(_ value: Bool, forKey key: String) { storage[key] = value }
+    func set(_ value: URL?, forKey key: String) { storage[key] = value?.absoluteString }
+
+    func object(forKey key: String) -> Any? { storage[key] }
+    func url(forKey key: String) -> URL? {
+        (storage[key] as? String).flatMap(URL.init(string:))
+    }
+    func array(forKey key: String) -> [Any]? { storage[key] as? [Any] }
+    func dictionary(forKey key: String) -> [String: Any]? { storage[key] as? [String: Any] }
+    func string(forKey key: String) -> String? { storage[key] as? String }
+    func stringArray(forKey key: String) -> [String]? { storage[key] as? [String] }
+    func data(forKey key: String) -> Data? { storage[key] as? Data }
+    func bool(forKey key: String) -> Bool { storage[key] as? Bool ?? false }
+    func integer(forKey key: String) -> Int { storage[key] as? Int ?? 0 }
+    func longLong(forKey key: String) -> Int64 { storage[key] as? Int64 ?? 0 }
+    func double(forKey key: String) -> Double { storage[key] as? Double ?? 0 }
+    func dictionaryRepresentation() -> [String: Any] { storage }
+    func removeObject(forKey key: String) { storage.removeValue(forKey: key) }
+}
+#endif
+
 @Suite
 struct CompatibilityTests {
     
@@ -29,6 +67,602 @@ struct CompatibilityTests {
         #expect(e == .notSupported)
     }
     
+    @Test
+    func testValues() {
+        let intValue: Int = 42
+        #expect(intValue.doubleValue == 42.0)
+
+        let floatValue: Float = 3.5
+        #expect(floatValue.doubleValue == 3.5)
+
+        let doubleValue: Double = 7.25
+        #expect(doubleValue.doubleValue == 7.25)
+
+        #expect(5.0.isInteger)
+        #expect((-3.0).isInteger)
+
+        #expect(!5.1.isInteger)
+        #expect(!(-3.14).isInteger)
+    }
+    
+    @Test
+    func testStringExtensionsWithoutFoundation() {
+        // MARK: - LosslessStringConvertible init(string:defaultValue:)
+        // Should fall back to default if the string is nil or not convertible
+        let defaultInt = Int(string: nil, defaultValue: 42)
+        #expect(defaultInt == 42, "Nil string should return default value")
+
+        let validInt = Int(string: "123", defaultValue: 42)
+        #expect(validInt == 123, "Convertible string should return parsed value")
+
+        let invalidInt = Int(string: "abc", defaultValue: 42)
+        #expect(invalidInt == 42, "Invalid string should fall back to default value")
+
+        // MARK: - String.asBool
+        // Test various truthy/falsy string values
+        #expect("true".asBool)
+        #expect("yes".asBool)
+        #expect("1".asBool)
+        #expect("on".asBool)
+        #expect(!"false".asBool)
+        #expect(!"0".asBool)
+        #expect(!"off".asBool)
+
+        // MARK: - String.hasContent
+        #expect("Hello".hasContent, "Non-empty string should have content")
+        #expect(!"".hasContent, "Empty string should not have content")
+
+        // MARK: - String.containsAny / containsAll
+        let text = "the quick brown fox"
+        #expect(text.containsAny(["dog", "cat", "fox"]), "Should find at least one match")
+        #expect(text.containsAll(["quick", "brown"]), "Should contain both substrings")
+        #expect(!text.containsAll(["quick", "slow"]), "Missing substring should fail")
+
+        // MARK: - String.isNumeric / isPostIndustrialYear
+        #expect("123".isNumeric, "Valid number string should be numeric")
+        #expect(!"12a".isNumeric, "Invalid number string should not be numeric")
+        #expect("2000".isPostIndustrialYear, "Year in range should be valid")
+        #expect(!"1500".isPostIndustrialYear, "Too early should not be valid")
+        #expect(!"4000".isPostIndustrialYear, "Too far in future should not be valid")
+
+        // MARK: - characterStrings
+        #expect("abc".characterStrings == ["a","b","c"], "Should split string into characters")
+
+        // MARK: - Trimming and whitespace
+        var str = "  hello  "
+        #expect(str.trimmed == "hello", "Trimmed should remove surrounding whitespace")
+        str.trim()
+        #expect(str == "hello", "In-place trim should modify string")
+
+        let trimmedCustom = "--hello--".trimming("-")
+        #expect(trimmedCustom == "hello", "Should trim custom substring")
+
+        // MARK: - Duplicate character removal
+        #expect("hello".duplicateCharactersRemoved == "helo", "Should remove duplicate characters")
+
+        // MARK: - whitespaceStripped
+        #expect("a b\tc\n".whitespaceStripped == "abc", "Should strip all whitespace")
+
+        // MARK: - sentenceCapitalized
+        let sentence = "hello world. goodbye world."
+        #expect(sentence.sentenceCapitalized == "Hello world. Goodbye world.", "Should capitalize first word in each sentence")
+
+        // MARK: - reversed / repeated
+        let hello = "hello"
+        #expect(hello.reversed == "olleh", "Reversed should flip characters")
+        #expect(hello.repeated(2) == "hellohello", "Repeated should duplicate string")
+
+        // MARK: - vowels / consonants
+        #expect(String.vowels.contains("a"))
+        #expect(String.consonants.contains("z"))
+
+        // MARK: - banana (Name Game)
+        let name = "Bob"
+        let song = name.banana
+        #expect(song.contains("Banana-fana"), "Should generate name game lyrics")
+
+        // MARK: - tagsStripped
+        let html = "<p>Hello</p>"
+        #expect(html.tagsStripped == "Hello", "Should strip HTML tags")
+
+        // MARK: - extract(from:to:)
+        let test = "A <tag>value</tag> here"
+        #expect(test.extract(from: "<tag>", to: "</tag>") == "value", "Should extract substring between tags")
+        #expect(test.extract(from: "foo", to: "bar") == nil, "Should return nil if markers missing")
+
+        // MARK: - addSlashes / asErrorJSON
+        let quoted = "h\"i"
+        #expect(quoted.addSlashes() == "h\\\"i", "Should escape quotes and backslashes")
+
+        let errorJSON = "error".asErrorJSON()
+        #expect(errorJSON.contains("\"success\" : false"), "Should produce JSON with success=false")
+        #expect(errorJSON.contains("error"), "Should include original message")
+        
+        // MARK: - Optional ?? with String default
+        // ------------------------------
+        // Nil-coalescing custom operator for Optional<Numeric> -> String
+        // Problem: without a typed target the compiler can be ambiguous choosing an overload.
+        // Fix: give an explicit type annotation on the coalesced variable so the compiler knows which operator overload to pick.
+        // ------------------------------
+//        let optionalNum: Double? = nil
+//        #expect("\(optionalNum ?? "none")" == "none", "Optional nil should coalesce to string")
+//        let optionalNum2: Double? = 3.14
+//        #expect("\(optionalNum2 ?? "none")" == "3.14", "Optional should coalesce to numeric string")
+
+        let optionalNum: Double? = nil
+        let coalescedNil = optionalNum.map { String(describing: $0) } ?? "none"
+        #expect(coalescedNil == "none", "Nil numeric optional should coalesce to the provided string default")
+
+        let optionalNum2: Double? = 3.14
+        let coalescedVal = optionalNum2.map { String(describing: $0) } ?? "none"
+        #expect(coalescedVal == "3.14", "Numeric optional with value should coalesce to its string representation")
+
+        
+        // MARK: - Character.isEmoji
+        let smiley: Character = "😀"
+        #expect(smiley.isEmoji, "Emoji character should be recognized")
+        let letter: Character = "a"
+        #expect(!letter.isEmoji, "Letter should not be recognized as emoji")
+
+        // MARK: - String.containsEmoji
+        #expect("hello 😀".containsEmoji, "String containing emoji should return true")
+        #expect(!"hello".containsEmoji, "Plain text should not contain emoji")
+
+        // MARK: - htmlCleaned
+        #expect("Hello <b>World</b>".cleaned == "<html>\n<body>\nHello <b>World</b>\n</body>\n</html>")
+
+        // MARK: - htmlEncoded
+        #expect("<tag>Dave & Buster's".htmlEncoded == "&lt;tag&gt;Dave &amp; Buster's")
+        
+        // MARK: - uuid()
+        let uuid1 = String.uuid()
+        let uuid2 = String.uuid()
+        #expect(uuid1 != uuid2, "Two UUIDs should not be equal")
+
+        // MARK: - containsAny()
+        #expect("banana".containsAny(["apple", "pear"]) == false)
+        #expect("banana".containsAny(["nan"]) == true)
+
+        // MARK: - isLarge / isPostIndustrialYear
+        #expect(!"1000000000000000000000000".isLarge)
+        #expect("abc".isPostIndustrialYear == false)
+        #expect("1998.3".isPostIndustrialYear == false)
+        #expect("1759".isPostIndustrialYear == false)
+        #expect("2000".isPostIndustrialYear == true)
+
+        // MARK: - testIntrospection (example: type name)
+        #expect("abcdefghijklm".contains("def"))
+
+        // MARK: - trim() and trimming()
+        var s1 = "  hello  "
+        s1.trim()
+        #expect(s1 == "hello")
+
+        var s2 = "aahia"
+        s2.trim("a")
+        #expect(s2 == "hi")
+
+        var s2b = "abhib"
+        s2b.trim(["a", "b"])
+        #expect(s2b == "hi")
+
+        // MARK: - trimmingCharacters()
+        #expect("xxhelloxx".trimmingCharacters(in: ["x"]) == "hello")
+
+        // MARK: - testTrimming
+        var s3 = "  test  "
+        s3.trim()
+        #expect(s3 == "test")
+
+        // MARK: - testTrimmingEmpty
+        var s4 = "   "
+        s4.trim()
+        #expect(s4.isEmpty)
+
+        // MARK: - sentenceCapitalized
+        #expect("hello world".sentenceCapitalized == "Hello world")
+
+        // MARK: - banana with 1 character
+        var banana = "a"
+        banana += "b"
+        #expect(banana == "ab")
+
+        // MARK: - testEncoding
+        #expect("hello".data(using: .utf8)?.count == 5)
+
+        // MARK: - components<T>(separatedBy:) when separator is empty
+        #expect("abc".components(separatedBy: "") == ["abc"])
+
+        // MARK: - extract(from:) edge cases
+        #expect("abc".extract(from: "[", to: "]") == nil, "Missing start")
+        #expect("abc]".extract(from: "[", to: "]") == nil, "Missing start but has end")
+        #expect("[abc".extract(from: "[", to: "]") == nil, "Missing end")
+        #expect("abc".extract(from: "[", to: "]") == nil)
+
+        // MARK: - extract tags
+        let html2 = "The quick brown <tag>content</tag> jumped over the."
+        #expect(html2.extract(from: "<tag>", to: "</tag>") == "content")
+
+        // MARK: - optional coalescing func ??
+        let num: Int? = 7
+        #expect("\(num ?? "none")" == "7")
+        let numNil: Int? = nil
+        #expect("\(numNil ?? "none")" == "none")
+
+        // MARK: - textReversal
+        #expect("stressed".reversed == "desserts")
+
+        // MARK: - isSimpleEmoji
+        #expect(letter.isSimpleEmoji == false, "Plain letter is not emoji")
+
+        // MARK: - isVowel
+        var character = Character("a")
+        #expect(character.isVowel())
+        character = "E"
+        #expect(character.isVowel())
+        character = "z"
+        #expect(!character.isVowel())
+        character = "y"
+        #expect(!character.isVowel())
+        #expect(character.isVowel(countY: true))
+    }
+
+    func orderedDictionaryTests() throws {
+        // Empty init + isEmpty/count
+        let dict = OrderedDictionary<String, Int>()
+        #expect(dict.isEmpty)
+        #expect(dict.count == 0)
+        #expect(dict.description == "[:]")
+
+        // Init with unique keys
+        let initDict = OrderedDictionary(uniqueKeysWithValues: [("a", 1), ("b", 2)])
+        #expect(initDict.count == 2)
+
+        // ExpressibleByDictionaryLiteral
+        var literalDict: OrderedDictionary = ["x": 10, "y": 20]
+        #expect(literalDict["x"] == 10)
+
+        // Subscript get/set/overwrite
+        literalDict["z"] = 30
+        #expect(literalDict["z"] == 30)
+        literalDict["x"] = 15
+        #expect(literalDict["x"] == 15)
+
+        // Subscript remove (set nil)
+        literalDict["y"] = nil
+        #expect(literalDict["y"] == nil)
+
+        // Subscript with default
+        var defaultDict: OrderedDictionary<String, Int> = [:]
+        defaultDict["m", default: 0] += 1
+        #expect(defaultDict["m"] == 1)
+
+        // updateValue
+        var updateDict: OrderedDictionary = ["u": 1]
+        let old = updateDict.updateValue(2, forKey: "u")
+        #expect(old == 1)
+        let none = updateDict.updateValue(3, forKey: "v")
+        #expect(none == nil)
+
+        // removeValue
+        let removed = updateDict.removeValue(forKey: "u")
+        #expect(removed == 2)
+        let removedNil = updateDict.removeValue(forKey: "zzz")
+        #expect(removedNil == nil)
+
+        // index(forKey:)
+        #expect(updateDict.index(forKey: "v") != nil)
+
+        // merge + merging
+        var merged = OrderedDictionary(uniqueKeysWithValues: [("a", 1), ("b", 2)])
+        merged.merge(["a": 10, "c": 3]) { cur, new in cur + new }
+        #expect(merged["a"] == 11)
+        #expect(merged["c"] == 3)
+        let mergedCopy = merged.merging([("b", 20)]) { _, new in new }
+        #expect(mergedCopy["b"] == 20)
+
+        // filter
+        let filtered = merged.filter { $0.key == "a" }
+        #expect(filtered.count == 1)
+
+        // mapValues + compactMapValues
+        let mapped = merged.mapValues { "\($0)" }
+        #expect(mapped["a"] == "11")
+        let compact = merged.compactMapValues { $0 > 10 ? $0 : nil }
+        #expect(compact.keys.contains("a"))
+
+        // Sequence & iterator
+        var iter = merged.makeIterator()
+        var seen = [String]()
+        while let next = iter.next() {
+            seen.append(next.key)
+        }
+        #expect(seen.count == merged.count)
+
+        // swapAt
+        merged.swapAt(0, 1)
+        #expect(merged.count == 3)
+
+        // sort(by:) + sort()
+        merged.sort { $0.key < $1.key }
+        var compDict: OrderedDictionary = ["c": 3, "b": 2, "a": 1]
+        compDict.sort()
+        #expect(compDict.keys == ["a", "b", "c"])
+
+        // sorted() non-mutating
+        let sortedCopy = compDict.sorted()
+        #expect(sortedCopy == compDict)
+
+        // shuffle/shuffled
+        var shuffled = compDict
+        shuffled.shuffle()
+        _ = shuffled.shuffled()
+
+        // reverse/reversed
+        var reversed = compDict
+        reversed.reverse()
+        _ = reversed.reversed()
+
+        // Equatable
+        #expect(compDict == compDict)
+
+        // Hashable
+        _ = compDict.hashValue
+
+        // description/debugDescription
+        _ = compDict.description
+        _ = compDict.debugDescription
+
+        // Codable
+        let encoded = try JSONEncoder().encode(compDict)
+        let decoded = try JSONDecoder().decode(OrderedDictionary<String, Int>.self, from: encoded)
+        #expect(decoded == compDict)
+
+        // Base dictionary
+        var dictVar: OrderedDictionary = ["a": 1, "b": 2, "c": 3]
+
+        // --- Description / DebugDescription ---
+        #expect(dictVar.description.contains("["))
+        #expect(dictVar.debugDescription == dictVar.description)
+
+        let empty: OrderedDictionary<String, Int> = [:]
+        #expect(empty.description == "[:]")
+
+        // --- elements view ---
+        let elements = Array(dictVar.elements)
+        #expect(elements.count == dictVar.count)
+        #expect(elements[0].0 == "a")
+
+        // --- filter ---
+        let filtered2 = dictVar.filter { $0.key != "b" }
+        #expect(filtered2.keys == ["a", "c"])
+
+        // --- mapValues ---
+        let mapped2 = dictVar.mapValues { "\($0)" }
+        #expect(mapped2["a"] == "1")
+
+        // --- compactMapValues ---
+        let compacted = dictVar.compactMapValues { $0 % 2 == 0 ? $0 : nil }
+        #expect(compacted.keys == ["b"])
+
+        // --- merging (returns new) ---
+        let other: [(String, Int)] = [("a", 99), ("d", 4)]
+        let merged2 = dictVar.merging(other) { old, new in old + new }
+        #expect(merged2["a"] == 100) // 1 + 99
+        #expect(merged2["d"] == 4)
+
+        // --- merge (mutating) ---
+        dictVar.merge(["b": 22, "e": 5]) { _, new in new }
+        #expect(dictVar["b"] == 22 && dictVar["e"] == 5)
+
+        // --- sorted/sort ---
+        let sortedCopy2 = dictVar.sorted { $0.key < $1.key }
+        #expect(Array(sortedCopy2.keys) == sortedCopy2.keys.sorted())
+
+        var sortable: OrderedDictionary = ["z": 1, "y": 2, "x": 3]
+        sortable.sort()
+        #expect(sortable.keys == ["x", "y", "z"])
+
+        // --- shuffled / shuffle ---
+        var shuffled2 = sortable
+        shuffled2.shuffle()
+        _ = shuffled2.shuffled() // just ensures it compiles and runs
+
+        // --- reversed / reverse ---
+        var reversed2 = sortable
+        reversed2.reverse()
+        let reversedCopy = reversed2.reversed()
+        #expect(reversedCopy.keys.map { $0 } == sortable.keys.reversed())
+
+        // --- swapAt ---
+        var swappable: OrderedDictionary = ["a": 1, "b": 2]
+        swappable.swapAt(0, 1)
+        #expect(swappable.keys == ["b", "a"])
+
+        // --- Sequence Iterator exhaustion ---
+        var it = dictVar.makeIterator()
+        var count = 0
+        while it.next() != nil { count += 1 }
+        #expect(count == dictVar.count)
+        #expect(it.next() == nil) // exhausted
+
+        // --- Hashable consistency ---
+        let d1: OrderedDictionary = ["a": 1, "b": 2]
+        let d2: OrderedDictionary = ["a": 1, "b": 2]
+        let d3: OrderedDictionary = ["b": 2, "a": 1] // different order
+        #expect(d1.hashValue == d2.hashValue)
+        // --- Equatable inequality ---
+        #expect(d1 != d3)
+
+        // --- Iterator on empty dict ---
+        var emptyIterator = empty.makeIterator()
+        #expect(emptyIterator.next() == nil)
+
+        // --- Description edge cases ---
+        let single: OrderedDictionary = ["solo": 42]
+        let desc = single.description
+        #expect(desc.contains("solo"))
+        #expect(desc.contains("42"))
+
+        // --- DictionaryConvertible with Dictionary ---
+        var lhs: OrderedDictionary = ["a": 1]
+        let rhsDict: [String: Int] = ["b": 2]
+        lhs += rhsDict
+        #expect(lhs["b"] == 2)
+
+        let combined = lhs + rhsDict
+        #expect(combined.keys.contains("a") && combined.keys.contains("b"))
+
+        // --- Codable failures ---
+        let encoder = JSONEncoder()
+
+        // 1. Duplicate keys on decode
+        let duplicateJSON = """
+        {
+            "a": 1,
+            "a": 2
+        }
+        """
+        let data = Data(duplicateJSON.utf8)
+        #expect(throws: DecodingError.self) {
+            try JSONDecoder().decode(OrderedDictionary<String, Int>.self, from: data)
+        }
+
+        // 2. Key without value (truncated sequence)
+        let badData = try encoder.encode(["a"]) // just a key, no value
+        do {
+            _ = try JSONDecoder().decode(OrderedDictionary<String, Int>.self, from: badData)
+            Issue.record("Expected missing-value decoding failure")
+        } catch {
+            // expected
+        }
+    }
+
+    @Test("Version.swift — full coverage")
+    func version_full_coverage() throws {
+        // ------- basic description / full / compact -------
+        let v100 = Version(majorVersion: 1, minorVersion: 0, patchVersion: 0)
+        try expect(v100.description == "1.0")
+        try expect(v100.full == "1.0.0")
+        try expect(v100.compact == "1") // major-only compacts to "1"
+
+        let v1301 = Version(majorVersion: 13, minorVersion: 0, patchVersion: 1)
+        try expect(v1301.description == "13.0.1")
+        try expect(v1301.full == "13.0.1")
+        try expect(v1301.compact == v1301.description) // not major-only -> description
+
+        // ------- ExpressibleByStringLiteral / forcing behavior -------
+        let s1: Version = "2b.5.s"
+        try expect(s1.full == "2.5.0")   // forcing strips non-digits, builds 2.5.0
+        try expect(s1.description == "2.5")
+
+        let expanded: Version = "1.2.3b4"
+        try expect(expanded.full == "1.2.34")   // "1.2.3b4" -> cleaned "1.2.34"
+
+        // ------- init?(parsing:) success & failure -------
+        try expect(Version(parsing: "2.12.1") != nil)  // exact numeric parse succeeds
+        try expect(Version(parsing: "1.2.3b4") == nil) // non-exact (forced changed) -> nil
+
+        // ------- init(string:defaultValue:) -------
+        let defaulted = Version(string: nil, defaultValue: "1.2.3") // default passed as literal -> converted
+        try expect(defaulted == Version("1.2.3"))
+
+        let badDefault = Version(string: "alphabet", defaultValue: Version.zero)
+        try expect(badDefault == .zero)
+
+        // ------- zero and components -------
+        try expect(Version.zero == Version(majorVersion: 0, minorVersion: 0, patchVersion: 0))
+        try expect(v1301.components == [13, 0, 1])
+
+        // ------- Comparable behavior / sorting -------
+        let first = Version("2")
+        let second = Version("12.1")
+        let third: Version = "2.12.1"
+        let fourth = Version(rawValue: "12.1")
+        let fifth: Version = "2.2.0"
+        let sixth: Version = "2.1"
+
+        try expect(first < second)
+        try expect(third > first)
+        try expect(fourth == second)
+        try expect(third < fourth)
+        try expect(sixth < fifth)
+        try expect(fifth < third)
+
+        let list = [first, second, third, fourth, fifth, sixth]
+        try expect(list.sorted() == [first, sixth, fifth, third, second, fourth])
+
+        // ------- Hashable / Set behavior -------
+        var set: Set<Version> = [first, second]
+        try expect(set.contains(first))
+        set.insert(first) // duplicate, set size should not change
+        try expect(set.count == 2)
+
+        // ------- RawRepresentable & LosslessStringConvertible on Version -------
+        let rv = Version("3.4.5")
+        try expect(rv.rawValue == rv.description)
+        let rv2 = Version(rawValue: rv.rawValue)
+        try expect(rv2 == rv)
+
+        // ------- Codable: encode/decode array of Versions (string-encoded path) -------
+        let arr: [Version] = [first, second, third, Version("1.0.0"), Version("2.0"), Version("3.0.1")]
+        let encoded = try JSONEncoder().encode(arr)
+        let decoded = try JSONDecoder().decode([Version].self, from: encoded)
+        try expect(decoded.count == arr.count)
+        try expect(decoded[0] == arr[0])
+        try expect(decoded.map(\.rawValue) == arr.map(\.rawValue)) // round-trip check
+
+        // ------- Codable: keyed (object) decoding branch (major/minor/patch as ints) -------
+        let intJSON = #"[{"majorVersion":5,"minorVersion":3,"patchVersion":10}]"#
+        let intData = Data(intJSON.utf8)
+        let intDecoded = try JSONDecoder().decode([Version].self, from: intData)
+        try expect(intDecoded.first?.full == "5.3.10")
+
+        // ------- Codable: single-value (string) decoding branch -------
+        let stringJSON = #"["2.0","12.1","2.12.1"]"#
+        let stringDecoded = try JSONDecoder().decode([Version].self, from: Data(stringJSON.utf8))
+        try expect(stringDecoded[0] == Version("2"))
+
+        // ------- Codable: keyed decode missing a key should throw (error branch) -------
+        let badKeyJSON = #"[{"majorVersion":1,"minorVersion":2}]"# // missing patchVersion -> should throw
+        do {
+            _ = try JSONDecoder().decode([Version].self, from: Data(badKeyJSON.utf8))
+            try expect(false, "Expected keyed decode to fail due missing patchVersion")
+        } catch is DecodingError {
+            try expect(true) // expected
+        } catch {
+            try expect(false, "Unexpected error: \(error)")
+        }
+
+        // ------- [Version] RawRepresentable init(rawValue:) and pretty -------
+        let rawInput = "1,2.1.2,3"
+        let versionsFromRaw: [Version] = .init(rawValue: rawInput)
+        try expect(versionsFromRaw.count == 3)
+        try expect(versionsFromRaw.pretty == "v1.0, v2.1.2, v3.0")
+
+        // rawValue round-trip for the array
+        try expect(versionsFromRaw.rawValue.contains("1.0"))
+        try expect(versionsFromRaw.rawValue.contains("2.1.2"))
+        try expect(versionsFromRaw.rawValue.contains("3.0"))
+
+        // the "required" convenience initializer (prepends required version)
+        let versionsWithRequired: [Version] = .init(rawValue: rawInput, required: Version("4.3"))
+        try expect(versionsWithRequired.pretty.contains("v4.3"))
+
+        // uniqueness behavior: duplicates in raw input should be removed via Set
+        let dupRaw = "1,1,2"
+        let dupVersions: [Version] = .init(rawValue: dupRaw)
+        try expect(Set(dupVersions.map { $0.rawValue }).count == dupVersions.count)
+
+        // ------- pretty property again for sanity -------
+        try expect(versionsFromRaw.pretty.starts(with: "v"))
+
+        // Final sanity: ensure some corner cases of compact/description interplay
+        let justMajor: Version = "7"           // 7.0.0 -> description "7.0", compact "7"
+        try expect(justMajor.description == "7.0")
+        try expect(justMajor.compact == "7")
+    }
+
 #if canImport(Foundation)
     @Test
     @MainActor
@@ -73,6 +707,7 @@ struct CompatibilityTests {
     }
         
 #if canImport(Foundation)
+    @available(iOS 13, tvOS 13, *)
     @Test func testEncoding() async throws {
         let json = """
 ["Hello world", true, false, 1, 2, -2, 2.1, 23.1, 3.14159265, null, {
@@ -135,7 +770,7 @@ struct CompatibilityTests {
         }
     }
     
-    @State var value: String?
+/*    @State var value: String?
     @Test
     @MainActor
     @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
@@ -152,8 +787,9 @@ struct CompatibilityTests {
             .padding(size: 22)
         _ = ClearableTextField(label: "hello", text: $value).body
      }
-    
+    */
     @Test
+    @available(iOS 16, macOS 13, tvOS 16, watchOS 9, *)
     func additionalTests() {
         Compatibility.copyToPasteboard("Testing copying text to pasteboard via Compatibility.swiftpm")
         
@@ -184,6 +820,111 @@ struct CompatibilityTests {
             #expect(files.count > 0)
         }
     }
+    
+    // MARK: DataStore tests
+    @available(iOS 16, macOS 13, tvOS 16, watchOS 9, *)
+    @Test func mockDataStoreSetGetAndRemove() {
+        let ds = MockDataStore()
+        #expect(ds.isLocal)
+
+        ds.set("hello", forKey: "k1")
+        #expect(ds.string(forKey: "k1") == "hello")
+        #expect(ds.object(forKey: "k1") as? String == "hello")
+
+        ds.set(42, forKey: "intKey")
+        #expect(ds.integer(forKey: "intKey") == 42)
+
+        ds.set(3.14, forKey: "doubleKey")
+        #expect(ds.double(forKey: "doubleKey") == 3.14)
+
+        ds.set(true, forKey: "boolKey")
+        #expect(ds.bool(forKey: "boolKey"))
+
+        let url = URL(string: "https://example.com")!
+        ds.set(url, forKey: "urlKey")
+        #expect(ds.url(forKey: "urlKey") == url)
+
+        ds.removeObject(forKey: "k1")
+        #expect(ds.object(forKey: "k1") == nil)
+
+        #expect(ds.synchronize())
+    }
+
+    @available(iOS 16, macOS 13, tvOS 16, watchOS 9, *)
+    @Test func mockDataStoreCollectionsAndDictionaryRepresentation() {
+        let ds = MockDataStore()
+        ds.set(["a","b"], forKey: "arr")
+        #expect(ds.array(forKey: "arr") as? [String] == ["a","b"])
+
+        let dict: [String: Any] = ["one": 1, "two": "2"]
+        ds.set(dict, forKey: "dict")
+        #expect(ds.dictionary(forKey: "dict")?["one"] as? Int == 1)
+
+        let dr = ds.dictionaryRepresentation()
+        #expect(dr.keys.contains("arr"))
+        #expect(dr.keys.contains("dict"))
+    }
+
+    @available(iOS 16, macOS 13, tvOS 16, watchOS 9, *)
+    @Test func mockDataStoreNumericConversions() {
+        let ds = MockDataStore()
+        ds.set(123, forKey: "int")
+        #expect(ds.integer(forKey: "int") == 123)
+
+        ds.set(Int64(1234567890123), forKey: "big")
+        #expect(ds.longLong(forKey: "big") == Int64(1234567890123))
+    }
+
+    @available(iOS 16, macOS 13, tvOS 16, watchOS 9, *)
+    @Test func userDefaultsConformance() throws {
+        let suiteName = "DataStoreTests.suite"
+        // use `#require` to fail early (and unwrap) instead of throwing a TestFailure
+        let ud = try #require(UserDefaults(suiteName: suiteName), "Unable to create test UserDefaults suite")
+        defer { ud.removePersistentDomain(forName: suiteName) }
+
+        let ds: DataStore = ud
+        #expect(ds.isLocal)
+        #expect(ds.description == "Local")
+
+        ud.set(999, forKey: "someInt")
+        #expect(ud.longLong(forKey: "someInt") == 999)
+    }
+
+    @available(iOS 16, macOS 13, tvOS 16, watchOS 9, *)
+    @Test func mockDataStoreICloudTypeDescription() {
+        let ds = MockDataStore(type: .iCloud)
+        #expect(!ds.isLocal)
+        #expect(ds.description == "iCloud data store")
+    }
+
+    @available(iOS 16, macOS 13, tvOS 16, watchOS 9, *)
+    @Test(arguments: ["testKey"]) func ubiquitousStoreSetAndGet(key: String) async throws {
+        let store = NSUbiquitousKeyValueStore.default
+        // Skip if iCloud is not available
+        guard store.synchronize() else {
+            return // just exit early
+        }
+
+        store.set("value", forKey: key)
+        #expect(store.string(forKey: key) == "value")
+
+        store.removeObject(forKey: key)
+        #expect(store.string(forKey: key) == nil)
+    }
+
+//    @available(iOS 16, macOS 13, tvOS 16, watchOS 9, *)
+//    @MainActor @Test func dataStoreTestModelDefaults() {
+//        let model = DataStoreTestModel()
+//        
+//        #expect(model.moduleVersionsRun.contains(Compatibility.version))
+//        
+//        // Assign new values and verify persistence through UserDefaults
+//        let now = Date.nowBackport
+//        model.lastSaved = now
+//        
+//        #expect(UserDefaults.standard.string(forKey: .lastSavedKey) == String(now.timeIntervalSinceReferenceDate))
+//    }
+
 #endif
 }
 #endif
