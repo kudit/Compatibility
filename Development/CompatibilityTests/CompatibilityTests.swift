@@ -13,6 +13,16 @@ import Testing
 import SwiftUI
 
 extension CloudStatus: @retroactive CaseNameConvertible {}
+final class TestClass {}
+// Define a simple struct to test Encodable/Decodable
+private struct TestPerson: Codable, Equatable {
+    let name: String
+    let age: Int
+    let isStudent: Bool
+    let nickname: String?
+    let scores: [Double]
+    let info: MixedTypeDictionary // ordered so we have deterministic output
+}
 
 #if canImport(Foundation)
 // MARK: - MockDataStore
@@ -55,7 +65,7 @@ private final class MockDataStore: DataStore {
 @Suite
 struct CompatibilityTests {
     
-    @Test
+    @Test("Enum rotation")
     func testEnumRotation() {
         var e = CloudStatus.notSupported
         #expect(e == .notSupported)
@@ -67,7 +77,7 @@ struct CompatibilityTests {
         #expect(e == .notSupported)
     }
     
-    @Test
+    @Test("Double/Integer Values")
     func testValues() {
         let intValue: Int = 42
         #expect(intValue.doubleValue == 42.0)
@@ -85,7 +95,7 @@ struct CompatibilityTests {
         #expect(!(-3.14).isInteger)
     }
     
-    @Test
+    @Test("String")
     func testStringExtensionsWithoutFoundation() {
         // MARK: - LosslessStringConvertible init(string:defaultValue:)
         // Should fall back to default if the string is nil or not convertible
@@ -247,7 +257,8 @@ struct CompatibilityTests {
         #expect(s2b == "hi")
 
         // MARK: - trimmingCharacters()
-        #expect("xxhelloxx".trimmingCharacters(in: ["x"]) == "hello")
+        let characterSet: Set<Character> = ["x"]
+        #expect("xxhelloxx".trimmingCharacters(in: characterSet) == "hello")
 
         // MARK: - testTrimming
         var s3 = "  test  "
@@ -307,7 +318,26 @@ struct CompatibilityTests {
         #expect(character.isVowel(countY: true))
     }
 
+    @Test("OrderedDictionary")
     func orderedDictionaryTests() throws {
+        var dictSub = OrderedDictionary<String, Int>()
+
+        // Insert new key
+        dictSub["a"] = 1
+        #expect(dictSub["a"] == 1)
+
+        // Update existing key
+        dictSub["a"] = 42
+        #expect(dictSub["a"] == 42)
+
+        // Insert another key
+        dictSub["b"] = 2
+        #expect(dictSub["b"] == 2)
+
+        // Remove a key by setting nil
+        dictSub["a"] = nil
+        #expect(dictSub["a"] == nil)
+
         // Empty init + isEmpty/count
         let dict = OrderedDictionary<String, Int>()
         #expect(dict.isEmpty)
@@ -470,8 +500,8 @@ struct CompatibilityTests {
 
         // --- reversed / reverse ---
         var reversed2 = sortable
-        reversed2.reverse()
-        let reversedCopy = reversed2.reversed()
+        reversed2.reverse() // normal order
+        let reversedCopy = reversed2.reversed() // backwards
         #expect(reversedCopy.keys.map { $0 } == sortable.keys.reversed())
 
         // --- swapAt ---
@@ -536,6 +566,104 @@ struct CompatibilityTests {
         } catch {
             // expected
         }
+
+        let a = TestClass()
+        let b = TestClass()
+        let c = TestClass()
+
+        let objDict: [String: TestClass] = [
+            "one": a,
+            "two": b,
+            "three": c
+        ]
+
+        #expect(objDict.firstKey(for: b) == "two")
+        #expect(objDict.firstKey(for: a) == "one")
+        #expect(objDict.firstKey(for: TestClass()) == nil)
+
+        var dict1 = OrderedDictionary<String, Int>()
+        dict1["a"] = 1
+        dict1["b"] = 2
+
+        var dict2 = OrderedDictionary<String, Int>()
+        dict2["a"] = 1
+        dict2["b"] = 2
+
+        var dict3 = OrderedDictionary<String, Int>()
+        dict3["b"] = 2
+        dict3["a"] = 1  // different order
+
+        // Same content & order → equal hashes
+        #expect(dict1.hashValue == dict2.hashValue)
+
+        // Same keys/values but different order → should not hash equal
+        #expect(dict1.hashValue != dict3.hashValue)
+    }
+
+    @Test("DictionaryConvertible")
+    func testDictionaryConvertible() {
+        var dict1: OrderedDictionary<String, Int> = [:]
+        dict1["a"] = 1
+        dict1["b"] = 2
+
+        let dict2: [String: Int] = ["b": 20, "c": 3]
+
+        dict1 += dict2
+
+        // "b" should be replaced, "c" should be added
+        #expect(dict1["a"] == 1)
+        #expect(dict1["b"] == 20)
+        #expect(dict1["c"] == 3)
+
+        let dict3: OrderedDictionary<String, Int> = ["a": 1, "b": 2]
+        let dict4: [String: Int] = ["b": 20, "c": 3]
+
+        let merged = dict3 + dict4
+
+        // merged should contain both sets of keys, with rhs taking precedence
+        #expect(merged["a"] == 1)
+        #expect(merged["b"] == 20)
+        #expect(merged["c"] == 3)
+
+        // originals remain unchanged
+        #expect(dict3["b"] == 2)
+        #expect(dict4["b"] == 20)
+    }
+
+    @Test("Combined tests for ++, --, random, ordinal, string, pluralEnding, and byteString")
+    func combinedIntTests() throws {
+        // ++ operator
+        var plusPlusValue = 3
+        plusPlusValue++
+        #expect(plusPlusValue == 4, "++ operator failed")
+
+        // -- operator
+        var minusMinusValue = 3
+        minusMinusValue--
+        #expect(minusMinusValue == 2, "-- operator failed")
+
+        // Int.random(max:)
+        #expect(Int.random(max: -2) == 0)
+        #expect(Int.random(max: 0) == 0)
+        for i in 1..<5 {
+            let num = Int.random(max: i)
+            #expect(num >= 0 && num < i)
+        }
+
+        // Int.string
+        #expect(1999.string == "1999")
+
+        // Int.pluralEnding
+        #expect(0.pluralEnding() == "s")
+        #expect(1.pluralEnding("teeth", singularEnding: "tooth") == "tooth")
+        #expect(2.pluralEnding("teeth", singularEnding: "tooth") == "teeth")
+
+        // BinaryInteger.byteString
+        #if canImport(Foundation)
+        let byteTestValue: UInt64 = 12334
+        let formatted = byteTestValue.byteString(.file)
+        #expect(formatted.contains("KB"), "Byte string formatting failed")
+        #endif
     }
 
     @Test("Version.swift — full coverage")
@@ -664,7 +792,7 @@ struct CompatibilityTests {
     }
 
 #if canImport(Foundation)
-    @Test
+    @Test("Identifiers")
     @MainActor
     @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
     func testValidIdentifier() {
@@ -676,7 +804,7 @@ struct CompatibilityTests {
     }
 #endif
     
-    @Test
+    @Test("Introspection")
     func testIntrospection() {
         let dictionary = ["a": 1, "b": 2]
         #expect("a" == dictionary.firstKey(for: 1))
@@ -705,8 +833,102 @@ struct CompatibilityTests {
             #expect(areEqual(String(describing: propertyValue), String(describing: pathValue)))
         }
     }
+
+    @Test("CodingJSON")
+    func testCodingJSON() throws {
+        // MARK: - Encodable.asJSON / prettyJSON
+        let person = TestPerson(name: "Alice", age: 30, isStudent: true, nickname: nil, scores: [3.5, 4.0], info: ["home": .string("Earth"), "favoriteNumbers": .array([.int(1), .int(2), .int(3)])])
+        let json = person.asJSON()
+        debug(json)
+        #expect(json == """
+{"name":"Alice","age":30,"isStudent":true,"scores":[3.5,4.0],"info":{"home":"Earth","favoriteNumbers":[1,2,3]}}
+""")
+        #expect(json.contains("\"Alice\""))
+        #expect(json.contains("30"))
+        #expect(json.contains("3.5"))
+
+        let pretty = person.prettyJSON
+        #expect(pretty == """
+            {
+              "age": 30,
+              "info": {
+                "favoriteNumbers": [
+                  1,
+                  2,
+                  3
+                ],
+                "home": "Earth"
+              },
+              "isStudent": true,
+              "name": "Alice",
+              "scores": [
+                3.5,
+                4.0
+              ]
+            }            
+            """)
         
-#if canImport(Foundation)
+        // MARK: - Decodable.init(fromJSON:)
+        let decoded = try TestPerson(fromJSON: json)
+        #expect(decoded == person)
+        
+        // MARK: - MixedTypeField encode/decode
+        let fields: [MixedTypeField] = [
+            .string("hello"),
+            .bool(true),
+            .int(42),
+            .double(3.14),
+            .null,
+            .dictionary(["key": .string("value")]),
+            .array([.int(1), .int(2)])
+        ]
+        
+        for field in fields {
+            let data = try JSONEncoder().encode(field)
+            let decodedField = try JSONDecoder().decode(MixedTypeField.self, from: data)
+            #expect(String(describing: field) == String(describing: decodedField))
+        }
+        
+        // MARK: - MixedTypeField convenience accessors
+        #expect(fields[0].stringValue == "hello")
+        #expect(fields[1].boolValue == true)
+        #expect(fields[2].intValue == 42)
+        #expect(fields[3].doubleValue == 3.14)
+        #expect(fields[4].stringValue == nil)
+        #expect(fields[5].dictionaryValue?["key"]??.stringValue == "value")
+        #expect(fields[6].arrayValue?.count == 2)
+        
+        // MARK: - toJSON
+        #expect(fields[0].asJSON() == "\"hello\"")
+        #expect(fields[1].asJSON() == "true")
+        #expect(fields[2].asJSON() == "42")
+        #expect(fields[3].asJSON() == "3.14")
+        #expect(fields[4].asJSON() == "null")
+        #expect(fields[5].asJSON().contains("\"key\""))
+        #expect(fields[6].asJSON().contains("["))
+                
+        // MARK: - parseJSON bad input
+        do {
+            _ = try TestPerson(fromJSON: "not-json")
+            Issue.record("Expected parseJSON failure not thrown")
+        } catch {
+            // expected
+        }
+                
+        // MARK: - MixedTypeDictionaryDecoder KeyedDecodingContainer
+        let dict: MixedTypeDictionary = [
+            "name": .string("Bob"),
+            "age": .int(25),
+            "isStudent": .bool(false),
+            "scores": .array([.double(2.5)])
+        ]
+        let bob = try TestPerson(fromMixedTypeField: .dictionary(dict))
+        #expect(bob.name == "Bob")
+        #expect(bob.age == 25)
+        #expect(bob.isStudent == false)
+        #expect(bob.scores == [2.5])
+    }
+
     @available(iOS 13, tvOS 13, *)
     @Test func testEncoding() async throws {
         let json = """
@@ -729,11 +951,11 @@ struct CompatibilityTests {
         let bar = Version(string: optional, defaultValue: "1.0")
         #expect(bar == "1.0")
 
-        let decoded = try [MixedTypeField].init(fromJSON: json)
+        let decoded = try [MixedTypeField](fromJSON: json)
         #expect(decoded[0].stringValue == "Hello world")
         #expect(decoded[2].boolValue == false)
         #expect(decoded[5].intValue == -2)
-        #expect(decoded[10].dictionaryValue?["double"]?.doubleValue == 2.1)
+        #expect(decoded[10].dictionaryValue?["double"]??.doubleValue == 2.1)
         #expect(decoded[11].arrayValue?.count == 5)
         let pretty = decoded.prettyJSON
         let redecoded = try [MixedTypeField].init(fromJSON: pretty)
@@ -741,12 +963,12 @@ struct CompatibilityTests {
 //        debug(pretty)
     }
     
-    @Test
+    @Test("Named Tests")
     @MainActor
     @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
     func testNamedTests() async throws {
         let namedTests = Test.namedTests
-        var ongoingTests = Date.tests // because can't just do = [Test]() for some reason...
+        var ongoingTests = Int.tests // because can't just do = [Test]() for some reason...
         ongoingTests.removeAll()
         for (name, tests) in namedTests {
             debug("Running \(name) tests...")
@@ -770,6 +992,7 @@ struct CompatibilityTests {
         }
     }
     
+#if canImport(Foundation)
 /*    @State var value: String?
     @Test
     @MainActor
@@ -788,7 +1011,7 @@ struct CompatibilityTests {
         _ = ClearableTextField(label: "hello", text: $value).body
      }
     */
-    @Test
+    @Test("Additional Tests")
     @available(iOS 16, macOS 13, tvOS 16, watchOS 9, *)
     func additionalTests() {
         Compatibility.copyToPasteboard("Testing copying text to pasteboard via Compatibility.swiftpm")
@@ -823,7 +1046,8 @@ struct CompatibilityTests {
     
     // MARK: DataStore tests
     @available(iOS 16, macOS 13, tvOS 16, watchOS 9, *)
-    @Test func mockDataStoreSetGetAndRemove() {
+    @Test("Mock DataStore")
+    func mockDataStoreSetGetAndRemove() {
         let ds = MockDataStore()
         #expect(ds.isLocal)
 

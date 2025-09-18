@@ -211,7 +211,7 @@ public extension Collection {
     }
 }
 // Testing is only supported with Swift 5.9+
-#if compiler(>=5.9) && canImport(Foundation)
+#if compiler(>=5.9)
 @available(iOS 13, tvOS 13, watchOS 6, *)
 @MainActor
 let collectionTests: [Test] = [

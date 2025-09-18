@@ -8,21 +8,19 @@
 public protocol DoubleConvertible {
     var doubleValue: Double { get }
 }
-extension Int: DoubleConvertible {
-    public var doubleValue: Double {
+public extension BinaryInteger {
+    var doubleValue: Double {
         return Double(self)
     }
 }
-extension Float: DoubleConvertible {
-    public var doubleValue: Double {
+extension Int: DoubleConvertible {}
+public extension BinaryFloatingPoint {
+    var doubleValue: Double {
         return Double(self)
     }
 }
-extension Double: DoubleConvertible {
-    public var doubleValue: Double {
-        return Double(self)
-    }
-}
+extension Double: DoubleConvertible {}
+extension Float: DoubleConvertible {}
 
 public extension Double {
     /// `true` if this value is an integer (rounding does nothing to the value).
@@ -44,17 +42,19 @@ public extension Double {
             return "\(self)"
         }
     }
-    
+
     /// Rounds decimals to the specified number of places.
     func precision(_ places: Int) -> Double {
         let divisor = pow(10.0, Double(places))
         return (self * divisor).rounded() / divisor
     }
-    
+#endif
+
     @MainActor
     internal static let doubleTests: TestClosure = {
         let five = 5.doubleValue.doubleValue
         try expect("\(five)" == "5.0")
+        #if canImport(Foundation)
         try expect(five.withoutZeros == "5")
         
         let two = Float(2).doubleValue
@@ -66,12 +66,12 @@ public extension Double {
         try expect(pi.precision(4) == 3.1416)
         try expect(pi.precision(5) == 3.14159)
         try expect(pi.withoutZeros == "\(pi)")
+        #endif
     }
-    #endif
 }
 
 // Testing is only supported with Swift 5.9+
-#if compiler(>=5.9) && canImport(Foundation)
+#if compiler(>=5.9)
 @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
 public extension Double {
     @MainActor

@@ -5,9 +5,9 @@
 //  Created by Ben Ku on 7/7/24.
 //
 
-#if !canImport(Combine) // for Linux and older OS support so we can use @CloudStorage but fall back to UserDefaults.
-// Add stub here to make sure we can compile
-public protocol ObservableObject {
+#if !canImport(Combine) || !canImport(Foundation) // for Linux and older OS support so we can use @CloudStorage but fall back to UserDefaults.
+// Add stub here to make sure we can compile and we can define things as ObservableObject but not use observation in legacy systems or where Foundation isn't available.
+public protocol ObservableObject: AnyObject {
     associatedtype ObjectWillChangePublisher : Publisher = ObservableObjectPublisher where Self.ObjectWillChangePublisher.Failure == Never
     var objectWillChange: ObjectWillChangePublisher { get }
 }

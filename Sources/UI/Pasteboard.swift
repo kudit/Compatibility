@@ -6,7 +6,7 @@
 //
 
 /// Pasteboard manipulation
-#if canImport(UIKit) || canImport(AppKit)
+#if (canImport(UIKit) || canImport(AppKit)) && canImport(Foundation)
 #if canImport(UIKit)
 import UIKit
 #elseif canImport(AppKit)

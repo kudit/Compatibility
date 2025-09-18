@@ -109,6 +109,142 @@ public extension CharacterSet {
         return String(self.allCharacters)
     }
 }
+#else // no Foundation support
+// MARK: - Foundation-less Backports
+public extension Set<Character> {
+    static let whitespacesAndNewlines: Set<Character> = [" ", "\t", "\n", "\r"]
+}
+public extension StringProtocol {
+    /// NON-Foundation implementation.  If foundation is available, use `.trimmingCharacters(in: .whitespacesAndNewLines)`. Returns a new string made by removing whitespace and newline characters from both ends.
+    func trimmingCharacters(in trimCharacters: Set<Character>) -> String {
+        guard self.count > 0 else { return String(self) }
+        var startIndex = self.startIndex
+        var endIndex = self.index(before: self.endIndex)
+        
+        // Find first non-trim character from the start
+        while startIndex <= endIndex && trimCharacters.contains(self[startIndex]) {
+            startIndex = self.index(after: startIndex)
+        }
+        
+        // Find first non-trim character from the end
+        while endIndex >= startIndex && trimCharacters.contains(self[endIndex]) {
+            endIndex = self.index(before: endIndex)
+        }
+        
+        guard startIndex <= endIndex else {
+            return ""
+        }
+        return String(self[startIndex...endIndex])
+    }
+
+    /// Find the range of `target` within self, restricted to `searchRange`.
+    /// Returns nil if not found.
+    func range(of target: String, range searchRange: Range<String.Index>? = nil) -> Range<String.Index>? {
+        // Define the actual search range: full string if nil
+        let searchRange = searchRange ?? self.startIndex..<self.endIndex
+
+        // Early exit if target is empty or longer than search range
+        guard !target.isEmpty,
+              target.count <= self.distance(from: searchRange.lowerBound, to: searchRange.upperBound) else {
+            return nil
+        }
+
+        var current = searchRange.lowerBound
+        while true {
+            // Calculate the end index of the current window
+            guard let windowEnd = self.index(current, offsetBy: target.count, limitedBy: searchRange.upperBound) else {
+                break
+            }
+            // Compare substring slice with target
+            if self[current..<windowEnd] == target {
+                return current..<windowEnd
+            }
+            // Move to next character
+            if current == searchRange.upperBound {
+                break
+            }
+            current = self.index(after: current)
+        }
+        return nil
+    }
+
+    // Only define this if you're not using Foundation
+    // and you want to silence the macOS 13+ overload
+    @_disfavoredOverload
+    func contains(_ substring: String) -> Bool {
+        guard !substring.isEmpty, substring.count <= self.count else {
+            return false
+        }
+
+        var current = self.startIndex
+        while let end = self.index(current, offsetBy: substring.count, limitedBy: self.endIndex) {
+            if self[current..<end] == substring {
+                return true
+            }
+            current = self.index(after: current)
+        }
+
+        return false
+    }
+    /// Returns a new string in which the characters in a
+    /// specified character set are replaced by a given string.
+    @inlinable func replacingCharacters<T>(
+        in characterSet: Set<Character>,
+        with replacement: T
+    ) -> String where T : StringProtocol {
+        var result = ""
+        result.reserveCapacity(self.count)
+        
+        for character in self {
+            if characterSet.contains(character) {
+                result.append(contentsOf: replacement)
+            } else {
+                result.append(character)
+            }
+        }
+        
+        return result
+    }
+    
+    /// A copy of the string with each word changed to its corresponding
+    /// capitalized spelling.
+    ///
+    /// This property performs the canonical (non-localized) mapping. It is
+    /// suitable for programming operations that require stable results not
+    /// depending on the current locale.
+    ///
+    /// A capitalized string is a string with the first character in each word
+    /// changed to its corresponding uppercase value, and all remaining
+    /// characters set to their corresponding lowercase values. A "word" is any
+    /// sequence of characters delimited by spaces, tabs, or line terminators.
+    /// Some common word delimiting punctuation isn't considered, so this
+    /// property may not generally produce the desired results for multiword
+    /// strings. See the `getLineStart(_:end:contentsEnd:for:)` method for
+    /// additional information.
+    ///
+    /// Case transformations aren’t guaranteed to be symmetrical or to produce
+    /// strings of the same lengths as the originals.
+    var capitalized: String {
+        var result = ""
+        var isAtWordStart = true
+
+        for character in self {
+            if Set<Character>.whitespacesAndNewlines.contains(character) {
+                result.append(character)
+                isAtWordStart = true
+            } else {
+                if isAtWordStart {
+                    result.append(String(character).uppercased())
+                    isAtWordStart = false
+                } else {
+                    result.append(String(character).lowercased())
+                }
+            }
+        }
+
+        return result
+    }
+}
 #endif
 
 // MARK: - HTML
@@ -492,7 +628,12 @@ public extension String {
 
     /// `true` if the byte length of the `String` is larger than 100k (the exact threashold may change)
     var isLarge: Bool {
+        #if canImport(Foundation)
         let bytes = self.lengthOfBytes(using: String.Encoding.utf8)
+        #else
+        let bytes = self.utf8.count
+        #endif
+
         return bytes / 1024 > 100 // larger than 100k worth of text (that's still a LOT of lines)
     }
     /// `true` if the `String` appears to be a year after 1760 and before 3000 (use for reasonablly assuming text could be a year value)
@@ -604,11 +745,7 @@ public extension String {
     // MARK: - Trimming
     /// Returns a new string made by removing whitespace from both ends of the `String`.
     var trimmed: String {
-        #if canImport(Foundation)
-        return self.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
-        #else
-        return self.trimmingCharacters(in: .init(charactersIn: " \t\n\r"))
-        #endif
+        trimmingCharacters(in: .whitespacesAndNewlines)
     }
     /// Removes whitespace from both ends of the `String`.
     mutating func trim() {
@@ -788,19 +925,62 @@ public extension String {
         let badCharacterSet = whitelistCharacterSet.inverted
         return self.components(separatedBy: badCharacterSet).joined(separator: "")
     }
+    #else
+    // More Foundation-less backports
+    /// Returns a new string in which all occurrences of a target
+    /// string in a specified range of the string are replaced by
+    /// another given string.
+    func replacingOccurrences<Target, Replacement>(
+        of target: Target,
+        with replacement: Replacement,
+        range searchRange: Range<Self.Index>? = nil
+    ) -> String where Target : StringProtocol, Replacement : StringProtocol {
+        
+        // If target is empty, return original string
+        if target.isEmpty {
+            return self
+        }
+
+        let targetString = String(target)
+        let replacementString = String(replacement)
+
+        let searchRange = searchRange ?? self.startIndex..<self.endIndex
+        var result = ""
+        var currentIndex = searchRange.lowerBound
+
+        while currentIndex < searchRange.upperBound {
+            guard let range = self.range(of: targetString, range: currentIndex..<searchRange.upperBound) else {
+                // No more matches; append the rest
+                result += self[currentIndex..<searchRange.upperBound]
+                break
+            }
+
+            // Append everything before the match
+            result += self[currentIndex..<range.lowerBound]
+
+            // Append the replacement
+            result += replacementString
+
+            // Move index past the match
+            currentIndex = self.index(range.lowerBound, offsetBy: targetString.count)
+        }
+
+        // Append any remaining content after the specified range
+        if searchRange.upperBound < self.endIndex {
+            result += self[searchRange.upperBound..<self.endIndex]
+        }
+
+        return result
+    }
     #endif
     /// string with all duplicate characters removed
     var duplicateCharactersRemoved: String {
         return self.characterStrings.unique.joined(separator: "")
     }
 
-    /// remove all characters in `.whitespacesAndNewLines`
+    /// remove all characters in `.whitespacesAndNewlines`
     var whitespaceStripped: String {
-        #if canImport(Foundation)
         replacingCharacters(in: .whitespacesAndNewlines, with: "")
-        #else
-        self.replacingOccurrences(of: "[\\s\\n]", with: "", options: .regularExpression)
-        #endif
     }
 
     // MARK: - Transformed
@@ -820,6 +1000,7 @@ public extension String {
                 // check for spaces or blank words
                 if words[index].trimmed != "" {
                     words[index] = words[index].capitalized
+
                     break // only do first word
                 }
             }
@@ -990,25 +1171,49 @@ public extension String {
     }
 
     // MARK: - HTML Tools
-    /// String with XML style tags removed.
+    /// Returns a copy of the string with all XML/HTML-style tags removed.
+    /// Tags are defined as anything between `<` and `>`, inclusive.
     var tagsStripped: String {
+        #if canImport(Foundation)
         var cleaned = self
         while let range = cleaned.range(of: "<[^>]+>", options: .regularExpression) {
+
             cleaned = cleaned.replacingCharacters(in: range, with: "")
         }
+        #else
+        // fallback implementation
+        var cleaned = ""
+        var insideTag = false
+        
+        for char in self {
+            if char == "<" {
+                insideTag = true
+                continue
+            } else if char == ">" {
+                insideTag = false
+                continue
+            }
+            
+            if !insideTag {
+                cleaned.append(char)
+            }
+        }
+        #endif
         return cleaned
     }
     
     // MARK: - Parsing
+    @MainActor
+    internal static let testSubstring: TestClosure = {
+        #if canImport(Foundation)
+        let extraction = TEST_STRING.substring(with: NSRange(7...12))
+        try expect(extraction == "string" , String(describing:extraction))
+        #endif
+    }
     #if canImport(Foundation)
     /// Fix to avoid casting String to NSString
     func substring(with range: NSRange) -> String { // TODO: figure out how to replace this...
         return (self as NSString).substring(with: range)
-    }
-    @MainActor
-    internal static let testSubstring: TestClosure = {
-        let extraction = TEST_STRING.substring(with: NSRange(7...12))
-        try expect(extraction == "string" , String(describing:extraction))
     }
     #else
     // alternate implementation of components that doesn't use Foundation
@@ -1120,7 +1325,6 @@ public extension String {
     // MARK: - JSON Tools
     /**
      Returns a string with backslashes added before characters that need to be escaped. These characters are:
-
 //     single quote (')
      double quote (")
      backslash (\)
@@ -1158,7 +1362,7 @@ public extension String {
 #endif
     
 // Testing is only supported with Swift 5.9+
-#if compiler(>=5.9) && canImport(Foundation)
+#if compiler(>=5.9)
     @available(iOS 13, tvOS 13, watchOS 6, *)
     @MainActor
     static let tests = [

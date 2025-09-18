@@ -71,11 +71,11 @@ public func debugSuppress(_ block: () async throws -> Void) async rethrows {
     try await block()
 }
 
-// Testing is only supported with Swift 5.9+ and requires Foundation
-#if compiler(>=5.9) && canImport(Foundation)
+// Testing is only supported with Swift 5.9+
+#if compiler(>=5.9)
 // Test Handlers
-@available(iOS 13, tvOS 13, watchOS 6, *) // due to ObservableObject
 @MainActor
+@available(iOS 13, tvOS 13, watchOS 6, *)
 public final class Test: ObservableObject {
     public enum TestProgress: Sendable {
         case notStarted
@@ -110,6 +110,7 @@ public final class Test: ObservableObject {
         self.task = task
     }
     
+    @available(iOS 13, tvOS 13, watchOS 6, *)
     public func run() {
         progress = .running
         // make sure to run the "work" in a separate thread since we don't want any of this running on the main thread and potentially bogging things down
@@ -165,35 +166,35 @@ public extension Test {
     }
 }
 
-#if canImport(Foundation)
 @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
 public extension Test {
     static let namedTests: OrderedDictionary = {
         var tests: OrderedDictionary = [
-            "Application Tests": Application.tests,
-            "Bundle Tests": Bundle.tests,
             "Version Tests": Version.tests,
             "Int Tests": Int.tests,
             "Double Tests": Double.tests,
             "Collection Tests": collectionTests,
-            "Date Tests": Date.tests,
             "String Tests": String.tests,
-            "CharacterSet Tests": CharacterSet.tests,
-            "Threading Tests": KuThreading.tests,
-            "URL Tests": URL.tests,
             "Dictionary Tests": dictionaryTests,
             "Debug Tests": DebugLevel.tests,
         ]
+#if canImport(Foundation)
+        tests["Application Tests"] = Application.tests
+        tests["Bundle Tests"] = Bundle.tests
+        tests["Date Tests"] = Date.tests
+        tests["CharacterSet Tests"] = CharacterSet.tests
+        tests["Threading Tests"] = KuThreading.tests
+        tests["URL Tests"] = URL.tests
 #if canImport(Combine)
         // unavailable on Linux
         tests["Network Tests"] = PostData.tests
 #endif
+#endif
         return tests
     }()
 }
-#endif
 
-#if canImport(SwiftUI)
+#if canImport(SwiftUI) && canImport(Foundation)
 import SwiftUI
 @available(iOS 13, tvOS 13, watchOS 6, *)
 #Preview {

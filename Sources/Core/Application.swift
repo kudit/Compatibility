@@ -16,21 +16,25 @@ extension String {
     public static let unknownAppIdentifier = "com.unknown.unknown"
 }
 
-#if canImport(Foundation)
-@available(iOS 13, tvOS 13, watchOS 6, *)
 @MainActor
+@available(iOS 13, tvOS 13, watchOS 6, *)
 public class Application: ObservableObject { // cannot automatically conform to CustomStringConvertible since it's actor-isolated...
     @MainActor
     public static var baseDomain = "com.kudit"
+
+    @MainActor
+    public static let main = Application()
+
+    // MARK: - Compiler information
     
     /// will be true if we're in a debug configuration and false if we're building for release
     nonisolated // Not @MainActor
-    public static let isDebug = _isDebugAssertConfiguration()
+    static let isDebug = _isDebugAssertConfiguration()
     
     // Documentation on the following compiler directives: https://docs.swift.org/swift-book/documentation/the-swift-programming-language/statements/#Compiler-Control-Statements
     
     /// Returns the version number of Swift being used to compile
-    public static var compilerVersion: String {
+    static var compilerVersion: String {
 #if compiler(>=9.0)
         "X.x"
 #elseif compiler(>=8.0)
@@ -73,9 +77,9 @@ public class Application: ObservableObject { // cannot automatically conform to 
         "Unsupported"
 #endif
     }
-
+    
     /// Returns the version number of Swift being used to run?
-    public static var swiftVersion: String {
+    static var swiftVersion: String {
 #if swift(>=9.0)
         "X.x"
 #elseif swift(>=8.0)
@@ -119,6 +123,77 @@ public class Application: ObservableObject { // cannot automatically conform to 
 #endif
     }
     
+    // MARK: - Environmental info
+    /// Returns `true` if running on the simulator vs actual device.
+    nonisolated // Not @MainActor
+    static var isSimulator: Bool {
+#if targetEnvironment(simulator)
+        // your simulator code
+        return true
+#else
+        // your real device code
+        return false
+#endif
+    }
+    
+    // In macOS Playgrounds Preview: swift-playgrounds-dev-previews.swift-playgrounds-app.hdqfptjlmwifrrakcettacbhdkhn.501.KuditFramework
+    // In macOS Playgrounds Running: swift-playgrounds-dev-run.swift-playgrounds-app.hdqfptjlmwifrrakcettacbhdkhn.501.KuditFrameworksApp
+    // In iPad Playgrounds Preview: swift-playgrounds-dev-previews.swift-playgrounds-app.agxhnwfqkxciovauscbmuhqswxkm.501.KuditFramework
+    // In iPad Playgrounds Running: swift-playgrounds-dev-run.swift-playgrounds-app.agxhnwfqkxciovauscbmuhqswxkm.501.KuditFrameworksApp
+    // warning: {"message":"This code path does I/O on the main thread underneath that can lead to UI responsiveness issues. Consider ways to optimize this code path","antipattern trigger":"+[NSBundle allBundles]","message type":"suppressable","show in console":"0"}
+    /// Returns `true` if running in Swift Playgrounds.
+    nonisolated // Not @MainActor
+    static var isPlayground: Bool {
+#if SwiftPlaygrounds
+        debug("New Swift Playgrounds test!", level: .WARNING)
+        return true
+#elseif canImport(Foundation)
+        //print("Testing inPlayground: Bundles", Bundle.allBundles.map { $0.bundleIdentifier }.description)")
+        if Bundle.allBundles.contains(where: { ($0.bundleIdentifier ?? "").contains("swift-playgrounds") }) {
+            //print("in playground")
+            return true
+        } else {
+            //print("not in playground")
+            return false
+        }
+#else
+        false
+#endif
+    }
+    
+    /// Returns `true` if running in an XCode or Swift Playgrounds #Preview macro.
+    nonisolated // Not @MainActor
+    static var isPreview: Bool {
+#if canImport(Foundation)
+        ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
+#else
+        false
+#endif
+    }
+    
+    /// Returns `true` if NOT running in preview, playground, or simulator.
+    nonisolated // Not @MainActor
+    static var isRealDevice: Bool {
+        return !isPreview && !isPlayground && !isSimulator
+    }
+    
+    /// Returns `true` if is macCatalyst app on macOS
+    nonisolated // Not @MainActor
+    static var isMacCatalyst: Bool {
+#if targetEnvironment(macCatalyst)
+        return true
+#else
+        return false
+#endif
+    }
+    
+    @MainActor
+    @available(*, deprecated, renamed: "Application.isDebug")
+    static var DEBUG: Bool {
+        Application.isDebug
+    }
+
+#if canImport(Foundation)
     // MARK: - iCloud Support
     /// Use before tracking to disable iCloud checks to prevent crashes if we can't check for iCloud or for simulating behavior without iCloud support for CloudStorage.
     @MainActor
@@ -175,84 +250,14 @@ public class Application: ObservableObject { // cannot automatically conform to 
         }
     }
     
-    // MARK: - Environmental info
-    /// Returns `true` if running on the simulator vs actual device.
-    nonisolated // Not @MainActor
-    public static var isSimulator: Bool {
-#if targetEnvironment(simulator)
-        // your simulator code
-        return true
-#else
-        // your real device code
-        return false
-#endif
-    }
-    
-    // In macOS Playgrounds Preview: swift-playgrounds-dev-previews.swift-playgrounds-app.hdqfptjlmwifrrakcettacbhdkhn.501.KuditFramework
-    // In macOS Playgrounds Running: swift-playgrounds-dev-run.swift-playgrounds-app.hdqfptjlmwifrrakcettacbhdkhn.501.KuditFrameworksApp
-    // In iPad Playgrounds Preview: swift-playgrounds-dev-previews.swift-playgrounds-app.agxhnwfqkxciovauscbmuhqswxkm.501.KuditFramework
-    // In iPad Playgrounds Running: swift-playgrounds-dev-run.swift-playgrounds-app.agxhnwfqkxciovauscbmuhqswxkm.501.KuditFrameworksApp
-    // warning: {"message":"This code path does I/O on the main thread underneath that can lead to UI responsiveness issues. Consider ways to optimize this code path","antipattern trigger":"+[NSBundle allBundles]","message type":"suppressable","show in console":"0"}
-    /// Returns `true` if running in Swift Playgrounds.
-    nonisolated // Not @MainActor
-    public static var isPlayground: Bool {
-#if SwiftPlaygrounds
-        debug("New Swift Playgrounds test!", level: .WARNING)
-        return true
-#else
-        //print("Testing inPlayground: Bundles", Bundle.allBundles.map { $0.bundleIdentifier }.description)")
-        if Bundle.allBundles.contains(where: { ($0.bundleIdentifier ?? "").contains("swift-playgrounds") }) {
-            //print("in playground")
-            return true
-        } else {
-            //print("not in playground")
-            return false
-        }
-#endif
-    }
-    
-    /// Returns `true` if running in an XCode or Swift Playgrounds #Preview macro.
-    nonisolated // Not @MainActor
-    public static var isPreview: Bool {
-        ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
-    }
-    
-    /// Returns `true` if NOT running in preview, playground, or simulator.
-    nonisolated // Not @MainActor
-    public static var isRealDevice: Bool {
-        return !isPreview && !isPlayground && !isSimulator
-    }
-    
-    /// Returns `true` if is macCatalyst app on macOS
-    nonisolated // Not @MainActor
-    public static var isMacCatalyst: Bool {
-#if targetEnvironment(macCatalyst)
-        return true
-#else
-        return false
-#endif
-    }
-    
-    
-#if !DEBUG
-    @MainActor
-    @available(*, deprecated, renamed: "Compatibility.isDebug")
-    public static var DEBUG: Bool {
-        return DebugLevel.currentLevel == .DEBUG
-    }
-#endif
-    
     /// Place `Application.track()` in `application(_:didFinishLaunchingWithOptions:)` or @main struct init() function to enable version tracking.
     @MainActor
     public static func track(file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) {
         // Calling Application.main is what initializes the application and does the tracking.  This really should only be called once.  TODO: Should we check to make sure this isn't called twice??  Application.main singleton should only be inited once.
         debug("Application Tracking:\n\(Application.main.description)", level: .NOTICE, file: file, function: function, line: line, column: column)
     }
-    
+
     // MARK: - Application information
-    @MainActor
-    public static let main = Application()
-    
     /// Human readable display name for the application.
     public let name = Bundle.main.name
     
@@ -420,7 +425,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
         description += "\nCompatibility Version: \(Compatibility.version)"
         return description
     }
-    
+#endif
 #if compiler(>=5.9)
     @MainActor
     internal static var applicationTests: TestClosure = { @MainActor in // ensure we're running these on the Main Actor so we don't have to worry about Application main actor access.
@@ -430,6 +435,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
         try expect(Application.isPlayground == Application.isPlayground, "App Playground test")
         try expect(Application.isRealDevice == Application.isRealDevice, "App Real Device test")
         try expect(Application.isMacCatalyst == Application.isMacCatalyst, "App Mac Catalyst test")
+#if canImport(Foundation)
         debugSuppress {
             Compatibility.main {
                 Application.main.resetVersionsRun()
@@ -450,13 +456,12 @@ Compiler Version: \(Application.compilerVersion)
 Compatibility Version: \(Compatibility.version)
 """
         try expect(Application.main.description == expectedDescription, "Unexpected app description: \(Application.main.description) (expected: \(expectedDescription))")
+#endif
     }
 
-    @available(iOS 13, tvOS 13, watchOS 6, *)
     @MainActor
     static var tests: [Test] = [
         Test("Application Tests", applicationTests),
     ]
 #endif
 }
-#endif

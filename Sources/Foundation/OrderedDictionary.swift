@@ -1194,7 +1194,7 @@ extension DictionaryConvertible {
 
 
 
-#if compiler(>=5.9) && canImport(Foundation)
+#if compiler(>=5.9)
 @MainActor
 internal var orderedDictionaryTests: TestClosure = {
     var ordered: OrderedDictionary = ["b": 2, "a": 1]

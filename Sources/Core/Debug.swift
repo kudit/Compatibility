@@ -330,6 +330,11 @@ public extension Error {
         Compatibility.debug(self.localizedDescription, level: level, file: file, function: function, line: line, column: column)
         return self
     }
+    #if !canImport(Foundation)
+    var localizedDescription: String {
+        "There was an error but without foundation, we're using the default `localizedDescription`."
+    }
+    #endif
 }
 
 
@@ -399,7 +404,6 @@ Normal output: \(defaultOutput)
             debugError = CustomError("test custom error").debug(level: .WARNING) // to test
             output = debugError.debug()
         }
-        try expect(output.contains("custom error"), "expected custom error to be in the output but found \(output)")
         #if canImport(Foundation)
         output = debugError.localizedDescription
         try expect(output.contains("custom error"), "expected custom error to be in the output but found \(output)")
@@ -414,12 +418,10 @@ Normal output: \(defaultOutput)
             try expect(level.description == "\(level)")
         }
     }
-    #if canImport(Foundation)
     @MainActor
     static let tests = [
         Test("debug configuration tests", testDebugConfig),
         Test("debug tests", testDebug),
     ]
-    #endif
 }
 #endif

@@ -6,8 +6,7 @@
 //  Copyright © 2016 Kudit. All rights reserved.
 //
 
-#if canImport(Foundation)
-#if os(iOS) || os(macOS) || os(tvOS) || os(watchOS) || os(visionOS) || os(Linux) // Don't run on WASM or Android
+#if (os(iOS) || os(macOS) || os(tvOS) || os(watchOS) || os(visionOS) || os(Linux)) && canImport(Foundation) // Don't run on WASM or Android
 // Use built-in Thread and Dispatch
 #else // not supported on WASM or Android
 // Backport Thread for code on WASM or Android
@@ -17,15 +16,25 @@ struct Thread: Sendable, Equatable {
     static let current = Thread()
 }
 struct DispatchTime : Sendable, CustomStringConvertible {
+    #if canImport(Foundation)
     var time = Date.nowBackport
+    #endif
     static func now() -> DispatchTime {
         return DispatchTime()
     }
     var description: String {
+        #if canImport(Foundation)
         return time.description
+        #else
+        return "UNAVAILABLE"
+        #endif
     }
     static func + (lhs: DispatchTime, rhs: Double) -> DispatchTime {
+        #if canImport(Foundation)
         return DispatchTime(time: lhs.time + rhs)
+        #else
+        return DispatchTime() // UNAVAILABLE
+        #endif
     }
 }
 struct DispatchQueue: Sendable {
@@ -81,19 +90,23 @@ public extension Compatibility {
 @available(iOS 13, tvOS 13, watchOS 6, *) // for concurrency
 @MainActor
 internal let testSleep3: TestClosure = {
+    #if canImport(Foundation)
     let then = Date.timeIntervalSinceReferenceDate
     let seconds: TimeInterval = 3
     await sleep(seconds: seconds)
     let now = Date.timeIntervalSinceReferenceDate
     try timeTolerance(start: then, end: now, expected: seconds)
+    #endif
 }
 @available(iOS 13, tvOS 13, watchOS 6, *) // for concurrency
 @MainActor
 internal let testSleep2: TestClosure = {
+    #if canImport(Foundation)
     let start = Date.timeIntervalSinceReferenceDate
     await sleep(seconds: 2)
     let end = Date.timeIntervalSinceReferenceDate
     try timeTolerance(start: start, end: end, expected: 2)
+    #endif
 }
 
 //// TODO: make sure all this is replace with new async-await code.
@@ -187,6 +200,7 @@ public extension Compatibility {
 
 @MainActor
 internal let testBackground: TestClosure = {
+    #if canImport(Foundation)
     let start = Date.timeIntervalSinceReferenceDate
     let end: TimeInterval
 #if !os(Android)
@@ -210,6 +224,7 @@ internal let testBackground: TestClosure = {
     }
     try timeTolerance(start: start, end: end, expected: 4)
 #endif
+    #endif
 }
 
 // MARK: - Main
@@ -239,7 +254,7 @@ public extension Compatibility {
 @available(iOS 13, tvOS 13, watchOS 6, *)
 @MainActor
 internal let testMain: TestClosure = {
-    #if os(macOS)
+    #if os(macOS) && canImport(Foundation)
     // test shell script
     let volumesOutput = try safeShell("ls -la /Volumes")
 //    debug(volumesOutput)
@@ -300,6 +315,7 @@ public extension Compatibility {
 @available(iOS 13, tvOS 13, watchOS 6, *) // for concurrency
 @MainActor
 internal let testDelay: TestClosure = {
+    #if canImport(Foundation)
     let start = Date.timeIntervalSinceReferenceDate
     let delayTime = 0.4
     var end: TimeInterval
@@ -319,6 +335,7 @@ internal let testDelay: TestClosure = {
 //        end = Date.timeIntervalSinceReferenceDate
 //    }
     try timeTolerance(start: start, end: end, expected: delayTime)
+    #endif
 }
 
 // Testing is only supported with Swift 5.9+
@@ -335,12 +352,11 @@ struct KuThreading {
     ]
 }
 
-#if canImport(SwiftUI)
+#if canImport(SwiftUI) && canImport(Foundation)
 import SwiftUI
 @available(iOS 13, tvOS 13, watchOS 6, *)
 #Preview("Tests") {
     TestsListView(tests: KuThreading.tests)
 }
-#endif
 #endif
 #endif

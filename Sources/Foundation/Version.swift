@@ -156,7 +156,7 @@ extension Version {
                 }
             } else {
                 // invalid character.  Just ignore
-                debug("Invalid character when parsing version: \(forcing) (\(character))", level: .WARNING)
+                debug("Invalid character when parsing version: \(forcing) (\(character))", level: .SILENT)
             }
         }
         let major = parts[0]
@@ -287,9 +287,9 @@ public extension Version {
 #endif
     }
 
-#if compiler(>=5.9) && canImport(Foundation)
-    @available(iOS 13, tvOS 13, watchOS 6, *)
+#if compiler(>=5.9)
     @MainActor
+    @available(iOS 13, tvOS 13, watchOS 6, *)
     static var tests: [Test] = [
         Test("Version Comparison Tests", testVersions),
         Test("Version Codable Tests", versionCodableTest),

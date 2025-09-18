@@ -141,7 +141,6 @@ internal let pluralTests: TestClosure = {
     try expect(1999.string == "1999")
 }
 
-
 // MARK: - Byte strings
 /// Add byte functions to all integer types. (Int64, Int, and UInt64 all automatically conform)
 public extension BinaryInteger {
@@ -212,7 +211,7 @@ internal let byteTests: TestClosure = {
 // MARK: - Tests
 
 // Testing is only supported with Swift 5.9+ and Foundation
-#if compiler(>=5.9) && canImport(Foundation)
+#if compiler(>=5.9)
 @available(iOS 13, tvOS 13, watchOS 6, *)
 extension Int {
     @MainActor
@@ -226,7 +225,7 @@ extension Int {
     ]
 }
 
-#if canImport(SwiftUI)
+#if canImport(SwiftUI) && canImport(Foundation)
 import SwiftUI
 @available(iOS 13, tvOS 13, watchOS 6, *)
 #Preview("Ordinals") {

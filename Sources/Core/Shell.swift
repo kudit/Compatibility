@@ -6,7 +6,7 @@
 //
 
 
-#if os(macOS)
+#if os(macOS) && canImport(Foundation)
 public extension Compatibility {
     /// Executes a shell command and returns the result (or errors) as a String (if you just need to execute and don't need the result, that's okay).
     /// This will primarily be used in command line tools.
