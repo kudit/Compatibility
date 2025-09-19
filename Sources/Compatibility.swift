@@ -8,7 +8,7 @@
 
 public enum Compatibility {
     /// The version of the Compatibility Library since cannot get directly from Package.swift.
-    public static let version: Version = "1.11.4"
+    public static let version: Version = "1.11.5"
 }
 
 #if canImport(Foundation)
@@ -142,8 +142,7 @@ canImport(Testing)
     SF Symbols 7.0
     Xcode 26
 
- 
- In Swift 6.2, Foundation is not available in WASM?
+ In Swift 6.2, Foundation is not available in WASM
  
  */
 // MARK: - Configuration

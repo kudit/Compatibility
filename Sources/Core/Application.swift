@@ -29,12 +29,12 @@ public class Application: ObservableObject { // cannot automatically conform to 
     
     /// will be true if we're in a debug configuration and false if we're building for release
     nonisolated // Not @MainActor
-    static let isDebug = _isDebugAssertConfiguration()
+    public static let isDebug = _isDebugAssertConfiguration()
     
     // Documentation on the following compiler directives: https://docs.swift.org/swift-book/documentation/the-swift-programming-language/statements/#Compiler-Control-Statements
     
     /// Returns the version number of Swift being used to compile
-    static var compilerVersion: String {
+    public static var compilerVersion: String {
 #if compiler(>=9.0)
         "X.x"
 #elseif compiler(>=8.0)
@@ -79,7 +79,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
     }
     
     /// Returns the version number of Swift being used to run?
-    static var swiftVersion: String {
+    public static var swiftVersion: String {
 #if swift(>=9.0)
         "X.x"
 #elseif swift(>=8.0)
@@ -126,7 +126,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
     // MARK: - Environmental info
     /// Returns `true` if running on the simulator vs actual device.
     nonisolated // Not @MainActor
-    static var isSimulator: Bool {
+    public static var isSimulator: Bool {
 #if targetEnvironment(simulator)
         // your simulator code
         return true
@@ -143,7 +143,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
     // warning: {"message":"This code path does I/O on the main thread underneath that can lead to UI responsiveness issues. Consider ways to optimize this code path","antipattern trigger":"+[NSBundle allBundles]","message type":"suppressable","show in console":"0"}
     /// Returns `true` if running in Swift Playgrounds.
     nonisolated // Not @MainActor
-    static var isPlayground: Bool {
+    public static var isPlayground: Bool {
 #if SwiftPlaygrounds
         debug("New Swift Playgrounds test!", level: .WARNING)
         return true
@@ -163,7 +163,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
     
     /// Returns `true` if running in an XCode or Swift Playgrounds #Preview macro.
     nonisolated // Not @MainActor
-    static var isPreview: Bool {
+    public static var isPreview: Bool {
 #if canImport(Foundation)
         ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
 #else
@@ -173,13 +173,13 @@ public class Application: ObservableObject { // cannot automatically conform to 
     
     /// Returns `true` if NOT running in preview, playground, or simulator.
     nonisolated // Not @MainActor
-    static var isRealDevice: Bool {
+    public static var isRealDevice: Bool {
         return !isPreview && !isPlayground && !isSimulator
     }
     
     /// Returns `true` if is macCatalyst app on macOS
     nonisolated // Not @MainActor
-    static var isMacCatalyst: Bool {
+    public static var isMacCatalyst: Bool {
 #if targetEnvironment(macCatalyst)
         return true
 #else
@@ -189,7 +189,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
     
     @MainActor
     @available(*, deprecated, renamed: "Application.isDebug")
-    static var DEBUG: Bool {
+    public static var DEBUG: Bool {
         Application.isDebug
     }
 
@@ -460,7 +460,7 @@ Compatibility Version: \(Compatibility.version)
     }
 
     @MainActor
-    static var tests: [Test] = [
+    public static var tests: [Test] = [
         Test("Application Tests", applicationTests),
     ]
 #endif

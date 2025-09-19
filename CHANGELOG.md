@@ -6,6 +6,8 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
+v1.11.5 9/18/2025 Fixed issue with certain Application functions accidentally not being public anymore.
+
 v1.11.4 9/18/2025 Added some fixes for test cases to bring code coverage to 87% without Foundation, 58% with.
 
 v1.11.3 9/18/2025 Added some additional backports for when Foundation is missing.  Changed Application from requiring Foundation and Combine to having different definitions when Foundation is available allowing most of the compiler checks to be valid even without Foundation or Combine.  Added back Testing framework when Foundation is missing, just excluding tests that require Foundation.  Improved DoubleConvertible to piggy back on BinaryInteger and BinaryFloatingPoint for larger compatibility.  Added MixedTypeField bridge for Foundation-less JSON encoding and decoding.  **Supports all platforms including WASM and Android and passes all Swift Package Index Checks!**
