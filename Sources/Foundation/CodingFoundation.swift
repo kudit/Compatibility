@@ -8,6 +8,7 @@
 
 // Note: Needed to support Data values since JSON doesn't support Data natively
 // TODO: make more generic so works with Arrays: /// Converts a codable object to a Foundational representation for storage in UserDefaults or UbiquitousKeyValueStores.
+// TODO: Remove entirely in favor of MixedFieldType encoding?  Where is this used?
 
 #if canImport(Foundation)
 public class DictionaryEncoder {

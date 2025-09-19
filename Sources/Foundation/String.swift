@@ -115,7 +115,7 @@ public extension Set<Character> {
     static let whitespacesAndNewlines: Set<Character> = [" ", "\t", "\n", "\r"]
 }
 public extension StringProtocol {
-    /// NON-Foundation implementation.  If foundation is available, use `.trimmingCharacters(in: .whitespacesAndNewLines)`. Returns a new string made by removing whitespace and newline characters from both ends.
+    /// NON-Foundation implementation.  If Foundation is available, use `.trimmingCharacters(in: .whitespacesAndNewLines)`. Returns a new string made by removing whitespace and newline characters from both ends.
     func trimmingCharacters(in trimCharacters: Set<Character>) -> String {
         guard self.count > 0 else { return String(self) }
         var startIndex = self.startIndex

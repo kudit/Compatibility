@@ -42,8 +42,11 @@ public enum MixedTypeField: Codable, Equatable {
             self = .double(double)
         } else if container.decodeNil() {
             self = .null
-        } else if let dictionary = try? container.decode(MixedTypeDictionary.self) {
+        } else if let dictionary = try? container.decode(MixedTypeDictionary.self) { // array of key value pairs
             self = .dictionary(dictionary)
+        } else if let dictionary = try? container.decode([String:MixedTypeField?].self) { // dictionary form (unordered)
+            let keyValues = dictionary.map { ($0.key, $0.value) }
+            self = .dictionary(MixedTypeDictionary(uniqueKeysWithValues: keyValues))
         } else if let array = try? container.decode(MixedTypeArray.self) {
             self = .array(array)
         } else {
@@ -56,9 +59,8 @@ public enum MixedTypeField: Codable, Equatable {
             self = .null
             return
         }
-        if let string = value as? LosslessStringConvertible {
-            self = .string(string.description)
-        } else if let value = value as? Bool {
+        
+        if let value = value as? Bool {
             self = .bool(value)
         } else if let value = value as? any BinaryInteger {
             self = .int(Int(value))
@@ -68,6 +70,8 @@ public enum MixedTypeField: Codable, Equatable {
             self = .dictionary(dict)
         } else if let value = value as? Array<Any> {
             self = .array(value.map { MixedTypeField(encoding: $0) })
+        } else if let string = value as? LosslessStringConvertible { // needed to move down later because bool and numbers are convertible to string
+            self = .string(string.description)
         } else {
             debug("Encoding error creating a MixedTypeField from value (likely not Encodable): \(value)", level: .WARNING)
             return nil

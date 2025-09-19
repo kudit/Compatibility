@@ -332,7 +332,7 @@ public extension Error {
     }
     #if !canImport(Foundation)
     var localizedDescription: String {
-        "There was an error but without foundation, we're using the default `localizedDescription`."
+        "There was an error but without Foundation, we're using the default `localizedDescription`."
     }
     #endif
 }
