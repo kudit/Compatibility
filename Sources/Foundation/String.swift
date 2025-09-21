@@ -480,7 +480,7 @@ public extension String {
         let defaultString = String(string: nil, defaultValue: "default")
         try expect(Version(string: "a.b.c", defaultValue: "1.0.3") == "1.0.3")
         
-        #if canImport(Foundation)
+#if canImport(Foundation)
         let urlCharactersAllowed = CharacterSet(charactersIn: "!$&\'()*+,-./0123456789:;=?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]_abcdefghijklmnopqrstuvwxyz~")
         let urlCharactersString = CharacterSet.urlAllowed.asString
         try expect(urlCharactersAllowed == CharacterSet.urlAllowed, "Mismatch in characters in urlAllowed character set.  Found: \(urlCharactersString), Expected: \(urlCharactersAllowed.asString)")
@@ -495,19 +495,19 @@ public extension String {
         let encoded = try ParameterEncoder().encode(dictionary) // may be in different order than original parameters.
         let dictionaryTwo = try? ParameterDecoder().decode([String:String].self, from: encoded)
         try expect(dictionaryTwo == dictionary, "expected `\(dictionary)` but got `\(String(describing: dictionaryTwo))`")
-        #endif
+#endif
         // test for optional numeric ?? with String
         let opDouble: Double? = 2.34
         try expect("\(opDouble ?? "nil")" == "2.34")
     }
-
+    
     // MARK: - UUID Generation
     static func uuid() -> String {
-        #if canImport(Foundation)
+#if canImport(Foundation)
         return UUID().uuidString
-        #else
+#else
         return "UUIDFALLBACK" + Int.random(in: 0..<1_000_000).description
-        #endif
+#endif
     }
     
     // MARK: - Introspection
@@ -551,13 +551,13 @@ public extension String {
         }
         return true
     }
-    #if canImport(Foundation)
+#if canImport(Foundation)
     /// Returns the number of times a string is included in the `String`.  Does not count overlaps.
     func occurrences(of substring: String) -> Int {
         let components = self.components(separatedBy: substring)
         return components.count - 1
     }
-    #endif
+#endif
     /// `true` if there is only an integer number or double in the `String` and there isn't other letters or spaces.
     var isNumeric: Bool {
         if let _ = Double(self) {
@@ -605,8 +605,8 @@ public extension String {
         return matchesDataDetector(type: .address)
     }
 #endif
-
-    #if canImport(Foundation)
+    
+#if canImport(Foundation)
     /// Returns a URL if the String can be converted to URL.  `nil` otherwise.  If this is linux or don't have access to data detectors, will not validate the url other than URL creation validation.
     var asURL: URL? {
         // make sure data matches detector so "world.json" isn't seen as a valid URL.  must be fully qualified.
@@ -617,23 +617,23 @@ public extension String {
 #endif
         return URL(string: self)
     }
-
+    
     /// Get last "path" component of a string (basically everything from the last `/` to the end)
     var lastPathComponent: String {
         let parts = self.components(separatedBy: "/")
         let last = parts.last ?? self
         return last
     }
-    #endif
-
+#endif
+    
     /// `true` if the byte length of the `String` is larger than 100k (the exact threashold may change)
     var isLarge: Bool {
-        #if canImport(Foundation)
+#if canImport(Foundation)
         let bytes = self.lengthOfBytes(using: String.Encoding.utf8)
-        #else
+#else
         let bytes = self.utf8.count
-        #endif
-
+#endif
+        
         return bytes / 1024 > 100 // larger than 100k worth of text (that's still a LOT of lines)
     }
     /// `true` if the `String` appears to be a year after 1760 and before 3000 (use for reasonablly assuming text could be a year value)
@@ -659,7 +659,7 @@ public extension String {
         return characters
         //return Array(self.characters).map { String($0) }
     }
-
+    
     @MainActor
     internal static let testIntrospection: TestClosure = {
         try expect(!"a1923".isNumeric)
@@ -668,7 +668,7 @@ public extension String {
         try expect(!"1000".isPostIndustrialYear)
         try expect(!"3214".isPostIndustrialYear)
         try expect("1923".isPostIndustrialYear)
-        #if canImport(Foundation)
+#if canImport(Foundation)
         try expect("\(Date.nowBackport.year)".isPostIndustrialYear)
         
         var test = "the/quick/brown/fix.txt"
@@ -681,7 +681,7 @@ public extension String {
         try expect(test.asURL != nil)
 #if canImport(Combine)
         try expect(test.isURL)
-
+        
         // data detectors
         try expect("foo@bar.com".isEmail)
         try expect("foo+sdf@bar.com".isEmail)
@@ -709,7 +709,7 @@ public extension String {
         try expect("1".asBool)
         try expect(!"0".asBool)
         try expect("5".asBool)
-
+        
         try expect(!"".hasContent)
         try expect(" ".hasContent)
         try expect(!" \n\t".whitespaceStripped.hasContent)
@@ -741,22 +741,27 @@ public extension String {
         try expect(error == roundTrip)
 #endif
     }
-
+}
+public extension StringProtocol {
     // MARK: - Trimming
     /// Returns a new string made by removing whitespace from both ends of the `String`.
     var trimmed: String {
         trimmingCharacters(in: .whitespacesAndNewlines)
     }
+}
+public extension String {
     /// Removes whitespace from both ends of the `String`.
     mutating func trim() {
         self = self.trimmed
     }
+}
+public extension StringProtocol {
     /// Returns a new string made by removing from both ends of the `String` instances of the given string.
     /// Returns a new string made by removing from both ends of the `String` instances of the given string.
     // Fixed to use Substrings so we don't have to do length or indexing.
     func trimming(_ trimString: String) -> String {
         guard trimString.count > 0 else { // if we try to trim an empty string, infinite loop will happen below so just return.
-            return self
+            return String(self)
         }
         var returnString = Substring(self)
         while returnString.hasPrefix(trimString) {
@@ -772,13 +777,17 @@ public extension String {
         }
         return String(returnString)
     }
+}
+public extension String {
     /// Removes the given string from both ends of the `String`.
     mutating func trim(_ trimString: String) {
         self = self.trimming(trimString)
     }
+}
+public extension StringProtocol {
     /// Returns a new string made by removing from both ends of the `String` instances of any of the given strings.
     func trimming(_ trimStrings: [String]) -> String {
-        var returnString = self
+        var returnString = String(self)
         var lastReturn: String
         repeat {
             lastReturn = returnString
@@ -788,20 +797,25 @@ public extension String {
         } while (returnString != lastReturn)
         return returnString
     }
+}
+public extension String {
     /// Removes the given strings from both ends of the `String`.
     mutating func trim(_ trimStrings: [String]) {
         self = self.trimming(trimStrings)
     }
+}
+public extension StringProtocol {
     /// Returns a new string made by removing from both ends of the `String` characters contained in a given string.
     func trimmingCharacters(in string: String) -> String {
-        #if canImport(Foundation)
+#if canImport(Foundation)
         let badSet = CharacterSet(charactersIn: string)
         return self.trimmingCharacters(in: badSet)
-        #else
+#else
         return self.trimming(string.characterStrings)
-        #endif
+#endif
     }
-    
+}
+public extension String {
     @MainActor
     internal static let testTriming: TestClosure = {
         var long = "ExampleWorld/world.json  "

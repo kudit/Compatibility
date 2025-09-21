@@ -6,7 +6,9 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
-v1.11.5 9/18/2025 Fixed issue with certain Application functions accidentally not being public anymore.
+v1.11.6 9/20/2025 Made trimmed functions on StringProtocol rather than String to make easier when splitting strings.  Changed `appendUnique` and `containsAny` and `containsAll` to require `Equatable` rather than `Comparable`.
+
+v1.11.5 9/18/2025 Fixed issue with certain Application functions accidentally not being public anymore.  **Supports all platforms including WASM and Android and passes all Swift Package Index Checks!**
 
 v1.11.4 9/18/2025 Added some fixes for test cases to bring code coverage to 87% without Foundation, 58% with.
 
@@ -259,6 +261,7 @@ This is where proposals can be discussed for potential movement to the roadmap.
 - [ ] Have debugSuppress suppress all messages except expect debug messages which should always print normally.
 - [ ] should we rename `background {}` to `Background {}` and `Main {}` and `Delay(#) {}` to match `Task {}`?
 - [ ] Debug: see if there's a way to add interpolation as a parameter to customize the output format.  Perhaps using a debug output formatter object that can be set?
+- [ ] Regroup String to better apply to StringProtocol and String seperately.  Also figure out how to optimize trim functions by returning Substrings?
 - [ ] Debug: allow setting a closure that will pre-process debug statements to allow for injection in debug statements?
 - [ ] Protocol for a DataStore synced ObservableObject that will automatically add property wrappers for @DataStoreBacked to properties that aren't ignored? may be too difficult (add in a future path perhaps with macros to automatically synthesize code and coding keys etc??  Macros aren't easily able to be written like property wrappers, so this may not happen.)
 

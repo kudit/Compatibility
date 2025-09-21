@@ -109,7 +109,7 @@ public extension Array where Element: Hashable {
     }
 }
 
-public extension Array where Element: Comparable {
+public extension Array where Element: Equatable {
     /// Append the value only if it doesn't already exist.
     mutating func appendUnique(_ newItem: Element) {
         if !self.contains(newItem) {
@@ -117,7 +117,7 @@ public extension Array where Element: Comparable {
         }
     }
 }
-public extension Collection where Element: Comparable {
+public extension Collection where Element: Equatable {
     /// Returns `true` iff the array contains one of the values.
     func containsAny(_ needles: [Element]) -> Bool {
         for needle in needles {
