@@ -42,28 +42,42 @@ public struct AdaptiveLayout<PContent, LContent>: View where PContent: View, LCo
 
 /// Adaptable Stack (uses HStack if the available space is wider than it is tall and VStack otherwise).
 @available(iOS 13, tvOS 13, watchOS 6, *)
-public struct AStack<Content>: View where Content: View {
+public struct AStack: View {
     let alignment: Alignment
     let spacing: CGFloat?
-    let content: () -> Content
+    /// Content will be provided horizontal = true or false depending on the chosen alignment
+    let content: (Orientation) -> AnyView
     
-    public init(alignment: Alignment = .center,
-         spacing: CGFloat? = nil,
-         @ViewBuilder content: @escaping () -> Content) {
-        self.alignment = alignment
-        self.spacing = spacing
-        self.content = content
+    public enum Orientation: CaseIterable, Sendable {
+        case horizontal
+        case vertical
     }
     
+    public init<Content: View>(alignment: Alignment = .center,
+         spacing: CGFloat? = nil,
+         @ViewBuilder content: @escaping (Orientation) -> Content) {
+        self.alignment = alignment
+        self.spacing = spacing
+        self.content = { orientation in AnyView(content(orientation)) }
+    }
+    // if we don't care about the orientation, we can call this without the parameter
+    public init<Content: View>(alignment: Alignment = .center,
+         spacing: CGFloat? = nil,
+                @ViewBuilder content: @escaping () -> Content) {
+        self.init(alignment: alignment, spacing: spacing, content: { _ in content() } )
+    }
+
     public var body: some View {
         AdaptiveLayout {
             VStack(alignment: alignment.horizontal,
-                   spacing: spacing,
-                   content: content)
+                   spacing: spacing) {
+                content(.vertical)
+            }
         } landscape: {
             HStack(alignment: alignment.vertical,
-                   spacing: spacing,
-                   content: content)
+                   spacing: spacing) {
+                content(.horizontal)
+            }
         }
     }
     
@@ -96,9 +110,13 @@ public struct AStack<Content>: View where Content: View {
 
 @available(iOS 15, macOS 12, tvOS 17, watchOS 8, *)
 #Preview("Adpative Layouts") {
-    AStack {
+    AStack { orientation in
         ZStack {
-            Color.yellow
+            if orientation == .horizontal {
+                Color.yellow
+            } else {
+                Color.yellow.opacity(0.5)
+            }
             HStack {
                 AStack {
                     Color.red

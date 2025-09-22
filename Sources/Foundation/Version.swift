@@ -178,7 +178,7 @@ extension Version {
     }
 }
 #if canImport(Foundation) && compiler(>=6.0)
-extension OperatingSystemVersion: @retroactive Equatable {}
+extension Version: @retroactive Equatable {}
 #endif
 extension Version: Swift.Comparable { // @retroactive in Swift 6?
     // For Comparable conformance

@@ -17,7 +17,6 @@
 		B58B5C452C38F98800689837 /* (null) in Sources */ = {isa = PBXBuildFile; };
 		B594CFB72DB0BACA001E8658 /* Compatibility Library in Frameworks */ = {isa = PBXBuildFile; productRef = B594CFB62DB0BACA001E8658 /* Compatibility Library */; };
 		B5CB1E3C2C6BB1D300CF542B /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = B51B70C42C5D6DBF001F7DCF /* PrivacyInfo.xcprivacy */; };
-		B5E1B6A62C3C6C3B00B92573 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B5E5FC822C3863B9004F2009 /* Assets.xcassets */; };
 		B5E5FC832C3863B9004F2009 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B5E5FC822C3863B9004F2009 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
@@ -241,7 +240,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				B5CB1E3C2C6BB1D300CF542B /* PrivacyInfo.xcprivacy in Resources */,
-				B5E1B6A62C3C6C3B00B92573 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -352,7 +350,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
-				MARKETING_VERSION = 1.11.6;
+				MARKETING_VERSION = 1.11.7;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -423,7 +421,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
-				MARKETING_VERSION = 1.11.6;
+				MARKETING_VERSION = 1.11.7;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				OTHER_SWIFT_FLAGS = "";
