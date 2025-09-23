@@ -847,6 +847,7 @@ public struct BackportGlass : Equatable, Sendable {
     
 #if compiler(>=6.2)
     @available(iOS 26, macOS 26, tvOS 26, watchOS 26, *)
+    @available(visionOS, unavailable)
     public var modernGlass: SwiftUI.Glass {
         if self == .regular {
             return .regular
