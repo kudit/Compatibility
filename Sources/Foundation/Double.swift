@@ -19,6 +19,7 @@ public extension BinaryFloatingPoint {
         return Double(self)
     }
 }
+// following are implemneted automatically by conforming BinaryFloatingPoint but need to add conformances for everything that conforms to BinaryFloatingPoint since we can't make it automatically conform
 extension Double: DoubleConvertible {}
 extension Float: DoubleConvertible {}
 

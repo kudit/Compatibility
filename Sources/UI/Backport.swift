@@ -259,7 +259,7 @@ public extension Backport where Content: View {
     func ignoresSafeArea(_ regions: SafeAreaRegions = .all, edges: Edge.Set = .all) -> some View {
         Group {
             if #available(iOS 14, macOS 11, tvOS 14, watchOS 7, *) {
-                content.ignoresSafeArea(regions.convert, edges: edges)
+                content.ignoresSafeArea(regions.swiftUIValue, edges: edges)
             } else {
                 // Fallback on earlier versions
                 content
@@ -273,7 +273,7 @@ public extension Backport where Content: View {
         case all, container, keyboard
         
         @available(iOS 14, macOS 11, tvOS 14, watchOS 7, *)
-        public var convert: SwiftUI.SafeAreaRegions {
+        public var swiftUIValue: SwiftUI.SafeAreaRegions {
             switch self {
             case .all:
                 return .all
@@ -316,7 +316,7 @@ public extension Backport where Content: View {
         case hidden
         
         @available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
-        public var swiftuiValue: SwiftUI.Visibility {
+        public var swiftUIValue: SwiftUI.Visibility {
             switch self {
             case .automatic: return .automatic
             case .visible: return .visible
@@ -370,7 +370,7 @@ public extension Backport where Content: View {
     func persistentSystemOverlays(_ visibility: Visibility) -> some View {
         Group {
             if #available(iOS 16, macOS 13, tvOS 16, watchOS 9, *) {
-                content.persistentSystemOverlays(visibility.swiftuiValue)
+                content.persistentSystemOverlays(visibility.swiftUIValue)
             } else {
                 // Fallback on earlier versions (just ignore since home indicator doesn't exist on touchID devices).
                 content
@@ -405,7 +405,7 @@ public extension Backport where Content: View {
 #else
         Group {
             if #available(iOS 16, macOS 13, watchOS 9, *) {
-                content.scrollContentBackground(visibility.swiftuiValue)
+                content.scrollContentBackground(visibility.swiftUIValue)
             } else {
 #if canImport(UIKit) && !os(watchOS) && !os(tvOS)
                 // Fallback on earlier versions
@@ -475,7 +475,107 @@ public extension Backport where Content: View {
         }
 #endif
     }
+
+    /// Sets the size for controls within this view.
+    ///
+    /// Use `controlSize(_:)` to override the system default size for controls
+    /// in this view. In this example, a view displays several typical controls
+    /// at `.mini`, `.small` and `.regular` sizes.
+    ///
+    ///     struct ControlSize: View {
+    ///         var body: some View {
+    ///             VStack {
+    ///                 MyControls(label: "Mini")
+    ///                     .controlSize(.mini)
+    ///                 MyControls(label: "Small")
+    ///                     .controlSize(.small)
+    ///                 MyControls(label: "Regular")
+    ///                     .controlSize(.regular)
+    ///             }
+    ///             .padding()
+    ///             .frame(width: 450)
+    ///             .border(Color.gray)
+    ///         }
+    ///     }
+    ///
+    ///     struct MyControls: View {
+    ///         var label: String
+    ///         @State private var value = 3.0
+    ///         @State private var selected = 1
+    ///         var body: some View {
+    ///             HStack {
+    ///                 Text(label + ":")
+    ///                 Picker("Selection", selection: $selected) {
+    ///                     Text("option 1").tag(1)
+    ///                     Text("option 2").tag(2)
+    ///                     Text("option 3").tag(3)
+    ///                 }
+    ///                 Slider(value: $value, in: 1...10)
+    ///                 Button("OK") { }
+    ///             }
+    ///         }
+    ///     }
+    ///
+    /// ![A screenshot showing several controls of various
+    /// sizes.](SwiftUI-View-controlSize.png)
+    ///
+    /// - Parameter controlSize: One of the control sizes specified in the
+    ///   ``ControlSize`` enumeration.
+    func controlSize(_ controlSize: BackportControlSize) -> some View {
+        Group {
+            if #available(iOS 15, macOS 11, tvOS 15, watchOS 9.0, *) { // supported on macOS 10.5 but 11 required for availability checking...
+                content.controlSize(controlSize.controlSize)
+            } else {
+                // Fallback on earlier versions
+                content
+            }
+        }
+    }
 }
+
+/// The size classes, like regular or small, that you can apply to controls
+/// within a view.
+public enum BackportControlSize : CaseIterable, Sendable {
+
+    /// A control version that is minimally sized.
+    case mini
+
+    /// A control version that is proportionally smaller size for space-constrained views.
+    case small
+
+    /// A control version that is the default size.
+    case regular
+
+    /// A control version that is prominently sized.
+    case large
+
+    /// A control version that is substantially sized. The largest control size.
+    /// Resolves to ``ControlSize/large`` on platforms other than visionOS.
+    case extraLarge
+    
+    @available(iOS 15, macOS 10.15, tvOS 15, watchOS 9, *)
+    var controlSize: ControlSize {
+        switch self {
+        case .mini: return .mini
+        case .small: return .small
+        case .regular: return .regular
+        case .large:
+            if #available(macOS 11, *) {
+                return .large
+            } else {
+                return .regular
+            }
+        case .extraLarge:
+            if #available(iOS 17, macOS 14, tvOS 17, watchOS 10, *) {
+                return .extraLarge
+            } else {
+                // Fallback on earlier versions
+                return Self.large.controlSize // to handle fallback appropriately
+            }
+        }
+    }
+}
+
 
 // MARK: Presentation Detents
 @available(iOS 13, tvOS 13, watchOS 6, *)
@@ -812,22 +912,22 @@ import _StoreKit_SwiftUI
 
 // MARK: - Glass effects
 @available(iOS 13, tvOS 13, watchOS 6, *)
-public struct BackportGlass : Equatable, Sendable {
+public struct Glass : Equatable, Sendable {
     var color: Color?
     var isInteractive: Bool?
 
     /// The regular variant of glass.
-    public static var regular: BackportGlass = BackportGlass()
+    public static var regular: Glass = Glass()
 
     /// Returns a copy of the glass with the provided tint color.
-    public func tint(_ color: Color?) -> BackportGlass {
+    public func tint(_ color: Color?) -> Glass {
         var copy = self
         copy.color = color
         return copy
     }
 
     /// Returns a copy of the glass configured to be interactive.
-    public func interactive(_ isEnabled: Bool = true) -> BackportGlass {
+    public func interactive(_ isEnabled: Bool = true) -> Glass {
         var copy = self
         copy.isInteractive = isEnabled
         return copy
@@ -841,14 +941,14 @@ public struct BackportGlass : Equatable, Sendable {
     /// - Parameters:
     ///   - lhs: A value to compare.
     ///   - rhs: Another value to compare.
-    public static func == (a: BackportGlass, b: BackportGlass) -> Bool {
+    public static func == (a: Glass, b: Glass) -> Bool {
         return a.color == b.color && a.isInteractive == b.isInteractive
     }
     
 #if compiler(>=6.2)
     @available(iOS 26, macOS 26, tvOS 26, watchOS 26, *)
     @available(visionOS, unavailable)
-    public var modernGlass: SwiftUI.Glass {
+    public var swiftUIValue: SwiftUI.Glass {
         if self == .regular {
             return .regular
         }
@@ -889,12 +989,12 @@ public extension Backport where Content: View {
     /// You typically use this modifier with a ``GlassEffectContainer``
     /// to combine multiple glass shapes into a single shape that
     /// can morph shapes into one another.
-    func glassEffect(_ glass: BackportGlass = .regular, in shape: some Shape = .capsule) -> some View {
+    func glassEffect(_ glass: Glass = .regular, in shape: some Shape = .capsule) -> some View {
         Group {
 #if !os(visionOS)
             if #available(iOS 26, macOS 26, tvOS 26, watchOS 26, *) {
 #if compiler(>=6.2)
-                content.glassEffect(glass.modernGlass, in: shape)
+                content.glassEffect(glass.swiftUIValue, in: shape)
 #else
                 content.backgroundMaterial()
 #endif
@@ -943,7 +1043,7 @@ public extension Backport {
         case ultraThickMaterial
         
         @available(iOS 15, macOS 12, tvOS 15, watchOS 10, *)
-        var swiftUIMaterial: SwiftUI.Material {
+        var swiftUIValue: SwiftUI.Material {
             switch self {
             case .regular: return .regular
             case .thick: return .thick
@@ -1009,7 +1109,7 @@ public extension Backport where Content: View {
     func presentationBackground(_ style: MaterialEnum) -> some View {
         Group {
             if #available(iOS 16.4, macOS 13.3, tvOS 16.4, watchOS 10, *) {
-                content.presentationBackground(style.swiftUIMaterial)
+                content.presentationBackground(style.swiftUIValue)
             } else {
                 // Fallback on earlier versions
                 content // ignore if older and unsupported - likely only on watchOS < 10
@@ -1041,7 +1141,7 @@ public extension Backport where Content: View {
         
 #if compiler(>=5.9)
         @available(iOS 17, macOS 14, tvOS 17, watchOS 10, *)
-        var swiftUIAnimationCompletion: SwiftUI.AnimationCompletionCriteria {
+        var swiftUIValue: SwiftUI.AnimationCompletionCriteria {
             switch self {
             case .logicallyComplete:
                 return .logicallyComplete
@@ -1064,7 +1164,7 @@ public extension Backport where Content: View {
     func withAnimation<Result>(_ animation: Animation? = .default, completionCriteria: AnimationCompletionCriteria = .logicallyComplete, duration: TimeInterval = 0.35, _ body: () throws -> Result, completion: @MainActor @Sendable @escaping () -> Void) rethrows -> Result {
 #if compiler(>=5.9)
         if #available(iOS 17, macOS 14, tvOS 17, watchOS 10, *) {
-            return try SwiftUI.withAnimation(animation, completionCriteria: completionCriteria.swiftUIAnimationCompletion, body, completion: completion)
+            return try SwiftUI.withAnimation(animation, completionCriteria: completionCriteria.swiftUIValue, body, completion: completion)
         }
 #endif
         // Fallback on earlier versions

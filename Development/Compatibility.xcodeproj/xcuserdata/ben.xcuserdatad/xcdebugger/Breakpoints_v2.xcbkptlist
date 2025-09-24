@@ -174,8 +174,8 @@
             filePath = "../Sources/Foundation/CodingMixedTypes.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "416"
-            endingLineNumber = "416"
+            startingLineNumber = "399"
+            endingLineNumber = "399"
             landmarkName = "decode(_:forKey:)"
             landmarkType = "7">
          </BreakpointContent>
@@ -183,63 +183,47 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "5EF549ED-F8F1-4577-ABED-AC838F1915B1"
+            uuid = "FCBBE866-FE5D-41DA-A353-9B6AA51B536E"
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "../Sources/Foundation/CodingMixedTypes.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "331"
-            endingLineNumber = "331"
-            landmarkName = "encode(_:)"
+            startingLineNumber = "52"
+            endingLineNumber = "52"
+            landmarkName = "init(from:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "2D374E0C-E95E-4B13-ADDB-A99DA61553DE"
+            uuid = "1725B103-B284-4FEF-9CE9-184DD8CE5F01"
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "../Sources/Foundation/CodingMixedTypes.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "333"
-            endingLineNumber = "333"
-            landmarkName = "encode(_:)"
+            startingLineNumber = "80"
+            endingLineNumber = "80"
+            landmarkName = "init?(encoding:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "74E9F3BC-DFC4-4C55-9B23-4E6FDD47C10E"
+            uuid = "1321858E-05F2-4716-BF5C-82C1D9F0017F"
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "../Sources/Foundation/CodingMixedTypes.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "335"
-            endingLineNumber = "335"
-            landmarkName = "encode(_:)"
-            landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "5A0368F2-C3A1-4D01-9F5C-09600C88BBA5"
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "../Sources/Foundation/CodingMixedTypes.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "337"
-            endingLineNumber = "337"
+            startingLineNumber = "326"
+            endingLineNumber = "326"
             landmarkName = "encode(_:)"
             landmarkType = "7">
          </BreakpointContent>

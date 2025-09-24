@@ -1024,6 +1024,8 @@ struct CompatibilityTests {
     "intNeg": -2,
     "double": 2.1,
     "pi"   : 3.14159265,
+    "dictionary" : {"a": "A", "b": "B", "c": "C"},
+    "array" : [1, 4, 2, 5, 3],
     "null" : null}, [1,2,"skip a few",99, 100.3]]
 """
         let range = json.range(of: "Hello")!
@@ -1038,16 +1040,45 @@ struct CompatibilityTests {
         #expect(decoded[0].stringValue == "Hello world")
         #expect(decoded[2].boolValue == false)
         #expect(decoded[5].intValue == -2)
-        if let dict = decoded[10].dictionaryValue, let mixed = dict["double"], let double = mixed?.doubleValue {
+        if let dict = decoded[10].dictionaryValue, let mixed = dict["double"], let double = mixed?.doubleValue, let subdict = dict["dictionary"]??.dictionaryValue as? MixedTypeDictionary {
+            #expect(dict["boolTrue"]??.boolValue == true)
             #expect(double == 2.1)
+            if let arrayJson = dict["array"]??.asJSON(), let intArray = try? [Int](fromJSON: arrayJson) {
+                #expect(intArray == [1, 4, 2, 5, 3])
+                #expect(arrayJson == "[1,4,2,5,3]") // no spaces because compact and not pretty
+            } else {
+                #expect(dict["array"] != nil)
+            }
+            #expect(subdict["b"] == .string("B"))
         } else {
             #expect(decoded[10].dictionaryValue != nil)
         }
         #expect(decoded[11].arrayValue?.count == 5)
         let pretty = decoded.prettyJSON
+        #expect(pretty.contains("\"double\" : 2.1,"))
+        #expect(pretty.contains("""
+            "a" : "A",
+            """))
         let redecoded = try [MixedTypeField].init(fromJSON: pretty)
         #expect(redecoded.prettyJSON == pretty)
 //        debug(pretty)
+        
+        // Test encoding ordered dictionary as a MixedTypeField and see what happens
+        let ordered: OrderedDictionary = [2: "b", 1: "a", 3: "c"]
+        let encodedOrdered = try ordered.asMixedTypeField()
+        let decodedOrdered = try OrderedDictionary<Int, String>(fromMixedTypeField: encodedOrdered)
+        #expect(ordered == decodedOrdered)
+
+        let unordered = [2: "b", 1: "a", 3: "c"]
+        let encodedUnordered = try unordered.asMixedTypeField()
+        let decodedUnordered = try Dictionary<Int, String>(fromMixedTypeField: encodedUnordered)
+        #expect(unordered == decodedUnordered)
+
+        let nilUnordered = [2: "b", 1: "a", 3: "c", 4: nil]
+        let encodedNilUnordered = try nilUnordered.asMixedTypeField()
+        let decodedNilUnordered = try Dictionary<Int, String?>(fromMixedTypeField: encodedNilUnordered)
+        #expect(nilUnordered == decodedNilUnordered)
+
     }
     
     @Test("Named Tests")

@@ -7,17 +7,19 @@
 /// A type that can hold primitive JSON types for more easily decoding JSON and unkeyed mixed type JSON arrays.  Also a way of encoding to more generic Dictionary objects.
 // MARK: - Mixed JSON coding
 
-/// Ordered dictionary with String keys and MixedTypeField values.
-public typealias MixedTypeDictionary = OrderedDictionary<String,MixedTypeField?>
+/// Unordered dictionary with String keys and MixedTypeField values.  If we need to encode ordered, will encode as key, value mixed array.
+public typealias MixedTypeDictionary = Dictionary<String,MixedTypeField?>
 public typealias MixedTypeArray = [MixedTypeField?]
 public extension MixedTypeDictionary {
+    /// Initializes with a Dictionary.  Returns nil if Dictionary.Key is not LosslessStringConvertible.
     init?<T>(dictionary: T) where T: DictionaryConvertible {
-        var dictionary = MixedTypeDictionary()
-        for (key, value) in dictionary {
-            dictionary[key] = MixedTypeField(encoding: value)
+        var dict = MixedTypeDictionary()
+        for (key, value) in dictionary.dictionaryValue {
+            guard let key = key as? LosslessStringConvertible else { return nil }
+            dict[key.description] = MixedTypeField(encoding: value)
         }
 //        let transformedDict = Dictionary(uniqueKeysWithValues: mapDict)
-        self = dictionary
+        self = dict
     }
 }
 public enum MixedTypeField: Codable, Equatable {
@@ -42,11 +44,8 @@ public enum MixedTypeField: Codable, Equatable {
             self = .double(double)
         } else if container.decodeNil() {
             self = .null
-        } else if let dictionary = try? container.decode(MixedTypeDictionary.self) { // array of key value pairs
+        } else if let dictionary = try? container.decode(MixedTypeDictionary.self) {
             self = .dictionary(dictionary)
-        } else if let dictionary = try? container.decode([String:MixedTypeField?].self) { // dictionary form (unordered)
-            let keyValues = dictionary.map { ($0.key, $0.value) }
-            self = .dictionary(MixedTypeDictionary(uniqueKeysWithValues: keyValues))
         } else if let array = try? container.decode(MixedTypeArray.self) {
             self = .array(array)
         } else {
@@ -60,7 +59,9 @@ public enum MixedTypeField: Codable, Equatable {
             return
         }
         
-        if let value = value as? Bool {
+        if let value = value as? MixedTypeField { // already encoded so no need to re-encode
+            self = value
+        } else if let value = value as? Bool {
             self = .bool(value)
         } else if let value = value as? any BinaryInteger {
             self = .int(Int(value))
@@ -72,6 +73,9 @@ public enum MixedTypeField: Codable, Equatable {
             self = .array(value.map { MixedTypeField(encoding: $0) })
         } else if let string = value as? LosslessStringConvertible { // needed to move down later because bool and numbers are convertible to string
             self = .string(string.description)
+        } else if value as? MixedTypeField == Optional<MixedTypeField>.none {
+            // this is how we check for null nil
+            self = .null
         } else {
             debug("Encoding error creating a MixedTypeField from value (likely not Encodable): \(value)", level: .WARNING)
             return nil
@@ -312,32 +316,11 @@ fileprivate final class _FieldEncoder: Encoder {
         mutating func encode<T>(_ value: T) throws where T: Encodable {
             // Prefer exact primitive matches first. Use protocol existentials to handle
             // all integer/floating types generically.
-            if let v = value as? Bool {
-                encoder.storage = .bool(v)
-            } else if let v = value as? any BinaryInteger {
-                encoder.storage = .int(Int(v))
-            } else if let v = value as? any BinaryFloatingPoint {
-                encoder.storage = .double(Double(v))
-            } else if let v = value as? LosslessStringConvertible {
-                encoder.storage = .string(v.description)
-            } else if let v = value as? any DictionaryConvertible, let dict = MixedTypeDictionary(dictionary: v) {
-                // wrap into OrderedDictionary (MixedTypeDictionary)
-                encoder.storage = .dictionary(dict)
 
-            } else if let v = value as? MixedTypeDictionary {
-                // 🚨 Explicitly handle OrderedDictionary here!
-                encoder.storage = .dictionary(v)
-            } else if let v = value as? [String: MixedTypeField], let dict = MixedTypeDictionary(dictionary: v) {
-                encoder.storage = .dictionary(dict)
-            } else if let v = value as? [String: MixedTypeField?], let dict = MixedTypeDictionary(dictionary: v) {
-                encoder.storage = .dictionary(dict)
-            } else if let v = value as? [String: Any], let dict = MixedTypeDictionary(dictionary: v) {
-                encoder.storage = .dictionary(dict)
-            } else if let v = value as? [String: Any?], let dict = MixedTypeDictionary(dictionary: v) {
-                encoder.storage = .dictionary(dict)
-                
-            } else if let v = value as? MixedTypeArray {
-                encoder.storage = .array(v)
+            // `nil` should be accounted for before getting here using the encodeNil function.
+            
+            if let value = MixedTypeField(encoding: value) {
+                encoder.storage = value
             } else {
                 // Fallback: encode normally
                 let nested = _FieldEncoder()

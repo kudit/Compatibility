@@ -431,7 +431,7 @@ fileprivate struct _JSONWriter {
         for (i, key) in keys.enumerated() {
             if pretty { output.append(String(repeating: indentString, count: indentLevel + 1)) }
             writeString(key)
-            output.append(pretty ? ": " : ":")
+            output.append(pretty ? " : " : ":")
             writeField((dict[key] ?? .null) ?? .null, indentLevel: indentLevel + 1)
             if i < keys.count - 1 { output.append(pretty ? ",\n" : ",") }
         }

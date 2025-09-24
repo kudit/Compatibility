@@ -1148,52 +1148,6 @@ extension OrderedDictionary: Decodable where Key: Decodable, Value: Decodable {
     }
 }
 
-// MARK: - DictionaryConvertible
-public protocol DictionaryConvertible: Sequence {
-    associatedtype Key: Hashable
-    associatedtype Value
-    associatedtype Element = (Key, Value)
-    var dictionaryValue: Dictionary<Key, Value> { get }
-    subscript(_ key: Key) -> Value? { get set }
-}
-extension Dictionary: DictionaryConvertible {
-    public var dictionaryValue: Dictionary<Key, Value> {
-        self
-    }
-}
-extension OrderedDictionary: DictionaryConvertible {
-    public var dictionaryValue: Dictionary<Key, Value> {
-        var dictionaryValue = Dictionary<Key, Value>()
-        for (key, value) in self {
-            dictionaryValue[key] = value
-        }
-        return dictionaryValue
-    }
-}
-
-// MARK: - Dictionary addition
-extension DictionaryConvertible {
-    /// Adds the right hand dictionary to the left hand dictionary.  If there are matching keys, the right hand side will replace the values in the left hand side.
-    public static func += <Other: DictionaryConvertible>(
-        lhs: inout Self, rhs: Other
-    ) where Self.Key == Other.Key, Self.Value == Other.Value, Other.Element == (key: Key, value: Value) {
-        for (key, value) in rhs {
-            lhs[key] = value
-        }
-    }
-
-    /// Adds the right hand dictionary to the left hand dictionary and returns the result.  If there are matching keys, the right hand side will replace the values in the left hand side.
-    public static func + <Other: DictionaryConvertible>(
-        lhs: Self, rhs: Other
-    ) -> Self where Self.Key == Other.Key, Self.Value == Other.Value, Other.Element == (key: Key, value: Value) {
-        var union = lhs
-        union += rhs
-        return union
-    }
-}
-
-
-
 #if compiler(>=5.9)
 @MainActor
 internal var orderedDictionaryTests: TestClosure = {

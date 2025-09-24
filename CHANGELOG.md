@@ -6,11 +6,13 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
-v1.11.8 9/23/2025 Fixed issue on visionOS (Glass is not supported there).
+v1.11.9 9/24/2025 Added import for Color to the RadialLayout preview so that included packages won't warn.  Change MixedTypeFieldDictionary to default to an unordered dictionary so JSON encoding matches and cleaned up and simplified and optimized code.  This will mean that the output is inconsistent but that’s what the `sortedKeys` option is for.  Added Backport for `controlSize`.  Re-worked all the `swiftUIValue` conversions to be consistent.  Re-worked `firstKey` extension to work on any DictionaryConvertible so that it works on ordered dictionaries as well.
+
+v1.11.8 9/23/2025 Fixed issue on visionOS (Glass is not supported there). **Supports all platforms EXCEPT WASM in 6.2 beta but passes all other Swift Package Index Checks!**
 
 v1.11.7 9/22/2025 Re-worked `AStack` so that we can get the orientation chosen in the body block should we need to add different layouts in different orientations. Did require type-erasure via AnyView unfortunately.  If you know of a better way to do this, let me know.  Also fixed warning about Watch icon by separating into a separate icon set.
 
-v1.11.6 9/20/2025 Made trimmed functions on StringProtocol rather than String to make easier when splitting strings.  Changed `appendUnique` and `containsAny` and `containsAll` to require `Equatable` rather than `Comparable`. **Supports all platforms EXCEPT WASM but including Android and passes all Swift Package Index Checks!**
+v1.11.6 9/20/2025 Made trimmed functions on StringProtocol rather than String to make easier when splitting strings.  Changed `appendUnique` and `containsAny` and `containsAll` to require `Equatable` rather than `Comparable`. **Supports all platforms EXCEPT WASM in 6.2 beta but passes all other Swift Package Index Checks!**
 
 v1.11.5 9/18/2025 Fixed issue with certain Application functions accidentally not being public anymore.  **Supports all platforms including WASM and Android and passes all Swift Package Index Checks!**
 
