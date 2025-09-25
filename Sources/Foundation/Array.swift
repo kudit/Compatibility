@@ -213,7 +213,9 @@ public extension Collection {
 // Testing is only supported with Swift 5.9+
 #if compiler(>=5.9)
 @available(iOS 13, tvOS 13, watchOS 6, *)
+#if !os(WASM)
 @MainActor
+#endif
 let collectionTests: [Test] = [
     Test("identity", {
         let testSequence = [5, 4, 2, 1, 3]

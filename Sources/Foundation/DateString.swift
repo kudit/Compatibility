@@ -42,7 +42,7 @@ public extension String {
 //s    1 or 2 digit second    2
 //a    AM/PM for 12-hour format
 
-#if canImport(Foundation) // not available in WASM?
+#if canImport(Foundation) && !os(WASM) // not available in WASM?
 #if canImport(Combine) // not available in Linux
 @available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
 public extension DateFormatter.Style {

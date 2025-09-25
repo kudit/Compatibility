@@ -16,7 +16,9 @@
 public postfix func ++(x: inout Int) {
     x += 1
 }
+#if !os(WASM)
 @MainActor
+#endif
 internal let testPlusPlus: TestClosure = {
     var value = 3
     value++
@@ -28,7 +30,9 @@ internal let testPlusPlus: TestClosure = {
 public postfix func --(x: inout Int) {
     x -= 1
 }
+#if !os(WASM)
 @MainActor
+#endif
 internal let testMinusMinus: TestClosure = {
     var value = 3
     value--
@@ -47,7 +51,9 @@ public extension Int {
         return .random(in: 0..<max)
     }
 }
+#if !os(WASM)
 @MainActor
+#endif
 internal let randomTests: TestClosure = {
     try expect(Int.random(max: -2) == 0)
     try expect(Int.random(max: 0) == 0)
@@ -99,7 +105,9 @@ public extension Int {
         22: "nd",
     ]
 }
+#if !os(WASM)
 @MainActor
+#endif
 internal let ordinalTests: TestClosure = {
     var failedMessages = [String]()
     for (num, suffix) in Int.ordinalTestMap {
@@ -131,7 +139,9 @@ public extension Int {
         }
     }
 }
+#if !os(WASM)
 @MainActor
+#endif
 internal let pluralTests: TestClosure = {
     try expect(0.pluralEnding() == "s")
     try expect(1.pluralEnding("teeth", singularEnding: "tooth") == "tooth")
@@ -148,13 +158,13 @@ public extension BinaryInteger {
     var bytes: Int64 {
         Int64(self)
     }
-#if !DEBUG
+#if canImport(Foundation)
+#if !DEBUG // to hide from compiler during debug so there aren't warnings or errors
     @available(*, deprecated, renamed: "byteString(countStyle:)", message: "use byteString(countStyle) instead so we know whether to convert with 1000 or 1024 division")
     var byteString: String {
         return byteString(.file)
     }
 #endif
-    #if canImport(Foundation)
     func byteString(_ countStyle: ByteCountFormatter.CountStyle) -> String {
         return ByteCountFormatter.string(fromByteCount: bytes, countStyle: countStyle)
     }
@@ -176,7 +186,9 @@ public extension BinaryInteger {
     }
     #endif
 }
-@MainActor
+#if !os(WASM)
+    @MainActor
+#endif
 internal let byteTests: TestClosure = {
     let fileTests: [UInt64: String] = [
         12334: "12 KB",
@@ -214,7 +226,9 @@ internal let byteTests: TestClosure = {
 #if compiler(>=5.9)
 @available(iOS 13, tvOS 13, watchOS 6, *)
 extension Int {
+#if !os(WASM)
     @MainActor
+#endif
     public static let tests: [Test] = [
         Test("plusplus", testPlusPlus),
         Test("minusminus", testMinusMinus),

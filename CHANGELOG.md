@@ -6,7 +6,9 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
-v1.11.9 9/24/2025 Added import for Color to the RadialLayout preview so that included packages won't warn.  Change MixedTypeFieldDictionary to default to an unordered dictionary so JSON encoding matches and cleaned up and simplified and optimized code.  This will mean that the output is inconsistent but that’s what the `sortedKeys` option is for.  Added Backport for `controlSize`.  Re-worked all the `swiftUIValue` conversions to be consistent.  Re-worked `firstKey` extension to work on any DictionaryConvertible so that it works on ordered dictionaries as well.
+v1.11.10 9/25/2025 Fixed tvOS issues.  Removed `@MainActor` from WASM builds by adding !os(WASM) (os(WASMX#) -> !os(WASM#))
+
+v1.11.9 9/24/2025 Added import for Color to the RadialLayout preview so that included packages won't warn.  Change MixedTypeFieldDictionary to default to an unordered dictionary so JSON encoding matches and cleaned up and simplified and optimized code.  This will mean that the output is inconsistent but that’s what the `sortedKeys` option is for.  Added Backport for `controlSize`.  Re-worked all the `swiftUIValue` conversions to be consistent.  Re-worked `firstKey` extension to work on any DictionaryConvertible so that it works on ordered dictionaries as well. **Fails tvOS**
 
 v1.11.8 9/23/2025 Fixed issue on visionOS (Glass is not supported there). **Supports all platforms EXCEPT WASM in 6.2 beta but passes all other Swift Package Index Checks!**
 

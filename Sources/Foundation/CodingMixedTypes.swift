@@ -31,6 +31,7 @@ public enum MixedTypeField: Codable, Equatable {
     case dictionary(MixedTypeDictionary)
     case array([MixedTypeField?])
 
+#if canImport(Foundation)
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         
@@ -52,7 +53,8 @@ public enum MixedTypeField: Codable, Equatable {
             throw DecodingError.typeMismatch(MixedTypeField.self, DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "Attempting to decode an unsupported base type."))
         }
     }
-    
+#endif
+
     public init?(encoding value: Any?) {
         guard let value else {
             self = .null
@@ -82,6 +84,7 @@ public enum MixedTypeField: Codable, Equatable {
         }
     }
     
+    #if canImport(Foundation)
     public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
         
@@ -102,6 +105,7 @@ public enum MixedTypeField: Codable, Equatable {
             try container.encode(value)
         }
     }
+    #endif
 
     public var stringValue: String? {
         if case let .string(value) = self {
@@ -147,6 +151,7 @@ public enum MixedTypeField: Codable, Equatable {
 }
 
 // MARK: - Coding Support
+#if !os(WASM)
 public extension Encodable {
     func asMixedTypeField() throws -> MixedTypeField {
         let encoder = MixedTypeFieldEncoder()
@@ -542,3 +547,4 @@ fileprivate final class _FieldDecoder: Decoder {
         }
     }
 }
+#endif

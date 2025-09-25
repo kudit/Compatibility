@@ -432,7 +432,9 @@ body {
 </html>
 """
     
+#if !os(WASM)
     @MainActor
+#endif
     internal static let testHTMLEncoded: TestClosure = {
         let encoded = """
         &lt;html&gt;
@@ -475,7 +477,9 @@ body {
 public extension String {
     static let INVALID_ENCODING = "INVALID_ENCODING"
     
+#if !os(WASM)
     @MainActor
+#endif
     internal static let testCodable: TestClosure = {
         let defaultString = String(string: nil, defaultValue: "default")
         try expect(Version(string: "a.b.c", defaultValue: "1.0.3") == "1.0.3")
@@ -660,7 +664,9 @@ public extension String {
         //return Array(self.characters).map { String($0) }
     }
     
+#if !os(WASM)
     @MainActor
+#endif
     internal static let testIntrospection: TestClosure = {
         try expect(!"a1923".isNumeric)
         try expect(!"a19x23".isNumeric)
@@ -816,7 +822,9 @@ public extension StringProtocol {
     }
 }
 public extension String {
+#if !os(WASM)
     @MainActor
+#endif
     internal static let testTriming: TestClosure = {
         var long = "ExampleWorld/world.json  "
             .trimmed
@@ -830,7 +838,9 @@ public extension String {
         trim.trim()
         try expect(trim.trimmingCharacters(in: "dol") == "r")
     }
+#if !os(WASM)
     @MainActor
+#endif
     internal static let testTrimingEmpty: TestClosure = {
         let long = "ExampleWorld/world.json"
         let trim = ""
@@ -1022,7 +1032,9 @@ public extension String {
         }
         return fixed.joined(separator: ".")
     }
+#if !os(WASM)
     @MainActor
+#endif
     internal static let testSentenceCapitalized: TestClosure = {
         let capitalized = "hello world. goodbye world.".sentenceCapitalized
         try expect(capitalized == "Hello world. Goodbye world.", String(describing:capitalized))
@@ -1146,7 +1158,9 @@ public extension String {
     }
 #endif
 
+#if !os(WASM)
     @MainActor
+#endif
     internal static let testEncoding: TestClosure = {
         let tags = "<p>Hello</p>"
         try expect(tags.tagsStripped == "Hello", "Unexpected stripped tags: \(tags.tagsStripped)")
@@ -1217,7 +1231,9 @@ public extension String {
     }
     
     // MARK: - Parsing
+#if !os(WASM)
     @MainActor
+#endif
     internal static let testSubstring: TestClosure = {
         #if canImport(Foundation)
         let extraction = TEST_STRING.substring(with: NSRange(7...12))
@@ -1290,27 +1306,37 @@ public extension String {
         return substr
     }
     internal static let TEST_STRING = "A long string with some <em>intérressant</em> properties!"
+#if !os(WASM)
     @MainActor
+#endif
     internal static let testExtractTags: TestClosure = {
         let extraction = TEST_STRING.extract(from: "<em>", to: "</em>") // should never fail
         try expect(extraction == "intérressant" , String(describing:extraction))
     }
+#if !os(WASM)
     @MainActor
+#endif
     internal static let testExtractNilStart: TestClosure = {
         let extraction = TEST_STRING.extract(from: nil, to: "string")
         try expect(extraction == "A long " , String(describing:extraction))
     }
+#if !os(WASM)
     @MainActor
+#endif
     internal static let testExtractNilEnd: TestClosure = {
         let extraction = TEST_STRING.extract(from: "</em>", to: nil)
         try expect(extraction == " properties!" , String(describing:extraction))
     }
+#if !os(WASM)
     @MainActor
+#endif
     internal static let testExtractMissingStart: TestClosure = {
         let extraction = TEST_STRING.extract(from: "<strong>", to: "</em>")
         try expect(extraction == nil , String(describing:extraction))
     }
+#if !os(WASM)
     @MainActor
+#endif
     internal static let testExtractMissingEnd: TestClosure = {
         let extraction = TEST_STRING.extract(from: "<em>", to: "</strong>")
         try expect(extraction == nil , String(describing:extraction))
@@ -1378,7 +1404,9 @@ public extension String {
 // Testing is only supported with Swift 5.9+
 #if compiler(>=5.9)
     @available(iOS 13, tvOS 13, watchOS 6, *)
+#if !os(WASM)
     @MainActor
+#endif
     static let tests = [
         Test("sentence capitalized", testSentenceCapitalized),
         Test("substring", testSubstring),
@@ -1415,7 +1443,28 @@ public extension Optional where Wrapped == Defaultable {
     }
 }
 
+#if !os(WASM)
+// This isn't anything but needs at least a line or this won't work
+#else
+// MARK: Backport for String(describing:) without Foundation
+public extension String {
+    init(describing value: Any?) {
+        guard let value else {
+            self = "nil"
+            return
+        }
+        if let stringValue = value as? CustomStringConvertible {
+            self = stringValue.description
+            return
+        }
+        self = "\(type(of: value)) with unknown value"
+    }
+}
+#endif
+
+#if !os(WASM)
 @MainActor
+#endif
 let testTextReversal: TestClosure = {
     let text = """
 v1.0.8 8/10/2022 Manually created initializers for SwiftUI views to prevent internal protection errors.

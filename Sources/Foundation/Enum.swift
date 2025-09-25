@@ -19,6 +19,7 @@ public extension CaseIterable where Self: Equatable { // equatable required to f
 public protocol CaseNameConvertible {
     var caseName: String { get }
 }
+#if !os(WASM)
 public extension CaseNameConvertible {
     /// exposes the case name for an enum without having to have a string rawValue.
     var caseName: String {
@@ -26,3 +27,4 @@ public extension CaseNameConvertible {
         (Mirror(reflecting: self).children.first?.label ?? String(describing: self))
     }
 }
+#endif

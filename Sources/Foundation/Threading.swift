@@ -8,7 +8,7 @@
 
 #if (os(iOS) || os(macOS) || os(tvOS) || os(watchOS) || os(visionOS) || os(Linux)) && canImport(Foundation) // Don't run on WASM or Android
 // Use built-in Thread and Dispatch
-#else // not supported on WASM or Android
+#elseif !os(WASM) // not supported on WASM or Android
 // Backport Thread for code on WASM or Android
 // None of this is public since this is just for internal supports.
 struct Thread: Sendable, Equatable {
@@ -64,6 +64,7 @@ func timeTolerance(start: TimeInterval, end: TimeInterval, expected: TimeInterva
     try expect(delta < timeTolerances, "took \(delta) seconds (expecting \(expected) sec difference)")
 }
 
+#if !os(WASM) // unable to run this on WASM
 // Implemented as static funcs with global wrappers in case something like View creates similarly named functions like background and we need to reference this specific version.
 
 // would have made this a static function on task but extending it apparently has issues??
@@ -172,11 +173,15 @@ public extension Compatibility {
     /// Throwable return background task.
     @available(iOS 13, tvOS 13, watchOS 6, *)
     static func background<ReturnType: Sendable>(_ closure: @Sendable @escaping () async throws -> ReturnType) async throws -> ReturnType {
+        #if canImport(Foundation)
         let longRunningTask = Task.detached(priority: .background) {
             return try await closure()
         }
         let result = await longRunningTask.result
         return try result.get()
+        #else
+        return try await closure()
+        #endif
     }
     /// Non-throwing return background task.  Return type must be an optional since there could be some error thrown by `result.get()` (though practically that should never happen)
     @available(iOS 13, tvOS 13, watchOS 6, *)
@@ -200,10 +205,9 @@ public extension Compatibility {
 
 @MainActor
 internal let testBackground: TestClosure = {
-    #if canImport(Foundation)
+#if canImport(Foundation)
     let start = Date.timeIntervalSinceReferenceDate
     let end: TimeInterval
-#if !os(Android)
     if #available(iOS 13, tvOS 13, watchOS 6, *) {
         end = await withCheckedContinuation { continuation in
             background {
@@ -224,7 +228,6 @@ internal let testBackground: TestClosure = {
     }
     try timeTolerance(start: start, end: end, expected: 4)
 #endif
-    #endif
 }
 
 // MARK: - Main
@@ -235,6 +238,7 @@ public func main(_ closure: @Sendable @MainActor @escaping () -> Void) {
 }
 public extension Compatibility {
     /// run code on the main thread
+    #if !os(WASM)
     static func main(_ closure: @Sendable @MainActor @escaping () -> Void) {
         if #available(iOS 13, tvOS 13, watchOS 6, *) {
             Task { @MainActor in
@@ -249,6 +253,12 @@ public extension Compatibility {
             }
         }
     }
+    #else
+    /// Run code on main thread - all code is executed on main thread already in embedded systems.
+    static func main(_ closure: @Sendable @escaping () -> Void) {
+        closure()
+    }
+    #endif
 }
 
 @available(iOS 13, tvOS 13, watchOS 6, *)
@@ -358,5 +368,6 @@ import SwiftUI
 #Preview("Tests") {
     TestsListView(tests: KuThreading.tests)
 }
+#endif
 #endif
 #endif

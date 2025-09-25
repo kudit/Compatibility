@@ -523,12 +523,16 @@ public extension Backport where Content: View {
     ///   ``ControlSize`` enumeration.
     func controlSize(_ controlSize: BackportControlSize) -> some View {
         Group {
+            #if os(tvOS)
+            content
+            #else
             if #available(iOS 15, macOS 11, tvOS 15, watchOS 9.0, *) { // supported on macOS 10.5 but 11 required for availability checking...
                 content.controlSize(controlSize.controlSize)
             } else {
                 // Fallback on earlier versions
                 content
             }
+            #endif
         }
     }
 }
@@ -554,6 +558,7 @@ public enum BackportControlSize : CaseIterable, Sendable {
     case extraLarge
     
     @available(iOS 15, macOS 10.15, tvOS 15, watchOS 9, *)
+    @available(tvOS, unavailable) // apparently this is marked as unavailable??
     var controlSize: ControlSize {
         switch self {
         case .mini: return .mini
@@ -917,7 +922,7 @@ public struct Glass : Equatable, Sendable {
     var isInteractive: Bool?
 
     /// The regular variant of glass.
-    public static var regular: Glass = Glass()
+    public static let regular: Glass = Glass()
 
     /// Returns a copy of the glass with the provided tint color.
     public func tint(_ color: Color?) -> Glass {

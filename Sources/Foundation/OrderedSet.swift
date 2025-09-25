@@ -332,6 +332,7 @@ extension OrderedSet {
     }
 }
 
+#if !os(WASM) // WASM doesn't have access to Codable or Mirror.
 // MARK: - Codable
 extension OrderedSet: Encodable where Element: Encodable {
     /// Encodes the elements of this ordered set into the given encoder.
@@ -382,6 +383,7 @@ extension OrderedSet: CustomDebugStringConvertible {
         elements.debugDescription
     }
 }
+#endif
 
 // MARK: - Equatable
 
@@ -825,8 +827,10 @@ let orderedSetTests = { @Sendable in
     copiedSet.shuffle()
     orderedSet.sort()
     try expect(orderedSet.isEqualSet(to: copiedSet))
+#if !os(WASM)
     try expect(!orderedSet.debugDescription.isEmpty)
     try expect(!orderedSet.description.isEmpty)
+#endif
     try expect(orderedSet.filter { $0 % 2 == 0 } == [2, 6])
     try expect(orderedSet.firstIndex(of: 2) == orderedSet.lastIndex(of: 2))
     try expect(orderedSet.startIndex == 0)

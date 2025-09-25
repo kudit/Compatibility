@@ -56,7 +56,6 @@ public protocol DynamicProperty {}
     /// initializer. See that initializer for more information.
     ///
     /// - Parameter initialValue: An initial value.
-    @MainActor
     public init(initialValue: ObjectType) {
         wrappedValue = initialValue
     }
@@ -98,7 +97,6 @@ public protocol DynamicProperty {}
     /// view.
     ///
     /// - Parameter wrappedValue: An initial value for the observable object.
-    @MainActor
     public init(wrappedValue: ObjectType) { self.wrappedValue = wrappedValue }
 
     /// The underlying value that the observed object references.
@@ -119,7 +117,7 @@ public protocol DynamicProperty {}
     /// When you change a wrapped value, you can access the new value
     /// immediately. However, SwiftUI updates views that display the value
     /// asynchronously, so the interface might not update immediately.
-    @MainActor public var wrappedValue: ObjectType
+    public var wrappedValue: ObjectType
 }
 
 
@@ -184,7 +182,7 @@ public protocol Subscription : Cancellable {
 
 public enum Subscribers {
     /// A requested number of items, sent to a publisher from a subscriber through the subscription.
-    @frozen public struct Demand : Equatable, Hashable, Codable {}
+    @frozen public struct Demand : Equatable, Hashable {}
     
     /// A signal that a publisher doesn’t produce additional elements, either due to normal completion or an error.
     @frozen public enum Completion<Failure> where Failure : Error {

@@ -1073,6 +1073,7 @@ extension OrderedDictionary {
 }
 
 // MARK: - Codable
+#if !os(WASM)
 extension OrderedDictionary: Encodable where Key: Encodable, Value: Encodable {
     /// Encodes the contents of this dictionary into the given encoder.
     ///
@@ -1147,9 +1148,12 @@ extension OrderedDictionary: Decodable where Key: Decodable, Value: Decodable {
         }
     }
 }
+#endif
 
 #if compiler(>=5.9)
+#if !os(WASM)
 @MainActor
+#endif
 internal var orderedDictionaryTests: TestClosure = {
     var ordered: OrderedDictionary = ["b": 2, "a": 1]
     let manipulated = ordered.sorted().reversed()
@@ -1162,10 +1166,12 @@ internal var orderedDictionaryTests: TestClosure = {
 //    ordered += unordered
 //    let merged = ordered + unordered
     
+#if !os(WASM)
     let encoded = ordered.asJSON()
     let decoded = try? OrderedDictionary<String, Int>(fromJSON: encoded)
     try expect(decoded == ordered)
-    
+#endif
+
     ordered.sort()
     ordered.updateValue(10, forKey: "b")
     ordered["d"] = 5
@@ -1192,7 +1198,9 @@ internal var orderedDictionaryTests: TestClosure = {
 }
 
 @available(iOS 13, tvOS 13, watchOS 6, *)
+#if !os(WASM)
 @MainActor
+#endif
 internal var dictionaryTests: [Test] = [
     Test("Ordered Dictionary Tests", orderedDictionaryTests),
 ]

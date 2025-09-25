@@ -10,6 +10,7 @@ public protocol PropertyIterable {
     var allProperties: OrderedDictionary<String, Any> { get }
     var allKeyPaths: OrderedDictionary<String, PartialKeyPath<Self>> { get }
 }
+#if !os(WASM)
 public extension PropertyIterable {
     var allProperties: OrderedDictionary<String, Any> {
         var result = OrderedDictionary<String, Any>()
@@ -43,6 +44,18 @@ public extension PropertyIterable {
         return membersTokeyPaths
     }
 }
+#else
+public extension PropertyIterable {
+    var allProperties: OrderedDictionary<String, Any> {
+        debug("Not implemented for non-WASM platforms.", level: .ERROR)
+        return [:]
+    }
+    var allKeyPaths: OrderedDictionary<String, PartialKeyPath<Self>> {
+        debug("Not implemented for non-WASM platforms.", level: .ERROR)
+        return [:]
+    }
+}
+#endif
 
 // Equatable conformance for this use and testing pathed values equality
 public extension Equatable {

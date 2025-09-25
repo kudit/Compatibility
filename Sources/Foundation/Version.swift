@@ -223,7 +223,9 @@ public extension Version {
 #endif
     
     // TODO: Convert to Swift Testing
+#if !os(WASM)
     @MainActor
+#endif
     internal static var testVersions: TestClosure = {
         let defaulted = Version(string: nil, defaultValue: "1.2.3")
         try expect(defaulted == Version("1.2.3"))
@@ -258,7 +260,9 @@ public extension Version {
         try expect(req.pretty == "v1.0, v2.1.2, v3.0, v4.3")
     }
 
-    @MainActor
+#if !os(WASM)
+@MainActor
+#endif
     internal static var versionCodableTest: TestClosure = {
         
 //        - [ ] Determine when Version should print 1.0.0 vs 1.0 vs 1 (do 1.0 at least, but if .0.0, just print the major and minor and not the patch) - see if there are best practices.
@@ -271,7 +275,7 @@ public extension Version {
         let b: Version = "2.0"
         let c: Version = "3.0.1"
         let array = [one, two, three, a, b, c]
-#if canImport(Foundation)
+#if !os(WASM)
         let json = array.asJSON()
         let expected = """
 ["2.0","12.1","2.12.1","1.0","2.0","3.0.1"]
@@ -288,7 +292,9 @@ public extension Version {
     }
 
 #if compiler(>=5.9)
+#if !os(WASM)
     @MainActor
+#endif
     @available(iOS 13, tvOS 13, watchOS 6, *)
     static var tests: [Test] = [
         Test("Version Comparison Tests", testVersions),

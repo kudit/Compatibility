@@ -16,13 +16,19 @@ extension String {
     public static let unknownAppIdentifier = "com.unknown.unknown"
 }
 
+#if !os(WASM)
 @MainActor
+#endif
 @available(iOS 13, tvOS 13, watchOS 6, *)
 public class Application: ObservableObject { // cannot automatically conform to CustomStringConvertible since it's actor-isolated...
+#if !os(WASM)
     @MainActor
+#endif
     public static var baseDomain = "com.kudit"
 
+#if !os(WASM)
     @MainActor
+#endif
     public static let main = Application()
 
     // MARK: - Compiler information
@@ -187,7 +193,9 @@ public class Application: ObservableObject { // cannot automatically conform to 
 #endif
     }
     
+#if !os(WASM)
     @MainActor
+#endif
     @available(*, deprecated, renamed: "Application.isDebug")
     public static var DEBUG: Bool {
         Application.isDebug
@@ -427,6 +435,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
     }
 #endif
 #if compiler(>=5.9)
+#if canImport(Foundation)
     @MainActor
     internal static var applicationTests: TestClosure = { @MainActor in // ensure we're running these on the Main Actor so we don't have to worry about Application main actor access.
         try expect(Application.isDebug, "App should not be running in debug mode")
@@ -435,7 +444,6 @@ public class Application: ObservableObject { // cannot automatically conform to 
         try expect(Application.isPlayground == Application.isPlayground, "App Playground test")
         try expect(Application.isRealDevice == Application.isRealDevice, "App Real Device test")
         try expect(Application.isMacCatalyst == Application.isMacCatalyst, "App Mac Catalyst test")
-#if canImport(Foundation)
         debugSuppress {
             Compatibility.main {
                 Application.main.resetVersionsRun()
@@ -456,10 +464,21 @@ Compiler Version: \(Application.compilerVersion)
 Compatibility Version: \(Compatibility.version)
 """
         try expect(Application.main.description == expectedDescription, "Unexpected app description: \(Application.main.description) (expected: \(expectedDescription))")
-#endif
     }
+#else
+    internal static var applicationTests: TestClosure = {
+        try expect(Application.isDebug, "App should not be running in debug mode")
+        try expect(Application.isPreview == Application.isPreview, "App Preview test")
+        try expect(Application.isSimulator == Application.isSimulator, "App Simulator test")
+        try expect(Application.isPlayground == Application.isPlayground, "App Playground test")
+        try expect(Application.isRealDevice == Application.isRealDevice, "App Real Device test")
+        try expect(Application.isMacCatalyst == Application.isMacCatalyst, "App Mac Catalyst test")
+    }
+#endif
 
+#if !os(WASM)
     @MainActor
+#endif
     public static var tests: [Test] = [
         Test("Application Tests", applicationTests),
     ]

@@ -12,7 +12,9 @@ import Compatibility
 import Testing
 import SwiftUI
 
+#if !os(WASM)
 extension CloudStatus: @retroactive CaseNameConvertible {}
+#endif
 final class TestClass {}
 // Define a simple struct to test Encodable/Decodable
 private struct TestPerson: Codable, Equatable {
@@ -210,9 +212,11 @@ struct CompatibilityTests {
         let quoted = "h\"i"
         #expect(quoted.addSlashes() == "h\\\"i", "Should escape quotes and backslashes")
 
-        let errorJSON = "error".asErrorJSON()
-        #expect(errorJSON.contains("\"success\" : false"), "Should produce JSON with success=false")
-        #expect(errorJSON.contains("error"), "Should include original message")
+        debugSuppress { // TODO: Figure out why this isn't supporessing output.
+            let errorJSON = "error".asErrorJSON()
+            #expect(errorJSON.contains("\"success\" : false"), "Should produce JSON with success=false")
+            #expect(errorJSON.contains("error"), "Should include original message")
+        }
         
         // MARK: - Optional ?? with String default
         // ------------------------------
@@ -473,11 +477,12 @@ struct CompatibilityTests {
         _ = compDict.description
         _ = compDict.debugDescription
 
+#if !os(WASM)
         // Codable
         let encoded = try JSONEncoder().encode(compDict)
         let decoded = try JSONDecoder().decode(OrderedDictionary<String, Int>.self, from: encoded)
         #expect(decoded == compDict)
-
+#endif
         // Base dictionary
         var dictVar: OrderedDictionary = ["a": 1, "b": 2, "c": 3]
 
@@ -584,18 +589,22 @@ struct CompatibilityTests {
         }
         """
         let data = Data(duplicateJSON.utf8)
+#if !os(WASM)
         #expect(throws: DecodingError.self) {
             try JSONDecoder().decode(OrderedDictionary<String, Int>.self, from: data)
         }
-
+#endif
+        
         // 2. Key without value (truncated sequence)
         let badData = try encoder.encode(["a"]) // just a key, no value
+#if !os(WASM)
         do {
             _ = try JSONDecoder().decode(OrderedDictionary<String, Int>.self, from: badData)
             Issue.record("Expected missing-value decoding failure")
         } catch {
             // expected
         }
+#endif
 
         let a = TestClass()
         let b = TestClass()
@@ -840,6 +849,7 @@ struct CompatibilityTests {
         #expect("a" == dictionary.firstKey(for: 1))
         #expect("b" == dictionary.firstKey(for: 2))
         
+#if !os(WASM)
         for c in CloudStatus.allCases {
             #expect(String(describing: c).contains(c.caseName))
         }
@@ -862,12 +872,14 @@ struct CompatibilityTests {
             // testing strings since function values might be problematic or not exactly equal.
             #expect(areEqual(String(describing: propertyValue), String(describing: pathValue)))
         }
+#endif
     }
 
     @Test("CodingJSON")
     func testCodingJSON() throws {
         // MARK: - Encodable.asJSON / prettyJSON
         let person = TestPerson(name: "Alice", age: 30, isStudent: true, nickname: nil, scores: [3.5, 4.0], info: ["home": .string("Earth"), "favoriteNumbers": .array([.int(1), .int(2), .int(3)])])
+#if !os(WASM)
         let json = person.asJSON()
 //        debug(json)
         #expect(json.contains("""
@@ -926,29 +938,30 @@ struct CompatibilityTests {
         """)
         #else
         #expect(pretty == """
-{
-  "age": 30,
-  "info": {
-    "favoriteNumbers": [
-      1,
-      2,
-      3
-    ],
-    "home": "Earth"
-  },
-  "isStudent": true,
-  "name": "Alice",
-  "scores": [
-    3.5,
-    4.0
-  ]
-}
-""")
+        {
+          "age" : 30,
+          "info" : {
+            "favoriteNumbers" : [
+              1,
+              2,
+              3
+            ],
+            "home" : "Earth"
+          },
+          "isStudent" : true,
+          "name" : "Alice",
+          "scores" : [
+            3.5,
+            4.0
+          ]
+        }
+        """)
         #endif
         
         // MARK: - Decodable.init(fromJSON:)
         let decoded = try TestPerson(fromJSON: json)
         #expect(decoded == person)
+#endif
         
         // MARK: - MixedTypeField encode/decode
         let fields: [MixedTypeField] = [
@@ -961,12 +974,14 @@ struct CompatibilityTests {
             .array([.int(1), .int(2)])
         ]
         
+#if !os(WASM)
         for field in fields {
             let data = try JSONEncoder().encode(field)
             let decodedField = try JSONDecoder().decode(MixedTypeField.self, from: data)
             #expect(String(describing: field) == String(describing: decodedField))
         }
-        
+#endif
+
         // MARK: - MixedTypeField convenience accessors
         #expect(fields[0].stringValue == "hello")
         #expect(fields[1].boolValue == true)
@@ -985,6 +1000,7 @@ struct CompatibilityTests {
         #expect(fields[5].asJSON().contains("\"key\""))
         #expect(fields[6].asJSON().contains("["))
                 
+#if !os(WASM)
         // MARK: - parseJSON bad input
         do {
             _ = try TestPerson(fromJSON: "not-json")
@@ -992,7 +1008,8 @@ struct CompatibilityTests {
         } catch {
             // expected
         }
-                
+#endif
+        
         // MARK: - MixedTypeDictionaryDecoder KeyedDecodingContainer
         let dict: MixedTypeDictionary = [
             "name": .string("Bob"),
@@ -1001,6 +1018,7 @@ struct CompatibilityTests {
             "scores": .array([.double(2.5)]),
             "info": .dictionary(["foo": nil, "bar": .string("barstring"), "nested": .array([.string("a"), .string("b")])]),
         ]
+#if !os(WASM)
         let bob = try TestPerson(fromMixedTypeField: .dictionary(dict))
         #expect(bob.name == "Bob")
         #expect(bob.age == 25)
@@ -1010,6 +1028,7 @@ struct CompatibilityTests {
         #expect(info != [:])
         let value = info["foo"] ?? .null
         #expect(value == nil)
+#endif
     }
 
     @available(iOS 13, tvOS 13, *)
@@ -1036,6 +1055,7 @@ struct CompatibilityTests {
         let bar = Version(string: optional, defaultValue: "1.0")
         #expect(bar == "1.0")
 
+#if !os(WASM)
         let decoded = try [MixedTypeField](fromJSON: json)
         #expect(decoded[0].stringValue == "Hello world")
         #expect(decoded[2].boolValue == false)
@@ -1078,7 +1098,7 @@ struct CompatibilityTests {
         let encodedNilUnordered = try nilUnordered.asMixedTypeField()
         let decodedNilUnordered = try Dictionary<Int, String?>(fromMixedTypeField: encodedNilUnordered)
         #expect(nilUnordered == decodedNilUnordered)
-
+#endif
     }
     
     @Test("Named Tests")
@@ -1100,6 +1120,7 @@ struct CompatibilityTests {
             }
         }
         while ongoingTests.count > 0 {
+#if !os(WASM)
             await sleep(seconds: 0.01)
             for ongoingTest in ongoingTests {
                 if ongoingTest.isFinished() {
@@ -1107,6 +1128,7 @@ struct CompatibilityTests {
                     #expect(ongoingTest.succeeded())
                 }
             }
+#endif
         }
     }
     
@@ -1341,6 +1363,7 @@ struct CompatibilityTests {
             .dictionary(["k": .string("v")]),
             .array([.int(1), .null, .string("s")])
         ]
+#if !os(WASM)
         for f in fields {
             // encode/decode round trip
             #if canImport(Foundation)
@@ -1375,7 +1398,8 @@ struct CompatibilityTests {
         do {
             _ = try JSONDecoder().decode(MixedTypeField.self, from: Data("{}".utf8))
         } catch { /* expected */ }
-
+#endif
+        
         // MARK: - DataStore
         #if compiler(>=5.9) && canImport(Foundation)
         if #available(iOS 13, tvOS 13, watchOS 6, *) {

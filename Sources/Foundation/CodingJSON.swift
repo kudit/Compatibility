@@ -47,7 +47,7 @@ public extension Decodable {
     }
 }
 #else
-// MARK: Legacy support for WASM or where Foundation isn't available
+// MARK: Legacy support for where Foundation isn't available
 public struct JSONFormattingOptions: OptionSet {
     public let rawValue: Int
 
@@ -59,6 +59,7 @@ public struct JSONFormattingOptions: OptionSet {
     }
 }
 
+#if !os(WASM)
 public extension Encodable {
     /**
      Use to output the encodable object as a JSON representation.
@@ -90,6 +91,7 @@ public extension Decodable {
         self = try Self(fromMixedTypeField: field)
     }
 }
+#endif
 //
 //  MixedTypeField+JSON.swift
 //
@@ -257,9 +259,14 @@ fileprivate struct _JSONParser {
         }
         
         if numberStr.contains(".") || numberStr.contains("e") || numberStr.contains("E") {
+            #if !os(WASM)
             if let d = Double(numberStr) {
                 return .double(d)
             }
+            #else
+            // TODO: Parse
+            throw CustomError("Need to implement fallback for Double from String")
+            #endif
         } else {
             if let i = Int(numberStr) {
                 return .int(i)
@@ -353,10 +360,18 @@ fileprivate struct _JSONWriter {
         case .bool(let v):
             output.append(v ? "true" : "false")
         case .int(let v):
+            #if canImport(Foundation)
             output.append(String(v))
+            #else
+            output.append("\(v)")
+            #endif
         case .double(let v):
             // Use standard JSON number formatting
+            #if canImport(Foundation)
             output.append(String(v))
+            #else
+            output.append("\(v)")
+            #endif
         case .string(let v):
             writeString(v)
         case .array(let arr):

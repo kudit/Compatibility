@@ -51,7 +51,9 @@ public extension Double {
     }
 #endif
 
+#if !os(WASM)
     @MainActor
+#endif
     internal static let doubleTests: TestClosure = {
         let five = 5.doubleValue.doubleValue
         try expect("\(five)" == "5.0")
@@ -75,7 +77,9 @@ public extension Double {
 #if compiler(>=5.9)
 @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
 public extension Double {
+#if !os(WASM)
     @MainActor
+#endif
     static let tests = [
         Test("double tests", doubleTests),
     ]

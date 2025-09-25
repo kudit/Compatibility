@@ -272,10 +272,15 @@ public extension Compatibility {
     static func debug(_ message: Any, level: DebugLevel = .defaultLevel, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) -> String {
         #if canImport(Foundation)
         let isMainThread = Thread.isMainThread // capture before we switch to main thread for printing
+        let message = String(describing: message) // convert to sendable item to avoid any thread issues. (Unavailable in embedded Swift)
         #else
         let isMainThread = true
+        let originalMessage = message
+        var message = "Unknown object message in debug."
+        if let string = originalMessage as? String {
+            message = string
+        }
         #endif
-        let message = String(describing: message) // convert to sendable item to avoid any thread issues.
         
         guard DebugLevel.isAtLeast(level) else { // check current debug level from settings
             return "" // don't actually print
@@ -342,7 +347,9 @@ public extension Error {
 #if compiler(>=5.9)
 @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
 public extension DebugLevel {
+#if !os(WASM)
     @MainActor
+#endif
     internal static let testDebugConfig: TestClosure = {
         // NOTE: This might happen concurrently with other tests so could cause issues with output...
         // preserve original settings
@@ -395,7 +402,9 @@ Normal output: \(defaultOutput)
 //        Compatibility.settings.debugLog(concurrentOutput)
 //        debug("TEST OUTPUT", level: .ERROR)
     }
+#if !os(WASM)
     @MainActor
+#endif
     internal static let testDebug: TestClosure = {
         var debugError = CustomError("NOT OUTPUT")
         var output = "OVERWRITE"
@@ -418,7 +427,9 @@ Normal output: \(defaultOutput)
             try expect(level.description == "\(level)")
         }
     }
+#if !os(WASM)
     @MainActor
+#endif
     static let tests = [
         Test("debug configuration tests", testDebugConfig),
         Test("debug tests", testDebug),
