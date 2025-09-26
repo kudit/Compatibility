@@ -10,7 +10,7 @@ public protocol PropertyIterable {
     var allProperties: OrderedDictionary<String, Any> { get }
     var allKeyPaths: OrderedDictionary<String, PartialKeyPath<Self>> { get }
 }
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
 public extension PropertyIterable {
     var allProperties: OrderedDictionary<String, Any> {
         var result = OrderedDictionary<String, Any>()

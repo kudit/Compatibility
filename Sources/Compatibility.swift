@@ -8,18 +8,27 @@
 
 public enum Compatibility {
     /// The version of the Compatibility Library since cannot get directly from Package.swift.
-    public static let version: Version = "1.11.10"
+    public static let version: Version = "1.11.11"
 }
 
 #if canImport(Foundation)
 @_exported import Foundation
+// The following can be added if we want to add back in some funtions for Android or Linux (we're not currently using these personally, so if you do, please feel free to file a pull request).
+//#elseif canImport(FoundationNetworking) && canImport(FoundationEssentials) && canImport(FoundationInternationalization) && canImport(FoundationXML)
+///*
+// Android compatibility: https://skip.tools/blog/android-native-swift-packages/#conditionally-importing-and-using-platform-specific-modules
+// */
+//@_exported import FoundationNetworking
+//@_exported import FoundationEssentials
+//@_exported import FoundationInternationalization
+//@_exported import FoundationXML
 #endif
 
 // NOTE: UNAVAILABLE to mark API as unavailabe for specific versions.
 //@available(*, unavailable, message: "use native function rather than backport?")
 
 /*
- 
+  
  For module checks to conditionally compile for versions:
  
  canImport(StoreKit)

@@ -74,7 +74,7 @@ public func debugSuppress(_ block: () async throws -> Void) async rethrows {
 // Testing is only supported with Swift 5.9+
 #if compiler(>=5.9)
 // Test Handlers
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
 @MainActor
 #endif
 @available(iOS 13, tvOS 13, watchOS 6, *)
@@ -115,7 +115,7 @@ public final class Test: ObservableObject {
     @available(iOS 13, tvOS 13, watchOS 6, *)
     public func run() {
         progress = .running
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
         // make sure to run the "work" in a separate thread since we don't want any of this running on the main thread and potentially bogging things down
         background {
             do {

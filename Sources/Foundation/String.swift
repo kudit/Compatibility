@@ -432,7 +432,7 @@ body {
 </html>
 """
     
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
     @MainActor
 #endif
     internal static let testHTMLEncoded: TestClosure = {
@@ -477,7 +477,7 @@ body {
 public extension String {
     static let INVALID_ENCODING = "INVALID_ENCODING"
     
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
     @MainActor
 #endif
     internal static let testCodable: TestClosure = {
@@ -664,7 +664,7 @@ public extension String {
         //return Array(self.characters).map { String($0) }
     }
     
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
     @MainActor
 #endif
     internal static let testIntrospection: TestClosure = {
@@ -822,7 +822,7 @@ public extension StringProtocol {
     }
 }
 public extension String {
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
     @MainActor
 #endif
     internal static let testTriming: TestClosure = {
@@ -838,7 +838,7 @@ public extension String {
         trim.trim()
         try expect(trim.trimmingCharacters(in: "dol") == "r")
     }
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
     @MainActor
 #endif
     internal static let testTrimingEmpty: TestClosure = {
@@ -1032,7 +1032,7 @@ public extension String {
         }
         return fixed.joined(separator: ".")
     }
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
     @MainActor
 #endif
     internal static let testSentenceCapitalized: TestClosure = {
@@ -1158,7 +1158,7 @@ public extension String {
     }
 #endif
 
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
     @MainActor
 #endif
     internal static let testEncoding: TestClosure = {
@@ -1231,7 +1231,7 @@ public extension String {
     }
     
     // MARK: - Parsing
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
     @MainActor
 #endif
     internal static let testSubstring: TestClosure = {
@@ -1306,35 +1306,35 @@ public extension String {
         return substr
     }
     internal static let TEST_STRING = "A long string with some <em>intérressant</em> properties!"
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
     @MainActor
 #endif
     internal static let testExtractTags: TestClosure = {
         let extraction = TEST_STRING.extract(from: "<em>", to: "</em>") // should never fail
         try expect(extraction == "intérressant" , String(describing:extraction))
     }
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
     @MainActor
 #endif
     internal static let testExtractNilStart: TestClosure = {
         let extraction = TEST_STRING.extract(from: nil, to: "string")
         try expect(extraction == "A long " , String(describing:extraction))
     }
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
     @MainActor
 #endif
     internal static let testExtractNilEnd: TestClosure = {
         let extraction = TEST_STRING.extract(from: "</em>", to: nil)
         try expect(extraction == " properties!" , String(describing:extraction))
     }
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
     @MainActor
 #endif
     internal static let testExtractMissingStart: TestClosure = {
         let extraction = TEST_STRING.extract(from: "<strong>", to: "</em>")
         try expect(extraction == nil , String(describing:extraction))
     }
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
     @MainActor
 #endif
     internal static let testExtractMissingEnd: TestClosure = {
@@ -1404,7 +1404,7 @@ public extension String {
 // Testing is only supported with Swift 5.9+
 #if compiler(>=5.9)
     @available(iOS 13, tvOS 13, watchOS 6, *)
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
     @MainActor
 #endif
     static let tests = [
@@ -1443,7 +1443,7 @@ public extension Optional where Wrapped == Defaultable {
     }
 }
 
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
 // This isn't anything but needs at least a line or this won't work
 #else
 // MARK: Backport for String(describing:) without Foundation
@@ -1462,7 +1462,7 @@ public extension String {
 }
 #endif
 
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
 @MainActor
 #endif
 let testTextReversal: TestClosure = {

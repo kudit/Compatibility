@@ -59,7 +59,7 @@ public struct JSONFormattingOptions: OptionSet {
     }
 }
 
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
 public extension Encodable {
     /**
      Use to output the encodable object as a JSON representation.
@@ -259,7 +259,7 @@ fileprivate struct _JSONParser {
         }
         
         if numberStr.contains(".") || numberStr.contains("e") || numberStr.contains("E") {
-            #if !os(WASM)
+            #if !(os(WASM) || os(WASI))
             if let d = Double(numberStr) {
                 return .double(d)
             }

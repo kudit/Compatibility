@@ -347,7 +347,7 @@ public extension Error {
 #if compiler(>=5.9)
 @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
 public extension DebugLevel {
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
     @MainActor
 #endif
     internal static let testDebugConfig: TestClosure = {
@@ -402,7 +402,7 @@ Normal output: \(defaultOutput)
 //        Compatibility.settings.debugLog(concurrentOutput)
 //        debug("TEST OUTPUT", level: .ERROR)
     }
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
     @MainActor
 #endif
     internal static let testDebug: TestClosure = {
@@ -427,7 +427,7 @@ Normal output: \(defaultOutput)
             try expect(level.description == "\(level)")
         }
     }
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
     @MainActor
 #endif
     static let tests = [

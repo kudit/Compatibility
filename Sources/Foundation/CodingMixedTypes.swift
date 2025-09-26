@@ -151,7 +151,7 @@ public enum MixedTypeField: Codable, Equatable {
 }
 
 // MARK: - Coding Support
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
 public extension Encodable {
     func asMixedTypeField() throws -> MixedTypeField {
         let encoder = MixedTypeFieldEncoder()

@@ -5,7 +5,7 @@
 //  Created by Ben Ku on 7/3/24.
 //
 
-#if !canImport(Combine) || !canImport(Foundation)
+#if !canImport(Combine) || !canImport(Foundation) || canImport(Android)
 // Compatibility OperatingSystemVersion for Linux
 public struct OperatingSystemVersion : Sendable {
     /// MAJOR version when you make incompatible API changes
@@ -88,7 +88,7 @@ extension Version: Swift.Encodable {
 }
 
 
-#if canImport(Foundation) && compiler(>=6.0)
+#if canImport(Foundation) && compiler(>=6.0) && !canImport(Android)
 extension OperatingSystemVersion: @retroactive ExpressibleByExtendedGraphemeClusterLiteral {}
 extension OperatingSystemVersion: @retroactive ExpressibleByUnicodeScalarLiteral {}
 #endif
@@ -177,7 +177,7 @@ extension Version {
         self = forced
     }
 }
-#if canImport(Foundation) && compiler(>=6.0)
+#if canImport(Foundation) && compiler(>=6.0) && !canImport(Android)
 extension Version: @retroactive Equatable {}
 #endif
 extension Version: Swift.Comparable { // @retroactive in Swift 6?
@@ -223,7 +223,7 @@ public extension Version {
 #endif
     
     // TODO: Convert to Swift Testing
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
     @MainActor
 #endif
     internal static var testVersions: TestClosure = {
@@ -260,7 +260,7 @@ public extension Version {
         try expect(req.pretty == "v1.0, v2.1.2, v3.0, v4.3")
     }
 
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
 @MainActor
 #endif
     internal static var versionCodableTest: TestClosure = {
@@ -275,7 +275,7 @@ public extension Version {
         let b: Version = "2.0"
         let c: Version = "3.0.1"
         let array = [one, two, three, a, b, c]
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
         let json = array.asJSON()
         let expected = """
 ["2.0","12.1","2.12.1","1.0","2.0","3.0.1"]
@@ -292,7 +292,7 @@ public extension Version {
     }
 
 #if compiler(>=5.9)
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
     @MainActor
 #endif
     @available(iOS 13, tvOS 13, watchOS 6, *)

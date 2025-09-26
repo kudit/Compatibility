@@ -16,7 +16,7 @@
 public postfix func ++(x: inout Int) {
     x += 1
 }
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
 @MainActor
 #endif
 internal let testPlusPlus: TestClosure = {
@@ -30,7 +30,7 @@ internal let testPlusPlus: TestClosure = {
 public postfix func --(x: inout Int) {
     x -= 1
 }
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
 @MainActor
 #endif
 internal let testMinusMinus: TestClosure = {
@@ -51,7 +51,7 @@ public extension Int {
         return .random(in: 0..<max)
     }
 }
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
 @MainActor
 #endif
 internal let randomTests: TestClosure = {
@@ -105,7 +105,7 @@ public extension Int {
         22: "nd",
     ]
 }
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
 @MainActor
 #endif
 internal let ordinalTests: TestClosure = {
@@ -139,7 +139,7 @@ public extension Int {
         }
     }
 }
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
 @MainActor
 #endif
 internal let pluralTests: TestClosure = {
@@ -186,7 +186,7 @@ public extension BinaryInteger {
     }
     #endif
 }
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
     @MainActor
 #endif
 internal let byteTests: TestClosure = {
@@ -226,7 +226,7 @@ internal let byteTests: TestClosure = {
 #if compiler(>=5.9)
 @available(iOS 13, tvOS 13, watchOS 6, *)
 extension Int {
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
     @MainActor
 #endif
     public static let tests: [Test] = [

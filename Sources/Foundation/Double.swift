@@ -51,7 +51,7 @@ public extension Double {
     }
 #endif
 
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
     @MainActor
 #endif
     internal static let doubleTests: TestClosure = {
@@ -77,7 +77,7 @@ public extension Double {
 #if compiler(>=5.9)
 @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
 public extension Double {
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
     @MainActor
 #endif
     static let tests = [

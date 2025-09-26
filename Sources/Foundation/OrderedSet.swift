@@ -332,7 +332,7 @@ extension OrderedSet {
     }
 }
 
-#if !os(WASM) // WASM doesn't have access to Codable or Mirror.
+#if !(os(WASM) || os(WASI)) // WASM doesn't have access to Codable or Mirror.
 // MARK: - Codable
 extension OrderedSet: Encodable where Element: Encodable {
     /// Encodes the elements of this ordered set into the given encoder.
@@ -827,7 +827,7 @@ let orderedSetTests = { @Sendable in
     copiedSet.shuffle()
     orderedSet.sort()
     try expect(orderedSet.isEqualSet(to: copiedSet))
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
     try expect(!orderedSet.debugDescription.isEmpty)
     try expect(!orderedSet.description.isEmpty)
 #endif

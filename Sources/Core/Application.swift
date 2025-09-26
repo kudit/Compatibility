@@ -16,17 +16,17 @@ extension String {
     public static let unknownAppIdentifier = "com.unknown.unknown"
 }
 
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
 @MainActor
 #endif
 @available(iOS 13, tvOS 13, watchOS 6, *)
 public class Application: ObservableObject { // cannot automatically conform to CustomStringConvertible since it's actor-isolated...
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
     @MainActor
 #endif
     public static var baseDomain = "com.kudit"
 
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
     @MainActor
 #endif
     public static let main = Application()
@@ -193,7 +193,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
 #endif
     }
     
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
     @MainActor
 #endif
     @available(*, deprecated, renamed: "Application.isDebug")
@@ -476,7 +476,7 @@ Compatibility Version: \(Compatibility.version)
     }
 #endif
 
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
     @MainActor
 #endif
     public static var tests: [Test] = [

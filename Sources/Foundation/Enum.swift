@@ -19,7 +19,7 @@ public extension CaseIterable where Self: Equatable { // equatable required to f
 public protocol CaseNameConvertible {
     var caseName: String { get }
 }
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
 public extension CaseNameConvertible {
     /// exposes the case name for an enum without having to have a string rawValue.
     var caseName: String {

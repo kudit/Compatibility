@@ -8,7 +8,7 @@
 
 #if (os(iOS) || os(macOS) || os(tvOS) || os(watchOS) || os(visionOS) || os(Linux)) && canImport(Foundation) // Don't run on WASM or Android
 // Use built-in Thread and Dispatch
-#elseif !os(WASM) // not supported on WASM or Android
+#elseif !(os(WASM) || os(WASI)) // not supported on WASM or Android
 // Backport Thread for code on WASM or Android
 // None of this is public since this is just for internal supports.
 struct Thread: Sendable, Equatable {
@@ -64,7 +64,7 @@ func timeTolerance(start: TimeInterval, end: TimeInterval, expected: TimeInterva
     try expect(delta < timeTolerances, "took \(delta) seconds (expecting \(expected) sec difference)")
 }
 
-#if !os(WASM) // unable to run this on WASM
+#if !(os(WASM) || os(WASI)) // unable to run this on WASM
 // Implemented as static funcs with global wrappers in case something like View creates similarly named functions like background and we need to reference this specific version.
 
 // would have made this a static function on task but extending it apparently has issues??
@@ -218,7 +218,11 @@ internal let testBackground: TestClosure = {
         }
     } else {
         // Fallback on earlier versions
+        #if canImport(Android)
+        sleep(seconds: 4)
+        #else
         sleep(4)
+        #endif
         end = Date.timeIntervalSinceReferenceDate
         // run background just for testing (will not actually affect test though)
         background {
@@ -238,7 +242,7 @@ public func main(_ closure: @Sendable @MainActor @escaping () -> Void) {
 }
 public extension Compatibility {
     /// run code on the main thread
-    #if !os(WASM)
+    #if !(os(WASM) || os(WASI))
     static func main(_ closure: @Sendable @MainActor @escaping () -> Void) {
         if #available(iOS 13, tvOS 13, watchOS 6, *) {
             Task { @MainActor in

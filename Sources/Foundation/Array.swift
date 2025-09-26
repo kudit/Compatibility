@@ -213,7 +213,7 @@ public extension Collection {
 // Testing is only supported with Swift 5.9+
 #if compiler(>=5.9)
 @available(iOS 13, tvOS 13, watchOS 6, *)
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
 @MainActor
 #endif
 let collectionTests: [Test] = [

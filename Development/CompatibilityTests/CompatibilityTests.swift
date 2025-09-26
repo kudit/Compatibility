@@ -12,7 +12,7 @@ import Compatibility
 import Testing
 import SwiftUI
 
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
 extension CloudStatus: @retroactive CaseNameConvertible {}
 #endif
 final class TestClass {}
@@ -477,7 +477,7 @@ struct CompatibilityTests {
         _ = compDict.description
         _ = compDict.debugDescription
 
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
         // Codable
         let encoded = try JSONEncoder().encode(compDict)
         let decoded = try JSONDecoder().decode(OrderedDictionary<String, Int>.self, from: encoded)
@@ -589,7 +589,7 @@ struct CompatibilityTests {
         }
         """
         let data = Data(duplicateJSON.utf8)
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
         #expect(throws: DecodingError.self) {
             try JSONDecoder().decode(OrderedDictionary<String, Int>.self, from: data)
         }
@@ -597,7 +597,7 @@ struct CompatibilityTests {
         
         // 2. Key without value (truncated sequence)
         let badData = try encoder.encode(["a"]) // just a key, no value
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
         do {
             _ = try JSONDecoder().decode(OrderedDictionary<String, Int>.self, from: badData)
             Issue.record("Expected missing-value decoding failure")
@@ -849,7 +849,7 @@ struct CompatibilityTests {
         #expect("a" == dictionary.firstKey(for: 1))
         #expect("b" == dictionary.firstKey(for: 2))
         
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
         for c in CloudStatus.allCases {
             #expect(String(describing: c).contains(c.caseName))
         }
@@ -879,7 +879,7 @@ struct CompatibilityTests {
     func testCodingJSON() throws {
         // MARK: - Encodable.asJSON / prettyJSON
         let person = TestPerson(name: "Alice", age: 30, isStudent: true, nickname: nil, scores: [3.5, 4.0], info: ["home": .string("Earth"), "favoriteNumbers": .array([.int(1), .int(2), .int(3)])])
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
         let json = person.asJSON()
 //        debug(json)
         #expect(json.contains("""
@@ -974,7 +974,7 @@ struct CompatibilityTests {
             .array([.int(1), .int(2)])
         ]
         
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
         for field in fields {
             let data = try JSONEncoder().encode(field)
             let decodedField = try JSONDecoder().decode(MixedTypeField.self, from: data)
@@ -1000,7 +1000,7 @@ struct CompatibilityTests {
         #expect(fields[5].asJSON().contains("\"key\""))
         #expect(fields[6].asJSON().contains("["))
                 
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
         // MARK: - parseJSON bad input
         do {
             _ = try TestPerson(fromJSON: "not-json")
@@ -1018,7 +1018,7 @@ struct CompatibilityTests {
             "scores": .array([.double(2.5)]),
             "info": .dictionary(["foo": nil, "bar": .string("barstring"), "nested": .array([.string("a"), .string("b")])]),
         ]
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
         let bob = try TestPerson(fromMixedTypeField: .dictionary(dict))
         #expect(bob.name == "Bob")
         #expect(bob.age == 25)
@@ -1055,7 +1055,7 @@ struct CompatibilityTests {
         let bar = Version(string: optional, defaultValue: "1.0")
         #expect(bar == "1.0")
 
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
         let decoded = try [MixedTypeField](fromJSON: json)
         #expect(decoded[0].stringValue == "Hello world")
         #expect(decoded[2].boolValue == false)
@@ -1120,7 +1120,7 @@ struct CompatibilityTests {
             }
         }
         while ongoingTests.count > 0 {
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
             await sleep(seconds: 0.01)
             for ongoingTest in ongoingTests {
                 if ongoingTest.isFinished() {
@@ -1363,7 +1363,7 @@ struct CompatibilityTests {
             .dictionary(["k": .string("v")]),
             .array([.int(1), .null, .string("s")])
         ]
-#if !os(WASM)
+#if !(os(WASM) || os(WASI))
         for f in fields {
             // encode/decode round trip
             #if canImport(Foundation)
