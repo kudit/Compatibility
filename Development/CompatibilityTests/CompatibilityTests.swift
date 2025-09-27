@@ -29,7 +29,9 @@ private struct TestPerson: Codable, Equatable {
 #if canImport(Foundation)
 
 // Helper model with @CloudStorage wrappers
+#if !(os(WASM) || os(WASI))
 @MainActor
+#endif
 private struct CloudStorageTestModel {
     @CloudStorage(wrappedValue: true, "boolKey") var boolValue
     @CloudStorage(wrappedValue: 42, "intKey") var intValue
@@ -1034,7 +1036,7 @@ struct CompatibilityTests {
     @available(iOS 13, tvOS 13, *)
     @Test func testEncoding() async throws {
         let json = """
-["Hello world", true, false, 1, 2, -2, 2.5, 23.1, 3.14159265, null, {
+["Hello world", true, false, 1, 2.0, -2, 2.5, 23.1, 3.14159265, null, {
     "string": "Hello world",
     "boolTrue" : true,
     "boolFalse": false,
@@ -1059,7 +1061,12 @@ struct CompatibilityTests {
         let decoded = try [MixedTypeField](fromJSON: json)
         #expect(decoded[0].stringValue == "Hello world")
         #expect(decoded[2].boolValue == false)
+        #expect(decoded[4].intValue == 2)
+        #expect(decoded[4].doubleValue == 2)
         #expect(decoded[5].intValue == -2)
+        #expect(decoded[5].doubleValue == -2) // Int should be convertible to Double
+        #expect(decoded[6].intValue == nil) // double not convertible
+        #expect(decoded[6].doubleValue == 2.5)
         if let dict = decoded[10].dictionaryValue, let mixed = dict["double"], let double = mixed?.doubleValue, let subdict = dict["dictionary"]??.dictionaryValue as? MixedTypeDictionary {
             #expect(dict["boolTrue"]??.boolValue == true)
             #expect(double == 2.1)

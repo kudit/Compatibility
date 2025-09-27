@@ -154,7 +154,9 @@ public extension Date {
 #endif
     
     // MARK: - Tests
+#if !(os(WASM) || os(WASI))
     @MainActor
+#endif
     internal static let testFormatStrings: TestClosure = {
         try expect(String.mysqlDateTimeFormat == "yyyy-MM-dd HH:mm:ss", String.mysqlDateTimeFormat)
         try expect(String.mysqlDateFormat == "yyyy-MM-dd", String.mysqlDateFormat)
@@ -162,7 +164,9 @@ public extension Date {
         try expect(String.numericDateFormat == "yyyyMMdd", String.numericDateFormat)
     }
     @available(macOS 12, *)
+#if !(os(WASM) || os(WASI))
     @MainActor
+#endif
     internal static let testFormatted: TestClosure = {
         let date = Date(from: "2023-01-02 17:12:00", format: .mysqlDateTimeFormat)
         let formatted = date?.formatted(withFormat: "Y-M-d h:m")
@@ -175,7 +179,9 @@ public extension Date {
         try expect(mysqlDateTime == "2023-01-02 17:12:00", mysqlDateTime)
         try expect(dateTimeString.mysqlDate == "2023-01-02", dateTimeString.mysqlDate)
     }
+#if !(os(WASM) || os(WASI))
     @MainActor
+#endif
     internal static let testPretty: TestClosure = {
         let dateString: DateString = "1955-11-05 01:40:30" // time should get stripped
         let dateString2: DateString = "1955-11-05 01:43:30" // time should get stripped

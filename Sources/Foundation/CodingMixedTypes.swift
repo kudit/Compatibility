@@ -124,6 +124,8 @@ public enum MixedTypeField: Codable, Equatable {
     public var intValue: Int? {
         if case let .int(value) = self {
             return value
+        } else if case let .double(double) = self {
+            return Int(exactly: double)
         }
         return nil
     }
@@ -131,6 +133,8 @@ public enum MixedTypeField: Codable, Equatable {
     public var doubleValue: Double? {
         if case let .double(value) = self {
             return value
+        } else if case let .int(int) = self {
+            return int.doubleValue
         }
         return nil
     }

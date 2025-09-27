@@ -218,11 +218,7 @@ internal let testBackground: TestClosure = {
         }
     } else {
         // Fallback on earlier versions
-        #if canImport(Android)
-        sleep(seconds: 4)
-        #else
-        sleep(4)
-        #endif
+        await sleep(seconds: 4)
         end = Date.timeIntervalSinceReferenceDate
         // run background just for testing (will not actually affect test though)
         background {

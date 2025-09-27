@@ -13,6 +13,7 @@
 		B5209EE32C431CF800FBA30B /* CompatibilityDemoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5209EE22C431CF800FBA30B /* CompatibilityDemoView.swift */; };
 		B5209EE42C431CF800FBA30B /* CompatibilityDemoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5209EE22C431CF800FBA30B /* CompatibilityDemoView.swift */; };
 		B52C8E0F2C38CA76008EBD2D /* MyApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5E5FC3A2C3860EC004F2009 /* MyApp.swift */; };
+		B569253B2E8715550045FFC6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B5E5FC822C3863B9004F2009 /* Assets.xcassets */; };
 		B579D4A52C46FF1A009A037A /* Compatibility Library in Frameworks */ = {isa = PBXBuildFile; productRef = B579D4A42C46FF1A009A037A /* Compatibility Library */; };
 		B58B5C452C38F98800689837 /* (null) in Sources */ = {isa = PBXBuildFile; };
 		B594CFB72DB0BACA001E8658 /* Compatibility Library in Frameworks */ = {isa = PBXBuildFile; productRef = B594CFB62DB0BACA001E8658 /* Compatibility Library */; };
@@ -239,6 +240,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B569253B2E8715550045FFC6 /* Assets.xcassets in Resources */,
 				B5CB1E3C2C6BB1D300CF542B /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -350,7 +352,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
-				MARKETING_VERSION = 1.11.11;
+				MARKETING_VERSION = 1.11.12;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -421,7 +423,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
-				MARKETING_VERSION = 1.11.11;
+				MARKETING_VERSION = 1.11.12;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				OTHER_SWIFT_FLAGS = "";
@@ -440,7 +442,7 @@
 		B58B5C502C38F98900689837 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIconWatch;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -468,7 +470,7 @@
 		B58B5C512C38F98900689837 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIconWatch;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
