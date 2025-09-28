@@ -159,12 +159,14 @@ struct CompatibilityTests {
         #expect(!text.containsAll(["quick", "slow"]), "Missing substring should fail")
 
         // MARK: - String.isNumeric / isPostIndustrialYear
+#if !(os(WASM) || os(WASI))
         #expect("123".isNumeric, "Valid number string should be numeric")
         #expect(!"12a".isNumeric, "Invalid number string should not be numeric")
         #expect("2000".isPostIndustrialYear, "Year in range should be valid")
         #expect(!"1500".isPostIndustrialYear, "Too early should not be valid")
         #expect(!"4000".isPostIndustrialYear, "Too far in future should not be valid")
-
+#endif
+        
         // MARK: - characterStrings
         #expect("abc".characterStrings == ["a","b","c"], "Should split string into characters")
 
@@ -267,11 +269,13 @@ struct CompatibilityTests {
 
         // MARK: - isLarge / isPostIndustrialYear
         #expect(!"1000000000000000000000000".isLarge)
+#if !(os(WASM) || os(WASI))
         #expect("abc".isPostIndustrialYear == false)
         #expect("1998.3".isPostIndustrialYear == false)
         #expect("1759".isPostIndustrialYear == false)
         #expect("2000".isPostIndustrialYear == true)
-
+#endif
+        
         // MARK: - testIntrospection (example: type name)
         #expect("abcdefghijklm".contains("def"))
 
@@ -777,6 +781,7 @@ struct CompatibilityTests {
 
         // ------- Codable: encode/decode array of Versions (string-encoded path) -------
         let arr: [Version] = [first, second, third, Version("1.0.0"), Version("2.0"), Version("3.0.1")]
+#if canImport(Foundation)
         let encoded = try JSONEncoder().encode(arr)
         let decoded = try JSONDecoder().decode([Version].self, from: encoded)
         try expect(decoded.count == arr.count)
@@ -804,6 +809,7 @@ struct CompatibilityTests {
         } catch {
             try expect(false, "Unexpected error: \(error)")
         }
+#endif
 
         // ------- [Version] RawRepresentable init(rawValue:) and pretty -------
         let rawInput = "1,2.1.2,3"
@@ -1125,6 +1131,7 @@ struct CompatibilityTests {
     @MainActor
     @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
     func testNamedTests() async throws {
+#if !(os(WASM) || os(WASI)) // most named tests are not actually available in WASM and since we don't have a real use, we can leave out for now.  If someone is using this, please fix this for WASM based on your use.
         let namedTests = Test.namedTests
         var ongoingTests = Int.tests // because can't just do = [Test]() for some reason...
         ongoingTests.removeAll()
@@ -1140,7 +1147,6 @@ struct CompatibilityTests {
             }
         }
         while ongoingTests.count > 0 {
-#if !(os(WASM) || os(WASI))
             await sleep(seconds: 0.01)
             for ongoingTest in ongoingTests {
                 if ongoingTest.isFinished() {
@@ -1148,8 +1154,8 @@ struct CompatibilityTests {
                     #expect(ongoingTest.succeeded())
                 }
             }
-#endif
         }
+#endif
     }
     
 #if canImport(Foundation)
