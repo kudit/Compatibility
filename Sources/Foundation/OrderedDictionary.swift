@@ -717,9 +717,7 @@ extension OrderedDictionary: CustomStringConvertible {
             } else {
                 result += ", "
             }
-            debugPrint(key, terminator: "", to: &result)
-            result += ": "
-            debugPrint(value, terminator: "", to: &result)
+            result += "\(key): \(value)"
         }
         result += "]"
         return result

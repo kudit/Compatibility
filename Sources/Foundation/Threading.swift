@@ -217,14 +217,15 @@ internal let testBackground: TestClosure = {
             }
         }
     } else {
+        // NOTE: We don't expect this to work or pass on non iOS 13+ systems.
         // Fallback on earlier versions
-        await sleep(seconds: 4)
+//        await sleep(seconds: 4)
         end = Date.timeIntervalSinceReferenceDate
         // run background just for testing (will not actually affect test though)
-        background {
-            sleep(4)
-            debug("Legacy Background task finished.", level: .DEBUG)
-        }
+//        _ = try await background {
+////            sleep(4)
+//            debug("Legacy Background task finished.", level: .DEBUG)
+//        }
     }
     try timeTolerance(start: start, end: end, expected: 4)
 #endif

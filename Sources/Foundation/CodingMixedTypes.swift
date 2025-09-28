@@ -22,7 +22,10 @@ public extension MixedTypeDictionary {
         self = dict
     }
 }
-public enum MixedTypeField: Codable, Equatable {
+#if !(os(WASM) || os(WASI)) && canImport(Foundation) // not available
+extension MixedTypeField: Codable {}
+#endif
+public enum MixedTypeField: Equatable {
     case string(String)
     case bool(Bool)
     case int(Int)

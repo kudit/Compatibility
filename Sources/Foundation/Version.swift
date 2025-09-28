@@ -61,6 +61,7 @@ extension Version: Swift.CustomStringConvertible { // @retroactive in Swift 6?
 }
 
 // MARK: - Codable conformance so stored as string rather than as a structure of values.
+#if !(os(WASM) || os(WASI))
 extension Version: Swift.Decodable {
     enum CodingKeys: String, CodingKey {
         case majorVersion, minorVersion, patchVersion
@@ -86,7 +87,7 @@ extension Version: Swift.Encodable {
         try container.encode(self.rawValue)
     }
 }
-
+#endif
 
 #if canImport(Foundation) && compiler(>=6.0) && !canImport(Android)
 extension OperatingSystemVersion: @retroactive ExpressibleByExtendedGraphemeClusterLiteral {}

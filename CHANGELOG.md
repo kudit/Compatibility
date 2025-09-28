@@ -6,6 +6,8 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
+v1.11.13 9/27/2025 Fixed weird fallback code but only in test so just removed.  Added additional WASM gates around codable.
+
 v1.11.12 9/26/2025 Fixed AppIconWatch being included in Watch App.  Fixed issue with MixedTypeField Int not being able to be converted to Double.
 
 v1.11.11 9/26/2025 Additional Android/WASM fixes.  Added #if canImport(Android) and os(WASI) (in addition to WASM).

@@ -12,9 +12,8 @@ import Compatibility
 import Testing
 import SwiftUI
 
-#if !(os(WASM) || os(WASI))
+#if !(os(WASM) || os(WASI)) && canImport(Foundation)
 extension CloudStatus: @retroactive CaseNameConvertible {}
-#endif
 final class TestClass {}
 // Define a simple struct to test Encodable/Decodable
 private struct TestPerson: Codable, Equatable {
@@ -25,6 +24,7 @@ private struct TestPerson: Codable, Equatable {
     let scores: [Double]
     let info: [String: MixedTypeField?]? // un-ordered so we have dictionary encoded.
 }
+#endif
 
 #if canImport(Foundation)
 
@@ -608,20 +608,22 @@ struct CompatibilityTests {
         }
 #endif
 
+#if canImport(Foundation)
         let a = TestClass()
         let b = TestClass()
         let c = TestClass()
-
+        
         let objDict: [String: TestClass] = [
             "one": a,
             "two": b,
             "three": c
         ]
-
+        
         #expect(objDict.firstKey(for: b) == "two")
         #expect(objDict.firstKey(for: a) == "one")
         #expect(objDict.firstKey(for: TestClass()) == nil)
-
+#endif
+        
         var dict1 = OrderedDictionary<String, Int>()
         dict1["a"] = 1
         dict1["b"] = 2
@@ -851,7 +853,7 @@ struct CompatibilityTests {
         #expect("a" == dictionary.firstKey(for: 1))
         #expect("b" == dictionary.firstKey(for: 2))
         
-#if !(os(WASM) || os(WASI))
+#if !(os(WASM) || os(WASI)) && canImport(Foundation)
         for c in CloudStatus.allCases {
             #expect(String(describing: c).contains(c.caseName))
         }
@@ -880,6 +882,7 @@ struct CompatibilityTests {
     @Test("CodingJSON")
     func testCodingJSON() throws {
         // MARK: - Encodable.asJSON / prettyJSON
+        #if canImport(Foundation)
         let person = TestPerson(name: "Alice", age: 30, isStudent: true, nickname: nil, scores: [3.5, 4.0], info: ["home": .string("Earth"), "favoriteNumbers": .array([.int(1), .int(2), .int(3)])])
 #if !(os(WASM) || os(WASI))
         let json = person.asJSON()
@@ -904,7 +907,7 @@ struct CompatibilityTests {
         #expect(json.contains("3.5"))
 
         let pretty = person.prettyJSON
-        debug(pretty)
+//        debug(pretty)
         #expect(pretty.contains("""
       2,
 """))
@@ -1031,10 +1034,20 @@ struct CompatibilityTests {
         let value = info["foo"] ?? .null
         #expect(value == nil)
 #endif
+        #endif
     }
 
     @available(iOS 13, tvOS 13, *)
     @Test func testEncoding() async throws {
+        #expect(MixedTypeField(encoding: "string")?.stringValue == "string")
+        #expect(MixedTypeField(encoding: true)?.boolValue == true)
+        #expect(MixedTypeField(encoding: false)?.boolValue == false)
+        #expect(MixedTypeField(encoding: 1)?.intValue == 1)
+        #expect(MixedTypeField(encoding: 1)?.doubleValue == 1)
+        #expect(MixedTypeField(encoding: 2.1)?.doubleValue == 2.1)
+        #expect(MixedTypeField(encoding: 2.1)?.intValue == nil)
+        #expect(MixedTypeField(encoding: nil) == .null)
+        
         let json = """
 ["Hello world", true, false, 1, 2.0, -2, 2.5, 23.1, 3.14159265, null, {
     "string": "Hello world",
@@ -1057,7 +1070,7 @@ struct CompatibilityTests {
         let bar = Version(string: optional, defaultValue: "1.0")
         #expect(bar == "1.0")
 
-#if !(os(WASM) || os(WASI))
+#if !(os(WASM) || os(WASI)) && canImport(Foundation)
         let decoded = try [MixedTypeField](fromJSON: json)
         #expect(decoded[0].stringValue == "Hello world")
         #expect(decoded[2].boolValue == false)
@@ -1370,7 +1383,7 @@ struct CompatibilityTests {
             .dictionary(["k": .string("v")]),
             .array([.int(1), .null, .string("s")])
         ]
-#if !(os(WASM) || os(WASI))
+#if !(os(WASM) || os(WASI)) && canImport(Foundation)
         for f in fields {
             // encode/decode round trip
             #if canImport(Foundation)
