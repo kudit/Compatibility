@@ -17,14 +17,14 @@ public func expect(_ condition: Bool, _ debugString: String? = nil, file: String
         if let debugString {
             throw CustomError(debugString)
         } else {
-#if canImport(Foundation)
+#if canImport(Foundation) && !(os(WASM) || os(WASI))
             let isMainThread = Thread.isMainThread
 #else
             let isMainThread = true
 #endif
             let context = Compatibility.settings.debugFormat(
                 "",
-                .OFF,
+                DebugLevel.OFF,
                 isMainThread,
                 Compatibility.settings.debugEmojiSupported,
                 true,
@@ -41,11 +41,11 @@ public func expect(_ condition: Bool, _ debugString: String? = nil, file: String
 /// Suppress debug messages during this execution block.  Allows fetching the debug string as normal.
 public func debugSuppress(_ block: () throws -> Void) rethrows {
     let log = Compatibility.settings.debugLog
-    #if canImport(Foundation)
+    #if canImport(Foundation) && !(os(WASM) || os(WASI))
     let suppressThread = Thread.current // restrict the silencing to this thread/closure assuming no background tasks are doing printing
     #endif
     Compatibility.settings.debugLog = { message in
-        #if canImport(Foundation)
+        #if canImport(Foundation) && !(os(WASM) || os(WASI))
         if Thread.current != suppressThread {
             log(message) // do normal logging
         }
@@ -174,7 +174,7 @@ public extension Test {
 
 @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
 public extension Test {
-    static let namedTests: OrderedDictionary = {
+    static let namedTests: OrderedDictionary<String, [Test]> = {
         var tests: OrderedDictionary = [
             "Version Tests": Version.tests,
             "Int Tests": Int.tests,
@@ -184,7 +184,7 @@ public extension Test {
             "Dictionary Tests": dictionaryTests,
             "Debug Tests": DebugLevel.tests,
         ]
-#if canImport(Foundation)
+#if canImport(Foundation) && !(os(WASM) || os(WASI))
         tests["Application Tests"] = Application.tests
         tests["Bundle Tests"] = Bundle.tests
         tests["Date Tests"] = Date.tests

@@ -174,6 +174,7 @@ public extension Date {
     @MainActor
     internal static let testTimes: TestClosure = {
         let nowTest = nowBackport
+        #if !(os(WASM) || os(WASI))
         try expect(nowBackport.mysqlDateTime == nowTest.mysqlDateTime, "\(nowBackport) != \(nowTest)")
         // tests without expectations
         let tomorrow = Self.tomorrow
@@ -202,11 +203,12 @@ public extension Date {
         
         let next = epoch.nextDay
         try expect(next.mysqlDate == "1970-01-01", "\(next.mysqlDate) != 1970-01-01") // note using mysqlDateTime gives unexpected value of 19:00 hours for some reason...
+        #endif
     }
 }
 
 // Testing is only supported with Swift 5.9+
-#if compiler(>=5.9)
+#if compiler(>=5.9) && canImport(Foundation)
 @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
 public extension Date {
     @MainActor

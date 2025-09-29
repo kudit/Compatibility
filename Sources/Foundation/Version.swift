@@ -5,7 +5,7 @@
 //  Created by Ben Ku on 7/3/24.
 //
 
-#if !canImport(Combine) || !canImport(Foundation) || canImport(Android)
+#if !canImport(Foundation)
 // Compatibility OperatingSystemVersion for Linux
 public struct OperatingSystemVersion : Sendable {
     /// MAJOR version when you make incompatible API changes
@@ -27,7 +27,7 @@ public extension Compatibility {
     typealias Version = OperatingSystemVersion
 }
 /// Version in semantic dot notation
-public typealias Version = Compatibility.Version
+public typealias Version = OperatingSystemVersion // Compatibility.Version - causes issues in WASM
 
 extension Version: Swift.CustomStringConvertible { // @retroactive in Swift 6?
     // For CustomStringConvertible conformance
@@ -89,7 +89,7 @@ extension Version: Swift.Encodable {
 }
 #endif
 
-#if canImport(Foundation) && compiler(>=6.0) && !canImport(Android)
+#if canImport(Foundation) && compiler(>=6.0) && !canImport(Android) && !(os(WASM) || os(WASI))
 extension OperatingSystemVersion: @retroactive ExpressibleByExtendedGraphemeClusterLiteral {}
 extension OperatingSystemVersion: @retroactive ExpressibleByUnicodeScalarLiteral {}
 #endif
@@ -178,7 +178,7 @@ extension Version {
         self = forced
     }
 }
-#if canImport(Foundation) && compiler(>=6.0) && !canImport(Android)
+#if canImport(Foundation) && compiler(>=6.0) && !canImport(Android) && !(os(WASM) || os(WASI))
 extension Version: @retroactive Equatable {}
 #endif
 extension Version: Swift.Comparable { // @retroactive in Swift 6?

@@ -34,7 +34,7 @@ public enum MixedTypeField: Equatable {
     case dictionary(MixedTypeDictionary)
     case array([MixedTypeField?])
 
-#if canImport(Foundation)
+#if !(os(WASM) || os(WASI)) && canImport(Foundation) // not available
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         
@@ -87,7 +87,7 @@ public enum MixedTypeField: Equatable {
         }
     }
     
-    #if canImport(Foundation)
+#if !(os(WASM) || os(WASI)) && canImport(Foundation) // not available
     public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
         
@@ -108,7 +108,7 @@ public enum MixedTypeField: Equatable {
             try container.encode(value)
         }
     }
-    #endif
+#endif
 
     public var stringValue: String? {
         if case let .string(value) = self {

@@ -38,7 +38,7 @@ public struct CompatibilityConfiguration: PropertyIterable {
         let message = "\(emojiSupported ? level.emoji : level.symbol) \(message)"
         var timestamp = ""
         if includeTimestamp {
-            #if canImport(Foundation)
+            #if canImport(Foundation) && !(os(WASM) || os(WASI))
             timestamp = "\(Date.nowBackport.mysqlDateTime): "
             #else
             timestamp = "UNABLE TO GET TIMESTAMP WITHOUT Foundation.Date: "

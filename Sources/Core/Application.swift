@@ -193,7 +193,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
 #endif
     }
     
-#if !(os(WASM) || os(WASI))
+#if canImport(Foundation) && !(os(WASM) || os(WASI))
     @MainActor
 #endif
     @available(*, deprecated, renamed: "Application.isDebug")
@@ -201,7 +201,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
         Application.isDebug
     }
 
-#if canImport(Foundation)
+#if canImport(Foundation) && !(os(WASM) || os(WASI))
     // MARK: - iCloud Support
     /// Use before tracking to disable iCloud checks to prevent crashes if we can't check for iCloud or for simulating behavior without iCloud support for CloudStorage.
     @MainActor
@@ -435,7 +435,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
     }
 #endif
 #if compiler(>=5.9)
-#if canImport(Foundation)
+#if canImport(Foundation) && !(os(WASM) || os(WASI))
     @MainActor
     internal static var applicationTests: TestClosure = { @MainActor in // ensure we're running these on the Main Actor so we don't have to worry about Application main actor access.
         try expect(Application.isDebug, "App should not be running in debug mode")
@@ -476,7 +476,7 @@ Compatibility Version: \(Compatibility.version)
     }
 #endif
 
-#if !(os(WASM) || os(WASI))
+#if canImport(Foundation) && !(os(WASM) || os(WASI))
     @MainActor
 #endif
     public static var tests: [Test] = [

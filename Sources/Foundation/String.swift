@@ -564,7 +564,6 @@ public extension String {
 #endif
     /// `true` if there is only an integer number or double in the `String` and there isn't other letters or spaces.
     var isNumeric: Bool {
-#if !(os(WASM) || os(WASI))
         if let _ = Double(self) {
             return true
             //            if let intVersion = Int(foo) {
@@ -573,9 +572,6 @@ public extension String {
             //                print("Double: \(doubleVersion)")
             //            }
         }
-#else
-#warning("Double(String) is not available in WASM")
-#endif
         // print("NaN")
         return false
     }

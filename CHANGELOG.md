@@ -6,7 +6,9 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
-v1.11.14 9/28/2025 Added additional WASM gates. (os(WASM) || os(WASI)) => (os(macOS) || os(iOS)) for testing.
+v1.11.15 9/28/2025 Additional WASM fixes.  Added Double(String) backport when Foundation isn't available.
+
+v1.11.14 9/28/2025 Added additional WASM gates. (os(WASMx) || os(WASIx)) => (os(WASM) || os(WASI)) for testing.
 
 v1.11.13 9/27/2025 Fixed weird fallback code but only in test so just removed.  Added additional WASM gates around codable.  **Supports all platforms EXCEPT WASM but passes all other Swift Package Index Checks!**
 
