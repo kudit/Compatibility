@@ -6,7 +6,9 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
-v1.11.15 9/28/2025 Additional WASM fixes.  Added Double(String) backport when Foundation isn't available.
+v1.11.16 9/29/2025 Additional WASM exclusions to enable clean compile on WASM.  Not sure why Foundation check is passing on WASM.
+
+v1.11.15 9/28/2025 Additional WASM fixes.  Added Double(String) backport when Foundation isn't available.  **Supports all platforms EXCEPT WASM but passes all other Swift Package Index Checks!**
 
 v1.11.14 9/28/2025 Added additional WASM gates. (os(WASMx) || os(WASIx)) => (os(WASM) || os(WASI)) for testing.
 

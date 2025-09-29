@@ -270,7 +270,7 @@ public extension Compatibility {
      */
     @discardableResult
     static func debug(_ message: Any, level: DebugLevel = .defaultLevel, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) -> String {
-        #if canImport(Foundation)
+        #if canImport(Foundation) && !(os(WASM) || os(WASI))
         let isMainThread = Thread.isMainThread // capture before we switch to main thread for printing
         let message = String(describing: message) // convert to sendable item to avoid any thread issues. (Unavailable in embedded Swift)
         #else
@@ -383,7 +383,7 @@ Normal output: \(defaultOutput)
 """
         }
         
-        #if canImport(Foundation)
+        #if canImport(Foundation) && !(os(WASM) || os(WASI))
         let timestamp = Date.nowBackport.mysqlDateTime
         #else
         let timestamp = "UNABLE TO GET TIMESTAMP WITHOUT Foundation.Date"

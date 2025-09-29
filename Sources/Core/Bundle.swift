@@ -6,7 +6,7 @@
 //  Copyright © 2016 Kudit. All rights reserved.
 //
 
-#if canImport(Foundation)
+#if canImport(Foundation) && !(os(WASM) || os(WASI))
 // get current version:
 // Bundle.main.version
 public extension Bundle {
