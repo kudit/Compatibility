@@ -806,6 +806,7 @@ extension OrderedDictionary {
 }
 
 // MARK: - Sorting
+#if !(os(WASM) || os(WASI)) // unable to throw custom error or convert Any types in embedded Swift.
 extension OrderedDictionary {
     /// Returns the collection sorted using the given predicate as the
     /// comparison between elements.
@@ -928,6 +929,7 @@ extension OrderedDictionary where Key: Comparable {
         sorted { $0.key < $1.key }
     }
 }
+#endif
 
 // MARK: - Shuffling
 extension OrderedDictionary {
@@ -1154,6 +1156,7 @@ extension OrderedDictionary: Decodable where Key: Decodable, Value: Decodable {
 #endif
 internal var orderedDictionaryTests: TestClosure = {
     var ordered: OrderedDictionary = ["b": 2, "a": 1]
+#if !(os(WASM) || os(WASI))
     let manipulated = ordered.sorted().reversed()
     try expect(ordered["c", default: 4] == 4)
     try expect(manipulated == ordered)
@@ -1164,11 +1167,9 @@ internal var orderedDictionaryTests: TestClosure = {
 //    ordered += unordered
 //    let merged = ordered + unordered
     
-#if !(os(WASM) || os(WASI))
     let encoded = ordered.asJSON()
     let decoded = try? OrderedDictionary<String, Int>(fromJSON: encoded)
     try expect(decoded == ordered)
-#endif
 
     ordered.sort()
     ordered.updateValue(10, forKey: "b")
@@ -1191,6 +1192,7 @@ internal var orderedDictionaryTests: TestClosure = {
     let filtered = merged.filter { (key, value) in
         key == "b"
     }
+#endif
     let mapped = ordered.mapValues { $0 * 10 }
     let cm = ordered.compactMapValues { Int.random(in: 0...1) == 0 ? nil : $0 }
 }

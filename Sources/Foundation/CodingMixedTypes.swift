@@ -10,6 +10,7 @@
 /// Unordered dictionary with String keys and MixedTypeField values.  If we need to encode ordered, will encode as key, value mixed array.
 public typealias MixedTypeDictionary = Dictionary<String,MixedTypeField?>
 public typealias MixedTypeArray = [MixedTypeField?]
+#if !(os(WASM) || os(WASI)) // not available in embedded Swift due to not being able to dynamically cast Any in encoding: function.
 public extension MixedTypeDictionary {
     /// Initializes with a Dictionary.  Returns nil if Dictionary.Key is not LosslessStringConvertible.
     init?<T>(dictionary: T) where T: DictionaryConvertible {
@@ -22,6 +23,7 @@ public extension MixedTypeDictionary {
         self = dict
     }
 }
+#endif
 #if !(os(WASM) || os(WASI)) && canImport(Foundation) // not available
 extension MixedTypeField: Codable {}
 #endif
@@ -57,8 +59,9 @@ public enum MixedTypeField: Equatable {
         }
     }
 #endif
-
-    public init?(encoding value: Any?) {
+    
+#if !(os(WASM) || os(WASI))
+    public init?(encoding value: Any?) { // dynamic typecasting isn't available in embedded Swift :(
         guard let value else {
             self = .null
             return
@@ -86,6 +89,7 @@ public enum MixedTypeField: Equatable {
             return nil
         }
     }
+#endif
     
 #if !(os(WASM) || os(WASI)) && canImport(Foundation) // not available
     public func encode(to encoder: Encoder) throws {

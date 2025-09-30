@@ -66,8 +66,16 @@ public extension Equatable {
         return self == otherValue
     }
 }
+
+#if (os(WASM) || os(WASI))
+@available(*, deprecated, message: "This is unavailable in WASM becuase dynamic casting isn't allowed in embedded Swfit.")
+#endif
 public func areEqual(_ left: Any?, _ right: Any?) -> Bool {
+#if !(os(WASM) || os(WASI))
     guard let first = left as? any Equatable, let second = right as? any Equatable else { return false }
     return first.isEqual(second)
+#else
+    return false
+#endif
 }
 

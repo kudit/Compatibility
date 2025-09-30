@@ -1,5 +1,6 @@
 // MARK: - JSON management (simplified)
 
+#if !(os(WASM) || os(WASI))
 #if canImport(Foundation)
 public extension Encodable {
     /**
@@ -59,7 +60,6 @@ public struct JSONFormattingOptions: OptionSet {
     }
 }
 
-#if !(os(WASM) || os(WASI))
 public extension Encodable {
     /**
      Use to output the encodable object as a JSON representation.
@@ -91,7 +91,6 @@ public extension Decodable {
         self = try Self(fromMixedTypeField: field)
     }
 }
-#endif
 //
 //  MixedTypeField+JSON.swift
 //
@@ -458,4 +457,5 @@ fileprivate struct _JSONWriter {
         output.append("}")
     }
 }
+#endif
 #endif

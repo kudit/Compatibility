@@ -210,12 +210,10 @@ public extension Collection {
         try expect(array[nth: 7] == 2, "Should be looped value")
     }
 }
-// Testing is only supported with Swift 5.9+
-#if compiler(>=5.9)
+// Testing is only supported with Swift 5.9+ & !WASM
+#if compiler(>=5.9) && !(os(WASM) || os(WASI))
 @available(iOS 13, tvOS 13, watchOS 6, *)
-#if !(os(WASM) || os(WASI))
 @MainActor
-#endif
 let collectionTests: [Test] = [
     Test("identity", {
         let testSequence = [5, 4, 2, 1, 3]

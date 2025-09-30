@@ -121,7 +121,11 @@ public struct CustomError: Error, Sendable {
     }
     @discardableResult
     func debug() -> String {
+#if !(os(WASM) || os(WASI))
         return Compatibility.debug(description, level: level ?? DebugLevel.defaultLevel, file: file, function: function, line: line, column: column)
+#else
+        return Compatibility.debug(description, isMainThread: true, level: level ?? DebugLevel.defaultLevel, file: file, function: function, line: line, column: column)
+#endif
     }
 }
 extension CustomError: CustomStringConvertible {
@@ -268,20 +272,22 @@ public extension Compatibility {
      - Parameter line: For bubbling down the #line number from a call site.
      - Parameter column: For bubbling down the #column number from a call site. (Not used currently but here for completeness).
      */
+#if !(os(WASM) || os(WASI))
     @discardableResult
     static func debug(_ message: Any, level: DebugLevel = .defaultLevel, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) -> String {
-        #if canImport(Foundation) && !(os(WASM) || os(WASI))
+#if canImport(Foundation)
         let isMainThread = Thread.isMainThread // capture before we switch to main thread for printing
-        let message = String(describing: message) // convert to sendable item to avoid any thread issues. (Unavailable in embedded Swift)
-        #else
+#else
         let isMainThread = true
-        let originalMessage = message
-        var message = "Unknown object message in debug."
-        if let string = originalMessage as? String {
-            message = string
-        }
-        #endif
+#endif
+        let message = String(describing: message) // convert to sendable item to avoid any thread issues.
         
+        return debug(message, isMainThread: isMainThread, level: level, file: file, function: function, line: line, column: column)
+    }
+#endif
+    /// Put most of the business logic here for compatibility with WASM.  isMainThread: is required to differentiate but can be removed in global definition
+    @discardableResult
+    static func debug(_ message: String, isMainThread: Bool, level: DebugLevel = .defaultLevel, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) -> String {
         guard DebugLevel.isAtLeast(level) else { // check current debug level from settings
             return "" // don't actually print
         }
@@ -314,10 +320,18 @@ public extension Compatibility {
  - Parameter line: For bubbling down the #line number from a call site.
  - Parameter column: For bubbling down the #column number from a call site. (Not used currently but here for completeness).
  */
+#if !(os(WASM) || os(WASI))
 @discardableResult
 public func debug(_ message: Any, level: DebugLevel = .defaultLevel, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) -> String {
     return Compatibility.debug(message, level: level, file: file, function: function, line: line, column: column)
 }
+#else
+@discardableResult
+public func debug(_ message: String, level: DebugLevel = .defaultLevel, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) -> String {
+    // go directly to alternate version since dynamic casting is unavailable in WASM
+    return Compatibility.debug(message, isMainThread: true, level: level, file: file, function: function, line: line, column: column)
+}
+#endif
 
 // MARK: Debug(error)
 // This is to provide debugging at calltime when creating errors.
@@ -332,7 +346,11 @@ public extension Error {
      - Parameter column: For bubbling down the #column number from a call site. (Not used currently but here for completeness).
      */
     func debug(level: DebugLevel = .defaultLevel, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) -> Self {
+#if !(os(WASM) || os(WASI))
         Compatibility.debug(self.localizedDescription, level: level, file: file, function: function, line: line, column: column)
+#else
+        Compatibility.debug(self.localizedDescription, isMainThread: true, level: level, file: file, function: function, line: line, column: column)
+#endif
         return self
     }
     #if !canImport(Foundation)
@@ -343,13 +361,11 @@ public extension Error {
 }
 
 
-// Testing is only supported with Swift 5.9+
-#if compiler(>=5.9)
+// Testing is only supported with Swift 5.9+ && !WASM
+#if compiler(>=5.9) && !(os(WASM) || os(WASI))
 @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
 public extension DebugLevel {
-#if !(os(WASM) || os(WASI))
     @MainActor
-#endif
     internal static let testDebugConfig: TestClosure = {
         // NOTE: This might happen concurrently with other tests so could cause issues with output...
         // preserve original settings
@@ -402,9 +418,8 @@ Normal output: \(defaultOutput)
 //        Compatibility.settings.debugLog(concurrentOutput)
 //        debug("TEST OUTPUT", level: .ERROR)
     }
-#if !(os(WASM) || os(WASI))
+
     @MainActor
-#endif
     internal static let testDebug: TestClosure = {
         var debugError = CustomError("NOT OUTPUT")
         var output = "OVERWRITE"
@@ -427,9 +442,8 @@ Normal output: \(defaultOutput)
             try expect(level.description == "\(level)")
         }
     }
-#if !(os(WASM) || os(WASI))
+
     @MainActor
-#endif
     static let tests = [
         Test("debug configuration tests", testDebugConfig),
         Test("debug tests", testDebug),

@@ -172,6 +172,7 @@ public extension Test {
     }
 }
 
+#if !(os(WASM) || os(WASI)) // testing not supported in WASM
 @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
 public extension Test {
     static let namedTests: OrderedDictionary<String, [Test]> = {
@@ -183,9 +184,9 @@ public extension Test {
             "String Tests": String.tests,
             "Dictionary Tests": dictionaryTests,
             "Debug Tests": DebugLevel.tests,
+            "Application Tests": Application.tests,
         ]
-#if canImport(Foundation) && !(os(WASM) || os(WASI))
-        tests["Application Tests"] = Application.tests
+#if canImport(Foundation)
         tests["Bundle Tests"] = Bundle.tests
         tests["Date Tests"] = Date.tests
         tests["CharacterSet Tests"] = CharacterSet.tests
@@ -199,6 +200,7 @@ public extension Test {
         return tests
     }()
 }
+#endif
 
 #if canImport(SwiftUI) && canImport(Foundation)
 import SwiftUI

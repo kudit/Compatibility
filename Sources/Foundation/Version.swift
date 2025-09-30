@@ -5,7 +5,7 @@
 //  Created by Ben Ku on 7/3/24.
 //
 
-#if !canImport(Foundation)
+#if !canImport(Foundation) || (os(WASM) || os(WASI))
 // Compatibility OperatingSystemVersion for Linux
 public struct OperatingSystemVersion : Sendable {
     /// MAJOR version when you make incompatible API changes
@@ -27,7 +27,7 @@ public extension Compatibility {
     typealias Version = OperatingSystemVersion
 }
 /// Version in semantic dot notation
-public typealias Version = OperatingSystemVersion // Compatibility.Version - causes issues in WASM
+public typealias Version = Compatibility.Version
 
 extension Version: Swift.CustomStringConvertible { // @retroactive in Swift 6?
     // For CustomStringConvertible conformance
@@ -157,7 +157,11 @@ extension Version {
                 }
             } else {
                 // invalid character.  Just ignore
+#if !(os(WASM) || os(WASI))
                 debug("Invalid character when parsing version: \(forcing) (\(character))", level: .SILENT)
+#else
+                debug("Invalid character when parsing version.", level: .SILENT)
+#endif
             }
         }
         let major = parts[0]

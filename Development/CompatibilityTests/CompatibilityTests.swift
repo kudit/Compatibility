@@ -336,10 +336,12 @@ struct CompatibilityTests {
 
         // MARK: - optional coalescing func ??
         let num: Int? = 7
+#if !(os(WASM) || os(WASI))
         #expect("\(num ?? "none")" == "7")
         let numNil: Int? = nil
         #expect("\(numNil ?? "none")" == "none")
-
+#endif
+        
         // MARK: - textReversal
         #expect("stressed".reversed == "desserts")
 
@@ -454,15 +456,21 @@ struct CompatibilityTests {
         #expect(merged.count == 3)
 
         // sort(by:) + sort()
+#if !(os(WASM) || os(WASI))
         merged.sort { $0.key < $1.key }
+#endif
         var compDict: OrderedDictionary = ["c": 3, "b": 2, "a": 1]
+#if !(os(WASM) || os(WASI))
         compDict.sort()
         #expect(compDict.keys == ["a", "b", "c"])
+#endif
 
         // sorted() non-mutating
+#if !(os(WASM) || os(WASI))
         let sortedCopy = compDict.sorted()
         #expect(sortedCopy == compDict)
-
+#endif
+        
         // shuffle/shuffled
         var shuffled = compDict
         shuffled.shuffle()
@@ -527,13 +535,17 @@ struct CompatibilityTests {
         #expect(dictVar["b"] == 22 && dictVar["e"] == 5)
 
         // --- sorted/sort ---
+#if !(os(WASM) || os(WASI))
         let sortedCopy2 = dictVar.sorted { $0.key < $1.key }
         #expect(Array(sortedCopy2.keys) == sortedCopy2.keys.sorted())
-
+#endif
+        
         var sortable: OrderedDictionary = ["z": 1, "y": 2, "x": 3]
+#if !(os(WASM) || os(WASI))
         sortable.sort()
         #expect(sortable.keys == ["x", "y", "z"])
-
+#endif
+        
         // --- shuffled / shuffle ---
         var shuffled2 = sortable
         shuffled2.shuffle()
@@ -863,7 +875,9 @@ struct CompatibilityTests {
         for c in CloudStatus.allCases {
             #expect(String(describing: c).contains(c.caseName))
         }
+#endif
         
+#if !(os(WASM) || os(WASI))
         let config = Compatibility.settings
         let propertyKeys = config.allProperties.keys
         for (key, value) in config.allProperties {
@@ -1043,6 +1057,7 @@ struct CompatibilityTests {
         #endif
     }
 
+#if !(os(WASM) || os(WASI)) // most named tests are not actually available in WASM and since we don't have a real use, we can leave out for now.  If someone is using this, please fix this for WASM based on your use.
     @available(iOS 13, tvOS 13, *)
     @Test func testEncoding() async throws {
         #expect(MixedTypeField(encoding: "string")?.stringValue == "string")
@@ -1076,7 +1091,7 @@ struct CompatibilityTests {
         let bar = Version(string: optional, defaultValue: "1.0")
         #expect(bar == "1.0")
 
-#if !(os(WASM) || os(WASI)) && canImport(Foundation)
+#if canImport(Foundation)
         let decoded = try [MixedTypeField](fromJSON: json)
         #expect(decoded[0].stringValue == "Hello world")
         #expect(decoded[2].boolValue == false)
@@ -1131,7 +1146,6 @@ struct CompatibilityTests {
     @MainActor
     @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
     func testNamedTests() async throws {
-#if !(os(WASM) || os(WASI)) // most named tests are not actually available in WASM and since we don't have a real use, we can leave out for now.  If someone is using this, please fix this for WASM based on your use.
         let namedTests = Test.namedTests
         var ongoingTests = Int.tests // because can't just do = [Test]() for some reason...
         ongoingTests.removeAll()
@@ -1155,9 +1169,9 @@ struct CompatibilityTests {
                 }
             }
         }
-#endif
     }
-    
+#endif
+
 #if canImport(Foundation)
 /*    @State var value: String?
     @Test

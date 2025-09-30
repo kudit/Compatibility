@@ -502,7 +502,9 @@ public extension String {
 #endif
         // test for optional numeric ?? with String
         let opDouble: Double? = 2.34
+#if !(os(WASM) || os(WASI))
         try expect("\(opDouble ?? "nil")" == "2.34")
+#endif
     }
     
     // MARK: - UUID Generation
@@ -1037,7 +1039,9 @@ public extension String {
 #endif
     internal static let testSentenceCapitalized: TestClosure = {
         let capitalized = "hello world. goodbye world.".sentenceCapitalized
+#if !(os(WASM) || os(WASI))
         try expect(capitalized == "Hello world. Goodbye world.", String(describing:capitalized))
+#endif
     }
     
     #if canImport(Foundation)
@@ -1311,35 +1315,45 @@ public extension String {
 #endif
     internal static let testExtractTags: TestClosure = {
         let extraction = TEST_STRING.extract(from: "<em>", to: "</em>") // should never fail
+#if !(os(WASM) || os(WASI))
         try expect(extraction == "intérressant" , String(describing:extraction))
+#endif
     }
 #if !(os(WASM) || os(WASI))
     @MainActor
 #endif
     internal static let testExtractNilStart: TestClosure = {
         let extraction = TEST_STRING.extract(from: nil, to: "string")
+#if !(os(WASM) || os(WASI))
         try expect(extraction == "A long " , String(describing:extraction))
+#endif
     }
 #if !(os(WASM) || os(WASI))
     @MainActor
 #endif
     internal static let testExtractNilEnd: TestClosure = {
         let extraction = TEST_STRING.extract(from: "</em>", to: nil)
+#if !(os(WASM) || os(WASI))
         try expect(extraction == " properties!" , String(describing:extraction))
+#endif
     }
 #if !(os(WASM) || os(WASI))
     @MainActor
 #endif
     internal static let testExtractMissingStart: TestClosure = {
         let extraction = TEST_STRING.extract(from: "<strong>", to: "</em>")
+#if !(os(WASM) || os(WASI))
         try expect(extraction == nil , String(describing:extraction))
+#endif
     }
 #if !(os(WASM) || os(WASI))
     @MainActor
 #endif
     internal static let testExtractMissingEnd: TestClosure = {
         let extraction = TEST_STRING.extract(from: "<em>", to: "</strong>")
+#if !(os(WASM) || os(WASI))
         try expect(extraction == nil , String(describing:extraction))
+#endif
     }
     
     
@@ -1378,7 +1392,9 @@ public extension String {
     
     /// Returns `self` as the `errorMessage` parameter of a JSON object with a `success` parameter equal to `false`.  Pass a debug `level` to also print a debug statement as the provided `level`.
     func asErrorJSON(level: DebugLevel = .NOTICE) -> String {
+#if !(os(WASM) || os(WASI))
         debug(self, level: level)
+#endif
         return """
 {
     "success" : false,
@@ -1428,6 +1444,7 @@ public extension String {
 
 // TODO: See where we can use @autoclosure in Kudit Frameworks to delay execution (particularly in test frameworks!)
 
+#if !(os(WASM) || os(WASI))
 public protocol Defaultable {}
 extension Bool: Defaultable {}
 extension Int: Defaultable {}
@@ -1442,10 +1459,7 @@ public extension Optional where Wrapped == Defaultable {
         }
     }
 }
-
-#if !(os(WASM) || os(WASI))
-// This isn't anything but needs at least a line or this won't work
-#else
+#if !canImport(Foundation) // don't backport in WASM because dynamic casting is not available in Swift
 // MARK: Backport for String(describing:) without Foundation
 public extension String {
     init(describing value: Any?) {
@@ -1457,9 +1471,16 @@ public extension String {
             self = stringValue.description
             return
         }
+        // check for functions
+        let m = Mirror(reflecting: value)
+        if m.description.contains("->") {
+            self = "(Function)" // to match Reflection version of String(describing:)
+            return
+        }
         self = "\(type(of: value)) with unknown value"
     }
 }
+#endif
 #endif
 
 #if !(os(WASM) || os(WASI))
