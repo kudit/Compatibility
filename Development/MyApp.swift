@@ -1,4 +1,4 @@
-#if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation)
+#if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation) && !(os(WASM) || os(WASI))
 import SwiftUI
 #if canImport(Compatibility) // since this is needed in XCode but is unavailable in Playgrounds.
 import Compatibility

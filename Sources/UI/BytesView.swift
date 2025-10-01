@@ -1,4 +1,4 @@
-#if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation)
+#if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation) && !(os(WASM) || os(WASI))
 import SwiftUI
 
 @available(iOS 13, tvOS 13, watchOS 6, *)

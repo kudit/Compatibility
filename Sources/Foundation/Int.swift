@@ -239,7 +239,7 @@ extension Int {
     ]
 }
 
-#if canImport(SwiftUI) && canImport(Foundation)
+#if canImport(SwiftUI) && canImport(Foundation) && !(os(WASM) || os(WASI))
 import SwiftUI
 @available(iOS 13, tvOS 13, watchOS 6, *)
 #Preview("Ordinals") {

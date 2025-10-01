@@ -5,7 +5,7 @@
 //  Created by Ben Ku on 10/30/20.
 //
 
-#if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation)
+#if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation) && !(os(WASM) || os(WASI))
 
 import SwiftUI
 

@@ -5,7 +5,7 @@
 //  Created by Tom Lokhorst on 2020-07-05.
 //
 
-#if canImport(SwiftUI) && canImport(Combine) && compiler(>=5.9) && canImport(Foundation)
+#if canImport(SwiftUI) && canImport(Combine) && compiler(>=5.9) && canImport(Foundation) && !(os(WASM) || os(WASI))
 import SwiftUI
 import Combine
 

@@ -14,9 +14,11 @@ import SwiftUI
 
 #if !(os(WASM) || os(WASI)) && canImport(Foundation)
 extension CloudStatus: @retroactive CaseNameConvertible {}
+extension TestPerson: Codable {}
+#endif
 final class TestClass {}
 // Define a simple struct to test Encodable/Decodable
-private struct TestPerson: Codable, Equatable {
+private struct TestPerson: Equatable {
     let name: String
     let age: Int
     let isStudent: Bool
@@ -24,14 +26,11 @@ private struct TestPerson: Codable, Equatable {
     let scores: [Double]
     let info: [String: MixedTypeField?]? // un-ordered so we have dictionary encoded.
 }
-#endif
 
-#if canImport(Foundation)
+#if canImport(Foundation) && !(os(WASM) || os(WASI))
 
 // Helper model with @CloudStorage wrappers
-#if !(os(WASM) || os(WASI))
 @MainActor
-#endif
 private struct CloudStorageTestModel {
     @CloudStorage(wrappedValue: true, "boolKey") var boolValue
     @CloudStorage(wrappedValue: 42, "intKey") var intValue
@@ -624,7 +623,7 @@ struct CompatibilityTests {
         }
 #endif
 
-#if canImport(Foundation)
+#if canImport(Foundation) && !(os(WASM) || os(WASI))
         let a = TestClass()
         let b = TestClass()
         let c = TestClass()
@@ -793,7 +792,7 @@ struct CompatibilityTests {
 
         // ------- Codable: encode/decode array of Versions (string-encoded path) -------
         let arr: [Version] = [first, second, third, Version("1.0.0"), Version("2.0"), Version("3.0.1")]
-#if canImport(Foundation)
+#if canImport(Foundation) && !(os(WASM) || os(WASI))
         let encoded = try JSONEncoder().encode(arr)
         let decoded = try JSONDecoder().decode([Version].self, from: encoded)
         try expect(decoded.count == arr.count)
@@ -852,7 +851,7 @@ struct CompatibilityTests {
         try expect(justMajor.compact == "7")
     }
 
-#if canImport(Foundation)
+#if canImport(Foundation) && !(os(WASM) || os(WASI))
     @Test("Identifiers")
     @MainActor
     @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
@@ -1017,6 +1016,7 @@ struct CompatibilityTests {
         #expect(fields[6].arrayValue?.count == 2)
         
         // MARK: - toJSON
+#if !(os(WASM) || os(WASI))
         #expect(fields[0].asJSON() == "\"hello\"")
         #expect(fields[1].asJSON() == "true")
         #expect(fields[2].asJSON() == "42")
@@ -1025,7 +1025,6 @@ struct CompatibilityTests {
         #expect(fields[5].asJSON().contains("\"key\""))
         #expect(fields[6].asJSON().contains("["))
                 
-#if !(os(WASM) || os(WASI))
         // MARK: - parseJSON bad input
         do {
             _ = try TestPerson(fromJSON: "not-json")
@@ -1225,6 +1224,7 @@ struct CompatibilityTests {
     }
     
     // MARK: DataStore tests
+#if !(os(WASM) || os(WASI))
     @available(iOS 16, macOS 13, tvOS 16, watchOS 9, *)
     @Test("Mock DataStore")
     func mockDataStoreSetGetAndRemove() {
@@ -1300,6 +1300,7 @@ struct CompatibilityTests {
         #expect(!ds.isLocal)
         #expect(ds.description == "iCloud data store")
     }
+#endif
 
     @available(iOS 16, macOS 13, tvOS 16, watchOS 9, *)
     @Test(arguments: ["testKey"]) func ubiquitousStoreSetAndGet(key: String) async throws {
@@ -1337,7 +1338,7 @@ struct CompatibilityTests {
     func exerciseDeprecatedCompatibility() {
         // Legacy/deprecated flags
         _ = Compatibility.isDebug
-        #if canImport(Foundation)
+        #if canImport(Foundation) && !(os(WASM) || os(WASI))
         _ = Compatibility.iCloudSupported
         _ = Compatibility.iCloudIsEnabled
         _ = Compatibility.iCloudStatus
@@ -1352,7 +1353,7 @@ struct CompatibilityTests {
         // --- Compatibility basics ---
         #expect(Compatibility.version.description == String(describing: Compatibility.version))
 
-        #if canImport(Foundation)
+        #if canImport(Foundation) && !(os(WASM) || os(WASI))
         // Ensure we’re running on main actor for @MainActor wrappers
         await MainActor.run {
             let model = CloudStorageTestModel()
@@ -1441,7 +1442,7 @@ struct CompatibilityTests {
 #endif
         
         // MARK: - DataStore
-        #if compiler(>=5.9) && canImport(Foundation)
+        #if compiler(>=5.9) && canImport(Foundation) && !(os(WASM) || os(WASI))
         if #available(iOS 13, tvOS 13, watchOS 6, *) {
             let store: DataStore = UserDefaults.standard
             let key = "testKey"

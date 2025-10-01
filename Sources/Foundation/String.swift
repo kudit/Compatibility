@@ -465,7 +465,7 @@ body {
     }
 }
 
-#if canImport(SwiftUI) && ((canImport(Combine) && canImport(Foundation)) || canImport(NSAttributedString)) && compiler(>=5.9)
+#if canImport(SwiftUI) && ((canImport(Combine) && canImport(Foundation)) || canImport(NSAttributedString)) && compiler(>=5.9) && !(os(WASM) || os(WASI))
 @available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
 #Preview("HTML") {
     ScrollView {
@@ -676,7 +676,7 @@ public extension String {
         try expect(!"1000".isPostIndustrialYear)
         try expect(!"3214".isPostIndustrialYear)
         try expect("1923".isPostIndustrialYear)
-#if canImport(Foundation)
+#if canImport(Foundation) && !(os(WASM) || os(WASI))
         try expect("\(Date.nowBackport.year)".isPostIndustrialYear)
         
         var test = "the/quick/brown/fix.txt"
@@ -1573,7 +1573,7 @@ public extension String {
     var containsEmoji: Bool { contains { $0.isEmoji } }
 }
 
-#if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation)
+#if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation) && !(os(WASM) || os(WASI))
 import SwiftUI
 @available(iOS 13, tvOS 13, watchOS 6, *)
 #Preview("Tests") {

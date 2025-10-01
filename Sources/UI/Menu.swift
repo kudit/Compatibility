@@ -5,7 +5,7 @@
 //  Created by Ben Ku on 7/5/24.
 //
 
-#if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation)
+#if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation) && !(os(WASM) || os(WASI))
 import SwiftUI
 
 // MARK: - Menu compatibility for watchOS
@@ -78,6 +78,8 @@ class MenuButton: UIButton {
 
 @available(iOS 14, macOS 12, tvOS 17, watchOS 7, *)
 public struct MenuTest: View {
+    @Binding var symbol: String
+    
     public var body: some View {
         Menu("Symbols") {
             Text("Test menu with symbols")
@@ -92,6 +94,7 @@ public struct MenuTest: View {
                 Button {
                     // Perform an action here.
                     print(String(describing: symbol))
+                    self.symbol = symbol
                 } label: {
                     // TODO: Figure out why this doesn't show images in macOS and doesn't work at all in tvOS. work on macOS and make sure does work for watchOS
                     Label(symbol, systemImage: symbol)
@@ -112,7 +115,7 @@ public struct MenuTest: View {
 
 @available(iOS 14, macOS 12, tvOS 17, watchOS 7, *)
 #Preview("Watch Menu test") {
-    MenuTest().navigationWrapper()
+    MenuTest(symbol: .constant("calendar")).navigationWrapper()
 }
 
-#endif // canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation)
+#endif

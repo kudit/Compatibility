@@ -349,7 +349,7 @@ extension [Version]: Swift.RawRepresentable {
 
 
 
-#if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation)
+#if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation) && !(os(WASM) || os(WASI))
 // Don't know why this is necessary.  CustomStringConvertible should have covered this.
 import SwiftUI
 @available(iOS 13, tvOS 13, watchOS 6, *)

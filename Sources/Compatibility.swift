@@ -8,7 +8,7 @@
 
 public enum Compatibility {
     /// The version of the Compatibility Library since cannot get directly from Package.swift.
-    public static let version: Version = "1.11.17"
+    public static let version: Version = "1.11.18"
 }
 
 #if canImport(Foundation)
@@ -264,7 +264,7 @@ public extension FileManager {
 }
 #endif
 
-#if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation)
+#if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation) && !(os(WASM) || os(WASI))
 import SwiftUI
 
 @available(iOS 14, macOS 11, tvOS 14, watchOS 7, *)

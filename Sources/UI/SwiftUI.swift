@@ -1,4 +1,4 @@
-#if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation)
+#if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation) && !(os(WASM) || os(WASI))
 import SwiftUI
 
 // Font-size reference:
@@ -64,6 +64,8 @@ public extension View {
 
 @available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
 public struct ClosureTestView: View {
+    @State var symbol = "calendar"
+    
     public init() {}
     public var body: some View {
         VStack {
@@ -79,7 +81,7 @@ public struct ClosureTestView: View {
             Text("Open Source projects used include [Compatibility](https://github.com/kudit/Compatibility) v\(Compatibility.version)")
                 .font(.caption)
             if #available(tvOS 17, *) {
-                MenuTest()
+                MenuTest(symbol: $symbol)
             } else {
                 // Fallback on earlier versions
                 // toolbars are not shown in tvOS?
@@ -91,7 +93,7 @@ public struct ClosureTestView: View {
                         Circle()
                             .fill([Color].rainbow[nth: item])
                             .frame(width: 64)
-                            .overlay(Image(systemName: "calendar")
+                            .overlay(Image(systemName: symbol)
                                 .foregroundColor(.white)
                             )
                     }
@@ -104,7 +106,7 @@ public struct ClosureTestView: View {
         }
         .toolbar {
             if #available(tvOS 17, *) {
-                MenuTest()
+                MenuTest(symbol: $symbol)
                     .padding()
             } else {
                 // Fallback on earlier versions
