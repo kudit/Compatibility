@@ -6,7 +6,9 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
-v1.11.18 10/1/2025 Additional WASM exclusions.  Added additional test functionality for symbols in ClosureTest.
+v1.11.19 10/2/2025 Added `main {}` backport for WASM so we don't have to adjust code.  Attempted to address `any Error` embedded swift error by removing `expect()` func from WASM.
+
+v1.11.18 10/1/2025 Additional WASM exclusions.  Added additional test functionality for symbols in ClosureTest. **Supports all platforms including WASM and Android and passes all Swift Package Index Checks!**
 
 v1.11.17 9/30/2025 Additional WASM exclusions.  Added alternate implementation of `debug()` to avoid dynamic casting to `Any`. **Supports all platforms EXCEPT WASM but passes all other Swift Package Index Checks!**
 

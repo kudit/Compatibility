@@ -6,6 +6,13 @@
 //  Copyright © 2016 Kudit. All rights reserved.
 //
 
+#if (os(WASM) || os(WASI))
+/// Backport of main that does nothing since threads are not supported on WASM
+public func main(_ closure: @Sendable @escaping () -> Void) {
+    closure()
+}
+#endif
+
 #if (os(iOS) || os(macOS) || os(tvOS) || os(watchOS) || os(visionOS) || os(Linux)) && canImport(Foundation) // Don't run on WASM or Android
 // Use built-in Thread and Dispatch
 #elseif !(os(WASM) || os(WASI)) // not supported on WASM or Android

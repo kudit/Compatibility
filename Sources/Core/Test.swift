@@ -15,7 +15,11 @@ public func expect(_ condition: Bool, _ debugString: String? = nil, file: String
     guard condition else {
         // set breakpoint on this line if we want to debug/inspect errors (note that this slows enough to mess with time stamp checks so disable once we know everything is working).
         if let debugString {
+#if !(os(WASM) || os(WASI))
             throw CustomError(debugString)
+#else
+            // unsure how to throw an error in embedded swift
+#endif
         } else {
 #if canImport(Foundation) && !(os(WASM) || os(WASI))
             let isMainThread = Thread.isMainThread
@@ -31,7 +35,11 @@ public func expect(_ condition: Bool, _ debugString: String? = nil, file: String
                 true,
                 file, function, line, column)
 
+#if !(os(WASM) || os(WASI))
             throw CustomError(context)
+#else
+            // unsure how to throw an error in embedded swift
+#endif
         }
     }
 }
