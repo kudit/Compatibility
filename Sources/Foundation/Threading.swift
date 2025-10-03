@@ -8,6 +8,7 @@
 
 #if (os(WASM) || os(WASI))
 /// Backport of main that does nothing since threads are not supported on WASM
+/// Run code on main thread - all code is executed on main thread already in embedded systems.
 public func main(_ closure: @Sendable @escaping () -> Void) {
     closure()
 }
@@ -246,7 +247,6 @@ public func main(_ closure: @Sendable @MainActor @escaping () -> Void) {
 }
 public extension Compatibility {
     /// run code on the main thread
-    #if !(os(WASM) || os(WASI))
     static func main(_ closure: @Sendable @MainActor @escaping () -> Void) {
         if #available(iOS 13, tvOS 13, watchOS 6, *) {
             Task { @MainActor in
@@ -261,12 +261,6 @@ public extension Compatibility {
             }
         }
     }
-    #else
-    /// Run code on main thread - all code is executed on main thread already in embedded systems.
-    static func main(_ closure: @Sendable @escaping () -> Void) {
-        closure()
-    }
-    #endif
 }
 
 @available(iOS 13, tvOS 13, watchOS 6, *)

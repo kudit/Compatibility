@@ -19,6 +19,7 @@ public func expect(_ condition: Bool, _ debugString: String? = nil, file: String
             throw CustomError(debugString)
 #else
             // unsure how to throw an error in embedded swift
+            return
 #endif
         } else {
 #if canImport(Foundation) && !(os(WASM) || os(WASI))
@@ -39,6 +40,7 @@ public func expect(_ condition: Bool, _ debugString: String? = nil, file: String
             throw CustomError(context)
 #else
             // unsure how to throw an error in embedded swift
+            return
 #endif
         }
     }
