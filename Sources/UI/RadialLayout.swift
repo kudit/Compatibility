@@ -95,8 +95,7 @@ public struct RadialLayout: Layout {
 import Color
 #else
 // Color framework provides better rainbow variable with 7 colors.  This is 6 colors.
-@available(iOS 13, tvOS 13, watchOS 6, *)
-extension [Color] {
+public extension Array where Element == Color {
     /// 6 color ROYGBV(purple for violet)
     static var rainbow: [Color] {
         [.red, .orange, .yellow, .green, .blue, .purple]

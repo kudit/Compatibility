@@ -39,7 +39,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
     
     // Documentation on the following compiler directives: https://docs.swift.org/swift-book/documentation/the-swift-programming-language/statements/#Compiler-Control-Statements
     
-    /// Returns the version number of Swift being used to compile
+    /// Returns the version number of Swift being used to compile (use these checks for Swift Package Index version checks).
     public static var compilerVersion: String {
 #if compiler(>=9.0)
         "X.x"

@@ -6,6 +6,8 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
+v1.11.21 10/4/2025 Tried to re-work color inclusion in `ClosureTestView` so that import of Color will properly overwrite when compiling.  Impossible due to cyclic inclusions?
+
 v1.11.20 10/3/2025 Added additional WASM fix in Test.
 
 v1.11.19 10/2/2025 Added `main {}` backport for WASM so we don't have to adjust code.  Attempted to address `any Error` embedded swift error by removing `expect()` func from WASM. **Supports all platforms EXCEPT WASM but passes all other Swift Package Index Checks!**
