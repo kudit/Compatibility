@@ -6,6 +6,8 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
+v1.11.24 10/4/2025 Fixing errors with macOS availability checks.
+
 v1.11.23 10/4/2025 Fixing errors with version dependencies.
 
 v1.11.22 10/4/2025 Removed import for `.rainbow` to prevent circular dependencies and simply have a private implementation of `.rainbow`. ** BROKEN **

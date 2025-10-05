@@ -219,7 +219,7 @@ private struct OverlappingStack: Layout {
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
 #Preview("OverlappingHStack") {
     VStack {
         Text("All of these should be the same height.")
