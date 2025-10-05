@@ -16,15 +16,17 @@ public extension CaseIterable where Self: Equatable { // equatable required to f
 #endif
 }
 
-#if !(os(WASM) || os(WASI))
 public protocol CaseNameConvertible {
     var caseName: String { get }
 }
 public extension CaseNameConvertible {
     /// exposes the case name for an enum without having to have a string rawValue.
     var caseName: String {
+#if !(os(WASM) || os(WASI))
         // for enums
         (Mirror(reflecting: self).children.first?.label ?? String(describing: self))
+#else
+        return ".unknown" // TODO: Need to find a way to back-port without manually defining or using reflection.
+#endif
     }
 }
-#endif

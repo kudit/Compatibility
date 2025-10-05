@@ -6,6 +6,8 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
+v1.11.25 10/5/2025 Added `CaseNameConvertible` stub for WASM so that it can be used but until we have a backport, there will not be a way to get this to work on WASM.
+
 v1.11.24 10/4/2025 Fixing errors with macOS availability checks.
 
 v1.11.23 10/4/2025 Fixing errors with version dependencies.
