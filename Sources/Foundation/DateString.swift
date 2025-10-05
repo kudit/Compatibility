@@ -218,6 +218,11 @@ public extension Date {
         return self
     }
 }
+#else
+// Stubs to enable compatibility in WASM
+public protocol DateRepresentable {}
+public protocol DateTimeRepresentable: DateRepresentable {}
+#endif
 
 /// A string representation of a date time.  When getting this as a date, it will attempt to parse various formats the string could be in to allow a variety of formats.  You can add other formats here to expand the support.  Add mappings in the date initializer if you need other formats supported.
 public protocol DateStringRepresentation: RawRepresentable, Sendable, Hashable, Codable, Comparable, DateRepresentable, ExpressibleByStringLiteral, ExpressibleByStringInterpolation, LosslessStringConvertible where RawValue == String {
@@ -241,9 +246,11 @@ public extension DateStringRepresentation {
         return rawValue
     }
     
+#if canImport(Foundation) && !(os(WASM) || os(WASI)) // not available in WASM?
     var date: Date? {
         return Date(parse: rawValue)
     }
+#endif
 }
 
 /// A string representation of a date (without time).  When getting this as a date, it will attempt to parse various formats the string could be in to allow a variety of formats.
@@ -263,6 +270,7 @@ public struct DateTimeString: DateStringRepresentation, DateTimeRepresentable {
     }
 }
 
+#if canImport(Foundation) && !(os(WASM) || os(WASI)) // not available in WASM?
 // MARK: - Formatted output
 public extension DateRepresentable {
     // MARK: - Formatting using format strings and styles
