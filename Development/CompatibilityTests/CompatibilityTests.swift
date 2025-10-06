@@ -124,7 +124,7 @@ struct CompatibilityTests {
         #expect(!(-3.14).isInteger)
     }
     
-    @Test("String")
+    @Test("String without Foundation")
     func testStringExtensionsWithoutFoundation() {
         // MARK: - LosslessStringConvertible init(string:defaultValue:)
         // Should fall back to default if the string is nil or not convertible
@@ -221,6 +221,17 @@ struct CompatibilityTests {
             #expect(errorJSON.contains("error"), "Should include original message")
         }
         
+        // MARK: - Replacements
+        let originalString = "Hello, world!"
+        var replacedString = originalString.replacingOccurrences(of: "world", with: "swift")
+        #expect(replacedString == "Hello, swift!", "Should replace all occurrences of a substring")
+        replacedString = originalString.replacingOccurrences(of: ["Hello",",","world"], with: "foo")
+        #expect(replacedString == "foofoo foo!")
+        
+        // MARK: - HEX
+        let scanned = UInt64("C", radix: 16)
+        #expect(scanned == 12)
+        
         // MARK: - Optional ?? with String default
         // ------------------------------
         // Nil-coalescing custom operator for Optional<Numeric> -> String
@@ -292,12 +303,13 @@ struct CompatibilityTests {
         #expect(s2b == "hi")
 
         // MARK: - trimmingCharacters()
-        #if !canImport(Foundation)
-        let characterSet: Set<Character> = ["x"]
-        #expect("xxhelloxx".trimmingCharacters(in: characterSet) == "hello")
+        #if canImport(Foundation)
+        #expect("xxhelloxx".trimmingCharacters(in: CharacterSet(charactersIn: "xeo")) == "hell")
         #else
-        #expect("xxhelloxx".trimmingCharacters(in: ["x"]) == "hello")
+        // I guess Foundation is always imported in tests which is why this has an ambiguous lookup in the above line which should work.
+        #expect("xxhelloxx".trimmingCharacters(in: Set<Character>(charactersIn: "xeo")) == "hell")
         #endif
+        #expect("xxhelloxx".trimming(["x","e","o"]) == "hell")
 
         // MARK: - testTrimming
         var s3 = "  test  "

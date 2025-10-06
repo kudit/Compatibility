@@ -6,7 +6,9 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
-v1.11.28 10/6/2025 Added Codable protocol for WASM so that we don't have to conditionally conform in WASM.
+v1.11.29 10/6/2025 Added precision backport for Double in WASM.  Added backports for `replacingOccurrences(of:[String])` for WASM.  Migrated `CharacterSet` additions and backport to separate file.
+
+v1.11.28 10/6/2025 Added Codable protocol for WASM so that we don't have to conditionally conform in WASM. **Supports all platforms including WASM and Android and passes all Swift Package Index Checks!**
 
 v1.11.27 10/5/2025 Missed a conditional check around the date requirement of `DateStringRepresentation` since this isn't present in WASM. **Supports all platforms including WASM and Android and passes all Swift Package Index Checks!**
 

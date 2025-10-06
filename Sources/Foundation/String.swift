@@ -30,93 +30,11 @@ public extension LosslessStringConvertible {
     }
 }
 
-// Testing is only supported with Swift 5.9+
-#if canImport(Foundation)
-#if compiler(>=5.9)
-@available(iOS 13, tvOS 13, watchOS 6, *)
-extension CharacterSet {
-    @MainActor public static let tests = [
-        Test("character strings", testCharacterStrings),
-    ]
-}
-#endif
-public extension CharacterSet {
-    /// Returns the character set as an array of strings. (ONLY ASCII Characters!)
-    var characterStrings: [String] {
-        let unichars = Array(0..<128).map { UnicodeScalar($0)! }
-        let filtered = unichars.filter(contains)
-        return filtered.map { String($0) }
-    }
-    @MainActor
-    internal static let testCharacterStrings: TestClosure = {
-        let array = "hello".characterStrings
-        try expect(array == ["h","e","l","l","o"], String(describing:array))
-
-        // emoji tests
-        let emoji = "😀👨🏻‍💻"
-        
-        let simple = emoji.first!
-        try expect(simple.isSimpleEmoji)
-        try expect(!simple.isCombinedIntoEmoji)
-        try expect(simple.isEmoji)
-        
-        let complex = emoji.last!
-        try expect(complex.isCombinedIntoEmoji)
-        try expect(complex.isEmoji)
-        
-        let letter = Character("a")
-        try expect(letter.isEmoji == false)
-        
-        for i in 0..<10 {
-            try expect(Self.numerics.allCharacters.contains(Character(string: "\(i)", defaultValue: "x")))
-        }
-    }
-
-    /// Returns a character set containing all numeric digits.
-    // NOTE: Can't use static let because CharacterSet is not Sendable :(
-    static var numerics: CharacterSet { CharacterSet(charactersIn: "0123456789")
-    }
-    
-    /// Returns a character set containing the characters allowed in an URL's parameter subcomponent.
-    static var urlParameterAllowed: CharacterSet {
-        var validCharacterString = CharacterSet.alphanumerics.characterStrings.joined()
-        validCharacterString += "-_.!~*()" // alphanumeric plus some additional valid characters (not including + or ,
-        return CharacterSet(charactersIn: validCharacterString)
-    }
-    
-    /// Returns a character set containing the characters allowed in a URL
-    static var urlAllowed: CharacterSet {
-        // https://stackoverflow.com/questions/7109143/what-characters-are-valid-in-a-url
-        return urlHostAllowed.union(urlUserAllowed.union(urlPasswordAllowed.union(urlFragmentAllowed.union(urlPathAllowed.union(urlQueryAllowed.union(urlFragmentAllowed))))))
-//        urlParameterAllowed.union(.init(charactersIn: "/?&:;=#%[]@!$'"))
-    }
-}
-public extension CharacterSet {
-    /// Returns the set as an array of Characters.
-    var allCharacters: [Character] {
-        var result: [Character] = []
-        for plane: UInt8 in 0...16 where self.hasMember(inPlane: plane) {
-            for unicode in UInt32(plane) << 16 ..< UInt32(plane + 1) << 16 {
-                if let uniChar = UnicodeScalar(unicode), self.contains(uniChar) {
-                    result.append(Character(uniChar))
-                }
-            }
-        }
-        return result
-    }
-    /// Returns the CharacterSet as a string containing all the characters.
-    var asString: String {
-        return String(self.allCharacters)
-    }
-}
-#else // no Foundation support
 // MARK: - Foundation-less Backports
-public extension Set<Character> {
-    static let whitespacesAndNewlines: Set<Character> = [" ", "\t", "\n", "\r"]
-}
+#if !canImport(Foundation)
 public extension StringProtocol {
     /// NON-Foundation implementation.  If Foundation is available, use `.trimmingCharacters(in: .whitespacesAndNewLines)`. Returns a new string made by removing whitespace and newline characters from both ends.
-    func trimmingCharacters(in trimCharacters: Set<Character>) -> String {
+    func trimmingCharacters(in trimCharacters: CharacterSet) -> String {
         guard self.count > 0 else { return String(self) }
         var startIndex = self.startIndex
         var endIndex = self.index(before: self.endIndex)
@@ -189,7 +107,7 @@ public extension StringProtocol {
     /// Returns a new string in which the characters in a
     /// specified character set are replaced by a given string.
     @inlinable func replacingCharacters<T>(
-        in characterSet: Set<Character>,
+        in characterSet: CharacterSet,
         with replacement: T
     ) -> String where T : StringProtocol {
         var result = ""
@@ -229,7 +147,7 @@ public extension StringProtocol {
         var isAtWordStart = true
 
         for character in self {
-            if Set<Character>.whitespacesAndNewlines.contains(character) {
+            if CharacterSet.whitespacesAndNewlines.contains(character) {
                 result.append(character)
                 isAtWordStart = true
             } else {
@@ -374,12 +292,12 @@ public extension HTML {
             //            .replacingOccurrences(of: "{", with: "&lbrace;")
             // accented characters we're going to not replace.
         ]
-#if canImport(Foundation)
         var encodedString = self.replacingOccurrences(of: "&", with: "&amp;") // ensure & is done first so we don't ever double-encode.
         for (symbol, entity) in entities {
             encodedString = encodedString.replacingOccurrences(of: symbol, with: entity)
         }
-#else
+/* Legacy code, but we do have a backport for replacingOccurences of so no need
+        // Since Characters, can manually go through each one to replace.
         // replace & first
         var modifiedString = ""
         var encodedString = self
@@ -406,8 +324,7 @@ public extension HTML {
                 modifiedString += String(character)
             }
         }
-        encodedString = modifiedString
-#endif
+        encodedString = modifiedString*/
         return encodedString
     }
     
@@ -557,13 +474,11 @@ public extension String {
         }
         return true
     }
-#if canImport(Foundation)
     /// Returns the number of times a string is included in the `String`.  Does not count overlaps.
     func occurrences(of substring: String) -> Int {
         let components = self.components(separatedBy: substring)
         return components.count - 1
     }
-#endif
     /// `true` if there is only an integer number or double in the `String` and there isn't other letters or spaces.
     var isNumeric: Bool {
         if let _ = Double(self) {
@@ -676,10 +591,11 @@ public extension String {
         try expect(!"1000".isPostIndustrialYear)
         try expect(!"3214".isPostIndustrialYear)
         try expect("1923".isPostIndustrialYear)
+        var test = "the/quick/brown/fix.txt"
+
 #if canImport(Foundation) && !(os(WASM) || os(WASI))
         try expect("\(Date.nowBackport.year)".isPostIndustrialYear)
         
-        var test = "the/quick/brown/fix.txt"
 #if canImport(Combine)
         try expect(test.asURL == nil) // this will pass on Linux pretty much regardless if it's a valid URL or not.
         try expect(test.lastPathComponent == "fix.txt")
@@ -701,6 +617,9 @@ public extension String {
         try expect("404 867 5309".isPhoneNumber)
         try expect("4048675309".isPhoneNumber)
         try expect("1 Infinite Loop, Cupertino, CA".isAddress)
+#endif
+#else
+        test = "file:///\(test)"
 #endif
         
         try expect(uuid() != uuid(), "generating two UUIDs should never be identical")
@@ -727,12 +646,15 @@ public extension String {
         let slashCount = test.occurrences(of: "/")
         try expect(slashCount == 6, "expected 6 slashes but found \(slashCount)")
         try expect(!test.repeated(100).isLarge)
+#if canImport(Foundation)
         try expect(test.replacingCharacters(in: test.startIndex..<test.index(test.startIndex, offsetBy: 5), with: "foo") == "foo///the/quick/brown/fix.txt")
+#endif
         try expect(test.removing(characters: "thequickbrownfoxjumpsoverthelazydog") == "://////.")
         try expect(test.preserving(characters: "abcde") == "eecb")
         try expect(test.duplicateCharactersRemoved == "file:/thquckbrownx.")
         
         try expect("h\"\\ello".addSlashes() == "h\\\"\\\\ello")
+#if canImport(Foundation) && !(os(WASM) || os(WASI))
         var json = ""
         debugSuppress {
             json = "foo".asErrorJSON() // outputs debug message
@@ -812,15 +734,23 @@ public extension String {
         self = self.trimming(trimStrings)
     }
 }
+#if !canImport(Foundation)
+// backport of CompareOptions
+public struct CompareOptions : OptionSet, @unchecked Sendable {
+    public var rawValue: UInt
+
+    public init(rawValue: UInt) {
+        self.rawValue = rawValue
+    }
+
+    public static var caseInsensitive: CompareOptions = .init(rawValue: 1 << 0)
+}
+#endif
 public extension StringProtocol {
     /// Returns a new string made by removing from both ends of the `String` characters contained in a given string.
     func trimmingCharacters(in string: String) -> String {
-#if canImport(Foundation)
         let badSet = CharacterSet(charactersIn: string)
         return self.trimmingCharacters(in: badSet)
-#else
-        return self.trimming(string.characterStrings)
-#endif
     }
 }
 public extension String {
@@ -857,6 +787,7 @@ public extension String {
     func replacingCharacters(in range: NSRange, with string: String) -> String {
         return (self as NSString).replacingCharacters(in: range, with: string)
     }
+    #endif
     
     /// Returns a new string in which all occurrences of any target
     /// strings in a specified range of the `String` are replaced by
@@ -885,6 +816,7 @@ public extension String {
         let characters = findCharacters.characterStrings
         return self.replacingOccurrences(of: characters, with: replacement, options: options, range: searchRange)
     }
+#if canImport(Foundation)
     /// Returns a new string in which all characters in a target
     /// string in a specified range of the `String` are replaced by
     /// another given string.
@@ -896,7 +828,8 @@ public extension String {
     ) -> String {
         return self.components(separatedBy: characterSet).joined(separator: replacement)
     }
-
+#endif
+    
     // MARK: - Condensing
     /// Collapse repeated occurrences of `string` with a single occurrance.  Ex: `"tooth".collapse("o") == "toth"`
     func collapse(_ string: String) -> String {
@@ -914,14 +847,9 @@ public extension String {
         // replace non-breaking space with normal space (seems to not be included in whitespaces)
         var returnString = self.replacingOccurrences(of: " ", with: " ");
         // replace whitespace characters with spaces
-        #if canImport(Foundation)
         returnString = returnString.replacingOccurrences(of: CharacterSet.whitespaces.characterStrings, with: " ")
         // replace newline characters with new lines
         returnString = returnString.replacingOccurrences(of: CharacterSet.newlines.characterStrings, with: "\n")
-        #else
-        returnString = returnString.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
-        returnString = returnString.replacingOccurrences(of: "\\n+", with: "\n", options: .regularExpression)
-        #endif
         // collapse runs of spaces
         returnString = returnString.collapse(" ")
         // collapse runs of line breaks with a single line break
@@ -948,10 +876,20 @@ public extension String {
         range searchRange: Range<Index>? = nil
     ) -> String {
         let whitelistCharacterSet = CharacterSet(charactersIn: characters)
+        #if canImport(Foundation)
         let badCharacterSet = whitelistCharacterSet.inverted
         return self.components(separatedBy: badCharacterSet).joined(separator: "")
+        #else
+        var returnString = ""
+        for character in self {
+            if whitelistCharacterSet.contains(character) {
+                returnString += String(character)
+            }
+        }
+        return returnString
+        #endif
     }
-    #else
+#if !canImport(Foundation)
     // More Foundation-less backports
     /// Returns a new string in which all occurrences of a target
     /// string in a specified range of the string are replaced by
@@ -959,6 +897,7 @@ public extension String {
     func replacingOccurrences<Target, Replacement>(
         of target: Target,
         with replacement: Replacement,
+        options: CompareOptions = [],
         range searchRange: Range<Self.Index>? = nil
     ) -> String where Target : StringProtocol, Replacement : StringProtocol {
         
@@ -966,39 +905,45 @@ public extension String {
         if target.isEmpty {
             return self
         }
+        
+        var searchString = self
+        var targetString = String(target)
+        if options.contains(.caseInsensitive) {
+            searchString = searchString.lowercased()
+            targetString = targetString.lowercased()
+        }
 
-        let targetString = String(target)
         let replacementString = String(replacement)
-
-        let searchRange = searchRange ?? self.startIndex..<self.endIndex
-        var result = ""
+        
+        let searchRange = searchRange ?? searchString.startIndex..<searchString.endIndex
+        var resultString = ""
         var currentIndex = searchRange.lowerBound
 
         while currentIndex < searchRange.upperBound {
-            guard let range = self.range(of: targetString, range: currentIndex..<searchRange.upperBound) else {
+            guard let range = searchString.range(of: targetString, range: currentIndex..<searchRange.upperBound) else {
                 // No more matches; append the rest
-                result += self[currentIndex..<searchRange.upperBound]
+                resultString += self[currentIndex..<searchRange.upperBound]
                 break
             }
 
             // Append everything before the match
-            result += self[currentIndex..<range.lowerBound]
+            resultString += self[currentIndex..<range.lowerBound]
 
             // Append the replacement
-            result += replacementString
+            resultString += replacementString
 
             // Move index past the match
-            currentIndex = self.index(range.lowerBound, offsetBy: targetString.count)
+            currentIndex = searchString.index(range.lowerBound, offsetBy: targetString.count)
         }
 
         // Append any remaining content after the specified range
-        if searchRange.upperBound < self.endIndex {
-            result += self[searchRange.upperBound..<self.endIndex]
+        if searchRange.upperBound < searchString.endIndex {
+            resultString += self[searchRange.upperBound..<searchString.endIndex]
         }
 
-        return result
+        return resultString
     }
-    #endif
+#endif
     /// string with all duplicate characters removed
     var duplicateCharactersRemoved: String {
         return self.characterStrings.unique.joined(separator: "")
@@ -1426,7 +1371,7 @@ public extension String {
     static let tests = [
         Test("sentence capitalized", testSentenceCapitalized),
         Test("substring", testSubstring),
-        Test("introspection", testIntrospection),
+        Test("String Introspection", testIntrospection),
         Test("trimming", testTriming),
         Test("trimming empty", testTrimingEmpty),
         Test("extract tags", testExtractTags),

@@ -30,6 +30,20 @@ public extension Double {
         return rounded == self
     }
     
+    /// Rounds decimals to the specified number of places.
+    func precision(_ places: Int) -> Double {
+#if canImport(Foundation)
+        let divisor = pow(10.0, Double(places))
+        return (self * divisor).rounded() / divisor
+#else
+        var multiplier = 1.0
+        for _ in 0..<places {
+            multiplier *= 10
+        }
+        return (self * multiplier).rounded() / multiplier
+#endif
+    }
+    
 #if canImport(Foundation)
     /// Creates a string version of this Double value without ".0" if this contains an integer number.  Otherwise, returns the normal value description.
     var withoutZeros: String {
@@ -42,12 +56,6 @@ public extension Double {
         } else {
             return "\(self)"
         }
-    }
-
-    /// Rounds decimals to the specified number of places.
-    func precision(_ places: Int) -> Double {
-        let divisor = pow(10.0, Double(places))
-        return (self * divisor).rounded() / divisor
     }
 #else
     // backport of Double(String)
@@ -246,19 +254,21 @@ public extension Double {
     internal static let doubleTests: TestClosure = {
         let five = 5.doubleValue.doubleValue
         try expect("\(five)" == "5.0")
-        #if canImport(Foundation)
+#if canImport(Foundation)
         try expect(five.withoutZeros == "5")
         
         let two = Float(2).doubleValue
         try expect(two.withoutZeros == "2")
+#endif
 
         let pi = 3.14159265358979323846
         try expect(pi.precision(2) == 3.14)
         try expect(pi.precision(3) == 3.142)
         try expect(pi.precision(4) == 3.1416)
         try expect(pi.precision(5) == 3.14159)
+#if canImport(Foundation)
         try expect(pi.withoutZeros == "\(pi)")
-        #endif
+#endif
     }
 }
 
