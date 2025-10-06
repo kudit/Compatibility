@@ -6,7 +6,9 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
-v1.11.27 10/5/2025 Missed a conditional check around the date requirement of `DateStringRepresentation` since this isn't present in WASM.
+v1.11.28 10/6/2025 Added Codable protocol for WASM so that we don't have to conditionally conform in WASM.
+
+v1.11.27 10/5/2025 Missed a conditional check around the date requirement of `DateStringRepresentation` since this isn't present in WASM. **Supports all platforms including WASM and Android and passes all Swift Package Index Checks!**
 
 v1.11.26 10/5/2025 Added back `DateString` as a type so that we can use in WASM as a type (but without working date features).
 

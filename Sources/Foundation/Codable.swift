@@ -1,5 +1,15 @@
 /// For flagging properties that should not be included in Codable conformance.  Can provide a default value if the property is not an Optional
 
+#if (os(WASM) || os(WASI)) && !canImport(Foundation) && compiler(>=6.2)
+/// Backport stub for Foundation.Codable
+public typealias Codable = Decodable & Encodable
+public protocol Decodable {}
+public protocol Encodable {}
+
+// TODO: Implement backport versions for WASM, but for now, just include stubs to silence compiler warnings and not have to conditionally remove conformances.
+
+#endif
+
 /*
 /// Note: T needs to conform to Codable so that the parent struct can also automatically conform to Codable, however, we won't actually be coding this value.
 @propertyWrapper
