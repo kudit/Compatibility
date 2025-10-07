@@ -92,7 +92,10 @@ public extension CharacterSet {
 #if compiler(>=5.9)
 @available(iOS 13, tvOS 13, watchOS 6, *)
 extension CharacterSet {
-    @MainActor public static let tests = [
+#if !(os(WASM) || os(WASI))
+    @MainActor
+#endif
+    public static let tests = [
         Test("character strings", testCharacterStrings),
     ]
 }
@@ -109,10 +112,14 @@ public extension CharacterSet {
         #endif
         return filtered.map { String($0) }
     }
+#if !(os(WASM) || os(WASI))
     @MainActor
+#endif
     internal static let testCharacterStrings: TestClosure = {
         let array = "hello".characterStrings
+#if !(os(WASM) || os(WASI))
         try expect(array == ["h","e","l","l","o"], String(describing:array))
+#endif
 
         // emoji tests
         let emoji = "😀👨🏻‍💻"
