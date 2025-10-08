@@ -61,7 +61,7 @@ extension Version: Swift.CustomStringConvertible { // @retroactive in Swift 6?
 }
 
 // MARK: - Codable conformance so stored as string rather than as a structure of values.
-#if !(os(WASM) || os(WASI))
+#if !(os(WASM) || os(WASI) || os(Linux))
 extension Version: Swift.Decodable {
     enum CodingKeys: String, CodingKey {
         case majorVersion, minorVersion, patchVersion
@@ -87,6 +87,9 @@ extension Version: Swift.Encodable {
         try container.encode(self.rawValue)
     }
 }
+#else
+extension Version: Decodable {}
+extension Version: Encodable {}
 #endif
 
 #if canImport(Foundation) && compiler(>=6.0) && !canImport(Android) && !(os(WASM) || os(WASI))
@@ -204,7 +207,9 @@ extension Version: Swift.Comparable { // @retroactive in Swift 6?
     }
 }
 
+#if !os(Linux)
 extension Version: Swift.Hashable {}
+#endif
 
 public extension Version {
     /// equivalent to Version("0.0.0")
