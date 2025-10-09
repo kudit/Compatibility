@@ -6,6 +6,8 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
+v1.11.32 10/8/2025 Old Linux support for Swift 5.10.
+
 v1.11.31 10/8/2025 Added stub mock conformance of Version to Codable on WASM.
 
 v1.11.30 10/7/2025 Additional WASM conditional checks.

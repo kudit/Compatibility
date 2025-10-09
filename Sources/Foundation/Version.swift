@@ -207,7 +207,7 @@ extension Version: Swift.Comparable { // @retroactive in Swift 6?
     }
 }
 
-#if !os(Linux)
+#if !os(Linux) || compiler(<6.0)
 extension Version: Swift.Hashable {}
 #endif
 
