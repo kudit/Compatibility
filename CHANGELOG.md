@@ -6,7 +6,9 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
-v1.11.32 10/8/2025 Old Linux support for Swift 5.10.
+v1.12.0 10/13/2024 Refactored build flags into a `Build` struct so that we can use in legacy versions that don't support `ObservableObject` required by `Application` (which also allows us to simplify configurations since these values no longer require Foundation).  Added `floor()` function when not available (like in WASM).  Added `widgetAccentable()` backport.  Added Build.Environment enum to facilitate iteration of build properties.
+
+v1.11.32 10/8/2025 Old Linux support for Swift 5.10. **Supports all platforms including WASM and Android and passes all Swift Package Index Checks!**
 
 v1.11.31 10/8/2025 Added stub mock conformance of Version to Codable on WASM.
 

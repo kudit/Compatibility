@@ -23,6 +23,18 @@ public extension BinaryFloatingPoint {
 extension Double: DoubleConvertible {}
 extension Float: DoubleConvertible {}
 
+
+#if (os(WASM) || os(WASI))
+#if canImport(WASILibc) // either include from library or use fallback implementation
+import WASILibc
+#else
+public func floor(_ value: Double) -> Int {
+    return value >= 0 ? Int(value) : Int(value) - 1
+}
+#endif
+#endif
+
+
 public extension Double {
     /// `true` if this value is an integer (rounding does nothing to the value).
     var isInteger: Bool {

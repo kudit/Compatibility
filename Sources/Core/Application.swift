@@ -16,29 +16,13 @@ extension String {
     public static let unknownAppIdentifier = "com.unknown.unknown"
 }
 
-#if !(os(WASM) || os(WASI))
-@MainActor
-#endif
-@available(iOS 13, tvOS 13, watchOS 6, *)
-public class Application: ObservableObject { // cannot automatically conform to CustomStringConvertible since it's actor-isolated...
-#if !(os(WASM) || os(WASI))
-    @MainActor
-#endif
-    public static var baseDomain = "com.kudit"
-
-#if !(os(WASM) || os(WASI))
-    @MainActor
-#endif
-    public static let main = Application()
-
-    // MARK: - Compiler information
-    
+// Environment struct that can get the build environment info since Application isn't supported on legacy platforms.  This allows pulling these out into a struct rather than an ObservableObject which is necessary for some of the Application features.
+public struct Build {
     /// will be true if we're in a debug configuration and false if we're building for release
-    nonisolated // Not @MainActor
     public static let isDebug = _isDebugAssertConfiguration()
     
     // Documentation on the following compiler directives: https://docs.swift.org/swift-book/documentation/the-swift-programming-language/statements/#Compiler-Control-Statements
-    
+
     /// Returns the version number of Swift being used to compile (use these checks for Swift Package Index version checks).
     public static var compilerVersion: String {
 #if compiler(>=9.0)
@@ -130,8 +114,31 @@ public class Application: ObservableObject { // cannot automatically conform to 
     }
     
     // MARK: - Environmental info
+    public enum Environment: String, RawRepresentable, CaseIterable, Identifiable {
+        case debug = "Debug"
+        case simulator = "Simulator"
+        case playground = "Playground"
+        case preview = "Preview"
+        case realDevice = "Real Device"
+        case macCatalyst = "Mac Catalyst"
+        
+        public var id: Self {
+            return self
+        }
+
+        var test: Bool {
+            switch self {
+            case .debug: return Build.isDebug
+            case .simulator: return Build.isSimulator
+            case .playground: return Build.isPlayground
+            case .preview: return Build.isPreview
+            case .realDevice: return Build.isRealDevice
+            case .macCatalyst: return Build.isMacCatalyst
+            }
+        }
+    }
+    
     /// Returns `true` if running on the simulator vs actual device.
-    nonisolated // Not @MainActor
     public static var isSimulator: Bool {
 #if targetEnvironment(simulator)
         // your simulator code
@@ -148,7 +155,6 @@ public class Application: ObservableObject { // cannot automatically conform to 
     // In iPad Playgrounds Running: swift-playgrounds-dev-run.swift-playgrounds-app.agxhnwfqkxciovauscbmuhqswxkm.501.KuditFrameworksApp
     // warning: {"message":"This code path does I/O on the main thread underneath that can lead to UI responsiveness issues. Consider ways to optimize this code path","antipattern trigger":"+[NSBundle allBundles]","message type":"suppressable","show in console":"0"}
     /// Returns `true` if running in Swift Playgrounds.
-    nonisolated // Not @MainActor
     public static var isPlayground: Bool {
 #if SwiftPlaygrounds
         debug("New Swift Playgrounds test!", level: .WARNING)
@@ -168,7 +174,6 @@ public class Application: ObservableObject { // cannot automatically conform to 
     }
     
     /// Returns `true` if running in an XCode or Swift Playgrounds #Preview macro.
-    nonisolated // Not @MainActor
     public static var isPreview: Bool {
 #if canImport(Foundation)
         ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
@@ -178,7 +183,6 @@ public class Application: ObservableObject { // cannot automatically conform to 
     }
     
     /// Returns `true` if NOT running in preview, playground, or simulator.
-    nonisolated // Not @MainActor
     public static var isRealDevice: Bool {
         return !isPreview && !isPlayground && !isSimulator
     }
@@ -192,13 +196,70 @@ public class Application: ObservableObject { // cannot automatically conform to 
         return false
 #endif
     }
+}
+
+#if !(os(WASM) || os(WASI))
+@MainActor
+#endif
+@available(iOS 13, tvOS 13, watchOS 6, *)
+public class Application: ObservableObject { // cannot automatically conform to CustomStringConvertible since it's actor-isolated...
+#if !(os(WASM) || os(WASI))
+    @MainActor
+#endif
+    public static var baseDomain = "com.kudit"
+
+#if !(os(WASM) || os(WASI))
+    @MainActor
+#endif
+    public static let main = Application()
+
+    // MARK: - Compiler information (moved to Build - included here to prevent breaking compatibility).
+/// will be true if we're in a debug configuration and false if we're building for release
+    @available(*, deprecated, renamed: "Build.isDebug")
+    nonisolated // Not @MainActor
+    public static let isDebug = Build.isDebug
     
+    /// Returns the version number of Swift being used to compile (use these checks for Swift Package Index version checks).
+    @available(*, deprecated, renamed: "Build.compilerVersion")
+    nonisolated // Not @MainActor
+    public static let compilerVersion = Build.compilerVersion
+
+    /// Returns the version number of Swift being used to run?
+    @available(*, deprecated, renamed: "Build.swiftVersion")
+    nonisolated // Not @MainActor
+    public static let swiftVersion = Build.swiftVersion
+    
+    /// Returns `true` if running on the simulator vs actual device.
+    @available(*, deprecated, renamed: "Build.isSimulator")
+    nonisolated // Not @MainActor
+    public static let isSimulator = Build.isSimulator
+
+    /// Returns `true` if running in Swift Playgrounds.
+    @available(*, deprecated, renamed: "Build.isPlayground")
+    nonisolated // Not @MainActor
+    public static let isPlayground = Build.isPlayground
+
+    /// Returns `true` if running in an XCode or Swift Playgrounds #Preview macro.
+    @available(*, deprecated, renamed: "Build.isPreview")
+    nonisolated // Not @MainActor
+    public static let isPreview = Build.isPreview
+
+    /// Returns `true` if NOT running in preview, playground, or simulator.
+    @available(*, deprecated, renamed: "Build.isRealDevice")
+    nonisolated // Not @MainActor
+    public static let isRealDevice = Build.isRealDevice
+
+    /// Returns `true` if is macCatalyst app on macOS
+    @available(*, deprecated, renamed: "Build.isMacCatalyst")
+    nonisolated // Not @MainActor
+    public static let isMacCatalyst = Build.isMacCatalyst
+
 #if canImport(Foundation) && !(os(WASM) || os(WASI))
     @MainActor
 #endif
-    @available(*, deprecated, renamed: "Application.isDebug")
+    @available(*, deprecated, renamed: "Build.isDebug")
     public static var DEBUG: Bool {
-        Application.isDebug
+        Build.isDebug
     }
 
 #if canImport(Foundation) && !(os(WASM) || os(WASI))
@@ -224,7 +285,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
             debug("iCloud is not supported by this app.", level: .DEBUG)
             return false
         }
-        if isPlayground || isPreview {
+        if Build.isPlayground || Build.isPreview {
             debug("iCloud works oddly in playgrounds and previews so don't actually support.", level: iCloudPlaygroundPreviewNoticed ? .SILENT : .DEBUG)
             // only output once per session otherwise this is very chatty
             iCloudPlaygroundPreviewNoticed = true
@@ -380,7 +441,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
     
     public var debugVersion: String {
         var string = version.rawValue
-        if Application.isDebug {
+        if Build.isDebug {
             string.append("b\(Bundle.main.buildNumber)")
         }
         return string
@@ -428,8 +489,8 @@ public class Application: ObservableObject { // cannot automatically conform to 
         description += "\nIdentifier: \(Application.main.appIdentifier)"
         // so we can disable on simple apps and still do tracking without issues.
         description += "\niCloud Status: \(Application.iCloudStatus.description)"
-        description += "\nSwift Version: \(Application.swiftVersion)"
-        description += "\nCompiler Version: \(Application.compilerVersion)"
+        description += "\nSwift Version: \(Build.swiftVersion)"
+        description += "\nCompiler Version: \(Build.compilerVersion)"
         description += "\nCompatibility Version: \(Compatibility.version)"
         return description
     }
@@ -438,12 +499,10 @@ public class Application: ObservableObject { // cannot automatically conform to 
 #if canImport(Foundation) && !(os(WASM) || os(WASI))
     @MainActor
     internal static var applicationTests: TestClosure = { @MainActor in // ensure we're running these on the Main Actor so we don't have to worry about Application main actor access.
-        try expect(Application.isDebug, "App should not be running in debug mode")
-        try expect(Application.isPreview == Application.isPreview, "App Preview test")
-        try expect(Application.isSimulator == Application.isSimulator, "App Simulator test")
-        try expect(Application.isPlayground == Application.isPlayground, "App Playground test")
-        try expect(Application.isRealDevice == Application.isRealDevice, "App Real Device test")
-        try expect(Application.isMacCatalyst == Application.isMacCatalyst, "App Mac Catalyst test")
+        try expect(Build.isDebug, "App should not be running in debug mode")
+        for environment in Build.Environment.allCases {
+            try expect(environment.test == environment.test, "App \(environment) test")
+        }
         debugSuppress {
             Compatibility.main {
                 Application.main.resetVersionsRun()
@@ -459,20 +518,18 @@ public class Application: ObservableObject { // cannot automatically conform to 
 \(Application.main.name) (v\(Application.main.debugVersion))\(Application.main.isFirstRun ? " **First Run!**" : "")
 Identifier: \(Application.main.appIdentifier)
 iCloud Status: \(Application.iCloudStatus.description)
-Swift Version: \(Application.swiftVersion)
-Compiler Version: \(Application.compilerVersion)
+Swift Version: \(Build.swiftVersion)
+Compiler Version: \(Build.compilerVersion)
 Compatibility Version: \(Compatibility.version)
 """
         try expect(Application.main.description == expectedDescription, "Unexpected app description: \(Application.main.description) (expected: \(expectedDescription))")
     }
 #else
     internal static var applicationTests: TestClosure = {
-        try expect(Application.isDebug, "App should not be running in debug mode")
-        try expect(Application.isPreview == Application.isPreview, "App Preview test")
-        try expect(Application.isSimulator == Application.isSimulator, "App Simulator test")
-        try expect(Application.isPlayground == Application.isPlayground, "App Playground test")
-        try expect(Application.isRealDevice == Application.isRealDevice, "App Real Device test")
-        try expect(Application.isMacCatalyst == Application.isMacCatalyst, "App Mac Catalyst test")
+        try expect(Build.isDebug, "App should not be running in debug mode")
+        for environment in Build.Environment.allCases {
+            try expect(environment.test == environment.test, "App \(environment) test")
+        }
     }
 #endif
 

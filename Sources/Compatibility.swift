@@ -8,7 +8,7 @@
 
 public enum Compatibility {
     /// The version of the Compatibility Library since cannot get directly from Package.swift.
-    public static let version: Version = "1.11.32"
+    public static let version: Version = "1.12.0"
 }
 
 #if canImport(Foundation)
@@ -193,7 +193,7 @@ public extension Compatibility { // for brief period where Application wasn't av
     static let isDebug = _isDebugAssertConfiguration()
 }
 @available(iOS 13, tvOS 13, watchOS 6, *)
-public extension Compatibility { // for brief period where Application wasn't available.  Static computed properties apparently aren't supported in extensions in iOS <13?
+public extension Compatibility { // for brief period where Application and Build wasn't available.  Static computed properties apparently aren't supported in extensions in iOS <13?
     // MARK: - Entitlements Information
 #if canImport(Foundation) && !(os(WASM) || os(WASI))
     @available(*, deprecated, renamed: "Application.iCloudSupported")
@@ -218,44 +218,19 @@ public extension Compatibility { // for brief period where Application wasn't av
     static var iCloudStatus: CloudStatus {
         Application.iCloudStatus
     }
-    
-    @available(*, deprecated, renamed: "Application.isSimulator")
-    static var isSimulator: Bool {
-#if targetEnvironment(simulator)
-        // your simulator code
-        return true
-#else
-        // your real device code
-        return false
 #endif
-    }
 
-    @available(*, deprecated, renamed: "Application.isPlayground")
-    static var isPlayground: Bool {
-        //print("Testing inPlayground: Bundles", Bundle.allBundles.map { $0.bundleIdentifier }.description)")
-        if Bundle.allBundles.contains(where: { ($0.bundleIdentifier ?? "").contains("swift-playgrounds") }) {
-            //print("in playground")
-            return true
-        } else {
-            //print("not in playground")
-            return false
-        }
-    }
+    @available(*, deprecated, renamed: "Build.isSimulator")
+    static let isSimulator = Build.isSimulator
+
+    @available(*, deprecated, renamed: "Build.isPlayground")
+    static let isPlayground = Build.isPlayground
     
-    @available(*, deprecated, renamed: "Application.isPreview")
-    static var isPreview: Bool {
-        ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
-    }
+    @available(*, deprecated, renamed: "Build.isPreview")
+    static let isPreview = Build.isPreview
     
-    @available(*, deprecated, renamed: "Application.isMacCatalyst")
-    static var isMacCatalyst: Bool {
-#if targetEnvironment(macCatalyst)
-        return true
-#else
-        return false
-#endif
-    }
-#endif
+    @available(*, deprecated, renamed: "Build.isMacCatalyst")
+    static let isMacCatalyst = Build.isMacCatalyst
 }
 
 #if !canImport(CoreML) && canImport(Foundation) // this isn't available on linux or WASM!
@@ -313,7 +288,7 @@ public struct CompatibilityEnvironmentTestView: View {
             }
             Section("Compatibility") {
                 Backport.LabeledContent("Compatibility Version:", value: Compatibility.version.description)
-                TestCheck("is Debug", Application.isDebug)
+                TestCheck("is Debug", Build.isDebug)
 #if compiler(>=5.9) && canImport(Combine)
                 if previouslyRunCompatibilityVersions != "" && previouslyRunCompatibilityVersions != "\(Compatibility.version.rawValue)" {
                     Text("Previously run Compatibility versions:")
@@ -332,14 +307,12 @@ public struct CompatibilityEnvironmentTestView: View {
                 }
             }
             Section("Environment") {
-                Backport.LabeledContent("Swift Version:", value: Application.swiftVersion)
-                Backport.LabeledContent("Compiler Version:", value: Application.compilerVersion)
-                TestCheck("isSimulator", Application.isSimulator)
-                    .backport.focusable(true) // to allow scrolling in tvOS
-                TestCheck("isPlayground", Application.isPlayground)
-                TestCheck("isPreview", Application.isPreview)
-                TestCheck("isRealDevice", Application.isRealDevice)
-                TestCheck("isMacCatalyst", Application.isMacCatalyst)
+                Backport.LabeledContent("Swift Version:", value: Build.swiftVersion)
+                Backport.LabeledContent("Compiler Version:", value: Build.compilerVersion)
+                ForEach(Build.Environment.allCases) { environment in
+                    TestCheck("is\(environment.rawValue.whitespaceStripped)", environment.test)
+                        .backport.focusable(true) // to allow scrolling in tvOS
+                }
             }
             Section("Dates") {
                 Backport.LabeledContent("Now Backport:", value: Date.nowBackport.pretty)

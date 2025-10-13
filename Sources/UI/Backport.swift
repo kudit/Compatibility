@@ -581,6 +581,62 @@ public enum BackportControlSize : CaseIterable, Sendable {
     }
 }
 
+#if canImport(WidgetKit)
+import WidgetKit
+#endif
+
+@available(iOS 13, tvOS 13, watchOS 6, *)
+public extension Backport where Content: View {
+    /// Adds the view and all of its subviews to the accented group.
+    ///
+    /// When the system renders the widget using the
+    /// ``WidgetKit/WidgetRenderingMode/accented`` mode, it divides the widget's
+    /// view hierarchy into two groups: the accented group and the default
+    /// group. It then applies a different color to each group.
+    ///
+    /// When applying the colors, the system treats the widget's views as if
+    /// they were template images. It ignores the view's color --- rendering the
+    /// new colors based on the view's alpha channel.
+    ///
+    /// To control your view's appearance, add the `widgetAccentable(_:)`
+    /// modifier to part of your view's hierarchy. If the `accentable` parameter
+    /// is `true`, the system adds that view and all of its subviews to the
+    /// accent group. It puts all other views in the default group.
+    ///
+    /// ``` swift
+    /// var body: some View {
+    ///     VStack {
+    ///         Text("MON")
+    ///             .font(.caption)
+    ///             .widgetAccentable()
+    ///         Text("6")
+    ///             .font(.title)
+    ///         }
+    ///     }
+    /// }
+    /// ```
+    ///
+    /// > Important: After you call `widgetAccentable(true)` on a view moving it
+    /// into the accented group, calling `widgetAccentable(false)` on its
+    /// subviews doesn't move the subviews back into the default group.
+    ///
+    /// - Parameter accentable: A Boolean value that indicates whether to add
+    /// the view and its subviews to the accented group.
+    func widgetAccentable(_ accentable: Bool = true) -> some View {
+        Group {
+#if os(tvOS) || !canImport(WidgetKit)
+            content
+#else
+            if #available(iOS 16, macOS 13, watchOS 9, visionOS 26, *) {
+                content.widgetAccentable(accentable)
+            } else {
+                // Fallback on earlier versions
+                content
+            }
+#endif
+        }
+    }
+}
 
 // MARK: Presentation Detents
 @available(iOS 13, tvOS 13, watchOS 6, *)

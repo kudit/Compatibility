@@ -3,14 +3,7 @@
 // Here since all releated to Debug code.
 public struct CompatibilityConfiguration: PropertyIterable {
     /// Override to change the which debug levels are output.  This level and higher (more important) will be output.
-    public var debugLevelCurrent: DebugLevel = {
-        #if canImport(Foundation)
-        if #available(iOS 13, tvOS 13, watchOS 6, *) {
-            return Application.isDebug ? .DEBUG : .WARNING
-        }
-        #endif
-        return .DEBUG
-    }()
+    public var debugLevelCurrent: DebugLevel = Build.isDebug ? .DEBUG : .WARNING
     
     /// Override to change the level of debug statments without a level parameter.
     public var debugLevelDefault = DebugLevel.DEBUG

@@ -65,6 +65,7 @@ public struct TriangleShowcaseView: View {
                                 .padding()
                         }
                 }
+                .buttonStyle(.plain)
                 .frame(size: 100)
             }
         }

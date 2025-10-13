@@ -11,7 +11,7 @@ public enum DataStoreType: Sendable {
 #if canImport(CoreML) // not available in Linux so skip
         if #available(watchOS 9, *) {
             // xcode previews indicate icloud is not available and thus will default to UserDefaults.  Playgrounds will indicate iCloud availability but values don't seem to persist.
-            if self == .iCloud && !Application.isPlayground && !Application.isPreview && Application.iCloudIsEnabled {
+            if self == .iCloud && !Build.isPlayground && !Build.isPreview && Application.iCloudIsEnabled {
                 debug("Using ubiquitous store")
                 return NSUbiquitousKeyValueStore.default
             } // if not, just use local.  Technically this case shouldn't even be available on unsupported devices
