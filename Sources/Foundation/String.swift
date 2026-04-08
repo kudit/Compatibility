@@ -955,6 +955,87 @@ public extension String {
     }
 
     // MARK: - Transformed
+
+    /// Capitalizes the first letter of each word without changing any other characters.
+    /// Suitable for simple title casing where you want the first character of each word uppercase.
+    ///
+    /// This function only capitalizes the first character after whitespace boundaries (spaces, tabs, newlines).
+    /// No other characters are modified - all other letters retain their original case.
+    ///
+    /// - Note: This is a simple operation that doesn't handle complex case logic.
+    /// - If you need more elaborate case transformations, handle them separately or lowercase the string first and then call `simpleTitleCase()`.
+    /// - This is NOT for AP title case where articles like "the", "a", "and" should remain lowercase.
+    ///
+    /// - Returns: A new string with the first character of each word capitalized.
+    ///
+    /// Example:
+    /// ```
+    /// "hello world".simpleTitleCase() // "Hello World"
+    /// "hELLO wORLD".simpleTitleCase() // "HELLO WORLD" (other characters unchanged)
+    /// "the QUICK brown FOX".simpleTitleCase() // "The QUICK Brown FOX"
+    /// ```
+    func simpleTitleCase() -> String {
+        var result = ""
+        var isAtWordStart = true
+        
+        for character in self {
+            if CharacterSet.whitespacesAndNewlines.allCharacters.contains(character) {
+                result.append(character)
+                isAtWordStart = true
+            } else {
+                if isAtWordStart {
+                    result.append(String(character).uppercased())
+                    isAtWordStart = false
+                } else {
+                    result.append(character)
+                }
+            }
+        }
+        
+        return result
+    }
+#if !(os(WASM) || os(WASI))
+    @MainActor
+#endif
+    internal static let testSimpleTitleCase: TestClosure = {
+        // Basic capitalization
+        try expect("hello world".simpleTitleCase() == "Hello World")
+        try expect("the quick brown fox".simpleTitleCase() == "The Quick Brown Fox")
+        
+        // Preserves non-first-letter case
+        try expect("hElLO wOrLD".simpleTitleCase() == "HElLO WOrLD")
+        try expect("hELLO wORLD jumps".simpleTitleCase() == "HELLO WORLD Jumps")
+        
+        // Single word
+        try expect("hello".simpleTitleCase() == "Hello")
+        try expect("HELLO".simpleTitleCase() == "HELLO")
+        try expect("hELLO".simpleTitleCase() == "HELLO")
+        
+        // Empty and single character
+        try expect("".simpleTitleCase() == "")
+        try expect("a".simpleTitleCase() == "A")
+        try expect("A".simpleTitleCase() == "A")
+        
+        // Multiple spaces and whitespace
+        try expect("hello  world".simpleTitleCase() == "Hello  World")
+        try expect("hello\tworld".simpleTitleCase() == "Hello\tWorld")
+        try expect("hello\nworld".simpleTitleCase() == "Hello\nWorld")
+        
+        // Numbers and special characters (should not be affected)
+        try expect("123 hello".simpleTitleCase() == "123 Hello")
+        try expect("hello 456 world".simpleTitleCase() == "Hello 456 World")
+        try expect("!hello @world".simpleTitleCase() == "!hello @world")
+        
+        // Already title cased
+        try expect("Hello World".simpleTitleCase() == "Hello World")
+        
+        // Mixed case with numbers
+        try expect("test123 hELLO 456world".simpleTitleCase() == "Test123 HELLO 456world")
+        
+        // Lowercase before titleCase behavior
+        try expect("hELLO wORLD".lowercased().simpleTitleCase() == "Hello World")
+    }
+
 #if canImport(Foundation)
     /// Return an arry of lines of the string.  If no line breaks, will be an array with the original string as the only entry.
     var lines: [String] {
@@ -1369,6 +1450,7 @@ public extension String {
     @MainActor
 #endif
     static let tests = [
+        Test("title case", testSimpleTitleCase),
         Test("sentence capitalized", testSentenceCapitalized),
         Test("substring", testSubstring),
         Test("String Introspection", testIntrospection),

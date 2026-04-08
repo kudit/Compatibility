@@ -8,7 +8,7 @@
 
 public enum Compatibility {
     /// The version of the Compatibility Library since cannot get directly from Package.swift.
-    public static let version: Version = "1.12.0"
+    public static let version: Version = "1.13.0"
 }
 
 #if canImport(Foundation)
@@ -61,7 +61,7 @@ public enum Compatibility {
  2017
  canImport(CoreML)
     iOS 11
-    macOS 10.13
+    macOS 10.13 (High Sierra)
     tvOS 11
     watchOS 4
  

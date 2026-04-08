@@ -1,4 +1,6 @@
+# Validate using https://swiftpackageindex.com/validate-spi-manifest
 version: 1
 builder:
   configs:
   - scheme: Compatibility Library
+    documentation_targets: [Compatibility]
