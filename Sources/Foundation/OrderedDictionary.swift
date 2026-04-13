@@ -70,28 +70,13 @@
 ///     //            "r": 2, "t": 2, " ": 1,
 ///     //            "i": 1, "n": 1, "g": 1]
 ///
-/// If the `Value` type implements reference semantics, or when you need to
-/// perform a series of individual mutations on the values, the closure-based
-/// ``updateValue(forKey:default:with:)`` method provides an easier-to-use
-/// alternative to the defaulted key-based subscript.
 ///
-///     let text = "short string"
-///     var counts: OrderedDictionary<Character, Int> = [:]
-///     for character in text {
-///       counts.updateValue(forKey: character, default: 0) { value in
-///         value += 1
-///       }
-///     }
-///     // Same result as before
-///
-/// (This isn't currently available on the regular `Dictionary`.)
-///
-/// The `Dictionary` type's original ``updateValue(_:forKey:)`` method is also
+/// The `Dictionary` type's original `updateValue(_:forKey:)` method is also
 /// available, and so is ``index(forKey:)``, grouping/uniquing initializers
-/// (``init(uniqueKeysWithValues:)-5ux9r``, ``init(_:uniquingKeysWith:)-2y39b``,
-/// ``init(grouping:by:)-6mahw``), methods for merging one dictionary with
-/// another (``merge(_:uniquingKeysWith:)-6ka2i``,
-/// ``merging(_:uniquingKeysWith:)-4z49c``), filtering dictionary entries
+/// (`init(uniqueKeysWithValues:)-5ux9r`, `init(_:uniquingKeysWith:)-2y39b`,
+/// `init(grouping:by:)-6mahw`), methods for merging one dictionary with
+/// another (`merge(_:uniquingKeysWith:)-6ka2i`,
+/// `merging(_:uniquingKeysWith:)-4z49c`), filtering dictionary entries
 /// (``filter(_:)``), transforming values (``mapValues(_:)``), and a combination
 /// of these two (``compactMapValues(_:)``).
 ///
@@ -115,21 +100,21 @@
 /// operations from `MutableCollection`:
 ///
 /// - ``swapAt(_:_:)``
-/// - ``partition(by:)``
+/// - `partition(by:)`
 /// - ``sort()``, ``sort(by:)``
 /// - ``shuffle()``, ``shuffle(using:)``
 /// - ``reverse()``
 ///
 /// It also supports removal operations from `RangeReplaceableCollection`:
 ///
-/// - ``removeAll(keepingCapacity:)``
-/// - ``remove(at:)``
-/// - ``removeSubrange(_:)-512n3``, ``removeSubrange(_:)-8rmzx``
-/// - ``removeLast()``, ``removeLast(_:)``
-/// - ``removeFirst()``, ``removeFirst(_:)``
-/// - ``removeAll(where:)``
+/// - `removeAll(keepingCapacity:)`
+/// - `remove(at:)`
+/// - `removeSubrange(_:)-512n3`, `removeSubrange(_:)-8rmzx`
+/// - `removeLast()`, `removeLast(_:)`
+/// - `removeFirst()`, `removeFirst(_:)`
+/// - `removeAll(where:)`
 ///
-/// `OrderedDictionary` also implements ``reserveCapacity(_:)`` from
+/// `OrderedDictionary` also implements `reserveCapacity(_:)` from
 /// `RangeReplaceableCollection`, to allow for efficient insertion of a known
 /// number of elements. (However, unlike `Array` and `Dictionary`,
 /// `OrderedDictionary` does not provide a `capacity` property.)

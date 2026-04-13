@@ -146,9 +146,9 @@ public extension Backport where Content: View {
     ///   - initial: Whether the action should be run when this view initially
     ///     appears.
     ///   - action: A closure to run when the value changes.
-    ///   - oldValue: The old value that failed the comparison check (or the
+    ///   /- oldValue: The old value that failed the comparison check (or the
     ///     initial value when requested).
-    ///   - newValue: The new value that failed the comparison check.
+    ///   /- newValue: The new value that failed the comparison check.
     ///
     /// - Returns: A view that fires an action when the specified value changes.
     @available(iOS 14, macOS 11, tvOS 14, watchOS 7, *)
@@ -300,7 +300,7 @@ public extension Backport where Content: View {
         /// Some APIs may use this value to represent a hint or preference, rather
         /// than a mandatory assertion. For example, setting list row separator
         /// visibility to `visible` using the
-        /// ``View/listRowSeparator(_:edges:)`` modifier may not always
+        /// `View/listRowSeparator(_:edges:)` modifier may not always
         /// result in any visible separators, especially for list styles that do not
         /// include separators as part of their design.
         case visible
@@ -310,7 +310,7 @@ public extension Backport where Content: View {
         /// Some APIs may use this value to represent a hint or preference, rather
         /// than a mandatory assertion. For example, setting confirmation dialog
         /// title visibility to `hidden` using the
-        /// ``View/confirmationDialog(_:isPresented:titleVisibility:actions:)``
+        /// `View/confirmationDialog(_:isPresented:titleVisibility:actions:)`
         /// modifier may not always hide the dialog title, which is required on
         /// some platforms.
         case hidden
@@ -346,9 +346,9 @@ public extension Backport where Content: View {
     /// scene is shared through SharePlay, or not shared at all.
     /// During screen sharing, the indicator always remains visible.
     /// The Home indicator doesn't appear without specific user intent
-    /// when you set visibility to ``hidden``. For a ``WindowGroup``,
+    /// when you set visibility to `hidden`. For a `WindowGroup`,
     /// the modifier affects the visibility of the window chrome. For an
-    /// ``ImmersiveSpace``, it affects the Home indicator.
+    /// `ImmersiveSpace`, it affects the Home indicator.
     ///
     ///     struct ImmersiveView: View {
     ///         var body: some View {
@@ -439,7 +439,7 @@ public extension Backport where Content: View {
     ///     }
     ///     .safeAreaPadding(.horizontal, 20.0)
     ///
-    /// See the ``View/safeAreaInset(edge:alignment:spacing:content)``
+    /// See the `View/safeAreaInset(edge:alignment:spacing:content)`
     /// modifier for adding to the safe area based on the size of a
     /// view.
     func safeAreaPadding(_ edges: Edge.Set = .all, _ length: CGFloat? = nil) -> some View {
@@ -455,7 +455,7 @@ public extension Backport where Content: View {
 
     
     
-    /// Configures the ``fileExporter``, ``fileImporter``, or ``fileMover`` to
+    /// Configures the `fileExporter`, `fileImporter`, or `fileMover` to
     /// open with the specified default directory.
     ///
     /// - Parameter defaultDirectory: The directory to show when
@@ -516,11 +516,8 @@ public extension Backport where Content: View {
     ///         }
     ///     }
     ///
-    /// ![A screenshot showing several controls of various
-    /// sizes.](SwiftUI-View-controlSize.png)
-    ///
     /// - Parameter controlSize: One of the control sizes specified in the
-    ///   ``ControlSize`` enumeration.
+    ///   `ControlSize` enumeration.
     func controlSize(_ controlSize: BackportControlSize) -> some View {
         Group {
             #if os(tvOS)
@@ -554,7 +551,7 @@ public enum BackportControlSize : CaseIterable, Sendable {
     case large
 
     /// A control version that is substantially sized. The largest control size.
-    /// Resolves to ``ControlSize/large`` on platforms other than visionOS.
+    /// Resolves to `ControlSize/large` on platforms other than visionOS.
     case extraLarge
     
     @available(iOS 15, macOS 10.15, tvOS 15, watchOS 9, *)
@@ -590,7 +587,7 @@ public extension Backport where Content: View {
     /// Adds the view and all of its subviews to the accented group.
     ///
     /// When the system renders the widget using the
-    /// ``WidgetKit/WidgetRenderingMode/accented`` mode, it divides the widget's
+    /// `WidgetKit/WidgetRenderingMode/accented` mode, it divides the widget's
     /// view hierarchy into two groups: the accented group and the default
     /// group. It then applies a different color to each group.
     ///
@@ -728,17 +725,17 @@ extension Backport where Content: View {
     ///
     /// @TabNavigator {
     ///     @Tab("True") {
-    ///         ![A horizontal row of uniformly sized, evenly spaced, vertically aligned squares inside a bounding box that's about twice the height of the squares, and almost four times the width. From left to right, three squares appear in full, while only the first quarter of a fourth square appears at the far right. All the squares have shadows that fade away before reaching the top or the bottom of the bounding box.](View-scrollClipDisabled-1-iOS)
+    ///         //A horizontal row of uniformly sized, evenly spaced, vertically aligned squares inside a bounding box that's about twice the height of the squares, and almost four times the width. From left to right, three squares appear in full, while only the first quarter of a fourth square appears at the far right. All the squares have shadows that fade away before reaching the top or the bottom of the bounding box.
     ///     }
     ///     @Tab("False") {
-    ///         ![A horizontal row of uniformly sized, evenly spaced, vertically aligned squares inside a bounding box that's about twice the height of the squares, and almost four times the width. From left to right, three squares appear in full, while only the first quarter of a fourth square appears at the far right. All the squares have shadows that are visible in between squares, but clipped at the top and bottom of the squares.](View-scrollClipDisabled-2-iOS)
+    ///         //A horizontal row of uniformly sized, evenly spaced, vertically aligned squares inside a bounding box that's about twice the height of the squares, and almost four times the width. From left to right, three squares appear in full, while only the first quarter of a fourth square appears at the far right. All the squares have shadows that are visible in between squares, but clipped at the top and bottom of the squares.
     ///     }
     /// }
     ///
     /// While you might want to avoid clipping parts of views that exceed the
     /// bounds of the scroll view, like the shadows in the above example, you
     /// typically still want the scroll view to clip at some point.
-    /// Create custom clipping by using the ``View/clipShape(_:style:)``
+    /// Create custom clipping by using the `View/clipShape(_:style:)`
     /// modifier to add a different clip shape. The following code disables
     /// the default clipping and then adds rectangular clipping that exceeds
     /// the bounds of the scroll view by the default padding amount:
@@ -771,10 +768,10 @@ extension Backport where Content: View {
 public extension Backport where Content: View {
 
     /// Associates a destination view with a binding that can be used to push
-    /// the view onto a ``NavigationStack``.
+    /// the view onto a `NavigationStack`.
     ///
     /// In general, favor binding a path to a navigation stack for programmatic
-    /// navigation. Add this view modifier to a view inside a ``NavigationStack``
+    /// navigation. Add this view modifier to a view inside a `NavigationStack`
     /// to programmatically push a single view onto the stack. This is useful
     /// for building components that can push an associated view. For example,
     /// you can present a `ColorDetail` view for a particular color:
@@ -797,7 +794,7 @@ public extension Backport where Content: View {
     ///     }
     ///
     /// Do not put a navigation destination modifier inside a "lazy" container,
-    /// like ``List`` or ``LazyVStack``. These containers create child views
+    /// like `List` or `LazyVStack`. These containers create child views
     /// only when needed to render on screen. Add the navigation destination
     /// modifier outside these containers so that the navigation stack can
     /// always see the destination.
@@ -831,7 +828,7 @@ public enum BackportTextSelectability {
 public extension Backport where Content: View {
     /// Controls whether people can select text within this view.
     ///
-    /// People sometimes need to copy useful information from ``Text`` views ---
+    /// People sometimes need to copy useful information from `Text` views ---
     /// including error messages, serial numbers, or IP addresses --- so they
     /// can then paste the text into another context. Enable text selection
     /// to let people select text in a platform-appropriate way.
@@ -864,23 +861,13 @@ public extension Backport where Content: View {
     /// which they can quickly copy by choosing Edit > Copy, or with the
     /// standard keyboard shortcut.
     ///
-    /// ![A macOS window titled New Invitation, with header Event Invite and
-    /// the date and time of the event below it. The date --- July 31, 2022 ---
-    /// is selected. Below this, a list of invitees by name and
-    /// email.](View-textSelection-1)
-    ///
     /// On iOS, the person using the app touches and holds on a selectable
     /// `Text` view, which brings up a system menu with menu items appropriate
     /// for the current context. These menu items operate on the entire contents
     /// of the `Text` view; the person can't select a range of text like they
     /// can on macOS.
     ///
-    /// ![A portion of an iOS view, with header Event Invite and
-    /// the date and time of the event below it. Below the date and time, a
-    /// menu shows two items: Copy and Share. Below this, a list of invitees by
-    /// name and email.](View-textSelection-2)
-    ///
-    /// - Note: ``Button`` views don't support text selection.
+    /// - Note: `Button` views don't support text selection.
     /// - Note: This is completely ignored in watchOS and tvOS but is here for simplified code compatibility.
     func textSelection(_ selectability: BackportTextSelectability) -> some View {
         Group {
@@ -1000,8 +987,8 @@ public struct Glass : Equatable, Sendable {
     /// `a == b` implies that `a != b` is `false`.
     ///
     /// - Parameters:
-    ///   - lhs: A value to compare.
-    ///   - rhs: Another value to compare.
+    ///   - a: A value to compare.
+    ///   - b: Another value to compare.
     public static func == (a: Glass, b: Glass) -> Bool {
         return a.color == b.color && a.isInteractive == b.isInteractive
     }
@@ -1034,20 +1021,20 @@ public extension Backport where Content: View {
     ///     the physical glass material
     ///   - Applies the foreground effects of the glass over this view.
     ///
-    /// For example, you could add a glass effect to a ``Label``:
+    /// For example, you could add a glass effect to a `Label`:
     ///
     ///     Label("Flag", systemImage: "flag.fill")
     ///         .padding()
     ///         .glassEffect()
     ///
-    /// SwiftUI uses the ``Glass/regular`` variant by default along with
-    /// a ``Capsule`` shape.
+    /// SwiftUI uses the `Glass/regular` variant by default along with
+    /// a `Capsule` shape.
     ///
     /// SwiftUI anchors the glass to the view's bounds. For the example
     /// above, the physical glass material fills the entirety of the label's
     /// frame, which includes the padding.
     ///
-    /// You typically use this modifier with a ``GlassEffectContainer``
+    /// You typically use this modifier with a `GlassEffectContainer`
     /// to combine multiple glass shapes into a single shape that
     /// can morph shapes into one another.
     func glassEffect(_ glass: Glass = .regular, in shape: some Shape = .capsule) -> some View {
@@ -1126,7 +1113,7 @@ public extension Backport where Content: View {
     /// Sets the presentation background of the enclosing sheet using a shape
     /// style.
     ///
-    /// The following example uses the ``Material/thick`` material as the sheet
+    /// The following example uses the `Material/thick` material as the sheet
     /// background:
     ///
     ///     struct ContentView: View {
@@ -1144,7 +1131,7 @@ public extension Backport where Content: View {
     ///     }
     ///
     /// The `presentationBackground(_:)` modifier differs from the
-    /// ``View/background(_:ignoresSafeAreaEdges:)`` modifier in several key
+    /// `View/background(_:ignoresSafeAreaEdges:)` modifier in several key
     /// ways. A presentation background:
     ///
     /// * Automatically fills the entire presentation.
@@ -1215,9 +1202,9 @@ public extension Backport where Content: View {
     /// Returns the result of recomputing the view's body with the provided
     /// animation, and runs the completion when all animations are complete.
     ///
-    /// This function sets the given ``Animation`` as the ``Transaction/animation``
-    /// property of the thread's current ``Transaction`` as well as calling
-    /// ``Transaction/addAnimationCompletion`` with the specified completion.
+    /// This function sets the given `Animation` as the `Transaction/animation`
+    /// property of the thread's current `Transaction` as well as calling
+    /// `Transaction/addAnimationCompletion` with the specified completion.
     ///
     /// The completion callback will always be fired exactly one time. If no
     /// animations are created by the changes in `body`, then the callback will be
@@ -1249,7 +1236,7 @@ public extension Backport where Content: View {
     }
     /// Sets the style for product views within a view.
     ///
-    /// This modifier styles any ``ProductView`` or ``StoreView`` instances within a view.
+    /// This modifier styles any `ProductView` or `StoreView` instances within a view.
     func productViewStyle(_ style: Backport.ProductViewStyle) -> some View {
         Group {
             if #available(iOS 17, macOS 14, tvOS 17, watchOS 10, *) {
@@ -1308,8 +1295,6 @@ public extension Backport where Content: View {
     ///         }
     ///     }
     ///
-    /// ![A full-screen modal view with the text A full-screen modal view
-    /// and Tap to Dismiss.](SwiftUI-FullScreenCoverIsPresented.png)
     /// - Parameters:
     ///   - isPresented: A binding to a Boolean value that determines whether
     ///     to present the sheet.
@@ -1379,7 +1364,7 @@ public extension Backport where Content: View {
     /// or taps on the view or container `count` times.
     ///
     /// > Note: If you create a control that's functionally equivalent
-    /// to a ``Button``, use ``ButtonStyle`` to create a customized button
+    /// to a `Button`, use `ButtonStyle` to create a customized button
     /// instead.
     ///
     /// In the example below, the color of the heart images changes to a random
@@ -1401,8 +1386,6 @@ public extension Backport where Content: View {
     ///                 }
     ///         }
     ///     }
-    ///
-    /// ![A screenshot of a view of a heart.](SwiftUI-View-TapGesture.png)
     ///
     /// - Parameters:
     ///    - count: The number of taps or clicks required to trigger the action
@@ -1702,7 +1685,7 @@ public struct BackportNavigationStack<Root: View>: View {
 public extension Backport where Content: View {
     /// Disables or enables scrolling in scrollable views.
     ///
-    /// Use this modifier to control whether a ``ScrollView`` can scroll:
+    /// Use this modifier to control whether a `ScrollView` can scroll:
     ///
     ///     @State private var isScrollDisabled = false
     ///
@@ -1731,7 +1714,7 @@ public extension Backport where Content: View {
     ///      .scrollDisabled(true)
     ///
     /// You can also use this modifier to disable scrolling for other kinds
-    /// of scrollable views, like a ``List`` or a ``TextEditor``.
+    /// of scrollable views, like a `List` or a `TextEditor`.
     ///
     /// - Parameter disabled: A Boolean that indicates whether scrolling is
     ///   disabled.

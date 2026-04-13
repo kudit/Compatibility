@@ -1309,8 +1309,8 @@ public extension String {
     /// Parses out a substring from the first occurrence of `start` to the next occurrence of `end`.
     /// If `start` or `end` are `nil`, will parse from the beginning of the `String` or to the end of the `String`.
     /// If the `String` doesn't contain the start or end (whichever is provided), this will return nil.
-    /// - Parameter from: start the extraction after the first occurrence of this string or from the beginning of the `String` if this is `nil`
-    /// - Parameter to: end the extraction at the first occurrence of this string after `from` or at the end of the `String` if this is `nil`
+    /// - Parameter start: start the extraction after the first occurrence of this string or from the beginning of the `String` if this is `nil`
+    /// - Parameter end: end the extraction at the first occurrence of this string after `from` or at the end of the `String` if this is `nil`
     ///  - Return: the extracted string or nil if either start or end are not found
     // TODO: rename extracting?
     func extract(from start: String?, to end: String?) -> String? {

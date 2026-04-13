@@ -45,9 +45,9 @@
 /// # Set Operations
 ///
 /// `OrderedSet` implements most, but not all, `SetAlgebra` requirements. In
-/// particular, it supports the membership test ``contains(_:)`` as well as all
-/// high-level set operations such as ``union(_:)-67y2h``,
-/// ``intersection(_:)-4o09a`` or ``isSubset(of:)-ptij``.
+/// particular, it supports the membership test `contains(_:)` as well as all
+/// high-level set operations such as `union(_:)-67y2h`,
+/// `intersection(_:)-4o09a` or `isSubset(of:)-ptij`.
 ///
 ///     buildingMaterials.contains("glass") // false
 ///     buildingMaterials.intersection(["bricks", "straw"]) // ["straw", "bricks"]
@@ -57,7 +57,7 @@
 /// above, the ordering of elements in the result is guaranteed to match their
 /// order in the first input set, `buildingMaterials`.
 ///
-/// On the other hand, predicates such as ``isSubset(of:)-ptij`` tend to ignore
+/// On the other hand, predicates such as `isSubset(of:)-ptij` tend to ignore
 /// element ordering:
 ///
 ///     let moreMaterials: OrderedSet = ["bricks", "glass", "sticks", "straw"]
@@ -83,7 +83,7 @@
 /// For cases where `SetAlgebra` conformance is desired (such as when passing an
 /// ordered set to a function that is generic over that protocol), `OrderedSet`
 /// provides an efficient *unordered view* of its elements that conforms to
-/// `SetAlgebra`. This view is accessed through the ``unordered`` property, and
+/// `SetAlgebra`. This view is accessed through the `unordered` property, and
 /// it implements the same concept of equality as the standard `Set`, ignoring
 /// element ordering.
 ///
@@ -137,12 +137,12 @@
 /// namely, it supports mutation operations that merely change the
 /// order of elements (such as ``sort()`` or ``swapAt(_:_:)``, or just remove
 /// some subset of existing members (such as ``remove(at:)`` or
-/// ``removeAll(where:)``).
+/// `removeAll(where:)`).
 ///
 /// Accordingly, `OrderedSet` provides permutation operations from `MutableCollection`:
 /// - ``swapAt(_:_:)``
-/// - ``partition(by:)``
-/// - ``sort()``, ``sort(by:)``
+/// - `partition(by:)`
+/// - ``sort()``, `sort(by:)`
 /// - ``shuffle()``, ``shuffle(using:)``
 /// - ``reverse()``
 ///
@@ -518,6 +518,7 @@ extension OrderedSet {
     /// already contain it.
     ///
     /// - Parameter item: The element to insert.
+    /// - Parameter index: the index where to insert the element.
     ///
     /// - Returns: A pair `(inserted, index)`, where `inserted` is a Boolean value
     ///    indicating whether the operation added a new element, and `index` is

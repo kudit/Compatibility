@@ -6,6 +6,8 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
+v1.13.1 4/12/2026 Fixed documentation warnings (Swift 6.2 on macOS).
+
 v1.13.0 4/8/2026 Fixed typo with last changelog date.  Added simpleTitleCase() function that just makes the first letter of each word capitalized.  Don't affect other characters (if you want that, you can lowercase() and then titleCase()).
 
 v1.12.0 10/13/2025 Refactored build flags into a `Build` struct so that we can use in legacy versions that don't support `ObservableObject` required by `Application` (which also allows us to simplify configurations since these values no longer require Foundation).  Added `floor()` function when not available (like in WASM).  Added `widgetAccentable()` backport.  Added Build.Environment enum to facilitate iteration of build properties. ** Passes all Swift Package Index Checks! **
