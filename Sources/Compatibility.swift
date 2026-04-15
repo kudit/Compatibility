@@ -3,12 +3,12 @@
 //  
 //
 //  Created by Ben Ku on 7/5/2024.
-//  Copyright © 2025 Kudit, LLC. All rights reserved.
+//  Copyright © 2026 Kudit, LLC. All rights reserved.
 //
 
 public enum Compatibility {
     /// The version of the Compatibility Library since cannot get directly from Package.swift.
-    public static let version: Version = "1.13.2"
+    public static let version: Version = "1.13.3"
 }
 
 #if canImport(Foundation)

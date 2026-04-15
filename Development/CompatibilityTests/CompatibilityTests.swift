@@ -864,6 +864,32 @@ struct CompatibilityTests {
     }
 
 #if canImport(Foundation) && !(os(WASM) || os(WASI))
+    @Test("Date parse supported formats")
+    func date_parse_supported_formats() throws {
+        let mysqlDateTime = Date(parse: "2023-01-02 17:12:00")
+        #expect(mysqlDateTime?.mysqlDateTime == "2023-01-02 17:12:00")
+
+        let mysqlDate = Date(parse: "2023-01-02")
+        #expect(mysqlDate?.mysqlDate == "2023-01-02")
+
+        let numericDateTime = Date(parse: "20230102171200")
+        #expect(numericDateTime?.numericDateTime == "20230102171200")
+
+        let numericDate = Date(parse: "20230102")
+        #expect(numericDate?.numericDate == "20230102")
+
+        let spelledOutDate = Date(parse: "January 2, 2023")
+        #expect(spelledOutDate?.mysqlDate == "2023-01-02")
+
+        let abbreviatedDate = Date(parse: "Jan 2, 23")
+        #expect(abbreviatedDate?.mysqlDate == "2023-01-02")
+
+        #expect(Date(parse: "not a date") == nil)
+        #expect(Date.supportedParseFormats.count == 8)
+    }
+#endif
+
+#if canImport(Foundation) && !(os(WASM) || os(WASI))
     @Test("Identifiers")
     @MainActor
     @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)

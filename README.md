@@ -98,6 +98,13 @@ background {
 }
 ```
 
+### Parsing a date from any built-in supported Compatibility format:
+```swift
+let mysql = Date(parse: "2023-01-02 17:12:00")
+let spelledOut = Date(parse: "January 2, 2023")
+let numeric = Date(parse: "20230102171200")
+```
+
 ### Trick to generate warning that can easily be disabled without using `#warning()`:
 Defaults to true so application will need to call a function during init/launch:
 ```swift

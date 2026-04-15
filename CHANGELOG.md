@@ -6,6 +6,8 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
+v1.13.3 4/15/2026 Bumped patch version and updated 2026 copyright notices.  Added shared `Date.supportedParseFormats` documentation/implementation cleanup and tests for supported date parsing formats.  Clarified README requirements and added a date parsing example.  Removed the completed roadmap item for adding a failable supported-format date initializer since `Date(parse:)` now covers and documents that behavior explicitly.
+
 v1.13.2 4/14/2026 Fixed Installation Issue #1.
 
 v1.13.1 4/12/2026 Fixed documentation warnings (Swift 6.2 on macOS).
@@ -301,7 +303,6 @@ Known issues that need to be addressed.
 Planned features and anticipated API changes.  If you want to contribute, this is a great place to start.
 - [ ] Standardize test formats and creations.  Add #if canImport(Testing) to add as actual testable things instead of `try expect(` do `#expect(` so that we can get exactly where the tests fail.  Then see if we can sub-class into the tests.  See if we can still run in the UI as part of the app?
 - [ ] Add more tests for improved code coverage.
-- [ ] TODO: Add a failable initializer so that there is a way to init a date with a string but the format must be one of the supported formats.
 - [ ] Add option to pad function to allow padding on left and use this in function for prefixing with a number of 0s.  Left padding function: https://stackoverflow.com/questions/32338137/padding-a-swift-string-for-printing
 - [ ] Add isFirstRunOnDevice to differentiate from isFirstRun (across devices).
 - [ ] Update tab view to use backport version that can extend content into safe area but still respects safe area for scrolling and clearing (for Color test app).  Have content of tab view extend into safe area but the contents not completely ignore safe area.

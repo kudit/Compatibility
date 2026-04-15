@@ -66,6 +66,19 @@ public extension DateFormatter.Style {
 #endif
 
 public extension Date {
+    /// Supported date formats for `init(parse:)`, ordered from most to least specific.
+    static let supportedParseFormats = [
+        String.mysqlDateTimeFormat,
+        .mysqlDateFormat,
+        .numericDateTimeFormat,
+        .numericDateFormat,
+        .spelledOutDateTimeFormat,
+        .spelledOutDateFormat,
+        .abbreviatedDateTimeFormat,
+        .abbreviatedDateFormat,
+        // Add additional supported formats here
+    ]
+
     // MARK: - Initialization with string and format
     /// create a date `from` a date String in the specified `format` String
     /// see NSDateFormatter dateFormat string for information on symbols and formatting
@@ -107,19 +120,7 @@ public extension Date {
     /// Creates a date from a string.  If the string cannot be converted to a date, returns `nil`.  Supported formats include MySQL format and numeric formats.  Add additional conversions here once we support.
     init?(parse string: String) {
         // do the conversion of a string to a date using all the strategies available.
-        let formatsToTry = [
-            String.mysqlDateTimeFormat,
-            .mysqlDateFormat,
-            .numericDateTimeFormat,
-            .numericDateFormat,
-            .spelledOutDateTimeFormat,
-            .spelledOutDateFormat,
-            .abbreviatedDateTimeFormat,
-            .abbreviatedDateFormat,
-            // Add additional supported formats here
-        ]
-        
-        for format in formatsToTry {
+        for format in Self.supportedParseFormats {
             if let date = Date(from: string, format: format) {
                 self = date
                 return
@@ -162,6 +163,16 @@ public extension Date {
         try expect(String.mysqlDateFormat == "yyyy-MM-dd", String.mysqlDateFormat)
         try expect(String.numericDateTimeFormat == "yyyyMMddHHmmss", String.numericDateTimeFormat)
         try expect(String.numericDateFormat == "yyyyMMdd", String.numericDateFormat)
+        try expect(Date.supportedParseFormats == [
+            String.mysqlDateTimeFormat,
+            .mysqlDateFormat,
+            .numericDateTimeFormat,
+            .numericDateFormat,
+            .spelledOutDateTimeFormat,
+            .spelledOutDateFormat,
+            .abbreviatedDateTimeFormat,
+            .abbreviatedDateFormat,
+        ])
     }
     @available(macOS 12, *)
 #if !(os(WASM) || os(WASI))
