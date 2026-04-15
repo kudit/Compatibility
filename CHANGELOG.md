@@ -6,6 +6,8 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
+v1.13.2 4/14/2026 Fixed Installation Issue #1.
+
 v1.13.1 4/12/2026 Fixed documentation warnings (Swift 6.2 on macOS).
 
 v1.13.0 4/8/2026 Fixed typo with last changelog date.  Added simpleTitleCase() function that just makes the first letter of each word capitalized.  Don't affect other characters (if you want that, you can lowercase() and then titleCase()).
