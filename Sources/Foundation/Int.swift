@@ -118,7 +118,7 @@ internal let ordinalTests: TestClosure = {
 
 // MARK: - String output support
 public extension Int {
-    /// convenience for String(self) so that can be included in string interpolation without commas. (Instead of 1,999 it will display 1999).
+    /// convenience for String(self) so that can be included in string interpolation without commas. (Instead of \(Date.now.year) displaying as 2,026, \(Date.now.year.string) will output "2026").
     var string: String {
         return String(self)
     }

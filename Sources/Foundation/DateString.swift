@@ -208,11 +208,14 @@ public extension Date {
         try expect(date.numericDateTime == "20230102171201", String(describing:date.numericDateTime))
         let pretty = date.pretty
         var expectedPretty = "January 2, 2023 5:12:01 PM"
-        if #available(iOS 15, macOS 12, tvOS 15, watchOS 8, *) {
 #if canImport(Combine)
-            expectedPretty = "Jan 2, 2023 at 5:12 PM"
-#endif
+        if #available(iOS 17, macOS 14, tvOS 17, watchOS 10, *) {
+            // modern macOS shows: Jan 2, 2023 at 5:12 PM (note the non-breaking space before the PM)
+            expectedPretty = "Jan 2, 2023 at 5:12\u{202F}PM"
+        } else if #available(iOS 15, macOS 12, tvOS 15, watchOS 8, *) {
+            expectedPretty = "Jan 2, 2023, 5:12 PM"
         }
+#endif
         try expect(pretty == expectedPretty, "Unexpected pretty string.  Expected \(expectedPretty) but got \(pretty)")
     }
 }

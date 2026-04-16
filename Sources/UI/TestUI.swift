@@ -35,8 +35,22 @@ struct TestsRowsView: View {
         ForEach(tests, id: \.title) { item in
             TestRow(test: item)
                 .onAppear {
-                    item.run()
+                    if !item.isFinished() {
+                        item.run()
+                    }
                 }
+        }
+    }
+}
+
+@available(iOS 15, macOS 12, tvOS 17, watchOS 8, *)
+@MainActor
+final class AllTestsListModel: ObservableObject {
+    let namedTests: OrderedDictionary<String, [Test]>
+
+    init(additionalNamedTests: OrderedDictionary<String, [Test]> = [:]) {
+        self.namedTests = additionalNamedTests.merging(Test.namedTests) { additionalTests, baseTests in
+            additionalTests + baseTests
         }
     }
 }
@@ -62,21 +76,17 @@ public struct TestsListView: View {
 @available(iOS 15, macOS 12, tvOS 17, watchOS 8, *)
 @MainActor // unnecessary in Swift 6
 public struct AllTestsListView: View {
-    /// Ordered set of section names and list of tests.  Similar to an ordered set but we do care about the order so that's why it's an array of tuples rather than a simple dictionary.  TODO: Should we change this to an ordered dictionary for clarity?  Means adding a dependency of swift-collections which isn't necessarily a problem.
-    // TODO: Have this be some singleton shared state so that it's not tied to the view so it won't re-create when view changes.
-    public var namedTests = Test.namedTests
+    /// Holds the test instances for the life of the view so background tasks don't outlive constantly recreated rows.
+    @StateObject private var model: AllTestsListModel
     
     // only necessary since in module and otherwise inaccessible outside package
     public init(additionalNamedTests: OrderedDictionary<String, [Test]> = [:]) {
-        // put additional up front
-        self.namedTests = additionalNamedTests.merging(namedTests) { additionalTests, baseTests in
-            return additionalTests + baseTests
-        }
+        _model = StateObject(wrappedValue: AllTestsListModel(additionalNamedTests: additionalNamedTests))
     }
     public var body: some View {
         List {
-            ForEach(namedTests.keys.elements, id: \.self) { key in
-                let tests = namedTests[key] ?? []
+            ForEach(model.namedTests.keys.elements, id: \.self) { key in
+                let tests = model.namedTests[key] ?? []
                 Section(key) {
                     TestsRowsView(tests: tests)
                 }

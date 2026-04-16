@@ -6,6 +6,8 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
+v1.13.4 4/16/2026 Fixed the open Bugs to fix list items that were practical in the current codebase.  Reworked the test UI so `AllTestsListView` keeps stable test instances instead of recreating them during view updates, and `Test.run()` now avoids overlapping runs and doesn't require the test object to survive background completion updates.  Replaced the tvOS page-based demo navigation with a navigation list so content remains focusable after moving between demo screens, and added a tvOS `Menu` fallback that behaves like a navigable menu list instead of relying on the broken native tvOS menu behavior.  Added `BackportTabView`, which preserves normal `TabView { ... }.tabItem { ... }` syntax on supported platforms while automatically falling back to a navigation-list presentation on tvOS by reflecting the stored tab item label views.  Reverted `CompatibilityDemoView` back to a single shared tab declaration so the demo syntax is stable across platforms, while tvOS still gets accessible navigation.  Fixed the `Date.pretty` test expectation so it checks the platform-specific localized joiner between date and time.
+
 v1.13.3 4/15/2026 Bumped patch version and updated 2026 copyright notices.  Added shared `Date.supportedParseFormats` documentation/implementation cleanup and tests for supported date parsing formats.  Clarified README requirements and added a date parsing example.  Removed the completed roadmap item for adding a failable supported-format date initializer since `Date(parse:)` now covers and documents that behavior explicitly.
 
 v1.13.2 4/14/2026 Fixed Installation Issue #1.
@@ -294,10 +296,8 @@ v1.0 7/6/2024 Initial code and features pulled from KuditFrameworks.  Converted 
 
 ## Bugs to fix:
 Known issues that need to be addressed.
-- [ ] Menu buttons in tvOS do not work at all.  Figure out why menus don't work at all in tvOS.  Figure out how to backport
-- [ ] pagination in tvOS works but after pagination, view content isn't accessible.
-- [ ] Placard view looks weird in macOS.
-- [ ] Background tasks can cause crash issues when run from SwiftUI in iOS 15.  Guessing this has to do with threading and background tasks attempting to update values that may have been released?  Can reproduce by switching between All tests view and another view quickly on iPhone 7 simulator.  Fix by having the tests stored in a global singleton rather than as part of the view state?
+- [ ] On iPhone 7, the RadialLayout doesn't seem to work/display anything.  Please include a backport for this that works in iOS 15.
+- [ ] Figure out consistent syntax BackportTabView vs Backport.TabView and fix to be consistent.  Figure out which would be best from an API standpoint/convention/ease of use.
 
 ## Roadmap:
 Planned features and anticipated API changes.  If you want to contribute, this is a great place to start.

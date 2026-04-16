@@ -52,6 +52,8 @@ public struct PlacardShowcaseView: View {
     public var body: some View {
         VStack {
             Placard()
+                .aspectRatio(1.4, contentMode: .fit)
+                .frame(maxWidth: 420)
                 .backport.overlay {
                     Text("Hello World!")
                         .bold()
@@ -66,7 +68,7 @@ public struct PlacardShowcaseView: View {
             }
             .frame(height: 50)
             .padding(20)
-HStack {
+            HStack {
                 Placard().fill(.green)
                     .backport.background(.yellow)
                 Placard().fill(.red)
@@ -84,6 +86,7 @@ HStack {
             .padding(20)
             Placard()
                 .fill(Color.yellow)
+                .aspectRatio(1.4, contentMode: .fit)
         }.padding()
     }
 }

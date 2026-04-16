@@ -89,6 +89,14 @@ public func debugSuppress(_ block: () async throws -> Void) async rethrows {
 #endif
 @available(iOS 13, tvOS 13, watchOS 6, *)
 public final class Test: ObservableObject {
+    private final class WeakReference<T: AnyObject>: @unchecked Sendable {
+        weak var value: T?
+
+        init(_ value: T?) {
+            self.value = value
+        }
+    }
+
     public enum TestProgress: Sendable {
         case notStarted
         case running
@@ -124,26 +132,30 @@ public final class Test: ObservableObject {
     
     @available(iOS 13, tvOS 13, watchOS 6, *)
     public func run() {
+        if case .running = progress {
+            return
+        }
+        let task = self.task
+        let weakSelf = WeakReference(self)
         progress = .running
 #if !(os(WASM) || os(WASI))
-        // make sure to run the "work" in a separate thread since we don't want any of this running on the main thread and potentially bogging things down
-        background {
+        // Run off the main actor, then publish the result back on the main actor.
+        Task.detached(priority: .userInitiated) { [task, weakSelf] in
             do {
-                //await PHP.sleep(2)
-                try await self.task()
-                main { // editing progress must happen on main actor
-                    self.progress = .pass
+                try await task()
+                await MainActor.run {
+                    weakSelf.value?.progress = .pass
                 }
             } catch {
-                main {
+                await MainActor.run {
                     debug(error.localizedDescription, level: .ERROR)
-                    self.progress = .fail("\(error.localizedDescription)")
+                    weakSelf.value?.progress = .fail("\(error.localizedDescription)")
                 }
             }
         }
-        #else
+#else
         self.progress = .fail("Unable to run tests in WASM")
-        #endif
+#endif
     }
     
     public func isFinished() -> Bool {

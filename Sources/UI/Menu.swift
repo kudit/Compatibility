@@ -8,9 +8,9 @@
 #if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation) && !(os(WASM) || os(WASI))
 import SwiftUI
 
-// MARK: - Menu compatibility for watchOS
-#if os(watchOS)
-@available(watchOS 6, *)
+// MARK: - Menu compatibility for watchOS/tvOS
+#if os(watchOS) || os(tvOS)
+@available(tvOS 13, watchOS 6, *)
 public struct Menu<Content: View, LabelView: View>: View {
     var content: () -> Content
     var label: () -> LabelView
@@ -27,7 +27,7 @@ public struct Menu<Content: View, LabelView: View>: View {
         }, label: label)
     }
 }
-@available(watchOS 6, *)
+@available(tvOS 13, watchOS 6, *)
 public extension Menu where LabelView == Text {
     init(
         _ title: some StringProtocol,
@@ -38,7 +38,7 @@ public extension Menu where LabelView == Text {
         })
     }
 }
-@available(watchOS 6, *)
+@available(tvOS 13, watchOS 6, *)
 public extension Menu where LabelView == Image {
     init(
         _ title: some StringProtocol,
@@ -96,7 +96,6 @@ public struct MenuTest: View {
                     print(String(describing: symbol))
                     self.symbol = symbol
                 } label: {
-                    // TODO: Figure out why this doesn't show images in macOS and doesn't work at all in tvOS. work on macOS and make sure does work for watchOS
                     Label(symbol, systemImage: symbol)
                 }
             }
