@@ -1535,6 +1535,30 @@ private struct BackportTabViewContent<Content: View>: View {
 
 @available(iOS 13, tvOS 13, watchOS 6, *)
 public extension Backport where Content == Any {
+    /// Backport for SF Symbol images on platforms that don't support `Image(systemName:)`.
+    static func Image(systemName: String) -> AnyView {
+        if #available(macOS 11, *) {
+            return AnyView(SwiftUI.Image(systemName: systemName))
+        } else {
+            return AnyView(Text(symbolFallback(for: systemName)))
+        }
+    }
+
+    private static func symbolFallback(for systemName: String) -> String {
+        switch systemName {
+        case "calendar":
+            return "📅"
+        case "applelogo":
+            return "Apple"
+        case "multiply.circle.fill":
+            return "×"
+        default:
+            return systemName
+                .replacingOccurrences(of: ".fill", with: "")
+                .replacingOccurrences(of: ".", with: " ")
+        }
+    }
+
     /// Usage: `Backport.TabView { MyView().tabItem { Text("Label") } }`
     @ViewBuilder static func TabView<C: View>(@ViewBuilder content: () -> C) -> some View {
         BackportTabViewContent(content: content)

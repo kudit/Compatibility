@@ -115,7 +115,7 @@ private struct _RadialLayout: Layout {
             Circle()
                 .fill([Color].rainbow[nth: item])
                 .frame(width: 64)
-                .overlay(Image(systemName: "calendar")
+                .overlay(Backport.Image(systemName: "calendar")
                     .foregroundColor(.white)
                 )
         }

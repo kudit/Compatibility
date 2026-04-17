@@ -6,6 +6,8 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
+v1.13.7 4/17/2026 Added a `Backport.Image(systemName:)` helper that works across platforms without relying on result-builder limited-availability handling, allowing older macOS builds to fall back cleanly when SF Symbols-backed `Image(systemName:)` is unavailable.  Updated the low-availability radial preview usage to rely on that helper.
+
 v1.13.6 4/17/2026 Relaxed the public availability of the new `RadialLayout` backport and `RadialStack` back down to the earlier supported SwiftUI platforms: iOS 13, macOS 10.15, tvOS 13, and watchOS 6.  This keeps the new variadic radial fallback usable on older OS versions while preserving the native `Layout` implementation on iOS 16+ and corresponding newer platform releases.
 
 v1.13.5 4/17/2026 Added a backport of `RadialLayout` so existing `RadialLayout { ... }` usage now works on platforms that predate SwiftUI `Layout`.  The container now uses the native layout implementation on iOS 16+ and a variadic-view radial positioning fallback on earlier supported SwiftUI platforms.  `RadialStack` now delegates directly to the same implementation for consistent behavior.  Refactored the new tab container API from `BackportTabView` to `Backport.TabView` so it matches the rest of the backport naming style while keeping the same tvOS navigation-list fallback behavior.  Fixed a regression where the non-tvOS path recursively called `Backport.TabView` instead of `SwiftUI.TabView`, which caused a runtime crash during view construction.  Fixed bad date test.
