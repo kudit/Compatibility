@@ -1515,10 +1515,10 @@ private struct BackportTVNavigationTabView<Content: View>: View {
 }
 
 @available(iOS 13, tvOS 13, watchOS 6, *)
-public struct BackportTabView<Content: View>: View {
+private struct BackportTabViewContent<Content: View>: View {
     private let content: Content
 
-    public init(@ViewBuilder content: () -> Content) {
+    init(@ViewBuilder content: () -> Content) {
         self.content = content()
     }
 
@@ -1526,7 +1526,7 @@ public struct BackportTabView<Content: View>: View {
 #if os(tvOS)
         BackportTVNavigationTabView(builtContent: content)
 #else
-        Backport.TabView {
+        SwiftUI.TabView {
             content
         }
 #endif
@@ -1534,14 +1534,10 @@ public struct BackportTabView<Content: View>: View {
 }
 
 @available(iOS 13, tvOS 13, watchOS 6, *)
-extension Backport where Content == Any {
-    /// Usage: Backport.AsyncImage(url: URL)
+public extension Backport where Content == Any {
+    /// Usage: `Backport.TabView { MyView().tabItem { Text("Label") } }`
     @ViewBuilder static func TabView<C: View>(@ViewBuilder content: () -> C) -> some View {
-        if #available(iOS 14, macOS 11, tvOS 14, watchOS 7, *) {
-            SwiftUI.TabView(content: content)
-        } else {
-            VStack(content: content)
-        }
+        BackportTabViewContent(content: content)
     }
 }
 public enum BackportTabViewStyle: Sendable {
@@ -1756,7 +1752,7 @@ public struct BackportNavigationStack<Root: View>: View {
 
 @available(iOS 13, tvOS 13, watchOS 6, *)
 #Preview("Page Tabs") {
-    BackportTabView {
+    Backport.TabView {
         Color.red
         Color.green
         Color.blue
@@ -1764,7 +1760,7 @@ public struct BackportNavigationStack<Root: View>: View {
 }
 @available(iOS 13, tvOS 13, watchOS 6, *)
 #Preview("Automatic Tabs") {
-    BackportTabView {
+    Backport.TabView {
         Color.red
         Color.green
         Color.blue

@@ -49,7 +49,7 @@ struct CompatibilityDemoView: View {
     ]
 
     var body: some View {
-        BackportTabView {
+        Backport.TabView {
             if #available(watchOS 9, *) {
                 CompatibilityEnvironmentTestView()
                     .tabItem {

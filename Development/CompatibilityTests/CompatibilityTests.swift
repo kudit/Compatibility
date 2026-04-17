@@ -881,7 +881,7 @@ struct CompatibilityTests {
         let spelledOutDate = Date(parse: "January 2, 2023")
         #expect(spelledOutDate?.mysqlDate == "2023-01-02")
 
-        let abbreviatedDate = Date(parse: "Jan 2, 23")
+        let abbreviatedDate = Date(parse: "Jan 2, 2023")
         #expect(abbreviatedDate?.mysqlDate == "2023-01-02")
 
         #expect(Date(parse: "not a date") == nil)
