@@ -6,6 +6,8 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
+v1.13.8 4/17/2026 Simplified the tvOS behavior of `Backport.TabView` so it now uses the normal non-page `SwiftUI.TabView` presentation instead of the navigation-list fallback.  Removed the now-unneeded reflected tab item parsing helpers.  This keeps the backport API stable while relying on the built-in tvOS tab behavior again.  Removed the experimental `Backport.TabView` wrapper entirely now that the existing `TabView` plus `.backport.tabViewStyle(.page)` behavior is sufficient.  `CompatibilityDemoView` and related previews now use plain `TabView` again, relying on the page-style backport to no-op on tvOS instead of introducing a separate tab container API.
+
 v1.13.7 4/17/2026 Added a `Backport.Image(systemName:)` helper that works across platforms without relying on result-builder limited-availability handling, allowing older macOS builds to fall back cleanly when SF Symbols-backed `Image(systemName:)` is unavailable.  Updated the low-availability radial preview usage to rely on that helper.
 
 v1.13.6 4/17/2026 Relaxed the public availability of the new `RadialLayout` backport and `RadialStack` back down to the earlier supported SwiftUI platforms: iOS 13, macOS 10.15, tvOS 13, and watchOS 6.  This keeps the new variadic radial fallback usable on older OS versions while preserving the native `Layout` implementation on iOS 16+ and corresponding newer platform releases.

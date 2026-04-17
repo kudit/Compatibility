@@ -1436,104 +1436,6 @@ public extension PickerStyle where Self == SegmentedPickerStyle {
 
 // MARK: TabView
 @available(iOS 13, tvOS 13, watchOS 6, *)
-private struct BackportTabItem: Identifiable {
-    let id: Int
-    let label: AnyView
-    let content: AnyView
-}
-
-@available(iOS 13, tvOS 13, watchOS 6, *)
-private func backportTabLeafViews(from value: Any) -> [Any] {
-    let mirror = Mirror(reflecting: value)
-    if mirror.displayStyle == .optional || mirror.displayStyle == .tuple {
-        return mirror.children.flatMap { backportTabLeafViews(from: $0.value) }
-    }
-
-    let typeName = String(describing: type(of: value))
-    if typeName.hasPrefix("Group<") || typeName.hasPrefix("TupleView<") || typeName.contains("ConditionalContent") || typeName.contains("_ConditionalContent") {
-        return mirror.children.flatMap { backportTabLeafViews(from: $0.value) }
-    }
-
-    return [value]
-}
-
-@available(iOS 13, tvOS 13, watchOS 6, *)
-private func backportTabLabel(from value: Any) -> AnyView? {
-    let mirror = Mirror(reflecting: value)
-    let typeName = String(describing: type(of: value))
-    if typeName.contains("TabItemLabel_v0") {
-        for child in mirror.children {
-            if child.label == "content", let label = child.value as? AnyView {
-                return label
-            }
-        }
-    }
-    for child in mirror.children {
-        if let label = backportTabLabel(from: child.value) {
-            return label
-        }
-    }
-    return nil
-}
-
-@available(iOS 13, tvOS 13, watchOS 6, *)
-private func backportAnyView(from value: Any) -> AnyView {
-    if let view = value as? any View {
-        return AnyView(view)
-    }
-    return AnyView(Text(String(describing: type(of: value))))
-}
-
-@available(iOS 13, tvOS 13, watchOS 6, *)
-private func backportTabItems<Content: View>(from content: Content) -> [BackportTabItem] {
-    let leafViews = backportTabLeafViews(from: content)
-    return leafViews.enumerated().map { index, leaf in
-        let label = backportTabLabel(from: leaf) ?? AnyView(Text("Tab \(index + 1)"))
-        return BackportTabItem(id: index, label: label, content: backportAnyView(from: leaf))
-    }
-}
-
-@available(iOS 13, tvOS 13, watchOS 6, *)
-private struct BackportTVNavigationTabView<Content: View>: View {
-    let builtContent: Content
-
-    var items: [BackportTabItem] {
-        backportTabItems(from: builtContent)
-    }
-
-    var body: some View {
-        BackportNavigationStack {
-            List(items) { item in
-                NavigationLink {
-                    item.content
-                } label: {
-                    item.label
-                }
-            }
-        }
-    }
-}
-
-@available(iOS 13, tvOS 13, watchOS 6, *)
-private struct BackportTabViewContent<Content: View>: View {
-    private let content: Content
-
-    init(@ViewBuilder content: () -> Content) {
-        self.content = content()
-    }
-
-    public var body: some View {
-#if os(tvOS)
-        BackportTVNavigationTabView(builtContent: content)
-#else
-        SwiftUI.TabView {
-            content
-        }
-#endif
-    }
-}
-
-@available(iOS 13, tvOS 13, watchOS 6, *)
 public extension Backport where Content == Any {
     /// Backport for SF Symbol images on platforms that don't support `Image(systemName:)`.
     static func Image(systemName: String) -> AnyView {
@@ -1557,11 +1459,6 @@ public extension Backport where Content == Any {
                 .replacingOccurrences(of: ".fill", with: "")
                 .replacingOccurrences(of: ".", with: " ")
         }
-    }
-
-    /// Usage: `Backport.TabView { MyView().tabItem { Text("Label") } }`
-    @ViewBuilder static func TabView<C: View>(@ViewBuilder content: () -> C) -> some View {
-        BackportTabViewContent(content: content)
     }
 }
 public enum BackportTabViewStyle: Sendable {
@@ -1776,7 +1673,7 @@ public struct BackportNavigationStack<Root: View>: View {
 
 @available(iOS 13, tvOS 13, watchOS 6, *)
 #Preview("Page Tabs") {
-    Backport.TabView {
+    TabView {
         Color.red
         Color.green
         Color.blue
@@ -1784,7 +1681,7 @@ public struct BackportNavigationStack<Root: View>: View {
 }
 @available(iOS 13, tvOS 13, watchOS 6, *)
 #Preview("Automatic Tabs") {
-    Backport.TabView {
+    TabView {
         Color.red
         Color.green
         Color.blue
