@@ -16,7 +16,7 @@ import SwiftUI
 //    }
 //}
 
-@available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public struct RadialStack<Content:View>: View {
     public var content: () -> Content
     public init(@ViewBuilder _ content: @escaping () -> Content) {
@@ -29,7 +29,7 @@ public struct RadialStack<Content:View>: View {
     }
 }
 
-@available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public struct RadialLayout<Content: View>: View {
     private let content: Content
 
@@ -50,7 +50,7 @@ public struct RadialLayout<Content: View>: View {
     }
 }
 
-@available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 private struct RadialLayoutBackportRoot: _VariadicView_MultiViewRoot {
     @ViewBuilder
     func body(children: _VariadicView.Children) -> some View {
@@ -108,7 +108,7 @@ private struct _RadialLayout: Layout {
     }
 }
 
-@available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 #Preview("Radial") {
     RadialLayout {
         ForEach(0 ..< 24) { item in
@@ -123,7 +123,7 @@ private struct _RadialLayout: Layout {
     .aspectRatio(contentMode: .fit)
 }
 
-@available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 #Preview("Colors") {
     RadialStack {
         Group {
@@ -137,7 +137,7 @@ private struct _RadialLayout: Layout {
 
 // For #Previews
 // Color framework provides better rainbow variable with 7 colors.  This is 6 colors.
-@available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 extension Array where Element == Color {
     /// 6 color ROYGBV(purple for violet)
     static var rainbow: [Color] {
