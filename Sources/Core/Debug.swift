@@ -15,7 +15,7 @@ public struct CompatibilityConfiguration: PropertyIterable {
     public var debugLevelsToIncludeContext = DebugLevels.important
     
     /// Set whether timestamps should be included in debug messages.  If you need to customize the format of timestamps, use the `debugFormat()` override.
-    @available(*, deprecated, renamed: "debugLevelsToIncludeContext", message: "Set `debugLevelsToIncludeContext` instead.")
+    @available(*, deprecated, renamed: "debugLevelsToIncludeTimestamp", message: "Set `debugLevelsToIncludeTimestamp` instead.")
     public var debugIncludeTimestamp: Bool {
         get {
             debugLevelsToIncludeTimestamp != .none

@@ -1436,7 +1436,89 @@ public extension PickerStyle where Self == SegmentedPickerStyle {
 
 // MARK: TabView
 @available(iOS 13, tvOS 13, watchOS 6, *)
+private struct BackportTabViewContent<Content: View>: View {
+    private let content: Content
+
+    init(@ViewBuilder content: () -> Content) {
+        self.content = content()
+    }
+
+    public var body: some View {
+#if os(watchOS)
+        Group {
+            if #available(watchOS 7, *) {
+                SwiftUI.TabView {
+                    content
+                }
+            } else {
+                fallback
+            }
+        }
+#else
+        SwiftUI.TabView {
+            content
+        }
+#endif
+    }
+
+    private var fallback: some View {
+        ScrollView {
+            VStack {
+                content
+            }
+        }
+    }
+}
+
+@available(iOS 13, tvOS 13, watchOS 6, *)
+private struct BackportSelectionTabViewContent<SelectionValue: Hashable, Content: View>: View {
+    private let selection: Binding<SelectionValue>?
+    private let content: Content
+
+    init(selection: Binding<SelectionValue>?, @ViewBuilder content: () -> Content) {
+        self.selection = selection
+        self.content = content()
+    }
+
+    public var body: some View {
+#if os(watchOS)
+        Group {
+            if #available(watchOS 7, *) {
+                SwiftUI.TabView(selection: selection) {
+                    content
+                }
+            } else {
+                fallback
+            }
+        }
+#else
+        SwiftUI.TabView(selection: selection) {
+            content
+        }
+#endif
+    }
+
+    private var fallback: some View {
+        ScrollView {
+            VStack {
+                content
+            }
+        }
+    }
+}
+
+@available(iOS 13, tvOS 13, watchOS 6, *)
 public extension Backport where Content == Any {
+    /// Usage: `Backport.TabView { MyView() }`
+    @ViewBuilder static func TabView<C: View>(@ViewBuilder content: () -> C) -> some View {
+        BackportTabViewContent(content: content)
+    }
+
+    /// Usage: `Backport.TabView(selection: $selection) { MyView().tag(selection) }`
+    @ViewBuilder static func TabView<SelectionValue: Hashable, C: View>(selection: Binding<SelectionValue>?, @ViewBuilder content: () -> C) -> some View {
+        BackportSelectionTabViewContent(selection: selection, content: content)
+    }
+
     /// Backport for SF Symbol images on platforms that don't support `Image(systemName:)`.
     static func Image(systemName: String) -> AnyView {
         if #available(macOS 11, *) {
@@ -1673,7 +1755,7 @@ public struct BackportNavigationStack<Root: View>: View {
 
 @available(iOS 13, tvOS 13, watchOS 6, *)
 #Preview("Page Tabs") {
-    TabView {
+    Backport.TabView {
         Color.red
         Color.green
         Color.blue
@@ -1681,7 +1763,7 @@ public struct BackportNavigationStack<Root: View>: View {
 }
 @available(iOS 13, tvOS 13, watchOS 6, *)
 #Preview("Automatic Tabs") {
-    TabView {
+    Backport.TabView {
         Color.red
         Color.green
         Color.blue

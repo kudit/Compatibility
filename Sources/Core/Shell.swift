@@ -6,6 +6,7 @@
 //
 
 
+// don't expose this to ensure errors when compiling for other platforms when we're just using this as a shell script.  This is expected behavior to prevent compiling as a mac catalyst app.
 #if os(macOS) && canImport(Foundation) && !(os(WASM) || os(WASI))
 public extension Compatibility {
     /// Executes a shell command and returns the result (or errors) as a String (if you just need to execute and don't need the result, that's okay).
