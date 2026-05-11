@@ -6,7 +6,9 @@ NOTE: Version needs to be updated in the following places:
 - [ ] Compatibility.version constant (must be hard coded since inaccessible in code)
 - [ ] Update changelog and tag with matching version in GitHub.
 
-v1.13.9 5/8/2026 Fixed documentation typo with `debugLevelsToIncludeTimestamp`.  Annotated safeShell to make it clear that the errors are expected on other platforms. Added Backport.TabView for watchOS 6.
+v1.13.10 5/9/2026 Updated `RadialLayout` and `RadialStack` so wrapped last items are masked by the first items at the radial seam, preserving the intended visual stacking when items overlap.  Made the Xcode project's local `Compatibility Library` package product reference explicit so package resolution survives clean rebuilds.
+
+v1.13.9 5/8/2026 Fixed documentation typo with `debugLevelsToIncludeTimestamp`.  Annotated safeShell to make it clear that the errors are expected on other platforms. Added Backport.TabView for watchOS 6. ** Passes all Swift Package Index Checks! **
 
 v1.13.8 4/17/2026 Simplified the tvOS behavior of `Backport.TabView` so it now uses the normal non-page `SwiftUI.TabView` presentation instead of the navigation-list fallback.  Removed the now-unneeded reflected tab item parsing helpers.  This keeps the backport API stable while relying on the built-in tvOS tab behavior again.  Removed the experimental `Backport.TabView` wrapper entirely now that the existing `TabView` plus `.backport.tabViewStyle(.page)` behavior is sufficient.  `CompatibilityDemoView` and related previews now use plain `TabView` again, relying on the page-style backport to no-op on tvOS instead of introducing a separate tab container API.
 

@@ -38,20 +38,14 @@ public struct RadialLayout<Content: View>: View {
     }
 
     public var body: some View {
-        if #available(iOS 16, macOS 13, tvOS 16, watchOS 9, *) {
-            _RadialLayout {
-                content
-            }
-        } else {
-            _VariadicView.Tree(RadialLayoutBackportRoot()) {
-                content
-            }
+        _VariadicView.Tree(RadialLayoutRoot()) {
+            content
         }
     }
 }
 
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
-private struct RadialLayoutBackportRoot: _VariadicView_MultiViewRoot {
+private struct RadialLayoutRoot: _VariadicView_MultiViewRoot {
     @ViewBuilder
     func body(children: _VariadicView.Children) -> some View {
         GeometryReader { geometry in
@@ -61,10 +55,14 @@ private struct RadialLayoutBackportRoot: _VariadicView_MultiViewRoot {
             let angle = Angle.degrees(360.0 / Double(count)).radians
 
             ZStack {
-                ForEach(Array(children.enumerated()), id: \.offset) { index, child in
+                ForEach(0..<children.count, id: \.self) { index in
                     let point = radialPoint(in: bounds, radius: radius, angle: angle, index: index)
-                    child
-                        .position(point)
+                    ZStack {
+                        children[index]
+                            .position(point)
+                    }
+                    .frame(width: bounds.width, height: bounds.height)
+                    .mask(radialMask(for: index, children: children, in: bounds, radius: radius, angle: angle))
                 }
             }
             .frame(width: bounds.width, height: bounds.height)
@@ -78,33 +76,36 @@ private struct RadialLayoutBackportRoot: _VariadicView_MultiViewRoot {
         point.y += bounds.midY
         return point
     }
-}
 
-@available(iOS 16, macOS 13, tvOS 16, watchOS 9, *)
-private struct _RadialLayout: Layout {
-    init() {}
-
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        proposal.replacingUnspecifiedDimensions()
-    }
-        // Place subviews
-
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        let radius = min(bounds.width, bounds.height) / 3.0
-        let angle = Angle.degrees(360.0 / Double(max(subviews.count, 1))).radians
-        for (index, subview) in subviews.enumerated() {
-            // Position
-            var point = CGPoint(x: 0, y: -radius).applying(CGAffineTransform(rotationAngle: CGFloat(angle) * CGFloat(index)))
-            
-            // Center
-            point.x += bounds.midX
-            point.y += bounds.midY
-            
-            // Place subviews
-            subview.place(at: point, anchor: .center, proposal: .unspecified)
+    @ViewBuilder
+    private func radialMask(
+        for index: Int,
+        children: _VariadicView.Children,
+        in bounds: CGRect,
+        radius: Double,
+        angle: Double
+    ) -> some View {
+        let maskingIndices = wrappedMaskingIndices(for: index, count: children.count)
+        if maskingIndices.isEmpty {
+            Color.white
+        } else {
+            ZStack {
+                Color.white
+                ForEach(maskingIndices, id: \.self) { maskingIndex in
+                    children[maskingIndex]
+                        .position(radialPoint(in: bounds, radius: radius, angle: angle, index: maskingIndex))
+                        .blendMode(.destinationOut)
+                }
+            }
+            .frame(width: bounds.width, height: bounds.height)
+            .compositingGroup()
         }
-        // TODO: Figure out how to duplicate half of the 0 index subview so in case of overlap it doesn't double overlap at top
-        // TODO: Add a mask to the last image with the first image
+    }
+
+    private func wrappedMaskingIndices(for index: Int, count: Int) -> Range<Int> {
+        // Later views past the halfway point can visually wrap over the first views at the seam.
+        let visibleIndexCount = max(0, index - count / 2)
+        return 0..<visibleIndexCount
     }
 }
 

@@ -224,6 +224,9 @@
 				Base,
 			);
 			mainGroup = B50E7B622C385BD8002D3F53;
+			packageReferences = (
+				B52C8E0D2C3886E6008EBD2D /* XCLocalSwiftPackageReference ".." */,
+			);
 			productRefGroup = B50E7B6D2C385BD8002D3F53 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -352,7 +355,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
-				MARKETING_VERSION = 1.13.9;
+				MARKETING_VERSION = 1.13.10;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -423,7 +426,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
-				MARKETING_VERSION = 1.13.9;
+				MARKETING_VERSION = 1.13.10;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				OTHER_SWIFT_FLAGS = "";
@@ -658,17 +661,27 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCLocalSwiftPackageReference section */
+		B52C8E0D2C3886E6008EBD2D /* XCLocalSwiftPackageReference ".." */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ..;
+		};
+/* End XCLocalSwiftPackageReference section */
+
 /* Begin XCSwiftPackageProductDependency section */
 		B5198A0F2C38FAEB00CEA720 /* Compatibility Library */ = {
 			isa = XCSwiftPackageProductDependency;
+			package = B52C8E0D2C3886E6008EBD2D /* XCLocalSwiftPackageReference ".." */;
 			productName = "Compatibility Library";
 		};
 		B579D4A42C46FF1A009A037A /* Compatibility Library */ = {
 			isa = XCSwiftPackageProductDependency;
+			package = B52C8E0D2C3886E6008EBD2D /* XCLocalSwiftPackageReference ".." */;
 			productName = "Compatibility Library";
 		};
 		B594CFB62DB0BACA001E8658 /* Compatibility Library */ = {
 			isa = XCSwiftPackageProductDependency;
+			package = B52C8E0D2C3886E6008EBD2D /* XCLocalSwiftPackageReference ".." */;
 			productName = "Compatibility Library";
 		};
 /* End XCSwiftPackageProductDependency section */
