@@ -1,5 +1,8 @@
 # ChangeLog
 
+## v1.14.1 2026-06-29
+Made `Build.Environment.test` public so package clients can check each environment case directly.
+
 ## v1.14.0 2026-06-28
 Moved generic Symbol code from Device into Compatibility, including shared `SymbolRepresentable` support for environment metadata.
 Added a minor-version release boundary for the manual environment display work, including the new `EnvironmentsView` and Compatibility demo integration.

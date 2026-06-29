@@ -131,7 +131,11 @@ public struct Build {
             return self
         }
 
-        var test: Bool {
+        /// Returns whether this environment is active for the current build/runtime.
+        ///
+        /// This is public so package clients can show the same environment state that
+        /// Compatibility uses internally without duplicating the platform checks.
+        public var test: Bool {
             switch self {
             case .debug: return Build.isDebug
             case .simulator: return Build.isSimulator
