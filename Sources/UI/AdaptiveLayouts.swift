@@ -20,21 +20,34 @@ import SwiftUI
 /// ```
 @available(iOS 13, tvOS 13, watchOS 6, *)
 public struct AdaptiveLayout<PContent, LContent>: View where PContent: View, LContent: View {
+    let orientation: AStack.Orientation
     let portrait: () -> PContent
     let landscape: () -> LContent
 
-    public init(@ViewBuilder portrait: @escaping () -> PContent, @ViewBuilder landscape: @escaping () -> LContent) {
+    public init(orientation: AStack.Orientation = .adaptive, @ViewBuilder portrait: @escaping () -> PContent, @ViewBuilder landscape: @escaping () -> LContent) {
+        self.orientation = orientation
         self.portrait = portrait
         self.landscape = landscape
     }
     
     public var body: some View {
-        GeometryReader { proxy in
-            if proxy.size.width > proxy.size.height {
-                // landscape
-                landscape()
-            } else {
-                portrait()
+        switch orientation {
+        case .horizontal:
+            // Explicit landscape mode avoids GeometryReader so fixed-orientation uses do
+            // not unexpectedly expand inside compact parent layouts.
+            landscape()
+        case .vertical:
+            // Explicit portrait mode avoids GeometryReader so fixed-orientation uses do
+            // not unexpectedly expand inside compact parent layouts.
+            portrait()
+        case .adaptive:
+            GeometryReader { proxy in
+                if orientation.resolved(for: proxy) == .horizontal {
+                    // landscape
+                    landscape()
+                } else {
+                    portrait()
+                }
             }
         }
     }
@@ -45,30 +58,44 @@ public struct AdaptiveLayout<PContent, LContent>: View where PContent: View, LCo
 public struct AStack: View {
     let alignment: Alignment
     let spacing: CGFloat?
+    let orientation: Orientation
     /// Content will be provided horizontal = true or false depending on the chosen alignment
     let content: (Orientation) -> AnyView
     
     public enum Orientation: CaseIterable, Sendable {
         case horizontal
         case vertical
+        case adaptive
+
+        fileprivate func resolved(for proxy: GeometryProxy) -> Orientation {
+            // `.adaptive` preserves the original width-vs-height behavior while the concrete
+            // cases give callers a stable layout when the surrounding view already knows best.
+            if self == .adaptive {
+                return proxy.size.width > proxy.size.height ? .horizontal : .vertical
+            }
+            return self
+        }
     }
     
     public init<Content: View>(alignment: Alignment = .center,
          spacing: CGFloat? = nil,
+         orientation: Orientation = .adaptive,
          @ViewBuilder content: @escaping (Orientation) -> Content) {
         self.alignment = alignment
         self.spacing = spacing
+        self.orientation = orientation
         self.content = { orientation in AnyView(content(orientation)) }
     }
     // if we don't care about the orientation, we can call this without the parameter
     public init<Content: View>(alignment: Alignment = .center,
          spacing: CGFloat? = nil,
+                orientation: Orientation = .adaptive,
                 @ViewBuilder content: @escaping () -> Content) {
-        self.init(alignment: alignment, spacing: spacing, content: { _ in content() } )
+        self.init(alignment: alignment, spacing: spacing, orientation: orientation, content: { _ in content() } )
     }
 
     public var body: some View {
-        AdaptiveLayout {
+        AdaptiveLayout(orientation: orientation) {
             VStack(alignment: alignment.horizontal,
                    spacing: spacing) {
                 content(.vertical)

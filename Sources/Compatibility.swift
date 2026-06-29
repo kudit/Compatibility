@@ -8,7 +8,7 @@
 
 public enum Compatibility {
     /// The version of the Compatibility Library since cannot get directly from Package.swift.
-    public static let version: Version = "1.13.10"
+    public static let version: Version = "1.14.0"
 }
 
 #if canImport(Foundation)
@@ -309,10 +309,9 @@ public struct CompatibilityEnvironmentTestView: View {
             Section("Environment") {
                 Backport.LabeledContent("Swift Version:", value: Build.swiftVersion)
                 Backport.LabeledContent("Compiler Version:", value: Build.compilerVersion)
-                ForEach(Build.Environment.allCases) { environment in
-                    TestCheck("is\(environment.rawValue.whitespaceStripped)", environment.test)
-                        .backport.focusable(true) // to allow scrolling in tvOS
-                }
+                EnvironmentsView(Build.environments())
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contentShape(Rectangle())
             }
             Section("Dates") {
                 Backport.LabeledContent("Now Backport:", value: Date.nowBackport.pretty)

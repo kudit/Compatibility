@@ -1,4 +1,4 @@
-public enum CloudStatus: CustomStringConvertible, Sendable, CaseIterable {
+public enum CloudStatus: CustomStringConvertible, Sendable, CaseIterable, SymbolRepresentable {
     case notSupported, available, unavailable
     public var description: String {
         switch self {

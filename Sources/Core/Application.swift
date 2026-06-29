@@ -16,6 +16,10 @@ extension String {
     public static let unknownAppIdentifier = "com.unknown.unknown"
 }
 
+#if canImport(UIKit)
+import UIKit
+#endif
+
 // Environment struct that can get the build environment info since Application isn't supported on legacy platforms.  This allows pulling these out into a struct rather than an ObservableObject which is necessary for some of the Application features.
 public struct Build {
     /// will be true if we're in a debug configuration and false if we're building for release
@@ -67,7 +71,7 @@ public struct Build {
         "Unsupported"
 #endif
     }
-    
+
     /// Returns the version number of Swift being used to run?
     public static var swiftVersion: String {
 #if swift(>=9.0)
@@ -112,14 +116,15 @@ public struct Build {
         "Unsupported"
 #endif
     }
-    
+
     // MARK: - Environmental info
-    public enum Environment: String, RawRepresentable, CaseIterable, Identifiable {
+    public enum Environment: String, RawRepresentable, CaseIterable, Identifiable, CaseNameConvertible, SymbolRepresentable {
         case debug = "Debug"
         case simulator = "Simulator"
         case playground = "Playground"
         case preview = "Preview"
         case realDevice = "Real Device"
+        case designedForiPad = "Designed for iPad"
         case macCatalyst = "Mac Catalyst"
         
         public var id: Self {
@@ -133,11 +138,42 @@ public struct Build {
             case .playground: return Build.isPlayground
             case .preview: return Build.isPreview
             case .realDevice: return Build.isRealDevice
+            case .designedForiPad: return Build.isDesignedForiPad
             case .macCatalyst: return Build.isMacCatalyst
             }
         }
+
+        public var symbolName: String {
+            switch self {
+            case .debug:
+                return "ladybug"
+            case .realDevice:
+                return "square.fill"
+            case .simulator:
+                return "squareshape.squareshape.dotted"
+            case .playground:
+                return "swift"
+            case .preview:
+                return "curlybraces.square"
+            case .designedForiPad:
+                return "ipad.badge.play"
+            case .macCatalyst:
+                return "macwindow.on.rectangle"
+            @unknown default:
+                return "questionmark.circle"
+            }
+        }
+
+        /// String Description for environment
+        public var label: String {
+            return self.rawValue
+        }
     }
-    
+
+    /// Returns a set of Build.Environment objects where the test is true for this build.
+    public static func environments() -> [Build.Environment] {
+        return Build.Environment.allCases.filter(\.test)
+    }
     /// Returns `true` if running on the simulator vs actual device.
     public static var isSimulator: Bool {
 #if targetEnvironment(simulator)
@@ -148,7 +184,7 @@ public struct Build {
         return false
 #endif
     }
-    
+
     // In macOS Playgrounds Preview: swift-playgrounds-dev-previews.swift-playgrounds-app.hdqfptjlmwifrrakcettacbhdkhn.501.KuditFramework
     // In macOS Playgrounds Running: swift-playgrounds-dev-run.swift-playgrounds-app.hdqfptjlmwifrrakcettacbhdkhn.501.KuditFrameworksApp
     // In iPad Playgrounds Preview: swift-playgrounds-dev-previews.swift-playgrounds-app.agxhnwfqkxciovauscbmuhqswxkm.501.KuditFramework
@@ -160,31 +196,77 @@ public struct Build {
         debug("New Swift Playgrounds test!", level: .WARNING)
         return true
 #elseif canImport(Foundation)
-        //print("Testing inPlayground: Bundles", Bundle.allBundles.map { $0.bundleIdentifier }.description)")
-        if Bundle.allBundles.contains(where: { ($0.bundleIdentifier ?? "").contains("swift-playgrounds") }) {
-            //print("in playground")
-            return true
-        } else {
-            //print("not in playground")
-            return false
-        }
+        // Swift Playgrounds 4.7 has been sensitive to both custom compilation
+        // conditions and closure-heavy checks here, so keep this as plain runtime code.
+        return bundleIdentifierContains("swift-playgrounds")
 #else
-        false
+        return false
 #endif
     }
-    
+
     /// Returns `true` if running in an XCode or Swift Playgrounds #Preview macro.
-    public static var isPreview: Bool {
 #if canImport(Foundation)
-        ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
-#else
-        false
-#endif
+    public static var isPreview: Bool {
+        let previewEnvironment = ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
+        // Swift Playgrounds uses separate bundle identifiers for the preview canvas and
+        // the running app but apparently the process reports XCODE_RUNNING_FOR_PREVIEWS.
+        let isSwiftPlaygroundsRunBundle = bundleIdentifierContains("swift-playgrounds-dev-run")
+        return previewEnvironment && !isSwiftPlaygroundsRunBundle // don't report as preview if we're running a swift playgrounds app
     }
-    
+#else
+    public static var isPreview: Bool {
+        return false
+    }
+#endif
+
+    /// Helper for looking up a bundle identifier.
+    private static func bundleIdentifierContains(_ string: String) -> Bool {
+#if canImport(Foundation)
+        // Avoid `contains(where:)` here because Swift Playgrounds has reported misleading
+        // parser errors in this area; a simple loop is boring in the best possible way.
+        // previous code:         if Bundle.allBundles.contains(where: { ($0.bundleIdentifier ?? "").contains("swift-playgrounds") }) {
+        for bundle in Bundle.allBundles {
+            if let bundleIdentifier = bundle.bundleIdentifier, bundleIdentifier.contains(string) {
+                return true
+            }
+        }
+#endif
+        return false
+    }
+
     /// Returns `true` if NOT running in preview, playground, or simulator.
     public static var isRealDevice: Bool {
         return !isPreview && !isPlayground && !isSimulator
+    }
+
+    /// Returns `true` if Built for iPad mode not a native mode (for macOS and visionOS).
+    public static var isDesignedForiPad: Bool {
+#if targetEnvironment(macCatalyst) || os(watchOS) || os(tvOS) || os(WASM) || os(WASI) || os(Linux)
+        // Catalyst is a native Mac target rather than Apple's iPad-compatible app
+        // runtime, so keep it separate from "Designed for iPad" reporting.
+        return false
+#elseif canImport(Combine)
+        // Check for iPad mode on visionOS
+        if #available(iOS 26.1, macOS 26.1, watchOS 26.1, tvOS 26.1, visionOS 26.1, *) {
+            if ProcessInfo.processInfo.isiOSAppOnVision {
+                return true
+            }
+        }
+        if #available(iOS 14, watchOS 7, macOS 11, tvOS 14, *) { // not available on watchOS 6
+            return ProcessInfo.processInfo.isiOSAppOnMac
+        }
+#if canImport(UIKit)
+        // visionOS can run compatible iPad apps where the process is not an iOS app
+        // on Mac, so use UIKit's interface idiom as a second signal for designed-for-iPad mode.
+        return UIDevice.current.userInterfaceIdiom == .pad
+#else
+        // Fallback on earlier versions & unsupported platforms
+        return false
+#endif
+#else
+        // Fallback on earlier versions & unsupported platforms
+        return false
+#endif
     }
     
     /// Returns `true` if is macCatalyst app on macOS
@@ -197,6 +279,40 @@ public struct Build {
 #endif
     }
 }
+
+// Color support for Build.Environment
+#if canImport(SwiftUI) && canImport(Foundation)
+import SwiftUI
+import Foundation
+
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+public extension Build.Environment {
+    var color: Color {
+        switch self {
+        case .debug:
+            return .red
+        case .realDevice:
+            return .green
+        case .simulator:
+            return .blue
+        case .playground:
+            return .orange
+        case .preview:
+            return .pink
+        case .designedForiPad:
+            return .purple
+        case .macCatalyst:
+            if #available(iOS 15.0, macCatalyst 15.0, tvOS 15.0, macOS 12.0, watchOS 8.0, *) {
+                return .teal
+            } else {
+                return .purple
+            }
+        }
+    }
+}
+#endif
+
+// MARK: - Application
 
 #if !(os(WASM) || os(WASI))
 @MainActor

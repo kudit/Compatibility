@@ -26,7 +26,7 @@ public extension CaseNameConvertible {
         // for enums
         (Mirror(reflecting: self).children.first?.label ?? String(describing: self))
 #else
-        return ".unknown" // TODO: Need to find a way to back-port without manually defining or using reflection.
+        return ".unknown" // TODO: Need to find a way to back-port without manually defining or using reflection.  Possibly using a key version of string if String representable?  If raw representable use the raw value?
 #endif
     }
 }
