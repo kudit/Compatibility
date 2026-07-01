@@ -13,7 +13,6 @@ import SwiftUI
 public struct EnvironmentsView: View {
     public var environmentSet: [Build.Environment]
     @State private var isExpanded = false
-    @Namespace private var environmentIconNamespace
 
     public init(_ environmentSet: [Build.Environment]) {
         self.environmentSet = environmentSet
@@ -21,7 +20,8 @@ public struct EnvironmentsView: View {
 
     private func toggleExpanded() {
         // Animate the compact icon row into the expanded labeled list so the icon
-        // positions and text reveal move together instead of snapping between states.
+        // reveal instead of using matched geometry, which emits duplicate-source
+        // diagnostics in SwiftUI list rows when both branches are inserted together.
         withAnimation(.easeInOut(duration: 0.25)) {
             isExpanded.toggle()
         }
@@ -65,15 +65,15 @@ public struct EnvironmentsView: View {
             // Fixed width keeps wide symbols, such as the Mac Catalyst icon, from pushing
             // labels farther right than narrower status icons in the expanded list.
             .frame(width: isExpanded ? 26 : 18, alignment: .center)
-            // Matched geometry makes each symbol travel from its compact horizontal
-            // position into its expanded row position instead of crossfading layouts.
-            .matchedGeometryEffect(id: environment, in: environmentIconNamespace)
             .opacity(enabled ? 1.0 : 0.2)
             .foregroundColor(enabled ? environment.color : .gray)
+            // Scaling gives the state change a small visual handoff without relying on
+            // matched geometry, whose duplicate-source diagnostics were breaking layout.
+            .scaleEffect(isExpanded ? 1.0 : 0.92)
     }
 
     private func environmentItem(environment: Build.Environment, enabled: Bool) -> some View {
-        HStack(spacing: isExpanded ? 6 : 0) {
+        HStack(spacing: 6) {
             environmentIcon(environment: environment, enabled: enabled)
             if isExpanded {
                 Text(environment.label)

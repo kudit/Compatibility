@@ -1,5 +1,9 @@
 # ChangeLog
 
+## v1.14.2 2026-06-30
+Removed matched geometry from `EnvironmentsView` after SwiftUI continued reporting duplicate inserted sources in list rows, keeping the expand/collapse behavior with simpler scale and label transitions instead.
+Added the SF Symbols version table comment from Device into `Symbols.swift` for clarity when choosing symbol availability.
+
 ## v1.14.1 2026-06-29
 Made `Build.Environment.test` public so package clients can check each environment case directly.
 
