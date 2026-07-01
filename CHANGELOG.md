@@ -1,5 +1,8 @@
 # ChangeLog
 
+## v1.14.3 2026-07-01
+Added Sendable conformance to `Build.Environment`.
+
 ## v1.14.2 2026-06-30
 Removed matched geometry from `EnvironmentsView` after SwiftUI continued reporting duplicate inserted sources in list rows, keeping the expand/collapse behavior with simpler scale and label transitions instead.
 Added the SF Symbols version table comment from Device into `Symbols.swift` for clarity when choosing symbol availability.

@@ -118,7 +118,7 @@ public struct Build {
     }
 
     // MARK: - Environmental info
-    public enum Environment: String, RawRepresentable, CaseIterable, Identifiable, CaseNameConvertible, SymbolRepresentable {
+    public enum Environment: String, Sendable, RawRepresentable, CaseIterable, Identifiable, CaseNameConvertible, SymbolRepresentable {
         case debug = "Debug"
         case simulator = "Simulator"
         case playground = "Playground"
