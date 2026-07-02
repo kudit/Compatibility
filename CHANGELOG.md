@@ -1,4 +1,7 @@
-# ChangeLog
+# Changelog
+
+## v1.14.4 2026-07-01
+Added README prompt context for Xcode/Codex changelog handling, version bump rules, code comments, and Swift logging/documentation preferences.
 
 ## v1.14.3 2026-07-01
 Added Sendable conformance to `Build.Environment`.
@@ -208,7 +211,7 @@ Fixing bug with Linux SPI Test.  Added `Date.yesterday` and `Date().previousDay`
 Updated so that levels that include timestamps can be customized.  Added debug tests.  Fixed so setting the default debug level AFTER being set actually changes the value.  Changed so `DebugLevel.currentLevel` and `.defaultLevel` reference the settings and aren't set at init so they can be changed by tests.  Need to ensure this doesn't violate any concurrency issues... Additional tests added bringing code coverage to 35%.  Added `.backport.scrollViewDisabled()`.  Added Pasteboard manipulation.  Fixed bug in `trimming([String])` where it was only trimmed once rather than repeatedly for all terms until finished. *FAILS LINUX SPI TEST*
 
 ## v1.10.3 2025-04-28
-Fixed typo with date of 1.10.2. Moved where the breakpoint check happens in `debug()` so that it happens AFTER printing the error to the console for easier debugging. Added documentation for `caseName`.  Added additional Int tests.  Only flag if packages fail tests from now on.  Otherwise, assume all swift package index tests pass (removing *PASSES ALL SWIFTPACKAGEINDEX TESTS (including Swift 5.8 - 6.1!)* from below to clean up change log).  Still fails in Swift Playgrounds 4.6.4  (FB17377610) but should work in 4.6.0—3.
+Fixed typo with date of 1.10.2. Moved where the breakpoint check happens in `debug()` so that it happens AFTER printing the error to the console for easier debugging. Added documentation for `caseName`.  Added additional Int tests.  Only flag if packages fail tests from now on.  Otherwise, assume all swift package index tests pass (removing *PASSES ALL SWIFTPACKAGEINDEX TESTS (including Swift 5.8 - 6.1!)* from below to clean up changelog).  Still fails in Swift Playgrounds 4.6.4  (FB17377610) but should work in 4.6.0—3.
 
 ## v1.10.2 2025-04-26
 Added `String.collapse()`.  Added `allCharacters` and `asString` to `CharacterSet`.  Added `String.lines`.  Added `String.whitespaceStripped`.  Added additional tests.
@@ -469,7 +472,7 @@ Reduced tvOS version requirements to tvOS 13 (though menu and other UI features 
 Fixed some data race issues and fixed breaking support for watchOS and Linux.  Added condition for @Published to ensure compilation on Linux.  Made PostData require a Sendable type and added Sendable conformance to NetworkError.  Fixed sendability of Message to prevent issues using `debug()`.
 
 ## v1.0.1 2024-07-07
-Fixed missing date in change log.  Moved DebugLevel.defaultLevel in initializers into nil initializers so can make sure to reference static property not in the initializer.  Changed default color to orange.  Changed several static vars to lets for concurrency safety.  Enabled `main {}` to be used with throwing functions.  Added `.spi.yml` file for Swift Package Index compiler.
+Fixed missing date in changelog.  Moved DebugLevel.defaultLevel in initializers into nil initializers so can make sure to reference static property not in the initializer.  Changed default color to orange.  Changed several static vars to lets for concurrency safety.  Enabled `main {}` to be used with throwing functions.  Added `.spi.yml` file for Swift Package Index compiler.
 
 ## v1.0 2024-07-06
 Initial code and features pulled from KuditFrameworks.  Converted CGFloat to Double for more Swifty code.  Broke code up into separate files for clarity since this is all now contained in this module.  Reworked testing framework to throw instead of returning messages that only have utility when there's a problem.
