@@ -99,6 +99,46 @@ public extension Decodable {
     }
 }
 
+#if compiler(>=5.9) && !(os(WASM) || os(WASI))
+private struct CodingRoundTripTestModel: Codable, Equatable {
+    let name: String
+    let count: Int
+    let enabled: Bool
+    let tags: [String]
+}
+
+@Sendable
+private func testCodingRoundTrips() throws {
+    let model = CodingRoundTripTestModel(name: "Compatibility", count: 3, enabled: true, tags: ["json", "dictionary", "mixed"])
+
+    // Exercise the Foundation JSON helpers so regressions in the public Codable convenience API are caught by the in-framework test UI.
+    let json = model.asJSON(outputFormatting: [.sortedKeys])
+    let decodedFromJSON = try CodingRoundTripTestModel(fromJSON: json)
+    try expect(decodedFromJSON == model, "JSON round trip should preserve the codable model")
+
+    // Exercise dictionary conversion because app settings and legacy stores commonly use dictionary-shaped Codable payloads.
+    guard let dictionary = model.asDictionary() else {
+        try expect(false, "Dictionary encoding should produce a dictionary for keyed Codable models")
+        return
+    }
+    let decodedFromDictionary = CodingRoundTripTestModel(fromDictionary: dictionary)
+    try expect(decodedFromDictionary == model, "Dictionary round trip should preserve the codable model")
+
+    // Exercise MixedTypeField conversion so non-Foundation and generic JSON pathways stay aligned with the Foundation helpers.
+    let mixedField = try model.asMixedTypeField()
+    let decodedFromMixedField = try CodingRoundTripTestModel(fromMixedTypeField: mixedField)
+    try expect(decodedFromMixedField == model, "MixedTypeField round trip should preserve the codable model")
+}
+
+@available(iOS 13, tvOS 13, watchOS 6, *)
+#if !(os(WASM) || os(WASI))
+@MainActor
+#endif
+internal let codingTests: [Test] = [
+    Test("Coding round trips", testCodingRoundTrips),
+]
+#endif
+
 
 /**
  

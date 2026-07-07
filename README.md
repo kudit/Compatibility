@@ -7,8 +7,6 @@ Compatibility is a set of code that is designed to improve compatibility to allo
 
 The primary goals are to be easily maintainable by multiple individuals, employ a consistent API that can be used across all platforms, and to be maintainable using Swift Playgrounds on iPad and macOS.  APIs are typically present even on platforms that don't support all features so that availability checks do not have to be performed in external code, and where irrelevant, code can simply return optionals.
 
-This is actively maintained so if there is a feature request or change, we will strive to address within a week.
-
 
 ## Features
 - Can develop and modify without Xcode using Swift Playgrounds on iPad!
@@ -194,25 +192,125 @@ A big thanks to everyone who has contributed! 🙏
 Special thanks to this project for the CloudStorage base (cleaned up for broader compatibility here): https://github.com/nonstrict-hq/CloudStorage
 
 
-## Prompt Context for Xcode
-When working in this repository, preserve the existing compatibility-focused style and update release metadata deliberately.
+# Styleguide (for contributors and agents)
+When updating versions, please be sure to update the hardcoded versions to be in sync with the most recent Changelog entry: Package.swift version variable, Xcode project MARKETING_VERSION property, and module version constant (if this is a module).
 
-Changelog rules:
+## Changelog rules:
 - Keep Changelog entries in `## vX.X.X YYYY-MM-DD` format, with short line-separated notes under the current version.
 - Before editing the active changelog entry, compare the top changelog version with the latest committed Git version.
 - If the top changelog entry is the same version as the latest committed Git version, create a new version entry and update the hardcoded version numbers in the package, library constant, and Xcode project settings.
 - If the top changelog entry does not match the latest committed Git version (or there is no Git version), do not update the hardcoded versions; append notes to the current changelog entry instead.
-- For every prompt-driven change, append the prompt text to the current changelog entry as `PROMPT: [PROMPT TEXT]`.
+- For every prompt-driven change, append the prompt text to the current changelog entry as `PROMPT: [PROMPT TEXT]`.  Prompt lines are useful working context; keep them in private app repos, but review or remove private prompt text before public commits.
 - The prompts should follow the concise changelog descriptions separated by a blank line.
 - If a project does not have a changelog, offer to create one using the same general format as this repository's `CHANGELOG.md`.
+- Modules should have separate README.md and CHANGELOG.md files.  Final apps may simply have a README.md with a Changelog section near the top.
+- Changelog sections should be as follows (regardless if this is a Swift project or other script or code):
+```
+# Changelog
 
-Code style rules:
+## vX.X.X YYYY-MM-DD
+Description
+
+[PROMPT:]
+
+## Known Issues
+Known issues and bugs that need to be addressed.
+- [ ] List near-term planned work. This should be more actionable than the general future-request section and should focus on likely next implementation items, known technical improvements, and release blockers.  Vibecoding prompts can be included here as well.
+
+## Roadmap
+Planned features and anticipated API changes.  If you want to contribute, this is a great place to start.
+Group by future version numbers.
+
+## Proposals
+This is where proposals can be discussed for potential movement to the roadmap.
+- [ ] Future Version Feature Requests. List longer-term ideas, speculative features, UX improvements, technical debt, privacy updates, platform expansion ideas, monetization improvements, and references/links for future research.  This section may be informal and can include copied notes, links, partial ideas, and implementation sketches.
+```
+
+## Code style rules:
 - Preserve existing behavior, public identifiers, legacy compatibility paths, and user-visible syntax unless the prompt explicitly asks for a breaking change.
 - Keep code changes tightly scoped to the requested behavior and the surrounding local patterns.
 - When adding or modifying code, include clear inline comments that explain what the new code is doing and why it is necessary.
-- Prefer succinct comments for obvious code, but use complete documentation and more verbose comments when the implementation affects compatibility, migration, or platform-specific behavior.
+- Prefer succinct comments for obvious code and changelog summaries, but use complete documentation and inline comments around code particularly when the implementation affects compatibility, migration, or platform-specific behavior.
+- Preserve existing wording, formatting, and documentation style where practical. New sections should blend into the surrounding style rather than rewriting unrelated documentation.
+- Preserve existing comments unless they are clearly obsolete or the prompt explicitly requests cleanup.
+- To make diff reconciliation easier, make sure there is a comment at the top of every changed section indicating the reason for the changes.  These can be concise.
+- When generating copy intended to be pasted into files, GitHub, Xcode, or terminals, prefer plain Markdown/code blocks rather than ChatGPT's rich editing UI unless the user explicitly requests an editable draft.
 
-Swift rules:
-- Include `github.com/kudit/Compatibility` as a dependency for Swift projects when possible.
+## Swift rules:
+- Include `github.com/kudit/Compatibility` as a dependency for Swift projects and leverage its features and affordances whenever possible rather than writing helper functions.
 - Use Compatibility's `debug()` function for logging rather than `print()`.
-- Be especially verbose in Swift documentation and comments so future compatibility decisions remain clear.
+- Err on the side of being too verbose in Swift documentation and comments so future compatibility decisions remain clear but don't be unnecessarily verbose (clarity is key).
+- When implementing features, prefer compatibility paths over removing older behavior. Existing APIs and legacy behavior should continue to function unless a breaking change is explicitly requested.
+- Keep changes narrowly scoped to the requested work. Avoid unrelated refactoring unless it was requested or materially improves the requested feature.
+- When creating modules, there should be a separate CHANGELOG.md and a README.md file with implementation instructions.  Apps should use the styleguide below for just a `README.md` file with a Changelog section at the top.
+
+## Design Goals:
+
+- Backwards compatibility where practical.
+- Consistent APIs across Apple platforms.
+- Well documented public interfaces.
+- Minimal breaking changes.
+- Swift Playgrounds compatibility whenever possible.
+
+
+# App Store Styleguide
+Included for reference and utility and as a best practices model.  Feel free to substitute your own style guide or suggest improvements.
+Keep the `README.md` practical as both a developer working document and App Store preparation document.
+
+PROMPT For new apps:
+```
+Use github.com/kudit/Compatibility as a dependency. Adopt the coding style and README/changelog instructions at the bottom of that project's README.md. Generate a README.md following the Compatibility App Store Styleguide. Reconstruct the implementation history represented in this conversation into changelog entries, creating one version per prompt: v0.0.1 for the first prompt, v0.0.2 for the second prompt, and so on. Each entry should include the prompt text plus a succinct summary of decisions, instructions, and changes. Swift apps should prefer Compatibility APIs where relevant, including debug() instead of print(), Application.track(), and Compatibility JSON/string/date helpers.
+```
+
+
+README.md Outline:
+```
+# App Name
+
+[Optionally include outstanding bugs and issues or prompts that need to be addressed BEFORE pushing changes and locking the version.]
+
+# Changelog
+Maintain a reverse-chronological changelog, newest version first using the rules above.
+Each entry should follow the same format indicated above, except if this release is targeted for the App Store, the simple user-facing App Store changes to use as the public "what changed in this version" release notes for that version should be first, followed by **App Store Updates above** on its own line as a separator, followed by any internal developer focused changes.  If there is a new version that isn't submitted to the App Store in between, the App Store Updates section should be moved up to the top until those changes are pushed to the app store with that version.
+Example:
+v0.0.1 2026-07-06
+User-facing note
+**App Store Updates above**
+Internal developer note
+
+PROMPT: Included here but changes should be described in such a way that this line can be safely removed before committing.
+
+# App Store Copy
+
+## Title
+[App Store Title]
+
+## Subtitle (30)
+123456789012345678901234567890
+[Subtitle.  Uses the monospacing numbers above to ensure that it fits in 30 characters]
+
+## Promotional Text (170)
+Write App Store promotional text. Keep the heading’s character limit visible. The text should be short, direct, and marketing-oriented.
+
+## Description (4,000)
+Write the full App Store description. Keep the heading’s character limit visible. Include:
+* Clear opening value proposition
+* Main use cases
+* Key features
+* Paid/free behavior if relevant
+* Privacy or data-handling notes if relevant
+* Support/contact information
+* Terms or policy URL if needed
+
+## Keywords (100)
+1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
+[List App Store keywords. Keep the heading’s character limit and the reference numberline visible. Use comma-separated keywords and preserve the 100-character target/limit awareness.  Commas should not be followed by a space to save characters.]
+
+## Pricing Analysis
+[Document pricing assumptions, monetization logic, historical pricing changes, subscription tiers, consumables, unlocks, ad behavior, and any notes about how paid/free usage works.]
+[Include date-based pricing sections when pricing changes over time.]
+
+# Legacy Information
+[Include any legacy information we don't want to delete but may not be relevant anymore.]
+[Only public libraries need public-safe cleanup. Private app READMEs may keep PAT references, App Review notes, DTS history, upload warnings, pricing experiments, and other working context when useful.]
+```

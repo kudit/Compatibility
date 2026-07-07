@@ -23,6 +23,13 @@
         "identifier" : "B594CFA82DB0B838001E8658",
         "name" : "CompatibilityTests"
       }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:Compatibility.xcodeproj",
+        "identifier" : "B50707012C60A00100000001",
+        "name" : "CompatibilityUITests"
+      }
     }
   ],
   "version" : 1

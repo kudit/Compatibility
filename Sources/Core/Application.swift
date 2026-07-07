@@ -9,6 +9,7 @@
 extension String {
     public static let legacyLastRunVersionKey = "last_run_version" // legacy (single version string) - only ever stored in UserDefaults.
     public static let localAppVersionsRunKey = "kuditVersions" // previous for compatibility (also only ever stored in UserDefaults)
+    public static let localAppVersionsRunOnDeviceKey = "kuditVersionsOnDevice" // device-local version history that is intentionally never synced.
     public static let appVersionsRunKey = "appVersionsRun" // modern support
 
     static let appTestLastRunKey = "appTestLastRun"
@@ -482,6 +483,9 @@ public class Application: ObservableObject { // cannot automatically conform to 
     
     /// `true`  if this is the first time the app has been run, `false` otherwise
     public private(set) var isFirstRun = true // can't be let since self._cloudVersionsRun check requires self access, but basically should only ever set once.
+
+    /// `true` if this is the first time the app has been run on this device/install, ignoring versions synced from other devices.
+    public let isFirstRunOnDevice: Bool
     
 #if compiler(>=5.9) && canImport(Combine)
     @CloudStorage(.appVersionsRunKey) private var _cloudVersionsRun: String?
@@ -493,8 +497,10 @@ public class Application: ObservableObject { // cannot automatically conform to 
         // if last_run_version set, add that to preserve legacy format
         let legacyLastRunVersion = UserDefaults.standard.object(forKey: .legacyLastRunVersionKey) as? String // legacy support
         let kuditPreviouslyRunVersions = UserDefaults.standard.object(forKey: .localAppVersionsRunKey) as? [String] // newer support (still local)
+        let localVersionsRunOnDevice = UserDefaults.standard.object(forKey: .localAppVersionsRunOnDeviceKey) as? [String]
         
         let localFirstRun = legacyLastRunVersion == nil && kuditPreviouslyRunVersions == nil
+        isFirstRunOnDevice = localFirstRun && localVersionsRunOnDevice == nil
         // if all nil, then isFirstRun is true (cache for the duration of the app running)
 #if compiler(>=5.9) && canImport(Combine)
         if #available(watchOS 9, *) {
@@ -510,6 +516,9 @@ public class Application: ObservableObject { // cannot automatically conform to 
         if isFirstRun {
             debug("First Run!", level: .NOTICE)
         }
+        if isFirstRunOnDevice && !isFirstRun {
+            debug("First Run On This Device!", level: .NOTICE)
+        }
         
         // join all versions run (the beauty of this is it doesn't matter if legacyLastRunVersion is a comma-separated list or a single value - both will work)
         var allVersionsString = "\(legacyLastRunVersion ?? ""),\(kuditPreviouslyRunVersions?.joined(separator: ",") ?? ""),\(version)"
@@ -523,6 +532,10 @@ public class Application: ObservableObject { // cannot automatically conform to 
         if !isFirstRun {
             debug("All versions run: \(allVersions.rawValue)", level: .NOTICE)
         }
+
+        // Keep a separate local-only version list so apps can tell first launch on this device from first launch across iCloud-synced devices.
+        let allLocalVersions = [Version](rawValue: "\(legacyLastRunVersion ?? ""),\(kuditPreviouslyRunVersions?.joined(separator: ",") ?? ""),\(localVersionsRunOnDevice?.joined(separator: ",") ?? ""),\(version)")
+        UserDefaults.standard.set(allLocalVersions.map { $0.rawValue }, forKey: .localAppVersionsRunOnDeviceKey)
 #if compiler(>=5.9) && canImport(Combine)
         if #available(watchOS 9, *) {
             // persist back to cloud for other devices and future runs or re-installs (do with delay in case of launch issue where the crash happens at launch)
@@ -549,6 +562,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
         debug("Resetting Versions Run!", level: .WARNING)
         UserDefaults.standard.removeObject(forKey: .legacyLastRunVersionKey)
         UserDefaults.standard.removeObject(forKey: .localAppVersionsRunKey)
+        UserDefaults.standard.removeObject(forKey: .localAppVersionsRunOnDeviceKey)
 #if compiler(>=5.9) && canImport(Combine)
         Application.main._cloudVersionsRun = nil
 #endif
@@ -603,6 +617,9 @@ public class Application: ObservableObject { // cannot automatically conform to 
         if isFirstRun {
             description += " **First Run!**"
         }
+        if isFirstRunOnDevice && !isFirstRun {
+            description += " **First Run On Device!**"
+        }
         if versionsRun.count > 1 {
             description += "\nPreviously run versions: \(previouslyRunVersions.map { "v\($0)" }.joined(separator: ", "))"
         }
@@ -631,11 +648,12 @@ public class Application: ObservableObject { // cannot automatically conform to 
             }
         }
         try expect(Application.main.isFirstRun == Application.main.isFirstRun, "First Run test")
+        try expect(Application.main.isFirstRunOnDevice == Application.main.isFirstRunOnDevice, "First Run On Device test")
         try expect(Application.main.versionsRun.count == 1, "Versions Run test")
         try expect(Application.main.hasRunVersion(before: Application.main.version) == false, "Has Run Version test")
         try expect(Application.main.previouslyRunVersions.count == 0, "Previously Run Versions test")
         let expectedDescription = """
-\(Application.main.name) (v\(Application.main.debugVersion))\(Application.main.isFirstRun ? " **First Run!**" : "")
+\(Application.main.name) (v\(Application.main.debugVersion))\(Application.main.isFirstRun ? " **First Run!**" : "")\(Application.main.isFirstRunOnDevice && !Application.main.isFirstRun ? " **First Run On Device!**" : "")
 Identifier: \(Application.main.appIdentifier)
 iCloud Status: \(Application.iCloudStatus.description)
 Swift Version: \(Build.swiftVersion)

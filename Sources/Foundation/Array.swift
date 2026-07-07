@@ -37,6 +37,26 @@ public extension Array {
             self.append(element)
         }
     }
+
+    /// Returns a copy of the array rotated by `offset` positions while preserving the original order within the rotated halves.
+    ///
+    /// Positive offsets move values from the front to the back, so `[1, 2, 3].rotated(1)` returns `[2, 3, 1]`.
+    /// Negative offsets move values from the back to the front, so `[1, 2, 3].rotated(-1)` returns `[3, 1, 2]`.
+    /// Empty arrays return themselves so callers can safely rotate optional content lists without checking `isEmpty` first.
+    func rotated(_ offset: Int) -> Self {
+        guard !isEmpty else {
+            return self
+        }
+
+        // Normalize the offset into the array bounds so very large positive or negative rotations remain predictable.
+        let normalizedOffset = ((offset % count) + count) % count
+        guard normalizedOffset != 0 else {
+            return self
+        }
+
+        return Self(self[normalizedOffset...] + self[..<normalizedOffset])
+    }
+
     /// returns an array with the elements of the base array repeated `count` times.  If count is less than 1, will return an empty array of the same type
     func repeated(_ count: Int) -> Self {
         var returnArray = self // so we get a copy of the same type of array
@@ -200,6 +220,10 @@ public extension Collection {
         try expect(chunk == ["orange", "zoo"])
         chunk.pad(to: 5, with: "x")
         try expect(chunk == ["orange", "zoo", "x", "x", "x"])
+        try expect(array.rotated(1) == ["pear", "orange", "zoo", "apple"], "Positive rotation should move leading values to the end")
+        try expect(array.rotated(-1) == ["zoo", "apple", "pear", "orange"], "Negative rotation should move trailing values to the front")
+        try expect(array.rotated(array.count) == array, "Full rotations should return the original order")
+        try expect([String]().rotated(3).isEmpty, "Empty arrays should stay empty when rotated")
         let copy = chunk.shuffled
         try expect(copy != chunk, "should be randomized but there is a chance this could fail due to random chance")
     }

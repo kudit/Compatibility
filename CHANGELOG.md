@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.14.5 2026-07-06
+Expanded the public README styleguide draft for contributor and AI-agent workflows, including changelog structure, prompt logging, Compatibility dependency expectations, and App Store README outline guidance.
+Added `Application.isFirstRunOnDevice` using local-only version tracking so apps can distinguish a first launch on this device from a first launch across iCloud-synced history.
+Added `Array.rotated(_:)` for cycling array values such as color palettes.
+Added in-framework coding round-trip tests for JSON, dictionary, and `MixedTypeField` Codable helpers.
+Added a `CompatibilityUITests` smoke test bundle that launches the demo app and checks the first visible SwiftUI content path so UI code contributes to coverage.
+Verified the Mac Catalyst Metal toolchain search-path warning is caused by Xcode selecting a supplemental MobileAsset toolchain; forcing the default Xcode toolchain silences the missing `swift/maccatalyst` path.
+
 ## v1.14.4 2026-07-01
 Added README prompt context for Xcode/Codex changelog handling, version bump rules, code comments, and Swift logging/documentation preferences.
 
@@ -479,31 +487,28 @@ Initial code and features pulled from KuditFrameworks.  Converted CGFloat to Dou
 
 
 
-## Bugs to fix:
-Known issues that need to be addressed.
+## Known Issues
+Known issues and bugs that need to be addressed.
 
-## Roadmap:
+## Roadmap
 Planned features and anticipated API changes.  If you want to contribute, this is a great place to start.
 - [ ] Standardize test formats and creations.  Add #if canImport(Testing) to add as actual testable things instead of `try expect(` do `#expect(` so that we can get exactly where the tests fail.  Then see if we can sub-class into the tests.  See if we can still run in the UI as part of the app?
 - [ ] Add more tests for improved code coverage.
 - [ ] Add option to pad function to allow padding on left and use this in function for prefixing with a number of 0s.  Left padding function: https://stackoverflow.com/questions/32338137/padding-a-swift-string-for-printing
-- [ ] Add isFirstRunOnDevice to differentiate from isFirstRun (across devices).
 - [ ] Update tab view to use backport version that can extend content into safe area but still respects safe area for scrolling and clearing (for Color test app).  Have content of tab view extend into safe area but the contents not completely ignore safe area.
 - [ ] Use this answer to create a FullPageTabView that will have the desired behavior and allow setting a color for the selected and deselected (defaults to .primary and .tertiary). Allow overriding symbol on each view by taking the tabItem view if present? https://stackoverflow.com/questions/78472655/swiftui-tabview-safe-area
 - [ ] Fix pagination dots not using primary color depending on dark mode (always white).  Perhaps create custom tab view style that is pageTinted(Color).  Add to Compatibility and then update this stack: https://stackoverflow.com/questions/68143240/tabview-dot-index-color-does-not-change
 - [ ] Add some shading at the bottom so the pagination dots show and make sure they are above the Kudit LLC to avoid the safe area.
-- [ ] Add .rotated(n) function on arrays for cycling things like the .rainbow array.
-- [ ] Add coding tests.
 - [ ] Add the new document view controller model for compatibility with iOS 17 and 18 (check Viewer code for reference)
 - [ ] Once Swift Testing is officially released, convert Testing functions to @Test functions and change expect function calls to #expect calls and remove custom debug statements.
 - [ ] Fix tvOS usage of controls within a page view (seems to only control pagination and not buttons inside)
 - [ ] Re-work page view on watchOS to use the vertical page view style or perhaps a navigation stack.  Color doesn't look great on watchOS.
 
-## Proposals:
+## Proposals
 This is where proposals can be discussed for potential movement to the roadmap.
 - [ ] 1.11.0: Remove Version from OperatingSystemVersion typealias so we don't have to do retroactive conformances?  Is there someplace where OperatingSystemVersion is used where a custom Version type would need to be bridged?
 - [ ] Have debugSuppress suppress all messages except expect debug messages which should always print normally.
-- [ ] should we rename `background {}` to `Background {}` and `Main {}` and `Delay(#) {}` to match `Task {}`?
+- [ ] should we rename `background {}` to `Background {}` and `Main {}` and `Delay(#) {}` to match `Task {}` and avoid conflicts with SwiftUI.View.background?
 - [ ] Debug: see if there's a way to add interpolation as a parameter to customize the output format.  Perhaps using a debug output formatter object that can be set?
 - [ ] Regroup String to better apply to StringProtocol and String seperately.  Also figure out how to optimize trim functions by returning Substrings?
 - [ ] Debug: allow setting a closure that will pre-process debug statements to allow for injection in debug statements?

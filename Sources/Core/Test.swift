@@ -204,6 +204,7 @@ public extension Test {
             "Double Tests": Double.tests,
             "Collection Tests": collectionTests,
             "String Tests": String.tests,
+            "Coding Tests": codingTests,
             "Dictionary Tests": dictionaryTests,
             "Debug Tests": DebugLevel.tests,
             "Application Tests": Application.tests,
