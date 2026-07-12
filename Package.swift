@@ -109,7 +109,7 @@ targets += [
 			.init(stringLiteral: packageLibraryName), // have to use init since normally would be assignable by string literal but we're not using a string literal
 		],
 		path: "Development"
-		,exclude: ["Resources", "CompatibilityTests"]
+		,exclude: ["Resources", "CompatibilityTests", "CompatibilitySwiftPMTests", "compatibilityCLI"]
 		// Include test app resources.
 		,resources: [
 //            .process("PlaygroundsAssets.xcassets")
@@ -119,16 +119,35 @@ targets += [
 //			.enableUpcomingFeature("BareSlashRegexLiterals"),
 //		]
 	),
-//	.testTarget(
-//		name: "\(packageLibraryName)Tests",
-//		dependencies: [
-//			.init(stringLiteral: packageLibraryName), // have to use init since normally would be assignable by string literal but we're not using a string literal
-//		],
-//		path: "Tests"
-//	),
 ]
 
 #endif // for Swift Package compiling for https://swiftpackageindex.com/add-a-package
+
+// MARK: - Command-line demonstration and package tests
+// These targets intentionally stay out of Swift Playgrounds, whose app-package
+// manifest only supports the existing iOS application target. SwiftPM and Xcode
+// on macOS still discover them, so maintainers can build the CLI and run tests.
+#if !SwiftPlaygrounds && !canImport(PlaygroundSupport)
+products += [
+	.executable(
+		name: "compatibilityCLI",
+		targets: ["compatibilityCLI"]
+	),
+]
+
+targets += [
+	.executableTarget(
+		name: "compatibilityCLI",
+		dependencies: [.init(stringLiteral: packageLibraryName)],
+		path: "Development/compatibilityCLI"
+	),
+	.testTarget(
+		name: "\(packageLibraryName)Tests",
+        dependencies: [.init(stringLiteral: packageLibraryName)],// have to use init since normally would be assignable by string literal but we're not using a string literal
+		path: "Development/CompatibilityTests"
+	),
+]
+#endif
 
 let package = Package(
 	name: packageLibraryName,

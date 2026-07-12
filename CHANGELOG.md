@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.15.0 2026-07-12
+Updated the README to include information about the library name in case agents make the incorrect assumption about the naming.
+Added an opt-in `compatibilityCLI` executable target with `banana` and `parseDate` demonstration commands, plus SwiftPM tests that are omitted from Swift Playgrounds manifests to enable tests in Swift Package Index.
+
 ## v1.14.5 2026-07-06
 Expanded the public README styleguide draft for contributor and AI-agent workflows, including changelog structure, prompt logging, Compatibility dependency expectations, and App Store README outline guidance.
 Added `Application.isFirstRunOnDevice` using local-only version tracking so apps can distinguish a first launch on this device from a first launch across iCloud-synced history.

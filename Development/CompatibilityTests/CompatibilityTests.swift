@@ -897,8 +897,8 @@ struct CompatibilityTests {
         debugSuppress {
             _ = Application.main
         }
-        #expect(Application.main.appIdentifier == "com.apple.dt.xctest.tool")
-        #expect(Application.main.version == "16.0")
+        #expect(Application.main.appIdentifier == "com.apple.dt.xctest.tool" || Application.main.appIdentifier == "com.unknown.unknown") // first is for Xcode tests within xcode, second is for command line tests.
+        #expect(Application.main.version == "16.0" || Application.main.version == "0.0")
     }
 #endif
     

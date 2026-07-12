@@ -50,7 +50,10 @@ dependencies: [
     .package(url: "https://github.com/kudit/Compatibility.git", from: "1.0.0"),
 ]
 ```
-
+Make sure the target includes the library:
+```swift
+            .product(name: "Compatibility Library", package: "compatibility"), // apparently needs to be lowercase.  Also note this is "Compatibility Library" not "Compatibility"
+```
 
 ## Usage
 First make sure to import the framework:
@@ -102,6 +105,18 @@ let mysql = Date(parse: "2023-01-02 17:12:00")
 let spelledOut = Date(parse: "January 2, 2023")
 let numeric = Date(parse: "20230102171200")
 ```
+
+### Command-line demonstration and SwiftPM tests
+The `compatibilityCLI` executable target and `CompatibilitySwiftPMTests` test target live in `Development` so the existing Swift Playgrounds app remains unchanged. They are conditionally omitted from a Swift Playgrounds manifest, but are available to SwiftPM and Xcode on macOS.
+
+From the package directory, select the macOS destination and run:
+```sh
+swift run --package-path . compatibilityCLI banana Bob
+swift run --package-path . compatibilityCLI parseDate "2023-01-02 17:12:00"
+swift test --package-path .
+```
+
+In Xcode, open the package, select the automatically discovered `compatibilityCLI` scheme, choose **My Mac** as the run destination, and run it with the desired arguments. The `CompatibilitySwiftPMTests` target is included in the same package scheme's Test action.
 
 ### Trick to generate warning that can easily be disabled without using `#warning()`:
 Defaults to true so application will need to call a function during init/launch:
