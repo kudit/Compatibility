@@ -288,9 +288,13 @@ public struct Build {
         // runtime, so keep it separate from "Designed for iPad" reporting.
         return false
 #elseif canImport(Combine)
-        // Check for iPad mode on visionOS
+        // Check for iPad mode on visionOS. Access the new Foundation property through
+        // Objective-C key-value coding so older SDKs, including the SDK bundled with
+        // Swift Playgrounds 4.7, do not have to resolve `isiOSAppOnVision` at compile time.
+        // The runtime availability check ensures the key exists before it is queried.
         if #available(iOS 26.1, macOS 26.1, watchOS 26.1, tvOS 26.1, visionOS 26.1, *) {
-            if ProcessInfo.processInfo.isiOSAppOnVision {
+//            if ProcessInfo.processInfo.isiOSAppOnVision {
+            if ProcessInfo.processInfo.value(forKey: "isiOSAppOnVision") as? Bool == true {
                 return true
             }
         }

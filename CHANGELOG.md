@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.15.2 2026-07-13
+Made `Build.isDesignedForiPad` compile with older Apple SDKs by dynamically querying the iOS 26.1 `ProcessInfo.isiOSAppOnVision` property only after its runtime availability check.
+Removed unnecessary --package-path properties from swift build and test examples.
+
 ## v1.15.1 2026-07-12
 Synchronized the package manifest, public Compatibility version constant, and Xcode app marketing version after the `v1.15.0` changelog release was committed with stale `1.14.5` version values.
 Added `isApp`, `isCommandLineTool`, and `isRunningTests` to Build flags.

@@ -111,9 +111,9 @@ The `compatibilityCLI` executable target and `CompatibilitySwiftPMTests` test ta
 
 From the package directory, select the macOS destination and run:
 ```sh
-swift run --package-path . compatibilityCLI banana Bob
-swift run --package-path . compatibilityCLI parseDate "2023-01-02 17:12:00"
-swift test --package-path .
+swift run compatibilityCLI banana Bob
+swift run compatibilityCLI parseDate "2023-01-02 17:12:00"
+swift test
 ```
 
 In Xcode, open the package, select the automatically discovered `compatibilityCLI` scheme, choose **My Mac** as the run destination, and run it with the desired arguments. The `CompatibilitySwiftPMTests` target is included in the same package scheme's Test action.
