@@ -1184,26 +1184,42 @@ struct CompatibilityTests {
     @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
     func testNamedTests() async throws {
         let namedTests = Test.namedTests
-        var ongoingTests = Int.tests // because can't just do = [Test]() for some reason...
-        ongoingTests.removeAll()
+
+        // Preserve group order because some groups temporarily modify shared framework
+        // state such as the debug logger. Tests within a group still run concurrently,
+        // allowing the threading group's independent delay checks to overlap.
         for (name, tests) in namedTests {
+            // Seed type inference from the legacy Compatibility tests because Swift
+            // Testing exports another type named Test, then clear the temporary values.
+            var ongoingTests = Int.tests.map { (group: "", test: $0) }
+            ongoingTests.removeAll()
+            // Both Debug Tests temporarily replace the same global logging settings,
+            // so serialize only that group to guarantee they restore state in order.
+            let runsConcurrently = name != "Debug Tests"
+
             debug("Running \(name) tests...")
             for test in tests {
                 test.run()
-                if !test.isFinished() {
-                    ongoingTests.append(test)
+                if test.isFinished() {
+                    #expect(test.succeeded(), "\(name) / \(test.description)")
+                } else if !runsConcurrently {
+                    while !test.isFinished() {
+                        await sleep(seconds: 0.01)
+                    }
+                    #expect(test.succeeded(), "\(name) / \(test.description)")
                 } else {
-                    #expect(test.succeeded())
+                    ongoingTests.append((name, test))
                 }
             }
-        }
-        while ongoingTests.count > 0 {
-            await sleep(seconds: 0.01)
+
+            // Each test in this group is already running in its own task. Waiting in
+            // array order does not serialize their work; later tests continue progressing
+            // while an earlier result is awaited. Pause briefly to avoid busy-spinning.
             for ongoingTest in ongoingTests {
-                if ongoingTest.isFinished() {
-                    ongoingTests.removeAll { $0 === ongoingTest }
-                    #expect(ongoingTest.succeeded())
+                while !ongoingTest.test.isFinished() {
+                    await sleep(seconds: 0.01)
                 }
+                #expect(ongoingTest.test.succeeded(), "\(ongoingTest.group) / \(ongoingTest.test.description)")
             }
         }
     }

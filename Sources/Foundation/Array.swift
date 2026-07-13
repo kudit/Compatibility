@@ -225,7 +225,9 @@ public extension Collection {
         try expect(array.rotated(array.count) == array, "Full rotations should return the original order")
         try expect([String]().rotated(3).isEmpty, "Empty arrays should stay empty when rotated")
         let copy = chunk.shuffled
-        try expect(copy != chunk, "should be randomized but there is a chance this could fail due to random chance")
+        // A valid shuffle may randomly produce the original order, so verify that the
+        // result preserves every element instead of making a probabilistic order assertion.
+        try expect(copy.sorted() == chunk.sorted(), "Shuffling should preserve the collection's elements")
     }
     @Sendable
     static func nthTests() throws {

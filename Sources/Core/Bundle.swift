@@ -56,6 +56,14 @@ public extension Bundle {
 #if compiler(>=5.9)
     @MainActor
     internal static var bundleTests: TestClosure = {
+        // Report every active runtime classification before checking bundle metadata.
+        // SF Symbols are named vector assets rather than Unicode characters, so use each
+        // environment's portable emoji when configured and retain a text-only fallback.
+        let environmentLabels = Build.environments().map { environment in
+            Compatibility.settings.debugEmojiSupported ? "\(environment.emoji) \(environment.label)" : environment.label
+        }.joined(separator: "\n  ")
+        debug("Active Build environments:\n  \(environmentLabels)", level: .DEBUG)
+
         try expect(!Bundle.main.name.isEmpty, "Expected bundle name but got: \(Bundle.main.name)")
         try expect(!Bundle.main.displayName.isEmpty, "Expected bundle display name but got: \(Bundle.main.displayName)")
         try expect(!Bundle.main.appName.isEmpty, "Expected bundle app name but got: \(Bundle.main.appName)")
@@ -63,7 +71,12 @@ public extension Bundle {
         try expect(!Bundle.main.identifier.isEmpty, "Expected bundle identifier but got: \(Bundle.main.identifier)")
         try expect(!Bundle.main.copyright.isEmpty, "Expected bundle copyright but got: \(Bundle.main.copyright)")
         try expect(!Bundle.main.build.isEmpty, "Expected bundle build but got: \(Bundle.main.build)")
-        try expect(Bundle.main.version > "0.1", "Expected bundle version but got: \(Bundle.main.version)")
+        // SwiftPM's generated PackageTests runner is not an app bundle and does not
+        // carry CFBundleShortVersionString, so its documented fallback is Version.zero.
+        // Only require a release-style version when Bundle.main is an actual app.
+        if Build.isApp {
+            try expect(Bundle.main.version > "0.1", "Expected app bundle version but got: \(Bundle.main.version)")
+        }
         try expect(Bundle.main.buildDate > Date.yesterday && Bundle.main.buildDate < Date.tomorrow)
         try expect(Bundle.main.buildNumber > 0)
         try expect(!String.appIconName.isEmpty, "Expected app icon name but got: \(String.appIconName)")

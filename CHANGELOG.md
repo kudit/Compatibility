@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.15.1 2026-07-12
+Synchronized the package manifest, public Compatibility version constant, and Xcode app marketing version after the `v1.15.0` changelog release was committed with stale `1.14.5` version values.
+Added `isApp`, `isCommandLineTool`, and `isRunningTests` to Build flags.
+Documented the three runtime flags, added matching `Build.Environment` cases and symbols, and prevented tests or extension bundles from being misclassified as command-line tools.
+Excluded the Xcode test plan from the SwiftPM test target, logged active Build environments and symbol names during Bundle Tests, and serialized the legacy Named Tests bridge to prevent shared-state and timing interference.
+Replaced the probabilistic shuffled-order assertion with a deterministic element-preservation check.
+Added a documented Unicode emoji for every Build environment and used those portable representations in command-line environment reports when emoji output is enabled.
+Repaired the shared CompatibilityTests Xcode scheme and explicitly attached the checked-in test plan so Xcode displays the test suite instead of an empty autocreated plan.
+Added back code coverage calculations.
+
 ## v1.15.0 2026-07-12
 Updated the README to include information about the library name in case agents make the incorrect assumption about the naming.
 Added an opt-in `compatibilityCLI` executable target with `banana` and `parseDate` demonstration commands, plus SwiftPM tests that are omitted from Swift Playgrounds manifests to enable tests in Swift Package Index.

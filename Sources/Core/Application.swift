@@ -121,6 +121,12 @@ public struct Build {
     // MARK: - Environmental info
     public enum Environment: String, Sendable, RawRepresentable, CaseIterable, Identifiable, CaseNameConvertible, SymbolRepresentable {
         case debug = "Debug"
+        /// The current process is running from an application bundle whose extension is `.app`.
+        case app = "App"
+        /// The current process is a standalone executable rather than an app, test, or extension bundle.
+        case commandLineTool = "Command Line Tool"
+        /// The current process is executing under XCTest or Swift Testing's XCTest-compatible runner.
+        case testing = "Testing"
         case simulator = "Simulator"
         case playground = "Playground"
         case preview = "Preview"
@@ -139,6 +145,9 @@ public struct Build {
         public var test: Bool {
             switch self {
             case .debug: return Build.isDebug
+            case .app: return Build.isApp
+            case .commandLineTool: return Build.isCommandLineTool
+            case .testing: return Build.isRunningTests
             case .simulator: return Build.isSimulator
             case .playground: return Build.isPlayground
             case .preview: return Build.isPreview
@@ -148,10 +157,17 @@ public struct Build {
             }
         }
 
+        /// An SF Symbol name for the environment test.
         public var symbolName: String {
             switch self {
             case .debug:
                 return "ladybug"
+            case .app:
+                return "app.badge.fill"
+            case .commandLineTool:
+                return "terminal" // apple.terminal starting with iOS 17
+            case .testing:
+                return "checkmark.circle"
             case .realDevice:
                 return "square.fill"
             case .simulator:
@@ -166,6 +182,27 @@ public struct Build {
                 return "macwindow.on.rectangle"
             @unknown default:
                 return "questionmark.circle"
+            }
+        }
+
+        /// A portable Unicode representation suitable for terminals and plain-text logs.
+        ///
+        /// SF Symbols are named vector assets and cannot be represented reliably as text,
+        /// while emoji remain meaningful across Apple terminals, CI logs, and other platforms.
+        /// Their artwork may vary by operating system, but each scalar remains stable text.
+        public var emoji: String {
+            switch self {
+            case .debug: return "🪲"
+            case .app: return "📦"
+            case .commandLineTool: return "⌨️"
+            case .testing: return "🧪"
+            case .simulator: return "🖥️"
+            case .playground: return "🛝"
+            case .preview: return "👁️"
+            case .realDevice: return "📱"
+            case .designedForiPad: return "📲"
+            case .macCatalyst: return "💻"
+            @unknown default: return "❓"
             }
         }
 
@@ -283,6 +320,66 @@ public struct Build {
         return false
 #endif
     }
+
+    /// Returns `true` when the current process is running from an `.app` bundle.
+    ///
+    /// This is a runtime packaging check rather than a compile-time platform check.
+    /// It is `true` for normally launched Apple apps and Swift Playgrounds app runs.
+    /// Xcode and Swift Playgrounds previews normally run through an app-like preview
+    /// host, so a preview may report both `isApp` and `isPreview` as `true`.
+    /// Tests are reported independently by `isRunningTests`; a hosted test can therefore
+    /// be a test even when its runner's main bundle is not the application under test.
+    public static var isApp: Bool {
+#if canImport(Foundation)
+        return Bundle.main.bundleURL.pathExtension.lowercased() == "app"
+#else
+        // Bundle metadata is unavailable without Foundation, so the process cannot be
+        // classified reliably as an app from this compatibility layer.
+        return false
+#endif
+    }
+
+    /// Returns `true` when the current process appears to be a standalone command-line executable.
+    ///
+    /// A command-line tool's main bundle path normally has no extension. Checking for that
+    /// shape avoids treating `.xctest`, `.appex`, and other non-app bundles as command-line
+    /// tools, which would happen if this were implemented as merely `!isApp`.
+    /// This value is normally `false` in app runs, Swift Playgrounds, previews, and tests.
+    public static var isCommandLineTool: Bool {
+#if canImport(Foundation)
+        return Bundle.main.bundleURL.pathExtension.isEmpty && !isRunningTests
+#else
+        // Without Foundation there is no portable runtime bundle inspection available.
+        return false
+#endif
+    }
+
+    /// Returns `true` when the current process is executing a test bundle or test runner.
+    ///
+    /// Xcode supplies `XCTestConfigurationFilePath` to XCTest-compatible runs. Test runners
+    /// also conventionally contain `xctest` or end in SwiftPM's generated `PackageTests`
+    /// suffix. Modern SwiftPM launches Swift Testing through `swiftpm-testing-helper` with
+    /// a `--testing-library` argument, so those runtime markers are recognized as well without
+    /// requiring Compatibility itself to depend on either test framework.
+    /// This is intentionally independent of `isApp`: hosted application tests and previews
+    /// can have app-like hosts while still needing to identify themselves as test processes.
+    public static var isRunningTests: Bool {
+#if canImport(Foundation)
+        let environment = ProcessInfo.processInfo.environment
+        if environment["XCTestConfigurationFilePath"] != nil {
+            return true
+        }
+        let processName = ProcessInfo.processInfo.processName.lowercased()
+        let arguments = ProcessInfo.processInfo.arguments
+        return processName.contains("xctest")
+            || processName.hasSuffix("packagetests")
+            || processName == "swiftpm-testing-helper"
+            || arguments.contains("--testing-library")
+#else
+        // Test-runner metadata is not portably available without Foundation.
+        return false
+#endif
+    }
 }
 
 // Color support for Build.Environment
@@ -292,10 +389,17 @@ import Foundation
 
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension Build.Environment {
+    /// A stable display color for presenting this environment alongside its symbol.
     var color: Color {
         switch self {
         case .debug:
             return .red
+        case .app:
+            return .yellow
+        case .commandLineTool:
+            return .gray
+        case .testing:
+            return .yellow
         case .realDevice:
             return .green
         case .simulator:

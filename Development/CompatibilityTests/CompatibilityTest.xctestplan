@@ -9,7 +9,7 @@
     }
   ],
   "defaultOptions" : {
-    "codeCoverage" : false,
+    "codeCoverage" : true,
     "targetForVariableExpansion" : {
       "containerPath" : "container:Compatibility.xcodeproj",
       "identifier" : "B5E5FC502C386144004F2009",
