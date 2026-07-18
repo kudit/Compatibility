@@ -1182,7 +1182,7 @@ internal var orderedDictionaryTests: TestClosure = {
     let cm = ordered.compactMapValues { Int.random(in: 0...1) == 0 ? nil : $0 }
 }
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 #if !(os(WASM) || os(WASI))
 @MainActor
 #endif

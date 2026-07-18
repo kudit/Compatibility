@@ -76,7 +76,7 @@ public class DictionaryDecoder {
 }
 
 public extension Encodable {
-//    @available(iOS 13, tvOS 13, watchOS 6, *)
+//    @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
     /// Returns a generic dictionary with string keys for the object.
     func asDictionary() -> Dictionary<String, Any>? {
         // really should never error since we conform to Encodable as long as the base is a dictionary or container structure.  Only issue would be an array.
@@ -130,7 +130,7 @@ private func testCodingRoundTrips() throws {
     try expect(decodedFromMixedField == model, "MixedTypeField round trip should preserve the codable model")
 }
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 #if !(os(WASM) || os(WASI))
 @MainActor
 #endif

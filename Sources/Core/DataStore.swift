@@ -1,7 +1,7 @@
 // TODO: Do we want to restrict DataStore to the main thread?
 
 #if compiler(>=5.9) && canImport(Foundation) && !(os(WASM) || os(WASI))
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public enum DataStoreType: Sendable {
     case local
     case iCloud // shared will return local if watchOS < 9
@@ -84,7 +84,7 @@ public protocol DataStore {
     /// Remove a key and it's value from the store.
     func removeObject(forKey: String)
     
-    @available(iOS 13, tvOS 13, watchOS 6, *)
+    @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
     var type: DataStoreType { get }
 }
 
@@ -93,19 +93,19 @@ extension DataStore {
     public var description: String {
         return isLocal ? "Local" : "iCloud" + " data store"
     }
-    @available(iOS 13, tvOS 13, watchOS 6, *)
+    @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
     @MainActor
     public static func shared(for type: DataStoreType) -> DataStore {
         return type.shared
     }
-    @available(iOS 13, tvOS 13, watchOS 6, *)
+    @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
     public var isLocal: Bool {
         self.type == .local
     }
 }
 
 // MARK: - Local (UserDefaults)
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 extension UserDefaults: DataStore {
     public static let notificationName = UserDefaults.didChangeNotification
     public var type: DataStoreType { .local }
@@ -117,7 +117,7 @@ extension UserDefaults: DataStore {
 
 // MARK: - iCloud (NSUbiquitousKeyValueStore)
 #if canImport(CoreML) // not available in Linux
-@available(iOS 13, tvOS 13, watchOS 9, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 9, *)
 extension NSUbiquitousKeyValueStore: DataStore {
     public func set(_ value: Int, forKey defaultName: String) {
         self.set(Int64(value), forKey: defaultName)

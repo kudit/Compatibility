@@ -1,7 +1,7 @@
 #if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation) && !(os(WASM) || os(WASI))
 import SwiftUI
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 @MainActor
 struct EmbossedModifier: ViewModifier {
     @State var offset = 4.0
@@ -15,14 +15,14 @@ struct EmbossedModifier: ViewModifier {
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension View {
     func embossed(offset: Double = 4.0, blur: Double = 4.0) -> some View {
         modifier(EmbossedModifier(offset: offset, blur: blur))
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 #Preview("Embossed") {
     ZStack {
         Color.yellow.backport.ignoresSafeArea()

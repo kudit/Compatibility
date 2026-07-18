@@ -6,9 +6,53 @@
 //  Copyright © 2026 Kudit, LLC. All rights reserved.
 //
 
-public enum Compatibility {
+public enum Compatibility: Module {
     /// The version of the Compatibility Library since cannot get directly from Package.swift.
-    public static let version: Version = "1.15.2"
+    public static let version: Version = "1.16.0"
+
+    /// Public source repository for Compatibility so support reports can direct developers to its source and issue history.
+    ///
+    /// The explicit optional type is required to witness ``Module/openSourceRepository`` rather than
+    /// accidentally selecting the protocol extension's default `nil` implementation.
+    public static let openSourceRepository: String? = "https://github.com/kudit/Compatibility"
+
+    /// Immediately available Compatibility and runtime information suitable for display or human-readable reports.
+    ///
+    /// These portable build fields remain synchronous and nonisolated so command-line, older Apple,
+    /// WASM, and other non-UI clients can always produce meaningful module output.
+    public static var moduleInfo: [Field] {
+        return [
+            Field("Swift Version", Build.swiftVersion, symbol: "swift"),
+            Field("Compiler Version", Build.compilerVersion),
+        ]
+    }
+
+    /// Loads complete module information, including application details where that state is supported.
+    @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+    public static func loadDetailedModuleInfo() async -> [Field] {
+#if canImport(Foundation) && !(os(WASM) || os(WASI))
+        // Application is main-actor isolated, so gather only its live values there instead of
+        // imposing actor isolation on every Module conformer and every portable metadata field.
+        let applicationDetails = await MainActor.run {
+            var details = [Field]()
+            details += [
+                Field("App Identifier", Application.main.appIdentifier),
+            ]
+            if Application.iCloudSupported {
+                // Pull dynamically because iCloud availability can change while the app is running.
+                details += [
+                    Field("iCloud status", Application.iCloudStatus),
+                ]
+            }
+            details += moduleInfo
+            return details
+        }
+        return applicationDetails
+#else
+        // Non-Foundation environments still receive every portable field without referencing Application.
+        return moduleInfo
+#endif
+    }
 }
 
 #if canImport(Foundation)
@@ -192,7 +236,7 @@ public extension Compatibility { // for brief period where Application wasn't av
     @available(*, deprecated, renamed: "Application.isDebug")
     static let isDebug = _isDebugAssertConfiguration()
 }
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension Compatibility { // for brief period where Application and Build wasn't available.  Static computed properties apparently aren't supported in extensions in iOS <13?
     // MARK: - Entitlements Information
 #if canImport(Foundation) && !(os(WASM) || os(WASI))
@@ -233,94 +277,95 @@ public extension Compatibility { // for brief period where Application and Build
     static let isMacCatalyst = Build.isMacCatalyst
 }
 
-#if !canImport(CoreML) && canImport(Foundation) // this isn't available on linux or WASM!
-public extension FileManager {
-    var ubiquityIdentityToken: String? { nil }
-}
-#endif
-
 #if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation) && !(os(WASM) || os(WASI))
 import SwiftUI
-
-@available(iOS 14, macOS 11, tvOS 14, watchOS 7, *)
-public struct TestCheck: View {
-    var label: String
-    var state: Bool
-    public init(_ label: String, _ state: Bool) {
-        self.label = label
-        self.state = state
-    }
-    public var body: some View {
-        Label(label, systemImage: state ? "checkmark.circle.fill" : "x.square.fill").backport.foregroundStyle(state ? .green : .gray)
-    }
-}
-
-@available(iOS 14, macOS 11, tvOS 14, watchOS 7, *)
-#Preview("Test Checks") {
-    List {
-        TestCheck("True", true)
-        TestCheck("False", false)
-        Label("True", systemImage: "checkmark.circle.fill").backport.foregroundStyle(.green)
-        Label("False", systemImage: "x.square.fill").backport.foregroundStyle(.gray)
-    }
-}
 
 @available(iOS 15, macOS 12, tvOS 15, watchOS 9, *)
 public struct CompatibilityEnvironmentTestView: View {
 #if compiler(>=5.9) && canImport(Combine)
     @CloudStorage(.compatibilityVersionsRunKey) var previouslyRunCompatibilityVersions = Compatibility.version.rawValue
 #endif
+    /// Complete deferred module information; `nil` keeps the loading state distinct from the portable baseline.
+    @State private var loadedModuleInfo: [Field]?
+
+    /// Creates an environment view whose module metadata is loaded after the UI first appears.
     public init() {}
+
+    /// Structured application fields displayed by the environment test view.
+    public var applicationInfo: [Field] {
+        var info = [
+            Field("Name", "\(Application.main.name) (\(Application.main.appName).app)"),
+            Field("App Identifier", Application.main.appIdentifier),
+            Field("App Version", "v\(Application.main.debugVersion)"),
+            Field("is first run", Application.main.isFirstRun),
+        ]
+        let previousVersions = Application.main.previouslyRunVersions
+        if previousVersions.count > 0 {
+            info.append(Field("Previously run versions", previousVersions.pretty))
+        }
+        return info
+    }
+
+    /// Structured Compatibility-version and build-mode fields displayed by the environment test view.
+    public var compatibilityInfo: [Field] {
+        var info = [
+            Field("\(Compatibility.moduleName) Version", Compatibility.version),
+            Field("is Debug", Build.isDebug),
+        ]
+#if compiler(>=5.9) && canImport(Combine)
+        if previouslyRunCompatibilityVersions != "" && previouslyRunCompatibilityVersions != "\(Compatibility.version.rawValue)" {
+            info += [
+                Field("Previously run Compatibility versions", previouslyRunCompatibilityVersions),
+                Field(nil, "NOTE: This only updates if we're running the DataStore test view and is not guaranteed to be run any other time or from any other app."),
+            ]
+        }
+#endif
+        return info
+    }
+
     public var body: some View {
         List {
-//            Text("Double values: \(String(describing: CGFloat(0.2)))")
-            Section("Application") {
-                Backport.LabeledContent("Name:", value: "\(Application.main.name) (\(Application.main.appName).app)")
-                    .backport.focusable(true) // to allow scrolling in tvOS
-                Backport.LabeledContent("App Identifier:", value: Application.main.appIdentifier)
-                Backport.LabeledContent("App Version:", value: Application.main.debugVersion)
-                TestCheck("is first run", Application.main.isFirstRun)
-                let previousVersions = Application.main.previouslyRunVersions
-                if previousVersions.count > 0 {
-                    Text("Previously run versions:")
-                    Text("\(previousVersions.pretty)")
+            FieldSections([
+                "Application": applicationInfo,
+                Compatibility.moduleName: compatibilityInfo,
+                "iCloud": [
+                    Field("Supported by app", Application.iCloudSupported),
+                    Field("Enabled", Application.iCloudIsEnabled),
+                    Field("iCloud status", Application.iCloudStatus),
+                ],
+            ])
+            Section("Module Info") {
+                // Show the portable baseline immediately, then replace it with the complete loaded result.
+                // This is example code.  Really this only needs to include moduleInfo since the detailed info is already included in other sections.
+                let displayedModuleInfo = loadedModuleInfo ?? Compatibility.moduleInfo
+                ForEach(displayedModuleInfo.indices, id: \.self) { index in
+                    FieldView(displayedModuleInfo[index])
                 }
-            }
-            Section("Compatibility") {
-                Backport.LabeledContent("Compatibility Version:", value: Compatibility.version.description)
-                TestCheck("is Debug", Build.isDebug)
-#if compiler(>=5.9) && canImport(Combine)
-                if previouslyRunCompatibilityVersions != "" && previouslyRunCompatibilityVersions != "\(Compatibility.version.rawValue)" {
-                    Text("Previously run Compatibility versions:")
-                    Text("\(previouslyRunCompatibilityVersions)")
-                    Text("NOTE: This only updates if we're running the DataStore test view and is not guaranteed to be run any other time or from any other app.").font(.footnote).foregroundStyle(.gray)
-                }
-#endif
-            }
-            Section("iCloud") {
-                TestCheck("Supported by app", Application.iCloudSupported)
-                TestCheck("Enabled", Application.iCloudIsEnabled)
-                HStack {
-                    Text("iCloud status:")
-                    Image(systemName: Application.iCloudStatus.symbolName)
-                    Text("\(Application.iCloudStatus.description)")
+                if loadedModuleInfo == nil {
+                    ProgressView("Loading module details…")
                 }
             }
             Section("Environment") {
-                Backport.LabeledContent("Swift Version:", value: Build.swiftVersion)
-                Backport.LabeledContent("Compiler Version:", value: Build.compilerVersion)
+                FieldView(Field("Swift Version", Build.swiftVersion, symbol: "swift"))
+                FieldView(Field("Compiler Version", Build.compilerVersion))
                 EnvironmentsView(Build.environments())
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .contentShape(Rectangle())
             }
-            Section("Dates") {
-                Backport.LabeledContent("Now Backport:", value: Date.nowBackport.pretty)
-                Backport.LabeledContent("Now MySQL:", value: Date.nowBackport.mysqlDateTime)
-                Backport.LabeledContent("Now File Format:", value: Date.nowBackport.numericDateTime)
-                Backport.LabeledContent("Tomorrow:", value: Date.tomorrow.pretty)
-                Backport.LabeledContent("Tomorrow Midnight:", value: Date.tomorrowMidnight.pretty)
-                    .backport.focusable(true) // to allow scrolling in tvOS
-            }
+            FieldSections([
+                "Dates": [
+                    Field("Now Backport", Date.nowBackport.pretty),
+                    Field("Now MySQL", Date.nowBackport.mysqlDateTime),
+                    Field("Now Numeric", Date.nowBackport.numericDateTime),
+                    Field("Tomorrow", Date.tomorrow.pretty),
+                    Field("Tomorrow Midnight", Date.tomorrowMidnight.pretty),
+                    Field("Yesterday", Date.yesterday.pretty),
+                ],
+            ])
+        }
+        .task {
+            // Await potentially slow details without delaying the portable module fields above.
+            loadedModuleInfo = await Compatibility.loadDetailedModuleInfo()
         }
     }
 }

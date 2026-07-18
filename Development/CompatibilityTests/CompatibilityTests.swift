@@ -30,6 +30,7 @@ private struct TestPerson: Equatable {
 #if canImport(Foundation) && !(os(WASM) || os(WASI))
 
 // Helper model with @CloudStorage wrappers
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 @MainActor
 private struct CloudStorageTestModel {
     @CloudStorage(wrappedValue: true, "boolKey") var boolValue
@@ -93,36 +94,6 @@ private final class MockDataStore: DataStore {
 
 @Suite
 struct CompatibilityTests {
-    
-    @Test("Enum rotation")
-    func testEnumRotation() {
-        var e = CloudStatus.notSupported
-        #expect(e == .notSupported)
-        e++
-        #expect(e == .available)
-        e++
-        #expect(e == .unavailable)
-        e++
-        #expect(e == .notSupported)
-    }
-    
-    @Test("Double/Integer Values")
-    func testValues() {
-        let intValue: Int = 42
-        #expect(intValue.doubleValue == 42.0)
-
-        let floatValue: Float = 3.5
-        #expect(floatValue.doubleValue == 3.5)
-
-        let doubleValue: Double = 7.25
-        #expect(doubleValue.doubleValue == 7.25)
-
-        #expect(5.0.isInteger)
-        #expect((-3.0).isInteger)
-
-        #expect(!5.1.isInteger)
-        #expect(!(-3.14).isInteger)
-    }
     
     @Test("String without Foundation")
     func testStringExtensionsWithoutFoundation() {
@@ -700,195 +671,6 @@ struct CompatibilityTests {
         #expect(dict4["b"] == 20)
     }
 
-    @Test("Combined tests for ++, --, random, ordinal, string, pluralEnding, and byteString")
-    func combinedIntTests() throws {
-        // ++ operator
-        var plusPlusValue = 3
-        plusPlusValue++
-        #expect(plusPlusValue == 4, "++ operator failed")
-
-        // -- operator
-        var minusMinusValue = 3
-        minusMinusValue--
-        #expect(minusMinusValue == 2, "-- operator failed")
-
-        // Int.random(max:)
-        #expect(Int.random(max: -2) == 0)
-        #expect(Int.random(max: 0) == 0)
-        for i in 1..<5 {
-            let num = Int.random(max: i)
-            #expect(num >= 0 && num < i)
-        }
-
-        // Int.string
-        #expect(1999.string == "1999")
-
-        // Int.pluralEnding
-        #expect(0.pluralEnding() == "s")
-        #expect(1.pluralEnding("teeth", singularEnding: "tooth") == "tooth")
-        #expect(2.pluralEnding("teeth", singularEnding: "tooth") == "teeth")
-
-        // BinaryInteger.byteString
-        #if canImport(Foundation)
-        let byteTestValue: UInt64 = 12334
-        let formatted = byteTestValue.byteString(.file)
-        #expect(formatted.contains("KB"), "Byte string formatting failed")
-        #endif
-    }
-
-    @Test("Version.swift — full coverage")
-    func version_full_coverage() throws {
-        // ------- basic description / full / compact -------
-        let v100 = Version(majorVersion: 1, minorVersion: 0, patchVersion: 0)
-        try expect(v100.description == "1.0")
-        try expect(v100.full == "1.0.0")
-        try expect(v100.compact == "1") // major-only compacts to "1"
-
-        let v1301 = Version(majorVersion: 13, minorVersion: 0, patchVersion: 1)
-        try expect(v1301.description == "13.0.1")
-        try expect(v1301.full == "13.0.1")
-        try expect(v1301.compact == v1301.description) // not major-only -> description
-
-        // ------- ExpressibleByStringLiteral / forcing behavior -------
-        let s1: Version = "2b.5.s"
-        try expect(s1.full == "2.5.0")   // forcing strips non-digits, builds 2.5.0
-        try expect(s1.description == "2.5")
-
-        let expanded: Version = "1.2.3b4"
-        try expect(expanded.full == "1.2.34")   // "1.2.3b4" -> cleaned "1.2.34"
-
-        // ------- init?(parsing:) success & failure -------
-        try expect(Version(parsing: "2.12.1") != nil)  // exact numeric parse succeeds
-        try expect(Version(parsing: "1.2.3b4") == nil) // non-exact (forced changed) -> nil
-
-        // ------- init(string:defaultValue:) -------
-        let defaulted = Version(string: nil, defaultValue: "1.2.3") // default passed as literal -> converted
-        try expect(defaulted == Version("1.2.3"))
-
-        let badDefault = Version(string: "alphabet", defaultValue: Version.zero)
-        try expect(badDefault == .zero)
-
-        // ------- zero and components -------
-        try expect(Version.zero == Version(majorVersion: 0, minorVersion: 0, patchVersion: 0))
-        try expect(v1301.components == [13, 0, 1])
-
-        // ------- Comparable behavior / sorting -------
-        let first = Version("2")
-        let second = Version("12.1")
-        let third: Version = "2.12.1"
-        let fourth = Version(rawValue: "12.1")
-        let fifth: Version = "2.2.0"
-        let sixth: Version = "2.1"
-
-        try expect(first < second)
-        try expect(third > first)
-        try expect(fourth == second)
-        try expect(third < fourth)
-        try expect(sixth < fifth)
-        try expect(fifth < third)
-
-        let list = [first, second, third, fourth, fifth, sixth]
-        try expect(list.sorted() == [first, sixth, fifth, third, second, fourth])
-
-        // ------- Hashable / Set behavior -------
-        var set: Set<Version> = [first, second]
-        try expect(set.contains(first))
-        set.insert(first) // duplicate, set size should not change
-        try expect(set.count == 2)
-
-        // ------- RawRepresentable & LosslessStringConvertible on Version -------
-        let rv = Version("3.4.5")
-        try expect(rv.rawValue == rv.description)
-        let rv2 = Version(rawValue: rv.rawValue)
-        try expect(rv2 == rv)
-
-        // ------- Codable: encode/decode array of Versions (string-encoded path) -------
-        let arr: [Version] = [first, second, third, Version("1.0.0"), Version("2.0"), Version("3.0.1")]
-#if canImport(Foundation) && !(os(WASM) || os(WASI))
-        let encoded = try JSONEncoder().encode(arr)
-        let decoded = try JSONDecoder().decode([Version].self, from: encoded)
-        try expect(decoded.count == arr.count)
-        try expect(decoded[0] == arr[0])
-        try expect(decoded.map(\.rawValue) == arr.map(\.rawValue)) // round-trip check
-
-        // ------- Codable: keyed (object) decoding branch (major/minor/patch as ints) -------
-        let intJSON = #"[{"majorVersion":5,"minorVersion":3,"patchVersion":10}]"#
-        let intData = Data(intJSON.utf8)
-        let intDecoded = try JSONDecoder().decode([Version].self, from: intData)
-        try expect(intDecoded.first?.full == "5.3.10")
-
-        // ------- Codable: single-value (string) decoding branch -------
-        let stringJSON = #"["2.0","12.1","2.12.1"]"#
-        let stringDecoded = try JSONDecoder().decode([Version].self, from: Data(stringJSON.utf8))
-        try expect(stringDecoded[0] == Version("2"))
-
-        // ------- Codable: keyed decode missing a key should throw (error branch) -------
-        let badKeyJSON = #"[{"majorVersion":1,"minorVersion":2}]"# // missing patchVersion -> should throw
-        do {
-            _ = try JSONDecoder().decode([Version].self, from: Data(badKeyJSON.utf8))
-            try expect(false, "Expected keyed decode to fail due missing patchVersion")
-        } catch is DecodingError {
-            try expect(true) // expected
-        } catch {
-            try expect(false, "Unexpected error: \(error)")
-        }
-#endif
-
-        // ------- [Version] RawRepresentable init(rawValue:) and pretty -------
-        let rawInput = "1,2.1.2,3"
-        let versionsFromRaw: [Version] = .init(rawValue: rawInput)
-        try expect(versionsFromRaw.count == 3)
-        try expect(versionsFromRaw.pretty == "v1.0, v2.1.2, v3.0")
-
-        // rawValue round-trip for the array
-        try expect(versionsFromRaw.rawValue.contains("1.0"))
-        try expect(versionsFromRaw.rawValue.contains("2.1.2"))
-        try expect(versionsFromRaw.rawValue.contains("3.0"))
-
-        // the "required" convenience initializer (prepends required version)
-        let versionsWithRequired: [Version] = .init(rawValue: rawInput, required: Version("4.3"))
-        try expect(versionsWithRequired.pretty.contains("v4.3"))
-
-        // uniqueness behavior: duplicates in raw input should be removed via Set
-        let dupRaw = "1,1,2"
-        let dupVersions: [Version] = .init(rawValue: dupRaw)
-        try expect(Set(dupVersions.map { $0.rawValue }).count == dupVersions.count)
-
-        // ------- pretty property again for sanity -------
-        try expect(versionsFromRaw.pretty.starts(with: "v"))
-
-        // Final sanity: ensure some corner cases of compact/description interplay
-        let justMajor: Version = "7"           // 7.0.0 -> description "7.0", compact "7"
-        try expect(justMajor.description == "7.0")
-        try expect(justMajor.compact == "7")
-    }
-
-#if canImport(Foundation) && !(os(WASM) || os(WASI))
-    @Test("Date parse supported formats")
-    func date_parse_supported_formats() throws {
-        let mysqlDateTime = Date(parse: "2023-01-02 17:12:00")
-        #expect(mysqlDateTime?.mysqlDateTime == "2023-01-02 17:12:00")
-
-        let mysqlDate = Date(parse: "2023-01-02")
-        #expect(mysqlDate?.mysqlDate == "2023-01-02")
-
-        let numericDateTime = Date(parse: "20230102171200")
-        #expect(numericDateTime?.numericDateTime == "20230102171200")
-
-        let numericDate = Date(parse: "20230102")
-        #expect(numericDate?.numericDate == "20230102")
-
-        let spelledOutDate = Date(parse: "January 2, 2023")
-        #expect(spelledOutDate?.mysqlDate == "2023-01-02")
-
-        let abbreviatedDate = Date(parse: "Jan 2, 2023")
-        #expect(abbreviatedDate?.mysqlDate == "2023-01-02")
-
-        #expect(Date(parse: "not a date") == nil)
-        #expect(Date.supportedParseFormats.count == 8)
-    }
-#endif
-
 #if canImport(Foundation) && !(os(WASM) || os(WASI))
     @Test("Identifiers")
     @MainActor
@@ -897,8 +679,14 @@ struct CompatibilityTests {
         debugSuppress {
             _ = Application.main
         }
-        #expect(Application.main.appIdentifier == "com.apple.dt.xctest.tool" || Application.main.appIdentifier == "com.unknown.unknown") // first is for Xcode tests within xcode, second is for command line tests.
-        #expect(Application.main.version == "16.0" || Application.main.version == "0.0")
+        let originalOverride = Application.forceUnknownAppIdentifierForTesting
+        defer {
+            // Restore the process-wide test setting so other hosted or in-app tests see their normal identifier.
+            Application.forceUnknownAppIdentifierForTesting = originalOverride
+        }
+        Application.forceUnknownAppIdentifierForTesting = true
+        #expect(Application.main.appIdentifier == .unknownAppIdentifier)
+        #expect(!Application.main.version.description.isEmpty)
     }
 #endif
     
@@ -1095,7 +883,6 @@ struct CompatibilityTests {
     }
 
 #if !(os(WASM) || os(WASI)) // most named tests are not actually available in WASM and since we don't have a real use, we can leave out for now.  If someone is using this, please fix this for WASM based on your use.
-    @available(iOS 13, tvOS 13, *)
     @Test func testEncoding() async throws {
         #expect(MixedTypeField(encoding: "string")?.stringValue == "string")
         #expect(MixedTypeField(encoding: true)?.boolValue == true)
@@ -1179,16 +966,14 @@ struct CompatibilityTests {
 #endif
     }
     
-    @Test("Named Tests")
+    @Test("Named Tests", .serialized, arguments: await MainActor.run { Test.namedTests.keys.elements })
     @MainActor
     @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
-    func testNamedTests() async throws {
-        let namedTests = Test.namedTests
-
-        // Preserve group order because some groups temporarily modify shared framework
-        // state such as the debug logger. Tests within a group still run concurrently,
-        // allowing the threading group's independent delay checks to overlap.
-        for (name, tests) in namedTests {
+    func testNamedTests(name: String) async throws {
+        // Parameterizing by section makes Swift Testing report every named section as a
+        // separate test case while serialization protects framework-wide state modified by
+        // some legacy tests and the in-app runner continues to use the same Test values.
+        if let tests = Test.namedTests[name] {
             // Seed type inference from the legacy Compatibility tests because Swift
             // Testing exports another type named Test, then clear the temporary values.
             var ongoingTests = Int.tests.map { (group: "", test: $0) }
@@ -1246,9 +1031,8 @@ struct CompatibilityTests {
     */
     @Test("Additional Tests")
     @available(iOS 16, macOS 13, tvOS 16, watchOS 9, *)
+    @MainActor
     func additionalTests() {
-        Compatibility.copyToPasteboard("Testing copying text to pasteboard via Compatibility.swiftpm")
-        
         Compatibility.settings.debugLog("hello \(Compatibility.version)")
         
         let html = "This is <b>bold</b> and this is <i>italic</i>."
@@ -1272,8 +1056,20 @@ struct CompatibilityTests {
         let any = NSString("B") as AnyObject
         #expect(dict.firstKey(for: any) == "b")
         
-        if let files = try? FileManager.default.files(in: .desktopDirectory) {
-            #expect(files.count > 0)
+        let manager = FileManager.default
+        let fixture = manager.temporaryDirectory.appendingPathComponent("CompatibilityAdditionalTests-\(UUID().uuidString)", isDirectory: true)
+        do {
+            // Use a private temporary fixture instead of reading the user's Desktop or requiring privacy permission.
+            try manager.createDirectory(at: fixture, withIntermediateDirectories: false)
+            defer {
+                try? manager.removeItem(at: fixture)
+            }
+            let file = fixture.appendingPathComponent("Entry.txt")
+            try Data().write(to: file)
+            let entries = try manager.entries(in: fixture)
+            #expect(entries.map(\.lastPathComponent) == ["Entry.txt"])
+        } catch {
+            Issue.record("Unable to exercise temporary directory entries: \(error)")
         }
     }
     
@@ -1356,21 +1152,6 @@ struct CompatibilityTests {
     }
 #endif
 
-    @available(iOS 16, macOS 13, tvOS 16, watchOS 9, *)
-    @Test(arguments: ["testKey"]) func ubiquitousStoreSetAndGet(key: String) async throws {
-        let store = NSUbiquitousKeyValueStore.default
-        // Skip if iCloud is not available
-        guard store.synchronize() else {
-            return // just exit early
-        }
-
-        store.set("value", forKey: key)
-        #expect(store.string(forKey: key) == "value")
-
-        store.removeObject(forKey: key)
-        #expect(store.string(forKey: key) == nil)
-    }
-
 //    @available(iOS 16, macOS 13, tvOS 16, watchOS 9, *)
 //    @MainActor @Test func dataStoreTestModelDefaults() {
 //        let model = DataStoreTestModel()
@@ -1408,6 +1189,10 @@ struct CompatibilityTests {
         #expect(Compatibility.version.description == String(describing: Compatibility.version))
 
         #if canImport(Foundation) && !(os(WASM) || os(WASI))
+        // CloudStorage uses the process's configured persistent store, so require explicit integration-test opt-in.
+        guard Build.runsIntegrationTests else {
+            return
+        }
         // Ensure we’re running on main actor for @MainActor wrappers
         await MainActor.run {
             let model = CloudStorageTestModel()

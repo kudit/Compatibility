@@ -1,5 +1,33 @@
 # Changelog
 
+## v1.16.0 2026-07-17
+Added `Module` protocol as a template for all Modules including lazy asynchronous GitHub license discovery.
+Added dependency-aware module registration through `Build.allModules`, `Build.register`, and `Module.include()`, with automatic Compatibility registration and optional top-level module registration from `Application.track(including:)`.
+Included every registered module's asynchronously loaded fields and version in application support descriptions so this can be injected by adding additional modules.
+Made URL file-system tests portable by creating and cleaning up a unique directory inside the platform-provided temporary directory instead of assuming macOS `/Users/Shared` exists.
+Separated Build code into separate file for clarity.
+Made additional Application values nonisolated so they can be accessed in alternative contexts and audited all methods for isolation needs.
+Added `Field` struct for information used in description in a way that can be structured for other uses/display.
+Documented the new structured `Field` APIs and added focused formatting, conformance, initialization, and coding tests.
+Created `FieldView` and moved `TestCheck` to that file and out of Compatibility.swift.
+Re-worked CompatibilityEnvironmentTestView to use newly created data-driven functions.
+Added human-readable `description` output to `MixedTypeField`, including list-style array descriptions intended for displays and email.
+Added `Sendable` and `Hashable` conformance to `MixedTypeField`.
+Added generic `Collection.ends(with:)` support with standard suffix edge-case coverage.
+Renamed `FileManager.files(in:)` to the more accurate `entries(in:)`, retained a deprecated source-compatible forwarding method, and added a deterministic temporary-directory test to the shared test suite.
+Moved numeric convenience, integer helper, Version, and date-parsing coverage from Swift Testing-only functions into the shared in-app named test collections.
+Restored the original iCloud ubiquitous key-value store value after its integration test completes.
+Added `TESTING` launch environment convention for flagging test UI environments.
+Added an XCTest-only `.backport.tap()` that uses remote Select on tvOS, and marked the launched demo app as testing during UI tests.
+Preserved and restored complete UIKit and AppKit pasteboard contents around the Compatibility copy test.
+Made asynchronous timing tests tolerate normal scheduling delays on loaded UI-test and CI hosts without accepting early completion.
+Corrected outdated README requirements and examples, and documented module metadata, shared tests, UI-test detection, and license loading.
+Deprecated Compatibility.copyToPasteboard().
+Added platform-neutral `Pasteboard` and `PasteboardItem` APIs with UIKit, AppKit, and process-local fallbacks, dedicated tests, complete-content restoration, and a deprecated Compatibility forwarding API.
+Added and documented the dynamic Application.forceUnknownAppIdentifierForTesting override.
+Lowered the Swift package's declared macOS baseline to SwiftPM's minimum macOS 10.10 while retaining availability boundaries for newer APIs.
+Updated module documentation for Apple and WebAssembly concurrency behavior and recorded that contributor rules and the App Store Styleguide now live in `CONTRIBUTING.md`.
+
 ## v1.15.2 2026-07-13
 Made `Build.isDesignedForiPad` compile with older Apple SDKs by dynamically querying the iOS 26.1 `ProcessInfo.isiOSAppOnVision` property only after its runtime availability check.
 Removed unnecessary --package-path properties from swift build and test examples.

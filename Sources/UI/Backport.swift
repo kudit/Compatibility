@@ -12,13 +12,13 @@ public struct Backport<Content> {
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension View {
     @MainActor
     var backport: Backport<Self> { Backport(self) }
 }
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 extension Backport where Content == Any {
     /// Usage: Backport.AsyncImage(url: URL)
     @ViewBuilder public static func AsyncImage(url: URL?) -> some View {
@@ -35,25 +35,33 @@ extension Backport where Content == Any {
     }
 }
 
-@available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
+@available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
 extension Backport where Content == Any {
     @ViewBuilder public static func LabeledContent(_ titleKey: String, value: some StringProtocol) -> some View {
-        if #available(iOS 16, macOS 13, tvOS 16, watchOS 9, *) {
+        if titleKey.count > 35 {
+            Text(titleKey)
+            Text(value)
+                .backport.foregroundStyle(.gray)
+        } else if #available(iOS 16, macOS 13, tvOS 16, watchOS 9, *) {
             SwiftUI.LabeledContent(LocalizedStringKey(titleKey), value: value)
         } else {
-            HStack {
+            AStack { orientation in
                 Text(titleKey)
+                if orientation == .horizontal {
                 Spacer()
+                }
                 Text(value)
                     .backport.foregroundStyle(.gray)
-                    .multilineTextAlignment(.trailing)
+                    .if(orientation == .horizontal) { view in
+                        view.multilineTextAlignment(.trailing)
+                    }
             }
         }
     }
 }
 
 // MARK: - Backport View compatibility functions
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 @MainActor
 public extension Backport where Content: View {
     // MARK: - .onChange
@@ -582,7 +590,7 @@ public enum BackportControlSize : CaseIterable, Sendable {
 import WidgetKit
 #endif
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension Backport where Content: View {
     /// Adds the view and all of its subviews to the accented group.
     ///
@@ -636,7 +644,7 @@ public extension Backport where Content: View {
 }
 
 // MARK: Presentation Detents
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension Backport where Content: View {
     enum BackportPresentationDetent: Sendable, Hashable {
         case large, medium, fraction(CGFloat)
@@ -671,7 +679,7 @@ public extension Backport where Content: View {
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 extension Backport where Content: View {
     /// Specifies if the view is focusable.
     ///
@@ -691,7 +699,7 @@ extension Backport where Content: View {
 }
 
 // MARK: scrollClipDisabled()
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 extension Backport where Content: View {
     /// Sets whether a scroll view clips its content to its bounds.
     ///
@@ -764,7 +772,7 @@ extension Backport where Content: View {
 }
 
 // MARK: - Navigation Destination
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension Backport where Content: View {
 
     /// Associates a destination view with a binding that can be used to push
@@ -886,7 +894,7 @@ public extension Backport where Content: View {
 }
 
 // MARK: Navigation Title
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension Backport where Content: View {
     //TODO: find a way to better consolidate code?  Possibly a protocol?)
     func navigationTitle(_ title: Text) -> some View {
@@ -959,7 +967,7 @@ import _StoreKit_SwiftUI
 #endif
 
 // MARK: - Glass effects
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public struct Glass : Equatable, Sendable {
     var color: Color?
     var isInteractive: Bool?
@@ -1012,7 +1020,7 @@ public struct Glass : Equatable, Sendable {
 #endif
 }
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension Backport where Content: View {
     /// Applies a glass effect to this view.
     ///
@@ -1108,7 +1116,7 @@ public extension Backport {
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension Backport where Content: View {
     /// Sets the presentation background of the enclosing sheet using a shape
     /// style.
@@ -1338,7 +1346,7 @@ public extension ToolbarItemPlacement {
     }()
 }
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension Backport where Content: View {
     /// Sets the visibility of the status bar.
     ///
@@ -1356,7 +1364,7 @@ public extension Backport where Content: View {
 
 // MARK: - User Interaction
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension Backport where Content: View {
     /// Adds an action to perform when this view recognizes a tap gesture.
     ///
@@ -1425,7 +1433,7 @@ public extension PickerStyle where Self == DefaultPickerStyle {
     }
 }
 #else
-@available(iOS 13, tvOS 13, *)
+@available(iOS 13, macOS 10.15, tvOS 13, *)
 public extension PickerStyle where Self == SegmentedPickerStyle {
     // can't just name segmented because marked as explicitly unavailable
     static var segmentedBackport: SegmentedPickerStyle {
@@ -1435,7 +1443,7 @@ public extension PickerStyle where Self == SegmentedPickerStyle {
 #endif
 
 // MARK: TabView
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 private struct BackportTabViewContent<Content: View>: View {
     private let content: Content
 
@@ -1470,7 +1478,7 @@ private struct BackportTabViewContent<Content: View>: View {
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 private struct BackportSelectionTabViewContent<SelectionValue: Hashable, Content: View>: View {
     private let selection: Binding<SelectionValue>?
     private let content: Content
@@ -1507,7 +1515,7 @@ private struct BackportSelectionTabViewContent<SelectionValue: Hashable, Content
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension Backport where Content == Any {
     /// Usage: `Backport.TabView { MyView() }`
     @ViewBuilder static func TabView<C: View>(@ViewBuilder content: () -> C) -> some View {
@@ -1547,7 +1555,7 @@ public enum BackportTabViewStyle: Sendable {
     public enum BackportIndexDisplayMode: Sendable {
         case always, automatic, never
         #if !os(macOS)
-        @available(iOS 14, tvOS 14, watchOS 7, *)
+        @available(iOS 14, macOS 10.15, tvOS 14, watchOS 7, *)
         public var converted: PageTabViewStyle.IndexDisplayMode {
             switch self {
             case .always:
@@ -1603,7 +1611,7 @@ public enum BackportTabViewStyle: Sendable {
 //    case grouped, sidebarAdaptable, tabBarOnly
 }
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension Backport where Content: View {
     /// Sets the style for the tab view within the current environment.
     ///
@@ -1613,7 +1621,7 @@ public extension Backport where Content: View {
             #if os(macOS) || os(tvOS) // no longer supported in tvOS 17.2+?
             content
             #else
-            if #available(iOS 14, tvOS 14, watchOS 7, *) {
+            if #available(iOS 14, macOS 10.15, tvOS 14, watchOS 7, *) {
                 switch style {
                 case .automatic:
                     content
@@ -1659,7 +1667,7 @@ public extension Backport where Content: View {
 
 // https://stackoverflow.com/questions/78472655/swiftui-tabview-safe-area
 // Apparently this doesn't work easily.  May need to custom develop a PageView.
-@available(iOS 13, tvOS 13, watchOS 7, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 7, *)
 #Preview("Page Backgrounds") {
     TabView {
         Color.red
@@ -1705,12 +1713,12 @@ Example implementation of a ContainerView:
  }
 ```
  */
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public protocol ContainerView: View {
     associatedtype Content
     init(content: @escaping () -> Content)
 }
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension ContainerView {
     init(@ViewBuilder _ content: @escaping () -> Content) {
         self.init(content: content)
@@ -1718,7 +1726,7 @@ public extension ContainerView {
 }
 
 // Try just re-definiing NavigationStack here and in this, do the check and show the appropriate SwiftUI implementation if that makes sense.
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 @MainActor
 public struct BackportNavigationStack<Root: View>: View {
     var root: () -> Root
@@ -1753,7 +1761,7 @@ public struct BackportNavigationStack<Root: View>: View {
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 #Preview("Page Tabs") {
     Backport.TabView {
         Color.red
@@ -1761,7 +1769,7 @@ public struct BackportNavigationStack<Root: View>: View {
         Color.blue
     }.backport.tabViewStyle(.page)
 }
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 #Preview("Automatic Tabs") {
     Backport.TabView {
         Color.red
@@ -1777,7 +1785,7 @@ public struct BackportNavigationStack<Root: View>: View {
 //    }.backport.tabViewStyle(.verticalPage)
 //}
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 @MainActor
 public extension Backport where Content: View {
     /// Disables or enables scrolling in scrollable views.

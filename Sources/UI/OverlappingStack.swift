@@ -4,7 +4,7 @@ import SwiftUI
 
 // NOTE: Used in Monetization
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 private enum OrientationAlignment {
     case horizontal(VerticalAlignment)
     case vertical(HorizontalAlignment)
@@ -74,7 +74,7 @@ private enum OrientationAlignment {
         }
     }
 }
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 private struct OverlappingStackContainer<StackContent:View>: View {
     public var alignment: OrientationAlignment
     public var content: () -> StackContent
@@ -101,7 +101,7 @@ private struct OverlappingStackContainer<StackContent:View>: View {
         }
     }
 }
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public struct OverlappingHStack<Content:View>: View {
     var alignment: VerticalAlignment
     var content: () -> Content
@@ -113,7 +113,7 @@ public struct OverlappingHStack<Content:View>: View {
         OverlappingStackContainer(alignment: .horizontal(alignment), content: content)
     }
 }
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public struct OverlappingVStack<Content:View>: View {
     var alignment: HorizontalAlignment = .center
     var content: () -> Content

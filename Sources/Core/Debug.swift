@@ -155,7 +155,7 @@ public enum DebugLevel: Comparable, CustomStringConvertible, CaseIterable, Senda
     case SILENT // Use to silence a message but keep the debug code in case it's needed in the future or for documentation.
     
     /// Change this value in production to `DebugLevel.ERROR` or `.OFF` to minimize logging.  Can be changed using the `debugLevelCurrent` setting.
-    @available(iOS 13, tvOS 13, watchOS 6, *)
+    @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
     public static var currentLevel: DebugLevel {
         get {
             Compatibility.settings.debugLevelCurrent
@@ -229,7 +229,7 @@ public enum DebugLevel: Comparable, CustomStringConvertible, CaseIterable, Senda
     }
     /// use to detect if the current level is at least the level.  So if the current level is .NOTICE, .isAtLeast(.ERROR) = true but .isAtLeast(.DEBUG) = false.  Will typically be used like: if DebugLevel.isAtLeast(.DEBUG) to check for whether debugging output is on.
     public static func isAtLeast(_ level: DebugLevel) -> Bool {
-        if #available(iOS 13, tvOS 13, watchOS 6, *) {
+        if #available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *) {
             return Self.currentLevel.isAtLeast(level)
         } else {
             // Fallback on earlier versions

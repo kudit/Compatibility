@@ -173,6 +173,14 @@ public extension Date {
             .abbreviatedDateTimeFormat,
             .abbreviatedDateFormat,
         ])
+        // Verify every documented parser family here so these checks also appear in the in-app test runner.
+        try expect(Date(parse: "2023-01-02 17:12:00")?.mysqlDateTime == "2023-01-02 17:12:00")
+        try expect(Date(parse: "2023-01-02")?.mysqlDate == "2023-01-02")
+        try expect(Date(parse: "20230102171200")?.numericDateTime == "20230102171200")
+        try expect(Date(parse: "20230102")?.numericDate == "20230102")
+        try expect(Date(parse: "January 2, 2023")?.mysqlDate == "2023-01-02")
+        try expect(Date(parse: "Jan 2, 2023")?.mysqlDate == "2023-01-02")
+        try expect(Date(parse: "not a date") == nil)
     }
     @available(macOS 12, *)
 #if !(os(WASM) || os(WASI))

@@ -55,7 +55,7 @@ public extension Menu where LabelView == Image {
 /*
 #if canImport(UIKit)
 import UIKit
-@available(iOS 15, tvOS 17, *)
+@available(iOS 15, macOS 10.15, tvOS 17, *)
 class MenuButton: UIButton {
 
     var onDismissMenu: (() -> Void)?

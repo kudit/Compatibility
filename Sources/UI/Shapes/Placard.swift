@@ -9,7 +9,7 @@
 
 import SwiftUI
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public struct Placard: Shape {
     public init() {} // necessary for creation like Circle()
     public func path(in rect: CGRect) -> Path {

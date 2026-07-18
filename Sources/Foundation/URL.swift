@@ -93,14 +93,29 @@ public extension URL {
         debugSuppress {
             secured = url.secured.secured
         }
-        let fileUrl = "file:///Users/Shared".asURL!
+        // Build the file-system fixture inside the process's temporary directory because
+        // `/Users/Shared` only exists on macOS and is unavailable to sandboxed iOS,
+        // iPadOS, tvOS, watchOS, visionOS, and Swift Playgrounds applications.
+        let fixtureName = "CompatibilityURLTests-\(UUID().uuidString)"
+        let fileUrl = FileManager.default.temporaryDirectory.appendingPathComponent(fixtureName, isDirectory: true)
+
+        // Create a real directory so `isDirectory` and `fileExists` exercise file-system
+        // resource lookup consistently instead of depending on a platform-specific path.
+        try FileManager.default.createDirectory(at: fileUrl, withIntermediateDirectories: false)
+
+        // Always remove the temporary fixture, including when a later expectation throws,
+        // so repeated in-app test runs do not leave stale test directories behind.
+        defer {
+            try? FileManager.default.removeItem(at: fileUrl)
+        }
+
         try expect(secured.scheme == "https")
-        try expect(fileUrl.isDirectory == true)
-        try expect(fileUrl.fileExists)
-        try expect(fileUrl.fileBasename == "Shared")
+        try expect(fileUrl.isDirectory == true, "Expected the temporary URL fixture to be a directory: \(fileUrl.path)")
+        try expect(fileUrl.fileExists, "Expected the temporary URL fixture to exist: \(fileUrl.path)")
+        try expect(fileUrl.fileBasename == fixtureName, "Expected the URL basename to match the temporary fixture name: \(fixtureName)")
     }
 
-    @available(iOS 13, tvOS 13, watchOS 6, *)
+    @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
     @MainActor
     static var tests: [Test] = [
         Test("URL Tests", urlTests),

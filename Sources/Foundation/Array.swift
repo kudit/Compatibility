@@ -159,6 +159,25 @@ public extension Collection where Element: Equatable {
     }
 }
 
+extension Collection where Element: Equatable {
+    /// Returns whether this collection ends with the elements in `possibleSuffix`, in the same order.
+    ///
+    /// This complements the standard library's `starts(with:)` operation. An empty suffix always matches,
+    /// while a suffix longer than the receiving collection cannot match.
+    ///
+    /// - Parameter possibleSuffix: A finite sequence to compare with the end of this collection.
+    /// - Returns: `true` when every suffix element matches the corresponding trailing collection element.
+    @inlinable
+    public func ends<PossibleSuffix>(with possibleSuffix: PossibleSuffix) -> Bool where PossibleSuffix: Sequence, Element == PossibleSuffix.Element {
+        // Materialize the generic sequence once because a Sequence does not necessarily expose a count or support multiple passes.
+        let suffixElements = Array(possibleSuffix)
+        guard suffixElements.count <= count else {
+            return false
+        }
+        return suffix(suffixElements.count).elementsEqual(suffixElements)
+    }
+}
+
 public extension Array where Element: Equatable {
 #if !DEBUG
     /// like indexOf but with just the element instead of having to construct a predicate.
@@ -238,7 +257,7 @@ public extension Collection {
 }
 // Testing is only supported with Swift 5.9+ & !WASM
 #if compiler(>=5.9) && !(os(WASM) || os(WASI))
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 @MainActor
 let collectionTests: [Test] = [
     Test("identity", {
@@ -248,6 +267,12 @@ let collectionTests: [Test] = [
         try expect(testSequence.sorted(by: \.self, isAscending: true) == [1, 2, 3, 4, 5])
         try expect(testSequence.average() == 3)
         try expect(testSequence.sum() == 15)
+        // Match the standard starts(with:) edge cases so callers can safely use the complementary suffix API.
+        try expect(testSequence.ends(with: [1, 3]))
+        try expect(testSequence.ends(with: testSequence))
+        try expect(testSequence.ends(with: [Int]()))
+        try expect(!testSequence.ends(with: [3, 1]))
+        try expect(!testSequence.ends(with: [0, 5, 4, 2, 1, 3]))
     }),
     Test("modification", [String].modificationTests),
     Test("safety", [Int].safeTests),
@@ -256,7 +281,7 @@ let collectionTests: [Test] = [
 ]
 
 // Array Identifiable
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension Array where Element: Identifiable {
     subscript(id: Element.ID) -> Element? {
         get {
@@ -309,7 +334,7 @@ public extension Collection where Element: DoubleConvertible & AdditiveArithmeti
 
 #if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation) && !(os(WASM) || os(WASI))
 import SwiftUI
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 #Preview("Tests") {
     TestsListView(tests: collectionTests)
 }

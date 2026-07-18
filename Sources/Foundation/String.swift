@@ -1445,7 +1445,7 @@ public extension String {
     
 // Testing is only supported with Swift 5.9+
 #if compiler(>=5.9)
-    @available(iOS 13, tvOS 13, watchOS 6, *)
+    @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 #if !(os(WASM) || os(WASI))
     @MainActor
 #endif
@@ -1602,7 +1602,7 @@ public extension String {
 
 #if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation) && !(os(WASM) || os(WASI))
 import SwiftUI
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 #Preview("Tests") {
     TestsListView(tests: String.tests + CharacterSet.tests)
 }

@@ -21,433 +21,28 @@ extension String {
 import UIKit
 #endif
 
-// Environment struct that can get the build environment info since Application isn't supported on legacy platforms.  This allows pulling these out into a struct rather than an ObservableObject which is necessary for some of the Application features.
-public struct Build {
-    /// will be true if we're in a debug configuration and false if we're building for release
-    public static let isDebug = _isDebugAssertConfiguration()
-    
-    // Documentation on the following compiler directives: https://docs.swift.org/swift-book/documentation/the-swift-programming-language/statements/#Compiler-Control-Statements
-
-    /// Returns the version number of Swift being used to compile (use these checks for Swift Package Index version checks).
-    public static var compilerVersion: String {
-#if compiler(>=9.0)
-        "X.x"
-#elseif compiler(>=8.0)
-        "8.x"
-#elseif compiler(>=7.0)
-        "7.x"
-#elseif compiler(>=6.5)
-        "6.x"
-#elseif compiler(>=6.4)
-        "6.4"
-#elseif compiler(>=6.3)
-        "6.3"
-#elseif compiler(>=6.2)
-        "6.2"
-#elseif compiler(>=6.1)
-        "6.1"
-#elseif compiler(>=6.0)
-        "6.0"
-#elseif compiler(>=5.12)
-        "5.12"
-#elseif compiler(>=5.11)
-        "5.11"
-#elseif compiler(>=5.10)
-        "5.10"
-#elseif compiler(>=5.9)
-        "5.9"
-#elseif compiler(>=5.8)
-        "5.8"
-#elseif compiler(>=5.7)
-        "5.7"
-#elseif compiler(>=4.0)
-        "4.x"
-#elseif compiler(>=3.0)
-        "3.x"
-#elseif compiler(>=2.0)
-        "2.x"
-#elseif compiler(>=1.0)
-        "1.x"
-#else
-        "Unsupported"
-#endif
-    }
-
-    /// Returns the version number of Swift being used to run?
-    public static var swiftVersion: String {
-#if swift(>=9.0)
-        "X.x"
-#elseif swift(>=8.0)
-        "8.x"
-#elseif swift(>=7.0)
-        "7.x"
-#elseif swift(>=6.5)
-        "6.x"
-#elseif swift(>=6.4)
-        "6.4"
-#elseif swift(>=6.3)
-        "6.3"
-#elseif swift(>=6.2)
-        "6.2"
-#elseif swift(>=6.1)
-        "6.1"
-#elseif swift(>=6.0)
-        "6.0"
-#elseif swift(>=5.12)
-        "5.12"
-#elseif swift(>=5.11)
-        "5.11"
-#elseif swift(>=5.10)
-        "5.10"
-#elseif swift(>=5.9)
-        "5.9"
-#elseif swift(>=5.8)
-        "5.8"
-#elseif swift(>=5.7)
-        "5.7"
-#elseif swift(>=4.0)
-        "4.x"
-#elseif swift(>=3.0)
-        "3.x"
-#elseif swift(>=2.0)
-        "2.x"
-#elseif swift(>=1.0)
-        "1.x"
-#else
-        "Unsupported"
-#endif
-    }
-
-    // MARK: - Environmental info
-    public enum Environment: String, Sendable, RawRepresentable, CaseIterable, Identifiable, CaseNameConvertible, SymbolRepresentable {
-        case debug = "Debug"
-        /// The current process is running from an application bundle whose extension is `.app`.
-        case app = "App"
-        /// The current process is a standalone executable rather than an app, test, or extension bundle.
-        case commandLineTool = "Command Line Tool"
-        /// The current process is executing under XCTest or Swift Testing's XCTest-compatible runner.
-        case testing = "Testing"
-        case simulator = "Simulator"
-        case playground = "Playground"
-        case preview = "Preview"
-        case realDevice = "Real Device"
-        case designedForiPad = "Designed for iPad"
-        case macCatalyst = "Mac Catalyst"
-        
-        public var id: Self {
-            return self
-        }
-
-        /// Returns whether this environment is active for the current build/runtime.
-        ///
-        /// This is public so package clients can show the same environment state that
-        /// Compatibility uses internally without duplicating the platform checks.
-        public var test: Bool {
-            switch self {
-            case .debug: return Build.isDebug
-            case .app: return Build.isApp
-            case .commandLineTool: return Build.isCommandLineTool
-            case .testing: return Build.isRunningTests
-            case .simulator: return Build.isSimulator
-            case .playground: return Build.isPlayground
-            case .preview: return Build.isPreview
-            case .realDevice: return Build.isRealDevice
-            case .designedForiPad: return Build.isDesignedForiPad
-            case .macCatalyst: return Build.isMacCatalyst
-            }
-        }
-
-        /// An SF Symbol name for the environment test.
-        public var symbolName: String {
-            switch self {
-            case .debug:
-                return "ladybug"
-            case .app:
-                return "app.badge.fill"
-            case .commandLineTool:
-                return "terminal" // apple.terminal starting with iOS 17
-            case .testing:
-                return "checkmark.circle"
-            case .realDevice:
-                return "square.fill"
-            case .simulator:
-                return "squareshape.squareshape.dotted"
-            case .playground:
-                return "swift"
-            case .preview:
-                return "curlybraces.square"
-            case .designedForiPad:
-                return "ipad.badge.play"
-            case .macCatalyst:
-                return "macwindow.on.rectangle"
-            @unknown default:
-                return "questionmark.circle"
-            }
-        }
-
-        /// A portable Unicode representation suitable for terminals and plain-text logs.
-        ///
-        /// SF Symbols are named vector assets and cannot be represented reliably as text,
-        /// while emoji remain meaningful across Apple terminals, CI logs, and other platforms.
-        /// Their artwork may vary by operating system, but each scalar remains stable text.
-        public var emoji: String {
-            switch self {
-            case .debug: return "🪲"
-            case .app: return "📦"
-            case .commandLineTool: return "⌨️"
-            case .testing: return "🧪"
-            case .simulator: return "🖥️"
-            case .playground: return "🛝"
-            case .preview: return "👁️"
-            case .realDevice: return "📱"
-            case .designedForiPad: return "📲"
-            case .macCatalyst: return "💻"
-            @unknown default: return "❓"
-            }
-        }
-
-        /// String Description for environment
-        public var label: String {
-            return self.rawValue
-        }
-    }
-
-    /// Returns a set of Build.Environment objects where the test is true for this build.
-    public static func environments() -> [Build.Environment] {
-        return Build.Environment.allCases.filter(\.test)
-    }
-    /// Returns `true` if running on the simulator vs actual device.
-    public static var isSimulator: Bool {
-#if targetEnvironment(simulator)
-        // your simulator code
-        return true
-#else
-        // your real device code
-        return false
-#endif
-    }
-
-    // In macOS Playgrounds Preview: swift-playgrounds-dev-previews.swift-playgrounds-app.hdqfptjlmwifrrakcettacbhdkhn.501.KuditFramework
-    // In macOS Playgrounds Running: swift-playgrounds-dev-run.swift-playgrounds-app.hdqfptjlmwifrrakcettacbhdkhn.501.KuditFrameworksApp
-    // In iPad Playgrounds Preview: swift-playgrounds-dev-previews.swift-playgrounds-app.agxhnwfqkxciovauscbmuhqswxkm.501.KuditFramework
-    // In iPad Playgrounds Running: swift-playgrounds-dev-run.swift-playgrounds-app.agxhnwfqkxciovauscbmuhqswxkm.501.KuditFrameworksApp
-    // warning: {"message":"This code path does I/O on the main thread underneath that can lead to UI responsiveness issues. Consider ways to optimize this code path","antipattern trigger":"+[NSBundle allBundles]","message type":"suppressable","show in console":"0"}
-    /// Returns `true` if running in Swift Playgrounds.
-    public static var isPlayground: Bool {
-#if SwiftPlaygrounds
-        debug("New Swift Playgrounds test!", level: .WARNING)
-        return true
-#elseif canImport(Foundation)
-        // Swift Playgrounds 4.7 has been sensitive to both custom compilation
-        // conditions and closure-heavy checks here, so keep this as plain runtime code.
-        return bundleIdentifierContains("swift-playgrounds")
-#else
-        return false
-#endif
-    }
-
-    /// Returns `true` if running in an XCode or Swift Playgrounds #Preview macro.
-#if canImport(Foundation)
-    public static var isPreview: Bool {
-        let previewEnvironment = ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
-        // Swift Playgrounds uses separate bundle identifiers for the preview canvas and
-        // the running app but apparently the process reports XCODE_RUNNING_FOR_PREVIEWS.
-        let isSwiftPlaygroundsRunBundle = bundleIdentifierContains("swift-playgrounds-dev-run")
-        return previewEnvironment && !isSwiftPlaygroundsRunBundle // don't report as preview if we're running a swift playgrounds app
-    }
-#else
-    public static var isPreview: Bool {
-        return false
-    }
-#endif
-
-    /// Helper for looking up a bundle identifier.
-    private static func bundleIdentifierContains(_ string: String) -> Bool {
-#if canImport(Foundation)
-        // Avoid `contains(where:)` here because Swift Playgrounds has reported misleading
-        // parser errors in this area; a simple loop is boring in the best possible way.
-        // previous code:         if Bundle.allBundles.contains(where: { ($0.bundleIdentifier ?? "").contains("swift-playgrounds") }) {
-        for bundle in Bundle.allBundles {
-            if let bundleIdentifier = bundle.bundleIdentifier, bundleIdentifier.contains(string) {
-                return true
-            }
-        }
-#endif
-        return false
-    }
-
-    /// Returns `true` if NOT running in preview, playground, or simulator.
-    public static var isRealDevice: Bool {
-        return !isPreview && !isPlayground && !isSimulator
-    }
-
-    /// Returns `true` if Built for iPad mode not a native mode (for macOS and visionOS).
-    public static var isDesignedForiPad: Bool {
-#if targetEnvironment(macCatalyst) || os(watchOS) || os(tvOS) || os(WASM) || os(WASI) || os(Linux)
-        // Catalyst is a native Mac target rather than Apple's iPad-compatible app
-        // runtime, so keep it separate from "Designed for iPad" reporting.
-        return false
-#elseif canImport(Combine)
-        // Check for iPad mode on visionOS. Access the new Foundation property through
-        // Objective-C key-value coding so older SDKs, including the SDK bundled with
-        // Swift Playgrounds 4.7, do not have to resolve `isiOSAppOnVision` at compile time.
-        // The runtime availability check ensures the key exists before it is queried.
-        if #available(iOS 26.1, macOS 26.1, watchOS 26.1, tvOS 26.1, visionOS 26.1, *) {
-//            if ProcessInfo.processInfo.isiOSAppOnVision {
-            if ProcessInfo.processInfo.value(forKey: "isiOSAppOnVision") as? Bool == true {
-                return true
-            }
-        }
-        if #available(iOS 14, watchOS 7, macOS 11, tvOS 14, *) { // not available on watchOS 6
-            return ProcessInfo.processInfo.isiOSAppOnMac
-        }
-#if canImport(UIKit)
-        // visionOS can run compatible iPad apps where the process is not an iOS app
-        // on Mac, so use UIKit's interface idiom as a second signal for designed-for-iPad mode.
-        return UIDevice.current.userInterfaceIdiom == .pad
-#else
-        // Fallback on earlier versions & unsupported platforms
-        return false
-#endif
-#else
-        // Fallback on earlier versions & unsupported platforms
-        return false
-#endif
-    }
-    
-    /// Returns `true` if is macCatalyst app on macOS
-    nonisolated // Not @MainActor
-    public static var isMacCatalyst: Bool {
-#if targetEnvironment(macCatalyst)
-        return true
-#else
-        return false
-#endif
-    }
-
-    /// Returns `true` when the current process is running from an `.app` bundle.
-    ///
-    /// This is a runtime packaging check rather than a compile-time platform check.
-    /// It is `true` for normally launched Apple apps and Swift Playgrounds app runs.
-    /// Xcode and Swift Playgrounds previews normally run through an app-like preview
-    /// host, so a preview may report both `isApp` and `isPreview` as `true`.
-    /// Tests are reported independently by `isRunningTests`; a hosted test can therefore
-    /// be a test even when its runner's main bundle is not the application under test.
-    public static var isApp: Bool {
-#if canImport(Foundation)
-        return Bundle.main.bundleURL.pathExtension.lowercased() == "app"
-#else
-        // Bundle metadata is unavailable without Foundation, so the process cannot be
-        // classified reliably as an app from this compatibility layer.
-        return false
-#endif
-    }
-
-    /// Returns `true` when the current process appears to be a standalone command-line executable.
-    ///
-    /// A command-line tool's main bundle path normally has no extension. Checking for that
-    /// shape avoids treating `.xctest`, `.appex`, and other non-app bundles as command-line
-    /// tools, which would happen if this were implemented as merely `!isApp`.
-    /// This value is normally `false` in app runs, Swift Playgrounds, previews, and tests.
-    public static var isCommandLineTool: Bool {
-#if canImport(Foundation)
-        return Bundle.main.bundleURL.pathExtension.isEmpty && !isRunningTests
-#else
-        // Without Foundation there is no portable runtime bundle inspection available.
-        return false
-#endif
-    }
-
-    /// Returns `true` when the current process is executing a test bundle or test runner.
-    ///
-    /// Xcode supplies `XCTestConfigurationFilePath` to XCTest-compatible runs. Test runners
-    /// also conventionally contain `xctest` or end in SwiftPM's generated `PackageTests`
-    /// suffix. Modern SwiftPM launches Swift Testing through `swiftpm-testing-helper` with
-    /// a `--testing-library` argument, so those runtime markers are recognized as well without
-    /// requiring Compatibility itself to depend on either test framework.
-    /// This is intentionally independent of `isApp`: hosted application tests and previews
-    /// can have app-like hosts while still needing to identify themselves as test processes.
-    public static var isRunningTests: Bool {
-#if canImport(Foundation)
-        let environment = ProcessInfo.processInfo.environment
-        if environment["XCTestConfigurationFilePath"] != nil {
-            return true
-        }
-        let processName = ProcessInfo.processInfo.processName.lowercased()
-        let arguments = ProcessInfo.processInfo.arguments
-        return processName.contains("xctest")
-            || processName.hasSuffix("packagetests")
-            || processName == "swiftpm-testing-helper"
-            || arguments.contains("--testing-library")
-#else
-        // Test-runner metadata is not portably available without Foundation.
-        return false
-#endif
-    }
-}
-
-// Color support for Build.Environment
-#if canImport(SwiftUI) && canImport(Foundation)
-import SwiftUI
-import Foundation
-
-@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
-public extension Build.Environment {
-    /// A stable display color for presenting this environment alongside its symbol.
-    var color: Color {
-        switch self {
-        case .debug:
-            return .red
-        case .app:
-            return .yellow
-        case .commandLineTool:
-            return .gray
-        case .testing:
-            return .yellow
-        case .realDevice:
-            return .green
-        case .simulator:
-            return .blue
-        case .playground:
-            return .orange
-        case .preview:
-            return .pink
-        case .designedForiPad:
-            return .purple
-        case .macCatalyst:
-            if #available(iOS 15.0, macCatalyst 15.0, tvOS 15.0, macOS 12.0, watchOS 8.0, *) {
-                return .teal
-            } else {
-                return .purple
-            }
-        }
-    }
-}
-#endif
-
 // MARK: - Application
-
+@available(macOS 10.15, iOS 13, tvOS 13, watchOS 6, *) // required since CloudStorage requires this and this is a property.  This is okay since the Build settings have been pulled out and this manages App specific behavior which isn't usually necessarily for a command line tool or non-app like a service.
 #if !(os(WASM) || os(WASI))
-@MainActor
+@MainActor // Application owns observable, cloud-backed, and persisted app state, so one actor boundary keeps that shared state coherent.
 #endif
-@available(iOS 13, tvOS 13, watchOS 6, *)
-public class Application: ObservableObject { // cannot automatically conform to CustomStringConvertible since it's actor-isolated...
-#if !(os(WASM) || os(WASI))
-    @MainActor
-#endif
+public class Application: ObservableObject { // The private initializer preserves singleton construction without unnecessarily forbidding future in-module subclassing.
     public static var baseDomain = "com.kudit"
 
-#if !(os(WASM) || os(WASI))
-    @MainActor
-#endif
+    /// Forces ``main`` to report ``String/unknownAppIdentifier`` instead of the host bundle identifier.
+    ///
+    /// A test app may change this around a synchronous assertion even when another test has already initialized
+    /// ``main``. The value is main-actor isolated so reads and writes remain serialized.
+    public static var forceUnknownAppIdentifierForTesting = false
+
     public static let main = Application()
 
     // MARK: - Compiler information (moved to Build - included here to prevent breaking compatibility).
-/// will be true if we're in a debug configuration and false if we're building for release
+    /// will be true if we're in a debug configuration and false if we're building for release
     @available(*, deprecated, renamed: "Build.isDebug")
     nonisolated // Not @MainActor
     public static let isDebug = Build.isDebug
-    
+
     /// Returns the version number of Swift being used to compile (use these checks for Swift Package Index version checks).
     @available(*, deprecated, renamed: "Build.compilerVersion")
     nonisolated // Not @MainActor
@@ -457,7 +52,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
     @available(*, deprecated, renamed: "Build.swiftVersion")
     nonisolated // Not @MainActor
     public static let swiftVersion = Build.swiftVersion
-    
+
     /// Returns `true` if running on the simulator vs actual device.
     @available(*, deprecated, renamed: "Build.isSimulator")
     nonisolated // Not @MainActor
@@ -468,7 +63,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
     nonisolated // Not @MainActor
     public static let isPlayground = Build.isPlayground
 
-    /// Returns `true` if running in an XCode or Swift Playgrounds #Preview macro.
+    /// Returns `true` if running in an Xcode or Swift Playgrounds `#Preview` macro.
     @available(*, deprecated, renamed: "Build.isPreview")
     nonisolated // Not @MainActor
     public static let isPreview = Build.isPreview
@@ -483,32 +78,43 @@ public class Application: ObservableObject { // cannot automatically conform to 
     nonisolated // Not @MainActor
     public static let isMacCatalyst = Build.isMacCatalyst
 
-#if canImport(Foundation) && !(os(WASM) || os(WASI))
-    @MainActor
-#endif
     @available(*, deprecated, renamed: "Build.isDebug")
-    public static var DEBUG: Bool {
-        Build.isDebug
-    }
+    nonisolated // This computed compatibility forwarding value reads only nonisolated Build state.
+    public static let DEBUG = Build.isDebug
 
 #if canImport(Foundation) && !(os(WASM) || os(WASI))
     // MARK: - iCloud Support
     /// Use before tracking to disable iCloud checks to prevent crashes if we can't check for iCloud or for simulating behavior without iCloud support for CloudStorage.
-    @MainActor
     public static var iCloudSupported = true
-    
+
 #if canImport(Combine)
-    /// Returns the ubiquityIdentityToken if iCloud is available and nil otherwise.  Can be used to check for iCloud outside of MainActor.
-    nonisolated // Not @MainActor
+    /// Returns the current opaque iCloud identity token, or `nil` when no token is available.
+    ///
+    /// This forwards `FileManager.ubiquityIdentityToken` without requiring access to the main actor. The
+    /// token can detect an iCloud identity change, but CloudKit clients should use account-status APIs
+    /// rather than treating the token as proof that a particular container is currently available.
+    nonisolated
     public static var iCloudToken: (any NSCoding & NSCopying & NSObjectProtocol)? {
         return FileManager.default.ubiquityIdentityToken
     }
+
+    /// Whether Foundation currently exposes an iCloud identity token.
+    ///
+    /// This nonisolated check is available to services that cannot hop to the main actor. When main-actor
+    /// access is available, prefer ``iCloudIsEnabled`` because it also respects app support, previews,
+    /// Swift Playgrounds, and platform-specific behavior.
+    nonisolated
+    public static var iCloudAvailable: Bool {
+        iCloudToken != nil
+    }
 #endif
-    
-    @MainActor
+
     private static var iCloudPlaygroundPreviewNoticed = false
-    
-    @MainActor
+
+    /// Whether this application should currently use its configured iCloud storage.
+    ///
+    /// Prefer this main-actor-isolated result in application code. It combines ``iCloudSupported`` with
+    /// runtime environment restrictions and token availability rather than reporting token presence alone.
     public static var iCloudIsEnabled: Bool {
         guard iCloudSupported else {
             debug("iCloud is not supported by this app.", level: .DEBUG)
@@ -536,7 +142,6 @@ public class Application: ObservableObject { // cannot automatically conform to 
 #endif
     }
     
-    @MainActor
     public static var iCloudStatus: CloudStatus {
         guard Self.iCloudSupported else {
             return .notSupported
@@ -547,23 +152,54 @@ public class Application: ObservableObject { // cannot automatically conform to 
             return .unavailable
         }
     }
-    
-    /// Place `Application.track()` in `application(_:didFinishLaunchingWithOptions:)` or @main struct init() function to enable version tracking.
-    @MainActor
-    public static func track(file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) {
+
+    /// Enables version tracking and registers modules used by the application.
+    ///
+    /// Place this in `application(_:didFinishLaunchingWithOptions:)` or the `@main` type's initializer.
+    /// Compatibility is always registered automatically. Pass only the highest-level modules used directly
+    /// by the application; their ``Module/dependencies`` are discovered recursively.
+    ///
+    /// - Parameters:
+    ///   - modules: Top-level modules used by the application.
+    ///   - file: Source file that initiated tracking.
+    ///   - function: Source function that initiated tracking.
+    ///   - line: Source line that initiated tracking.
+    ///   - column: Source column that initiated tracking.
+    public static func track(including modules: [Module.Type] = [], file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) {
+        // Compatibility supplies Application itself, so it belongs in every tracked application's module report.
+        Compatibility.include()
+        Build.register(modules)
+        // Prevent late mutation once asynchronous support reporting can begin reading the global registry.
+        Build.finishModuleRegistration()
         // Calling Application.main is what initializes the application and does the tracking.  This really should only be called once.  TODO: Should we check to make sure this isn't called twice??  Application.main singleton should only be inited once.
-        debug("Application Tracking:\n\(Application.main.description)", level: .NOTICE, file: file, function: function, line: line, column: column)
+        debug("Application Tracking: \(Application.main.appName)", level: .NOTICE, file: file, function: function, line: line, column: column) // Initialize persisted version state synchronously before detached reporting begins.
+        // Defer the complete report so modules may calculate or fetch metadata without blocking application launch.
+        background {
+            let description = await Application.main.loadDetailedDescription()
+            debug("Application Detailed Tracking:\n\(description)", level: .NOTICE, file: file, function: function, line: line, column: column)
+        }
     }
 
     // MARK: - Application information
     /// Human readable display name for the application.
+    nonisolated // The bundle name is captured once as an immutable support-reporting snapshot.
     public let name = Bundle.main.name
     
     /// Name that appears on the Home Screen
+    nonisolated // The executable name is captured once as an immutable support-reporting snapshot.
     public let appName = Bundle.main.appName
     
-    /// The fully qualified reverse dot notation from Bundle.main.bundleIdentifier like com.kudit.appName
-    public let appIdentifier: String = {
+    /// The fully qualified reverse dot notation from Bundle.main.bundleIdentifier like com.kudit.appName.
+    public var appIdentifier: String {
+        if Application.forceUnknownAppIdentifierForTesting {
+            // Resolve the override at access time so hosted tests can opt in after the singleton was initialized.
+            return .unknownAppIdentifier
+        }
+        return detectedAppIdentifier
+    }
+
+    /// Captures the real host identifier once because bundle metadata does not change during the process.
+    private let detectedAppIdentifier: String = {
         guard var identifier = Bundle.main.bundleIdentifier else {
             return .unknownAppIdentifier
         }
@@ -576,12 +212,10 @@ public class Application: ObservableObject { // cannot automatically conform to 
         let lastComponent = identifier.components(separatedBy: ".").last // should never really be nil
         if let lastComponent, identifier.contains("swift-playgrounds-dev") {
             let originalIdentifier = identifier // save since we're about to change the identifier and delayed code gets the new value not the original captured value
-            Compatibility.main { // required or will not actually print
-                debug("Swift Playgrounds Dev environment.  Replacing identifier: \(originalIdentifier)", level: .DEBUG)
-            }
+            debug("Swift Playgrounds Dev environment.  Replacing identifier: \(originalIdentifier)", level: .DEBUG)
             identifier = "\(Application.baseDomain).\(lastComponent.replacingOccurrences(of: "-", with: ""))"
         }
-        // NEXT: expose this so other frameworks can check for test frameworks as this is KUDIT specific.  TODO: create a list that this can check to return unknown app identifier?
+        // Preserve legacy Compatibility demo identifiers while new test apps use forceUnknownAppIdentifierForTesting.
         if lastComponent == "KuditFramework" || identifier.contains("com.kudit.KuditFrameworksTest") {
             // replace with unknown for KuditFrameworks test output.
             return .unknownAppIdentifier
@@ -593,6 +227,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
     public private(set) var isFirstRun = true // can't be let since self._cloudVersionsRun check requires self access, but basically should only ever set once.
 
     /// `true` if this is the first time the app has been run on this device/install, ignoring versions synced from other devices.
+    nonisolated // Initialization captures this device-local result once and it never changes afterward.
     public let isFirstRunOnDevice: Bool
     
 #if compiler(>=5.9) && canImport(Combine)
@@ -679,8 +314,14 @@ public class Application: ObservableObject { // cannot automatically conform to 
     // MARK: - Version information
     // NOTE: in Objective C, the key was kCFBundleVersionKey, but that returns the build number in Swift.
     /// Current app version string (not including build)
+    nonisolated // Not @MainActor
     public let version = Bundle.main.version
     
+    /// The immutable application version with the debug build number appended for diagnostic display.
+    ///
+    /// This value is nonisolated because both the release version and bundle build number are fixed for the
+    /// lifetime of the process, allowing support reporting to read it without crossing onto the main actor.
+    nonisolated
     public var debugVersion: String {
         var string = version.rawValue
         if Build.isDebug {
@@ -692,7 +333,7 @@ public class Application: ObservableObject { // cannot automatically conform to 
     /// List of all versions that have been run since install.  Checks iCloud and reports versions run on other devices.
     public var versionsRun: [Version] {
 #if compiler(>=5.9) && canImport(Combine)
-        if #available(iOS 13, tvOS 13, watchOS 9, *) {
+        if #available(iOS 13, macOS 10.15, tvOS 13, watchOS 9, *) {
             return [Version](rawValue: _cloudVersionsRun ?? version.rawValue)
         }
 #endif
@@ -719,56 +360,75 @@ public class Application: ObservableObject { // cannot automatically conform to 
     /// Vendor ID (may not be used anywhere since not very helpful)
     //    public var vendorID = UIDevice.current.identifierForVendor.UUIDString
     
-    // Note that cannot do conformance to CustomStringConvertible since it requires isolation...
-    public var description: String {
-        var description = "\(name) (v\(debugVersion))"
+    /// Structured application information immediately available on the main actor.
+    ///
+    /// The fields include the current version and, when available, versions that previously ran. First-run
+    /// annotations remain attached to the version so clients do not need to reproduce version-tracking rules.
+    public var info: [Field] {
+        var info = [Field]()
+        var versionInfo = "v\(debugVersion)"
         if isFirstRun {
-            description += " **First Run!**"
+            versionInfo += " **First Run!**"
+        } else if isFirstRunOnDevice {
+            versionInfo += " **First Run On Device!**"
         }
-        if isFirstRunOnDevice && !isFirstRun {
-            description += " **First Run On Device!**"
-        }
+        info.append(Field(name, versionInfo))
         if versionsRun.count > 1 {
-            description += "\nPreviously run versions: \(previouslyRunVersions.map { "v\($0)" }.joined(separator: ", "))"
+            info.append(Field("Previously run versions", previouslyRunVersions.map { "v\($0)" }.joined(separator: ", ")))
         }
-        description += "\nIdentifier: \(Application.main.appIdentifier)"
-        // so we can disable on simple apps and still do tracking without issues.
-        description += "\niCloud Status: \(Application.iCloudStatus.description)"
-        description += "\nSwift Version: \(Build.swiftVersion)"
-        description += "\nCompiler Version: \(Build.compilerVersion)"
-        description += "\nCompatibility Version: \(Compatibility.version)"
+        return info
+    }
+
+    /// An immediate application and module description that does not wait for deferred module metadata.
+    ///
+    /// Use ``loadDetailedDescription()`` when the report should also include every deferred field returned by
+    /// ``Module/loadDetailedModuleInfo()``.
+    public var description: String {
+        let moduleDescription = Build.allModules.description
+        // Avoid a trailing newline when callers inspect Application before registering any modules.
+        return moduleDescription.isEmpty ? info.description : info.description + "\n" + moduleDescription
+    }
+
+    /// Builds a complete detailed description after awaiting asynchronously generated module details.
+    nonisolated
+    public func loadDetailedDescription() async -> String {
+#if !(os(WASM) || os(WASI))
+        // Capture actor-owned application state briefly, then allow module loading and formatting to proceed off actor.
+        let appInfo = await MainActor.run { self.info.description }
+        let moduleInfo = await Build.allModules.loadDetailedDescription()
+        // Preserve clean app-only output when no modules were registered before detailed reporting.
+        return moduleInfo.isEmpty ? appInfo : appInfo + "\n" + moduleInfo
+#else
         return description
+#endif
     }
 #endif
+
 #if compiler(>=5.9)
 #if canImport(Foundation) && !(os(WASM) || os(WASI))
-    @MainActor
     internal static var applicationTests: TestClosure = { @MainActor in // ensure we're running these on the Main Actor so we don't have to worry about Application main actor access.
         try expect(Build.isDebug, "App should not be running in debug mode")
         for environment in Build.Environment.allCases {
             try expect(environment.test == environment.test, "App \(environment) test")
         }
         debugSuppress {
-            Compatibility.main {
-                Application.main.resetVersionsRun()
-                // throws a warning in Swift Playgrounds that this isn't async.
-                Application.track()
-            }
+            // This test closure already runs on the main actor, so perform setup synchronously before assertions.
+            Application.main.resetVersionsRun()
+            Application.track()
         }
         try expect(Application.main.isFirstRun == Application.main.isFirstRun, "First Run test")
         try expect(Application.main.isFirstRunOnDevice == Application.main.isFirstRunOnDevice, "First Run On Device test")
         try expect(Application.main.versionsRun.count == 1, "Versions Run test")
         try expect(Application.main.hasRunVersion(before: Application.main.version) == false, "Has Run Version test")
         try expect(Application.main.previouslyRunVersions.count == 0, "Previously Run Versions test")
-        let expectedDescription = """
-\(Application.main.name) (v\(Application.main.debugVersion))\(Application.main.isFirstRun ? " **First Run!**" : "")\(Application.main.isFirstRunOnDevice && !Application.main.isFirstRun ? " **First Run On Device!**" : "")
-Identifier: \(Application.main.appIdentifier)
-iCloud Status: \(Application.iCloudStatus.description)
-Swift Version: \(Build.swiftVersion)
-Compiler Version: \(Build.compilerVersion)
-Compatibility Version: \(Compatibility.version)
-"""
+        let expectedDescription = Application.main.info.description + "\n" + Build.allModules.description
+        // Use the active registry so these shared tests also pass in apps that register additional top-level modules.
         try expect(Application.main.description == expectedDescription, "Unexpected app description: \(Application.main.description) (expected: \(expectedDescription))")
+        try expect(Build.allModules.contains { $0.moduleIdentifier == Compatibility.moduleIdentifier }, "Application.track() should register Compatibility")
+        let detailedDescription = await Application.main.loadDetailedDescription()
+        try expect(detailedDescription.contains("Swift Version: \(Build.swiftVersion)"), "The asynchronous detailed description should include module metadata")
+        try expect(detailedDescription.contains("\(Compatibility.moduleName) Framework Version: \(Compatibility.version)"), "The asynchronous detailed description should include registered module versions")
+        try expect(detailedDescription.contains("App Identifier: \(Application.main.appIdentifier)"), "The asynchronous detailed description should include the app's identifier, which the immediate description omits")
     }
 #else
     internal static var applicationTests: TestClosure = {
@@ -779,9 +439,6 @@ Compatibility Version: \(Compatibility.version)
     }
 #endif
 
-#if canImport(Foundation) && !(os(WASM) || os(WASI))
-    @MainActor
-#endif
     public static var tests: [Test] = [
         Test("Application Tests", applicationTests),
     ]

@@ -224,7 +224,7 @@ internal let byteTests: TestClosure = {
 
 // Testing is only supported with Swift 5.9+ and Foundation
 #if compiler(>=5.9)
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 extension Int {
 #if !(os(WASM) || os(WASI))
     @MainActor
@@ -241,7 +241,7 @@ extension Int {
 
 #if canImport(SwiftUI) && canImport(Foundation) && !(os(WASM) || os(WASI))
 import SwiftUI
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 #Preview("Ordinals") {
     List {
         ForEach(1..<25 + .random(max: 5), id: \.self) { i in
@@ -249,7 +249,7 @@ import SwiftUI
         }
     }
 }
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 #Preview("Tests") {
     TestsListView(tests: Int.tests)
 }

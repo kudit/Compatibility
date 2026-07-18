@@ -11,7 +11,7 @@ import Combine
 import UIKit
 #endif
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 @MainActor
 public class CloudStorageSync: ObservableObject {
     @MainActor
@@ -104,7 +104,7 @@ public class CloudStorageSync: ObservableObject {
 }
 
 // Wrap calls to NSUbiquitousKeyValueStore
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 extension CloudStorageSync {
     public func object(forKey key: String) -> Any? {
         ubiquitousKvs.object(forKey: key)
@@ -205,7 +205,7 @@ extension CloudStorageSync {
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 extension CloudStorageSync {
     public enum ChangeReason {
         case serverChange

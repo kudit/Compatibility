@@ -18,7 +18,7 @@ import SwiftUI
 ///     MyLandscapeView()
 /// }
 /// ```
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public struct AdaptiveLayout<PContent, LContent>: View where PContent: View, LContent: View {
     let orientation: AStack.Orientation
     let portrait: () -> PContent
@@ -54,7 +54,7 @@ public struct AdaptiveLayout<PContent, LContent>: View where PContent: View, LCo
 }
 
 /// Adaptable Stack (uses HStack if the available space is wider than it is tall and VStack otherwise).
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public struct AStack: View {
     let alignment: Alignment
     let spacing: CGFloat?

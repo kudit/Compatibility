@@ -7,6 +7,29 @@
 #if canImport(XCTest)
 import XCTest
 
+/// Adds Compatibility-style backports to XCTest elements without making the shipping library depend on XCTest.
+private struct XCUIElementBackport {
+    let element: XCUIElement
+
+    /// Activates the element on pointer-driven platforms and selects the focused item on tvOS.
+    @MainActor
+    func tap() {
+#if os(tvOS)
+        // XCUIElement.tap() is unavailable on tvOS; remote Select is the platform's equivalent activation gesture.
+        if element.hasFocus {
+            XCUIRemote.shared.press(.select)
+        }
+#else
+        element.tap()
+#endif
+    }
+}
+
+private extension XCUIElement {
+    /// Compatibility namespace for XCTest APIs whose availability differs by platform.
+    var backport: XCUIElementBackport { XCUIElementBackport(element: self) }
+}
+
 /// Smoke tests for the Compatibility demo application.
 ///
 /// These tests intentionally launch the real demo app instead of constructing
@@ -24,6 +47,8 @@ final class CompatibilityUITests: XCTestCase {
         // Ignore saved state so the smoke test starts from the same first tab
         // even when Xcode or a previous manual run restored another demo page.
         app.launchArguments += ["-ApplePersistenceIgnoreState", "YES"]
+        // UI tests run out of process, so explicitly pass the generic testing environment to the app under test.
+        app.launchEnvironment["TESTING"] = "1"
         app.launch()
 
         XCTAssertTrue(app.wait(for: .runningForeground, timeout: 15), "CompatibilityTest app should launch into the foreground.")
@@ -53,13 +78,13 @@ final class CompatibilityUITests: XCTestCase {
     private func tapIfPresent(_ label: String, in app: XCUIApplication) {
         let button = app.buttons[label]
         if button.waitForExistence(timeout: 1) {
-            button.tap()
+            button.backport.tap()
             return
         }
 
         let text = app.staticTexts[label]
         if text.waitForExistence(timeout: 1) {
-            text.tap()
+            text.backport.tap()
         }
     }
 }

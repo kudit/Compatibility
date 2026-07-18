@@ -264,6 +264,15 @@ public extension Double {
     @MainActor
 #endif
     internal static let doubleTests: TestClosure = {
+        // Exercise every numeric convenience from the shared test collection so the demo and CI use identical coverage.
+        try expect(Int(42).doubleValue == 42.0)
+        try expect(Float(3.5).doubleValue == 3.5)
+        try expect(Double(7.25).doubleValue == 7.25)
+        try expect(5.0.isInteger)
+        try expect((-3.0).isInteger)
+        try expect(!5.1.isInteger)
+        try expect(!(-3.14).isInteger)
+
         let five = 5.doubleValue.doubleValue
         try expect("\(five)" == "5.0")
 #if canImport(Foundation)

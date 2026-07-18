@@ -237,8 +237,21 @@ public extension Version {
     @MainActor
 #endif
     internal static var testVersions: TestClosure = {
+        // Keep formatting and component coverage in the framework-owned collection so it runs in the demo too.
+        let v100 = Version(majorVersion: 1, minorVersion: 0, patchVersion: 0)
+        try expect(v100.description == "1.0")
+        try expect(v100.full == "1.0.0")
+        try expect(v100.compact == "1")
+        let v1301 = Version(majorVersion: 13, minorVersion: 0, patchVersion: 1)
+        try expect(v1301.description == "13.0.1")
+        try expect(v1301.full == "13.0.1")
+        try expect(v1301.compact == v1301.description)
+        try expect(v1301.components == [13, 0, 1])
+        try expect(Version.zero == Version(majorVersion: 0, minorVersion: 0, patchVersion: 0))
+
         let defaulted = Version(string: nil, defaultValue: "1.2.3")
         try expect(defaulted == Version("1.2.3"))
+        try expect(Version(string: "alphabet", defaultValue: .zero) == .zero)
         let zero = Version("0.0.0")
         try expect(zero == Version("a.b.c"))
         let okay: Version = "2b.5.s"
@@ -250,6 +263,8 @@ public extension Version {
         let bad: Version = "alphabet soup"
         try expect(bad == .zero)
         try expect(Version(parsing: "alphabet") == nil)
+        try expect(Version(parsing: "2.12.1") != nil)
+        try expect(Version(parsing: "1.2.3b4") == nil)
         let forcedBad: Version = "alphabet soup"
         try expect(forcedBad == .zero)
         let first = Version("2")
@@ -266,6 +281,19 @@ public extension Version {
         try expect(fifth < third)
         let list = [first, second, third, fourth, fifth, sixth]
         try expect(list.sorted() == [first, sixth, fifth, third, second, fourth])
+        var set: Set<Version> = [first, second]
+        set.insert(first)
+        try expect(set.count == 2)
+        let rawVersion = Version("3.4.5")
+        try expect(Version(rawValue: rawVersion.rawValue) == rawVersion)
+
+        let rawInput = "1,2.1.2,3"
+        let rawVersions: [Version] = .init(rawValue: rawInput)
+        try expect(rawVersions.count == 3)
+        try expect(rawVersions.pretty == "v1.0, v2.1.2, v3.0")
+        try expect(rawVersions.rawValue.contains("2.1.2"))
+        let duplicateVersions: [Version] = .init(rawValue: "1,1,2")
+        try expect(Set(duplicateVersions.map(\.rawValue)).count == duplicateVersions.count)
         let req: [Version] = .init(rawValue: "1,2.1.2,3", required: "4.3")
         try expect(req.pretty == "v1.0, v2.1.2, v3.0, v4.3")
     }
@@ -298,6 +326,15 @@ public extension Version {
             """
         let intDecoded = try [Version].init(fromJSON: intVersion)
         try expect(intDecoded.first == "5.3.10", "int json decoding failed.")
+
+        // A keyed legacy value missing a semantic-version component must remain a decoding failure.
+        let badKeyJSON = #"[{"majorVersion":1,"minorVersion":2}]"#
+        do {
+            _ = try JSONDecoder().decode([Version].self, from: Data(badKeyJSON.utf8))
+            try expect(false, "Expected keyed decode to fail due to a missing patchVersion")
+        } catch is DecodingError {
+            // The expected failure confirms corrupt legacy storage is not silently accepted.
+        }
 #endif
     }
 
@@ -305,7 +342,7 @@ public extension Version {
 #if !(os(WASM) || os(WASI))
     @MainActor
 #endif
-    @available(iOS 13, tvOS 13, watchOS 6, *)
+    @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
     static var tests: [Test] = [
         Test("Version Comparison Tests", testVersions),
         Test("Version Codable Tests", versionCodableTest),
@@ -357,14 +394,14 @@ extension [Version]: Swift.RawRepresentable {
 #if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation) && !(os(WASM) || os(WASI))
 // Don't know why this is necessary.  CustomStringConvertible should have covered this.
 import SwiftUI
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension LocalizedStringKey.StringInterpolation {
     mutating func appendInterpolation(_ value: Version) {
         appendInterpolation(value.description)
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 #Preview("Tests") {
     TestsListView(tests: Version.tests)
 }

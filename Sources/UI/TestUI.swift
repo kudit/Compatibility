@@ -2,7 +2,7 @@
 import SwiftUI
 
 // MARK: - Test UI
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public struct TestRow: View {
     @ObservedObject public var test: Test
     
@@ -28,7 +28,7 @@ public struct TestRow: View {
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 struct TestsRowsView: View {
     var tests: [Test]
     var body: some View {
@@ -56,7 +56,7 @@ final class AllTestsListModel: ObservableObject {
 }
 
 // use this to test the local file tests only.
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public struct TestsListView: View {
     public var tests: [Test]
     

@@ -69,7 +69,7 @@ public func debugSuppress(_ block: () throws -> Void) rethrows {
     try block()
 }
 /// Suppress debug messages during this async execution block.  Allows fetching the debug string as normal.
-@available(iOS 13, tvOS 13, watchOS 6, *) // due to Concurrency
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *) // due to Concurrency
 //@MainActor
 public func debugSuppress(_ block: () async throws -> Void) async rethrows {
     let log = Compatibility.settings.debugLog
@@ -87,7 +87,7 @@ public func debugSuppress(_ block: () async throws -> Void) async rethrows {
 #if !(os(WASM) || os(WASI))
 @MainActor
 #endif
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public final class Test: ObservableObject {
     private final class WeakReference<T: AnyObject>: @unchecked Sendable {
         weak var value: T?
@@ -130,7 +130,7 @@ public final class Test: ObservableObject {
         self.task = task
     }
     
-    @available(iOS 13, tvOS 13, watchOS 6, *)
+    @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
     public func run() {
         if case .running = progress {
             return
@@ -188,7 +188,7 @@ public final class Test: ObservableObject {
         return "\(progress): \(title)\(errorString)"
     }
 }
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension Test {
     static func dummyAsyncThrows() async throws {
     }
@@ -200,17 +200,23 @@ public extension Test {
     static let namedTests: OrderedDictionary<String, [Test]> = {
         var tests: OrderedDictionary = [
             "Version Tests": Version.tests,
+            "Module Tests": moduleTests,
+            "Enum Tests": CloudStatus.tests,
             "Int Tests": Int.tests,
             "Double Tests": Double.tests,
             "Collection Tests": collectionTests,
             "String Tests": String.tests,
+            "Mixed Type Field Tests": MixedTypeField.tests,
             "Coding Tests": codingTests,
             "Dictionary Tests": dictionaryTests,
             "Debug Tests": DebugLevel.tests,
             "Application Tests": Application.tests,
+            "Integration Tests": integrationTests,
         ]
 #if canImport(Foundation)
         tests["Bundle Tests"] = Bundle.tests
+        tests["File Manager Tests"] = FileManager.tests
+        tests["Pasteboard Tests"] = Pasteboard.tests
         tests["Date Tests"] = Date.tests
         tests["CharacterSet Tests"] = CharacterSet.tests
         tests["Threading Tests"] = KuThreading.tests
@@ -227,7 +233,7 @@ public extension Test {
 
 #if canImport(SwiftUI) && canImport(Foundation) && !(os(WASM) || os(WASI))
 import SwiftUI
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 #Preview {
     TestsListView(tests: KuThreading.tests + Int.tests)
 }

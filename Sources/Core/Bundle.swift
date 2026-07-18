@@ -82,7 +82,7 @@ public extension Bundle {
         try expect(!String.appIconName.isEmpty, "Expected app icon name but got: \(String.appIconName)")
     }
 
-    @available(iOS 13, tvOS 13, watchOS 6, *)
+    @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
     @MainActor
     static var tests: [Test] = [
         Test("Bundle Tests", bundleTests),

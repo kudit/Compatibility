@@ -10,11 +10,11 @@ import SwiftUI
 import Combine
 
 // Static stored properites are not supported in generic types so we have to use a global var.
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 @MainActor
 private let sync = CloudStorageSync.shared
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 @MainActor
 @propertyWrapper public struct CloudStorage<Value>: DynamicProperty {
     @ObservedObject private var object: CloudStorageObject<Value>
@@ -50,7 +50,7 @@ private let sync = CloudStorageSync.shared
     #endif
 }
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 @MainActor // prevent publishing changes on background thread
 internal class KeyObserver {
     weak var storageObjectWillChange: ObservableObjectPublisher?
@@ -65,7 +65,7 @@ internal class KeyObserver {
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 @MainActor
 internal class CloudStorageObject<Value>: ObservableObject {
     private let key: String
@@ -101,7 +101,7 @@ internal class CloudStorageObject<Value>: ObservableObject {
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 extension CloudStorage where Value == Bool {
     public init(wrappedValue: Value, _ key: String) {
         self.init(
@@ -111,7 +111,7 @@ extension CloudStorage where Value == Bool {
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 extension CloudStorage where Value == Int {
     public init(wrappedValue: Value, _ key: String) {
         self.init(
@@ -121,7 +121,7 @@ extension CloudStorage where Value == Int {
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 extension CloudStorage where Value == Double {
     public init(wrappedValue: Value, _ key: String) {
         self.init(
@@ -131,7 +131,7 @@ extension CloudStorage where Value == Double {
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 extension CloudStorage where Value == String {
     public init(wrappedValue: Value, _ key: String) {
         self.init(
@@ -141,7 +141,7 @@ extension CloudStorage where Value == String {
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 extension CloudStorage where Value == URL {
     public init(wrappedValue: Value, _ key: String) {
         self.init(
@@ -151,7 +151,7 @@ extension CloudStorage where Value == URL {
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 extension CloudStorage where Value == Data {
     public init(wrappedValue: Value, _ key: String) {
         self.init(
@@ -161,7 +161,7 @@ extension CloudStorage where Value == Data {
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 extension CloudStorage where Value: RawRepresentable, Value.RawValue == Int {
     public init(wrappedValue: Value, _ key: String) {
         self.init(
@@ -171,7 +171,7 @@ extension CloudStorage where Value: RawRepresentable, Value.RawValue == Int {
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 extension CloudStorage where Value: RawRepresentable, Value.RawValue == Double {
     public init(wrappedValue: Value, _ key: String) {
         self.init(
@@ -183,7 +183,7 @@ extension CloudStorage where Value: RawRepresentable, Value.RawValue == Double {
 
 // TODO: Add JSON representable for RawRepresentable when type is Codable
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 extension CloudStorage where Value: RawRepresentable, Value.RawValue == String {
     public init(wrappedValue: Value, _ key: String) {
         self.init(
@@ -193,7 +193,7 @@ extension CloudStorage where Value: RawRepresentable, Value.RawValue == String {
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 extension CloudStorage where Value == Bool? {
     public init(_ key: String) {
         self.init(
@@ -203,7 +203,7 @@ extension CloudStorage where Value == Bool? {
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 extension CloudStorage where Value == Int? {
     public init(_ key: String) {
         self.init(
@@ -213,7 +213,7 @@ extension CloudStorage where Value == Int? {
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 extension CloudStorage where Value == Double? {
     public init(_ key: String) {
         self.init(
@@ -223,7 +223,7 @@ extension CloudStorage where Value == Double? {
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 extension CloudStorage where Value == String? {
     public init(_ key: String) {
         self.init(
@@ -233,7 +233,7 @@ extension CloudStorage where Value == String? {
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 extension CloudStorage where Value == URL? {
     public init(_ key: String) {
         self.init(
@@ -243,7 +243,7 @@ extension CloudStorage where Value == URL? {
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 extension CloudStorage where Value == Data? {
     public init(_ key: String) {
         self.init(
@@ -283,7 +283,7 @@ extension DateStringRepresentation {
 }
 extension DateString: DefaultDateCloudStorage {}
 extension DateTimeString: DefaultDateCloudStorage {}
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 extension CloudStorage where Value: DefaultDateCloudStorage {
     public init(wrappedValue: Value, _ key: String) {
         self.init(

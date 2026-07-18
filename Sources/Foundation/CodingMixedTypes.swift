@@ -27,7 +27,12 @@ public extension MixedTypeDictionary {
 #if !(os(WASM) || os(WASI)) && canImport(Foundation) // not available
 extension MixedTypeField: Codable {}
 #endif
-public enum MixedTypeField: Equatable {
+/// A recursive, type-safe representation of primitive values, arrays, and dictionaries commonly stored in JSON-like data.
+///
+/// `MixedTypeField` includes human-readable output intended for interfaces,
+/// diagnostics, and messages such as email. Its ``description`` is deliberately not JSON; use the JSON
+/// coding helpers when a stable, machine-readable representation is required.
+public enum MixedTypeField: Equatable, Sendable, Hashable {
     case string(String)
     case bool(Bool)
     case int(Int)
@@ -159,7 +164,99 @@ public enum MixedTypeField: Equatable {
         }
         return nil
     }
+
+    /// A human-readable representation of the stored value. (not for serialization)
+    ///
+    /// Primitive values use their normal Swift text, `null` appears as `<null>`, dictionaries retain
+    /// Swift's useful debug-style representation, and arrays become comma-separated lists without
+    /// brackets. This output is intended for people rather than parsers and is not stable serialization.
+    public var description: String {
+        switch self {
+        case .string(let value):
+            return value
+        case .bool(let value):
+            return value ? "true" : "false"
+        case .int(let value):
+            return String(value)
+        case .double(let value):
+            return String(value)
+        case .null:
+            return "<null>"
+        case .dictionary(let value):
+            return String(describing: value)
+        case .array(let value):
+            // Human-facing destinations read naturally without collection brackets. Preserve explicit
+            // null elements so the list does not silently change meaning when included in a report.
+            return value.map { $0?.description ?? "<null>" }.joined(separator: ", ")
+        }
+    }
 }
+
+#if compiler(>=5.9) && !(os(WASM) || os(WASI))
+@available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
+public extension MixedTypeField {
+    /// Shared value, formatting, and `Field` integration tests available to the in-app and Swift Testing runners.
+    @MainActor
+    static let tests = [
+        Test("Descriptions, conformances, and Field conveniences") {
+            // Compile-time generic constraints ensure these public values remain safe across concurrency boundaries.
+            func requireSendable<Value: Sendable>(_ value: Value) { _ = value }
+
+            let string = MixedTypeField.string("hello")
+            let boolTrue = MixedTypeField.bool(true)
+            let boolFalse = MixedTypeField.bool(false)
+            let integer = MixedTypeField.int(42)
+            let double = MixedTypeField.double(3.5)
+            let null = MixedTypeField.null
+            let array = MixedTypeField.array([.string("one"), .int(2), nil, .array([.bool(true), .bool(false)])])
+            let dictionary = MixedTypeField.dictionary(["answer": .int(42)])
+
+            try expect(string.description == "hello")
+            try expect(boolTrue.description == "true")
+            try expect(boolFalse.description == "false")
+            try expect(integer.description == "42")
+            try expect(double.description == "3.5")
+            try expect(null.description == "<null>")
+            try expect(array.description == "one, 2, <null>, true, false")
+            try expect(dictionary.description.contains("answer"))
+            try expect(dictionary.description.contains("42"))
+
+            let uniqueValues: Set<MixedTypeField> = [string, string, array, dictionary, .int(1), .double(1)]
+            try expect(uniqueValues.count == 5)
+            try expect(MixedTypeField.int(1) != MixedTypeField.double(1))
+            try expect([array: "array", dictionary: "dictionary"][array] == "array")
+            requireSendable(array)
+
+            let direct = Field(label: "Direct", value: .array([.int(1), .int(2)]), symbol: "list.bullet")
+            let labeledString = Field("String", "value", symbol: "textformat")
+            let note = Field("An unlabeled note")
+            let intField = Field("Integer", 7)
+            let doubleField = Field("Double", 2.5)
+            let boolField = Field("Boolean", true)
+            let describedField = Field("Version", Version(rawValue: "1.2.3"))
+            let symbolField = Field("Cloud", CloudStatus.available)
+
+            try expect(direct.value.description == "1, 2")
+            try expect(labeledString.label == "String" && labeledString.value == .string("value") && labeledString.symbol == "textformat")
+            try expect(note.label == nil && note.value == .string("An unlabeled note"))
+            try expect(intField.value == .int(7))
+            try expect(doubleField.value == .double(2.5))
+            try expect(boolField.value == .bool(true))
+            try expect(describedField.value == .string("1.2.3"))
+            try expect(symbolField.value == .string(CloudStatus.available.description))
+            try expect(symbolField.symbol == CloudStatus.available.symbolName)
+            requireSendable(direct)
+
+#if canImport(Foundation)
+            // Verify conditional Codable conformance preserves all public Field properties.
+            let encodedField = try JSONEncoder().encode(direct)
+            let decodedField = try JSONDecoder().decode(Field.self, from: encodedField)
+            try expect(decodedField == direct)
+#endif
+        },
+    ]
+}
+#endif
 
 // MARK: - Coding Support
 #if !(os(WASM) || os(WASI))

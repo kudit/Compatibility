@@ -8,7 +8,7 @@
 #if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation) && !(os(WASM) || os(WASI))
 import SwiftUI
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public struct Triangle: Shape {
     public var flatEdge: Edge
     public init(flatEdge: Edge) {
@@ -46,7 +46,7 @@ public struct Triangle: Shape {
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public struct TriangleShowcaseView: View {
     @State var showDetail = false
     public init() {}
@@ -78,7 +78,7 @@ public struct TriangleShowcaseView: View {
     }
 }
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 #Preview("Triangles") {
     TriangleShowcaseView()
 }

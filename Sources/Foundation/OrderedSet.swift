@@ -806,7 +806,7 @@ public extension OrderedSet {
 // MARK: - TESTING
 // Testing is only supported with Swift 5.9+
 #if compiler(>=5.9)
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 let orderedSetTests = { @Sendable in
     var orderedSet: OrderedSet<Int> = [1,2,3]
     orderedSet.append(2)

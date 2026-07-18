@@ -86,7 +86,7 @@ extension NetworkError: LocalizedError {
 //import FoundationNetworking
 //#endif
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension PostData {
     // MARK: - Tests
     internal static let TEST_DATA: PostData = ["id": 13, "name": "Jack & \"Jill\"", "foo": false, "bar": "0.0"]
@@ -143,7 +143,7 @@ public extension PostData {
     ]
 }
 
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 extension URLRequest {
     func legacyData(for session: URLSession) async throws -> (Data, URLResponse) {
         try await withCheckedThrowingContinuation { continuation in
@@ -166,7 +166,7 @@ extension URLRequest {
 
 extension Compatibility {
     /// Fetch data from URL including optional postData.  Will report included file information and automatically debug output to the logs.
-    @available(iOS 13, tvOS 13, watchOS 6, *) // for concurrency
+    @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *) // for concurrency
     public static func fetchURLData(urlString: String, postData: PostData? = nil, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) async throws -> Data {
 #if !(os(WASM) || os(WASI))
         debug("Fetching URL [\(urlString)]...", level: .NOTICE, file: file, function: function, line: line, column: column)
@@ -201,7 +201,7 @@ extension Compatibility {
         var response: URLResponse
         // create dataTask using the session object to send data to the server
         do {
-            if #available(iOS 15, watchOS 8, tvOS 15, *) {
+            if #available(iOS 15, macOS 12, watchOS 8, tvOS 15, *) {
                 (data, response) = try await URLSession.shared.data(for: request)
             } else {
                 // Fallback on earlier versions
@@ -235,7 +235,7 @@ extension Compatibility {
         return data
     }
     /// Fetch a string from the provided URL.  If `postData` is provided, will use `POST` method instead of `GET`.
-    @available(iOS 13, tvOS 13, watchOS 6, *) // for concurrency
+    @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *) // for concurrency
     public static func fetchURL(urlString: String, postData: PostData? = nil, encoding: String.Encoding = .utf8, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) async throws -> String {
         let data = try await fetchURLData(urlString: urlString, postData: postData, file: file, function: function, line: line, column: column)
 
@@ -251,16 +251,16 @@ extension Compatibility {
         return responseString
     }
 }
-@available(iOS 13, tvOS 13, watchOS 6, *) // for concurrency
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *) // for concurrency
 public func fetchURLData(urlString: String, postData: PostData? = nil, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) async throws -> Data {
     try await Compatibility.fetchURLData(urlString: urlString, postData: postData, file: file, function: function, line: line, column: column)
 }
-@available(iOS 13, tvOS 13, watchOS 6, *) // for concurrency
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *) // for concurrency
 public func fetchURL(urlString: String, postData: PostData? = nil, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) async throws -> String {
     try await Compatibility.fetchURL(urlString: urlString, postData: postData, file: file, function: function, line: line, column: column)
 }
 
-@available(iOS 15, tvOS 13, watchOS 6, *)
+@available(iOS 15, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension URL {
     /// download data asynchronously and return the data or nil if there is a failure
     func download() async throws -> Data {
