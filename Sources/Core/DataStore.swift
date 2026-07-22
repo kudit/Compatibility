@@ -402,7 +402,7 @@ public extension DataStoreBacked {
             }
         })
         Self.dataStore = observer.store
-        //            main { // allow this init to return before setting up!
+        //            Task.main { // allow this init to return before setting up!
         observer.setup()
         debug("new data store set: \(Self.dataStore?.description ?? "nil!")")
         //            }
@@ -539,7 +539,7 @@ class DataStoreTestModel: ObservableObject {
                 }
             })
             Self.dataStore = observer.store
-//            main { // allow this init to return before setting up!
+//            Task.main { // allow this init to return before setting up!
                 observer.setup()
                 debug("new data store set: \(Self.dataStore?.description ?? "nil!")")
 //            }

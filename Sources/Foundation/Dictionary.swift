@@ -54,7 +54,7 @@ extension DictionaryConvertible {
 // MARK: - Dictionary key lookup extensions
 public extension DictionaryConvertible where Value: AnyObject, Element == (key: Key, value: Value) {
 #if !DEBUG
-    @available(*, deprecated, renamed: "firstKey")
+    @available(*, deprecated, renamed: "firstKey(for:)")
     func key(for value: AnyObject) -> Key? {
         return firstKey(for: value)
     }
@@ -71,7 +71,7 @@ public extension DictionaryConvertible where Value: AnyObject, Element == (key: 
 }
 public extension DictionaryConvertible where Value: Equatable, Element == (key: Key, value: Value) {
 #if !DEBUG
-    @available(*, deprecated, renamed: "firstKey")
+    @available(*, deprecated, renamed: "firstKey(for:)")
     func key(for value: Value) -> Key? {
         return firstKey(for: value)
     }

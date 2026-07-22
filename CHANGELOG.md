@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.17.1 2026-07-21
+Added compiler-assisted migration fix-its to deprecated collection and pasteboard APIs whose replacements preserve the original call semantics.
+Corrected existing deprecation rename spellings so dictionary and threading compatibility wrappers point to their complete replacement declarations.
+Kept behavioral migrations message-only when creating an observer, changing comparison behavior, converting receiver types, or supplying additional debug-format arguments cannot be expressed safely by Swift's `renamed` attribute.
+Updated legacy DataStore comments to reference `Task.main` and match the current threading API.
+
 ## v1.17.0 2026-07-21
 Added an ordered, empty-by-default `Module.tests` catalog and a public module test UI that identifies the source module and version.
 Introduced `TestCase`, lifecycle hooks, reusable expectation helpers, and one shared `Compatibility.tests` catalog for live apps, previews, and Swift Testing.

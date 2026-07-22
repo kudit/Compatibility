@@ -103,7 +103,7 @@ public extension Compatibility {
 }
 
 /// Legacy WebAssembly sleep spelling retained as an immediate compatibility fallback.
-@available(*, deprecated, message: "Use Compatibility.sleep(seconds:) instead.")
+@available(*, deprecated, renamed: "Compatibility.sleep(seconds:)", message: "Use Compatibility.sleep(seconds:) instead.")
 public func sleep(
     seconds: Double,
     file: String = #file,
@@ -141,7 +141,7 @@ public extension Compatibility {
 
 /// Legacy unqualified sleep retained for source compatibility.
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
-@available(*, deprecated, message: "Use Task.sleep(seconds:) or Compatibility.sleep(seconds:) instead.")
+@available(*, deprecated, renamed: "Task.sleep(seconds:)", message: "Use Task.sleep(seconds:) or Compatibility.sleep(seconds:) instead.")
 public func sleep(
     seconds: Double,
     file: String = #file,
@@ -260,7 +260,7 @@ public extension Compatibility {
 }
 
 /// Legacy unqualified synchronous background helper retained for source compatibility.
-@available(*, deprecated, message: "Use Compatibility.background or Task.background instead.")
+@available(*, deprecated, renamed: "Task.background", message: "Use Compatibility.background or Task.background instead.")
 public func background(_ closure: @Sendable @escaping () -> Void) {
     Compatibility.background(closure)
 }
@@ -268,14 +268,14 @@ public func background(_ closure: @Sendable @escaping () -> Void) {
 #if !(os(WASM) || os(WASI))
 /// Legacy unqualified asynchronous background helper retained for source compatibility.
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
-@available(*, deprecated, message: "Use Compatibility.background or Task.background instead.")
+@available(*, deprecated, renamed: "Task.background", message: "Use Compatibility.background or Task.background instead.")
 public func background(_ closure: @Sendable @escaping () async -> Void) {
     Compatibility.background(closure)
 }
 
 /// Legacy unqualified throwing background helper retained for source compatibility.
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
-@available(*, deprecated, message: "Use Compatibility.background or Task.background instead.")
+@available(*, deprecated, renamed: "Task.background", message: "Use Compatibility.background or Task.background instead.")
 public func background<ReturnType: Sendable>(
     _ closure: @Sendable @escaping () async throws -> ReturnType
 ) async throws -> ReturnType {
@@ -284,7 +284,7 @@ public func background<ReturnType: Sendable>(
 
 /// Legacy unqualified optional-returning background helper retained for source compatibility.
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
-@available(*, deprecated, message: "Use Compatibility.background or Task.background instead.")
+@available(*, deprecated, renamed: "Task.background", message: "Use Compatibility.background or Task.background instead.")
 public func background<ReturnType: Sendable>(
     _ closure: @Sendable @escaping () async -> ReturnType?
 ) async -> ReturnType? {
@@ -345,7 +345,7 @@ public extension Compatibility {
 }
 
 /// Legacy unqualified WebAssembly main helper retained for source compatibility.
-@available(*, deprecated, message: "Use Compatibility.main instead.")
+@available(*, deprecated, renamed: "Task.main", message: "Use Compatibility.main instead.")
 public func main(
     _ closure: @Sendable @escaping () -> Void,
     file: String = #file,
@@ -379,7 +379,7 @@ public extension Compatibility {
 }
 
 /// Legacy unqualified main-thread helper retained for source compatibility.
-@available(*, deprecated, message: "Use Compatibility.main or Task.main instead.")
+@available(*, deprecated, renamed: "Task.main", message: "Use Compatibility.main or Task.main instead.")
 public func main(
     _ closure: @Sendable @MainActor @escaping () -> Void,
     file: String = #file,
@@ -444,7 +444,7 @@ public extension Compatibility {
 }
 
 /// Legacy unqualified delay helper retained for source compatibility.
-@available(*, deprecated, message: "Use Compatibility.delay or Task.delay instead.")
+@available(*, deprecated, renamed: "Task.delay", message: "Use Compatibility.delay or Task.delay instead.")
 public func delay(_ seconds: Double, closure: @Sendable @escaping () -> Void) {
     Compatibility.delay(seconds, closure: closure)
 }

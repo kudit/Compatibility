@@ -240,7 +240,7 @@ public enum DebugLevel: Comparable, CustomStringConvertible, CaseIterable, Senda
 
 /// Generates context string
 #if !DEBUG
-@available(*, deprecated, renamed: "Compatibility.settings.debugFormat()")
+@available(*, deprecated, message: "Use Compatibility.settings.debugFormat with the desired formatting options instead.")
 public func debugContext(isMainThread: Bool, file: String, function: String, line: Int, column: Int) -> String {
     Compatibility.settings.debugFormat(
         "",

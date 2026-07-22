@@ -195,7 +195,7 @@ public extension Compatibility {
     /// Copies text to the system pasteboard.
     ///
     /// - Parameter string: Text to copy.
-    @available(*, deprecated, message: "Use Pasteboard.system.copy(_:) instead.")
+    @available(*, deprecated, renamed: "Pasteboard.system.copy(_:)", message: "Use Pasteboard.system.copy(_:) instead.")
     @MainActor
     static func copyToPasteboard(_ string: String) {
         // Forward legacy callers to the platform-neutral pasteboard facade.

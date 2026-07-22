@@ -21,7 +21,7 @@ public extension Collection {
     }
 #if !DEBUG
     /// Returns a randomly selected item from the collection.
-    @available(*, deprecated, message: "Use native randomElement() method")
+    @available(*, deprecated, renamed: "randomElement()", message: "Use the native randomElement() method.")
     var randomItem: Iterator.Element {
         get {
             return self.randomElement()!
@@ -181,7 +181,7 @@ extension Collection where Element: Equatable {
 public extension Array where Element: Equatable {
 #if !DEBUG
     /// like indexOf but with just the element instead of having to construct a predicate.
-    @available(*, deprecated, message: "Use new native firstIndex(of:) method")
+    @available(*, deprecated, renamed: "firstIndex(of:)", message: "Use the native firstIndex(of:) method.")
     func indexOf(item: Element) -> Int? {
         return self.firstIndex(of: item)
     }
