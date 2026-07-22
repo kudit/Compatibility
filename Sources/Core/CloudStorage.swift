@@ -58,7 +58,7 @@ internal class KeyObserver {
 
     func keyChanged() {
         // Need to do from main actor? Also can't do during view updates.
-        main {
+        Task.main {
             self.storageObjectWillChange?.send()
             self.enclosingObjectWillChange?.send()
         }
@@ -95,7 +95,7 @@ internal class CloudStorageObject<Value>: ObservableObject {
     deinit {
         // TODO: May need to keep a local copy of self.keyObserver so we don't need to access self in the main closure?
         let observer = self.keyObserver
-        main { // removeObserver must be called on main and apparently deinit isn't called on main even in @MainActor isolated.
+        Task.main { // removeObserver must be called on main and apparently deinit isn't called on main even in @MainActor isolated.
             sync.removeObserver(observer)
         }
     }

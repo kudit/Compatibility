@@ -117,8 +117,8 @@ public extension URL {
 
     @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
     @MainActor
-    static var tests: [Test] = [
-        Test("URL Tests", urlTests),
+    static var tests: [TestCase] = [
+        TestCase("URL Tests", urlTests),
     ]
 #endif
 }

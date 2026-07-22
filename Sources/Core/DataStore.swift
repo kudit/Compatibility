@@ -465,8 +465,8 @@ class DataStoreTestModel: ObservableObject {
             // make sure to propagate back if changed!
             if resolvedVersions.rawValue != moduleVersionsRunStorage {
                 // but do on separate thread since updates aren't supported within view rendering
-                delay(0.01) {
-                    main {
+                Task.delay(0.01) {
+                    Task.main {
                         self.moduleVersionsRunStorage = resolvedVersions.rawValue
                     }
                 }
@@ -634,7 +634,7 @@ public struct DataStoreTestView: View {
                     model.lastSaved = .nowBackport
 //                    model.save()
                 }))
-                ClearableTextField(label: "Label Double Test", text: Binding(get: {
+                ClearableTextField(label: "Label Double TestCase", text: Binding(get: {
                     "\(model.doubleTest.rawValue)"
                 }, set: {
                     debug("bindingDoubleTest set \($0 ?? "nil")")

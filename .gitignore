@@ -3,3 +3,6 @@
 # Xcode regenerates per-user scheme ordering and automatic-scheme preferences locally.
 # Keep shared behavior in xcshareddata schemes and checked-in test plans instead.
 **/xcuserdata/*/xcschemes/xcschememanagement.plist
+
+# Xcode synthesizes package-product schemes from Package.swift; the checked-in project owns shared schemes.
+.swiftpm/xcode/xcshareddata/

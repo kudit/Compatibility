@@ -96,7 +96,7 @@ extension CharacterSet {
     @MainActor
 #endif
     public static let tests = [
-        Test("character strings", testCharacterStrings),
+        TestCase("character strings", testCharacterStrings),
     ]
 }
 #endif

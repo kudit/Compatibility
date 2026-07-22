@@ -1228,8 +1228,8 @@ public extension Backport where Content: View {
             try body()
         }
         
-        delay(duration) { // This should pull the duration from the animation but this is just for compatibility so we'll hard-code since there's no good way to pull the duration from the animation.
-            main { // force back on the main actor since delay doesn't seem to want to have a version to support this
+        Task.delay(duration) { // This should pull the duration from the animation but this is just for compatibility so we'll hard-code since there's no good way to pull the duration from the animation.
+            Task.main { // force back on the main actor since delay doesn't seem to want to have a version to support this
                 completion()
             }
         }

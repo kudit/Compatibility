@@ -332,7 +332,7 @@ extension OrderedSet {
     }
 }
 
-#if !(os(WASM) || os(WASI)) // WASM doesn't have access to Codable or Mirror.
+#if !hasFeature(Embedded) // Full-runtime WASM supports Codable; the Embedded subset does not.
 // MARK: - Codable
 extension OrderedSet: Encodable where Element: Encodable {
     /// Encodes the elements of this ordered set into the given encoder.
@@ -837,7 +837,7 @@ let orderedSetTests = { @Sendable in
     try expect(orderedSet.startIndex == 0)
     try expect(orderedSet.endIndex == 4)
     try expect(orderedSet.index(after: 0) == 1)
-    // TODO: Test mirror?
-    // TODO: Test encoding
+    // TODO: TestCase mirror?
+    // TODO: TestCase encoding
 }
 #endif

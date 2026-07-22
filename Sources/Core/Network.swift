@@ -81,10 +81,7 @@ extension NetworkError: LocalizedError {
     }
 }
 
-#if compiler(>=5.9) && canImport(Combine)// || canImport(FoundationNetworking) // for Linux support of URLRequest - apparently still doesn't work even if we were to include that, so gate this to not be available on linux :(
-//#if canImport(FoundationNetowrking)
-//import FoundationNetworking
-//#endif
+#if compiler(>=5.9) && (canImport(Combine) || canImport(FoundationNetworking))
 
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension PostData {
@@ -135,11 +132,11 @@ public extension PostData {
     }
     @MainActor
     static let tests = [
-        Test("POST data query encoding", testPostDataQueryEncoding),
-        Test("fetchURL Gwinnett check", testFetchGwinnettCheck),
-        Test("fetchURL GET check", testFetchGETCheck),
-        Test("fetchURL POST check", testFetchPOSTCheck),
-        Test("Network Errors", testNetworkErrors),
+        TestCase("POST data query encoding", testPostDataQueryEncoding),
+        TestCase("fetchURL Gwinnett check", testFetchGwinnettCheck),
+        TestCase("fetchURL GET check", testFetchGETCheck),
+        TestCase("fetchURL POST check", testFetchPOSTCheck),
+        TestCase("Network Errors", testNetworkErrors),
     ]
 }
 

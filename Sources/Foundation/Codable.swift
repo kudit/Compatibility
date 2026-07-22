@@ -1,12 +1,16 @@
 /// For flagging properties that should not be included in Codable conformance.  Can provide a default value if the property is not an Optional
 
-#if (os(WASM) || os(WASI)) && !canImport(Foundation) && compiler(>=6.2)
-/// Backport stub for Foundation.Codable
+#if hasFeature(Embedded) && !canImport(Foundation)
+/// Minimal protocols that let Embedded Swift models retain source-compatible declarations.
+///
+/// Full-runtime WebAssembly uses Swift's real Codable protocols; only Embedded Swift needs these
+/// placeholders because that language subset does not currently provide the coding machinery.
 public typealias Codable = Decodable & Encodable
 public protocol Decodable {}
 public protocol Encodable {}
 
-// TODO: Implement backport versions for WASM, but for now, just include stubs to silence compiler warnings and not have to conditionally remove conformances.
+// These protocols intentionally do not promise serialization; host-specific encoders can add that
+// capability without making ordinary WASM builds look like Embedded Swift.
 
 #endif
 

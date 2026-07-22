@@ -35,7 +35,7 @@ struct MyApp: App {
             debug("First Run!")
         }
         debug("All versions run: \(Application.main.versionsRun)")
-        background {
+        Task.background {
             debug("Run background task (for testing)")
         }
     }

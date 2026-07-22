@@ -208,13 +208,13 @@ public extension Compatibility {
 extension Pasteboard {
     /// Deterministic pasteboard tests shared by the in-app runner and Swift Testing.
     @MainActor
-    internal static let tests: [Test] = [
-        Test("In-memory text pasteboard") { @MainActor in
+    internal static let tests: [TestCase] = [
+        TestCase("In-memory text pasteboard") { @MainActor in
             let pasteboard = Pasteboard()
             pasteboard.copy("Compatibility pasteboard test")
             try expect(pasteboard.readString() == "Compatibility pasteboard test", "Expected the copied text to round-trip")
         },
-        Test("In-memory typed pasteboard items") { @MainActor in
+        TestCase("In-memory typed pasteboard items") { @MainActor in
             let pasteboard = Pasteboard()
             let items = [
                 PasteboardItem(representations: [

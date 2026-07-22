@@ -66,7 +66,7 @@ public struct TestCheck: View {
 }
 
 @available(iOS 14, macOS 11, tvOS 14, watchOS 7, *)
-#Preview("Test Checks") {
+#Preview("TestCase Checks") {
     List {
         TestCheck("True", true)
         TestCheck("False", false)

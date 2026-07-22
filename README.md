@@ -10,7 +10,7 @@ The primary goals are to be easily maintainable by multiple individuals, employ 
 
 ## Features
 - Can develop and modify without Xcode using Swift Playgrounds on iPad!
-- Threading features to make syntax easier (`main {}` and `background {}`).
+- Threading features to make syntax easier (`Task.main {}` and `Task.background {}`).
 - Sleep feature for simple delays in tasks.
 - Testing framework for providing tests inline in frameworks that can be output/tested using #Previews.
 - Several SwiftUI features that have been added have been "Backported" so that you can use the new features on new platforms but have an automatic fallback for older platforms that do not support the feature.
@@ -88,11 +88,11 @@ if Application.isDebug {
 
 ### Running code on various threads and delaying execution of code:
 ```swift
-background {
+Task.background {
     // run long-running code on background thread
-    sleep(4) // wait for 4 seconds before continuing
-    delay(0.4) { // run this code after 0.4 seconds (similar to calling await sleep() and then executing code)
-        main {
+    await Task.sleep(seconds: 4) // wait for 4 seconds before continuing
+    Task.delay(0.4) { // run this code after 0.4 seconds (similar to calling await sleep() and then executing code)
+        Task.main {
             // run this code back on the main thread
         }
     }
@@ -114,6 +114,8 @@ From the package directory, select the macOS destination and run:
 swift run compatibilityCLI banana Bob
 swift run compatibilityCLI parseDate "2023-01-02 17:12:00"
 swift test
+swift test --enable-code-coverage
+swift test --show-codecov-path
 ```
 
 In Xcode, open the package, select the automatically discovered `compatibilityCLI` scheme, choose **My Mac** as the run destination, and run it with the desired arguments. The `CompatibilitySwiftPMTests` target is included in the same package scheme's Test action.
@@ -200,6 +202,16 @@ public enum Support: Module {
     /// Register direct dependencies so callers only need to include their highest-level modules.
     public static let dependencies: [Module.Type] = [Compatibility.self]
 
+    /// Ordered sections shared by automated runners and Compatibility's live test UI.
+    @MainActor
+    public static let tests: OrderedDictionary<String, [TestCase]> = [
+        "Support Model": [
+            TestCase("Default state") {
+                try expectEqual(SupportModel().state, .ready)
+            },
+        ],
+    ]
+
     /// Portable information is synchronous so it remains usable without a concurrency runtime.
     public static var moduleInfo: [Field] {
         [Field("\(moduleName) Version", version)]
@@ -240,7 +252,13 @@ Conformers that opt in must declare the property as `String?`. A nonoptional inf
 
 `openSourceLicense` is an asynchronous optional property with a default implementation where Swift concurrency and Foundation networking are supported. An `await Support.openSourceLicense` access lazily asks GitHub's repository-license API for the detected license on the repository's default branch. Private modules return `nil`; non-GitHub repositories, unsupported platforms, network failures, and repositories without a detectable license return repository guidance instead. The value is not loaded or cached as part of `moduleInfo`; callers that reuse the text should retain the returned value.
 
-Compatibility's in-app `AllTestsListView` and the Swift Testing suite share the same `Test` values from `Test.namedTests`. Add reusable framework checks to that collection rather than duplicating assertions in a separate `@Test`; the parameterized Swift Testing bridge reports every named section as a separate test case in CI and Xcode. `CloudStatus.tests` and `MixedTypeField.tests` are examples migrated from direct Swift Testing checks into this shared form. Keep tests that require Swift Testing-only features, private test fixtures, or XCTest infrastructure in the test target.
+Each `Module` can expose ordered test sections through `Module.tests`. The default is empty, so modules without reusable tests need no boilerplate. `ModuleTestsListView(module:)` presents the module name and version as the screen's first section header, followed by its ordered test sections. An empty module still receives a named section explaining that it provides no tests. `AllTestsListView()` is the Compatibility-specific convenience screen.
+
+Compatibility's in-app test UI and Swift Testing suite share the same `TestCase` values from `Compatibility.tests`. `TestCase` deliberately avoids colliding with Swift Testing's `Test`; the old `Test` spelling remains available as a source-compatible alias. Add reusable framework checks to the conforming module's `tests` collection rather than duplicating assertions in a separate `@Test`. The parameterized Swift Testing bridge reports every Compatibility section as a separate test case in CI and Xcode.
+
+`expect(_:)` remains the flexible Boolean primitive for live apps, previews, Playgrounds, and older systems. Prefer `expectEqual(_:_:)` and `expectNotEqual(_:_:)` for comparisons because their thrown diagnostics include actual and expected values. Swift Testing macros cannot be backported or invoked indirectly by a normal function, so the package does not make Swift Testing a runtime dependency; its Swift Testing target instead runs the same `TestCase` closures and reports their thrown failures.
+
+`Compatibility.main` and `Compatibility.background` preserve dispatch or single-threaded fallbacks where Swift concurrency is unavailable. On concurrency-capable systems, prefer the shorter `Task.main` and `Task.background` forwarding conveniences without spelling `Task` generic arguments. `Task.sleep(seconds:)` and `Task.delay(_:)` similarly forward to the established Compatibility helpers. Source arguments remain available for source compatibility, while `SourceContext` can carry a complete file, function, line, and column snapshot through asynchronous work.
 
 Tests that access GitHub, iCloud, the system pasteboard, or persistent CloudStorage are opt-in. Set
 `INTEGRATION_TESTING=1` in the Xcode scheme, command environment, or launched in-app test process to run the

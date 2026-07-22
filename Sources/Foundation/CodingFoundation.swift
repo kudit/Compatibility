@@ -99,7 +99,7 @@ public extension Decodable {
     }
 }
 
-#if compiler(>=5.9) && !(os(WASM) || os(WASI))
+#if compiler(>=5.9)
 private struct CodingRoundTripTestModel: Codable, Equatable {
     let name: String
     let count: Int
@@ -134,8 +134,8 @@ private func testCodingRoundTrips() throws {
 #if !(os(WASM) || os(WASI))
 @MainActor
 #endif
-internal let codingTests: [Test] = [
-    Test("Coding round trips", testCodingRoundTrips),
+internal let codingTests: [TestCase] = [
+    TestCase("Coding round trips", testCodingRoundTrips),
 ]
 #endif
 

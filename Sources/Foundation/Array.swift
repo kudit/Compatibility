@@ -255,12 +255,14 @@ public extension Collection {
         try expect(array[nth: 7] == 2, "Should be looped value")
     }
 }
-// Testing is only supported with Swift 5.9+ & !WASM
-#if compiler(>=5.9) && !(os(WASM) || os(WASI))
+// Testing is supported anywhere Swift 5.9 can compile the underlying collection helpers.
+#if compiler(>=5.9)
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+#if !(os(WASM) || os(WASI))
 @MainActor
-let collectionTests: [Test] = [
-    Test("identity", {
+#endif
+let collectionTests: [TestCase] = [
+    TestCase("identity", {
         let testSequence = [5, 4, 2, 1, 3]
         try expect(testSequence.repeated(0) == [])
         try expect(testSequence.chunked(into: 2) == [[5, 4], [2, 1], [3]])
@@ -274,10 +276,10 @@ let collectionTests: [Test] = [
         try expect(!testSequence.ends(with: [3, 1]))
         try expect(!testSequence.ends(with: [0, 5, 4, 2, 1, 3]))
     }),
-    Test("modification", [String].modificationTests),
-    Test("safety", [Int].safeTests),
-    Test("nth", [Int].nthTests),
-    Test("OrderedSet", orderedSetTests),
+    TestCase("modification", [String].modificationTests),
+    TestCase("safety", [Int].safeTests),
+    TestCase("nth", [Int].nthTests),
+    TestCase("OrderedSet", orderedSetTests),
 ]
 
 // Array Identifiable

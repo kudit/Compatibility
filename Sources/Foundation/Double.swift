@@ -301,7 +301,7 @@ public extension Double {
     @MainActor
 #endif
     static let tests = [
-        Test("double tests", doubleTests),
+        TestCase("double tests", doubleTests),
     ]
 }
 #endif

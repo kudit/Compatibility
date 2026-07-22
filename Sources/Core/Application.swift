@@ -174,9 +174,11 @@ public class Application: ObservableObject { // The private initializer preserve
         // Calling Application.main is what initializes the application and does the tracking.  This really should only be called once.  TODO: Should we check to make sure this isn't called twice??  Application.main singleton should only be inited once.
         debug("Application Tracking: \(Application.main.appName)", level: .NOTICE, file: file, function: function, line: line, column: column) // Initialize persisted version state synchronously before detached reporting begins.
         // Defer the complete report so modules may calculate or fetch metadata without blocking application launch.
-        background {
+        Task.background {
             let description = await Application.main.loadDetailedDescription()
-            debug("Application Detailed Tracking:\n\(description)", level: .NOTICE, file: file, function: function, line: line, column: column)
+            Task.main {
+                debug("Application Detailed Tracking:\n\(description)", level: .NOTICE, file: file, function: function, line: line, column: column)
+            }
         }
     }
 
@@ -282,12 +284,12 @@ public class Application: ObservableObject { // The private initializer preserve
 #if compiler(>=5.9) && canImport(Combine)
         if #available(watchOS 9, *) {
             // persist back to cloud for other devices and future runs or re-installs (do with delay in case of launch issue where the crash happens at launch)
-            delay(0.5) { // technically should still be on the main thread.  Would do @MainActor in but Swift 6 has issues with that
+            Task.delay(0.5) { // technically should still be on the main thread.  Would do @MainActor in but Swift 6 has issues with that
                 debug("Setting versions run to: \(allVersions.rawValue)", level: .DEBUG)
                 //                debug("Bundle Identifier: \(Bundle.main.identifier)")
                 //                debug("Application Identifier: \(Application.main.appIdentifier)")
                 // setting Application.main so don't capture mutating self.
-                Compatibility.main { // but need to add this to guarantee for compiler issues.
+                Task.main { // Explicitly return to the main actor before updating shared application state.
                     Application.main._cloudVersionsRun = allVersions.rawValue
                 }
             }
@@ -439,8 +441,8 @@ public class Application: ObservableObject { // The private initializer preserve
     }
 #endif
 
-    public static var tests: [Test] = [
-        Test("Application Tests", applicationTests),
+    public static var tests: [TestCase] = [
+        TestCase("Application Tests", applicationTests),
     ]
 #endif
 }

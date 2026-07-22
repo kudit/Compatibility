@@ -1,6 +1,5 @@
 // MARK: - JSON management (simplified)
 
-#if !(os(WASM) || os(WASI))
 #if canImport(Foundation)
 public extension Encodable {
     /**
@@ -47,7 +46,7 @@ public extension Decodable {
         self = try JSONDecoder().decode(Self.self, from: jsonData)
     }
 }
-#else
+#elseif !hasFeature(Embedded)
 // MARK: Legacy support for where Foundation isn't available
 public struct JSONFormattingOptions: OptionSet {
     public let rawValue: Int
@@ -258,7 +257,7 @@ fileprivate struct _JSONParser {
         }
         
         if numberStr.contains(".") || numberStr.contains("e") || numberStr.contains("E") {
-            #if !(os(WASM) || os(WASI))
+            #if !hasFeature(Embedded)
             if let d = Double(numberStr) {
                 return .double(d)
             }
@@ -457,5 +456,4 @@ fileprivate struct _JSONWriter {
         output.append("}")
     }
 }
-#endif
 #endif

@@ -1450,21 +1450,73 @@ public extension String {
     @MainActor
 #endif
     static let tests = [
-        Test("title case", testSimpleTitleCase),
-        Test("sentence capitalized", testSentenceCapitalized),
-        Test("substring", testSubstring),
-        Test("String Introspection", testIntrospection),
-        Test("trimming", testTriming),
-        Test("trimming empty", testTrimingEmpty),
-        Test("extract tags", testExtractTags),
-        Test("extract nil start", testExtractNilStart),
-        Test("extract nil end", testExtractNilEnd),
-        Test("extract missing start", testExtractMissingStart),
-        Test("extract missing end", testExtractMissingEnd),
-        Test("Line Reversal", testTextReversal),
-        Test("HTML Encoding", testHTMLEncoded),
-        Test("Codable", testCodable),
-        Test("URL & File Encoding", testEncoding),
+        TestCase("Foundation-independent conveniences") {
+            // Keep portable behavior beside String so Linux, UI, and external runners execute one source of truth.
+            try expectEqual(Int(string: nil, defaultValue: 42), 42)
+            try expectEqual(Int(string: "123", defaultValue: 42), 123)
+            try expectEqual(Int(string: "abc", defaultValue: 42), 42)
+            try expect("true".asBool)
+            try expect("yes".asBool)
+            try expect(!"false".asBool)
+            try expect("Hello".hasContent)
+            try expect(!"".hasContent)
+            try expect("the quick brown fox".containsAny(["dog", "fox"]))
+            try expect("the quick brown fox".containsAll(["quick", "brown"]))
+            try expectEqual("abc".characterStrings, ["a", "b", "c"])
+            try expectEqual("  hello  ".trimmed, "hello")
+            try expectEqual("--hello--".trimming("-"), "hello")
+            try expectEqual("hello".duplicateCharactersRemoved, "helo")
+            try expectEqual("a b\tc\n".whitespaceStripped, "abc")
+            try expectEqual("hello".reversed, "olleh")
+            try expectEqual("hello".repeated(2), "hellohello")
+            try expect(String.vowels.contains("a"))
+            try expect(String.consonants.contains("z"))
+            try expect("Bob".banana.contains("Banana-fana"))
+            try expectEqual("<p>Hello</p>".tagsStripped, "Hello")
+            try expectEqual("A <tag>value</tag>".extract(from: "<tag>", to: "</tag>"), "value")
+            try expectEqual("h\"i".addSlashes(), "h\\\"i")
+            try expectEqual("Hello, world!".replacingOccurrences(of: "world", with: "Swift"), "Hello, Swift!")
+            try expectEqual(UInt64("C", radix: 16), 12)
+            // MARK: - Character.isEmoji
+            let smiley: Character = "😀"
+            try expect(smiley.isEmoji, "Emoji character should be recognized")
+            let letter: Character = "a"
+            try expect(!letter.isEmoji, "Letter should not be recognized as emoji")
+            try expect(Character("😀").isEmoji)
+            try expect("hello 😀".containsEmoji)
+            try expectEqual("<tag>Dave & Buster's".htmlEncoded, "&lt;tag&gt;Dave &amp; Buster's")
+#if !(os(WASM) || os(WASI))
+            try expect("123".isNumeric)
+            try expect(!"12a".isNumeric)
+            try expect("2000".isPostIndustrialYear)
+#endif
+        },
+        TestCase("HTML and Markdown attributed strings") {
+#if ((canImport(Foundation) && canImport(Combine)) || canImport(NSAttributedString)) && !(os(WASM) || os(WASI))
+            // AttributedString itself begins at watchOS 8, while the surrounding String tests support older watches.
+            if #available(iOS 15, macOS 12, tvOS 15, watchOS 8, *) {
+                let html = "This is <b>bold</b> and this is <i>italic</i>."
+                let markdown = "This is **bold** and this is *italic*."
+                let markdownValue = try? AttributedString(markdown: markdown)
+                try expect(AttributedString(html.attributedString) != markdownValue, "HTML and Markdown parsing should preserve their distinct representations")
+            }
+#endif
+        },
+        TestCase("title case", testSimpleTitleCase),
+        TestCase("sentence capitalized", testSentenceCapitalized),
+        TestCase("substring", testSubstring),
+        TestCase("String Introspection", testIntrospection),
+        TestCase("trimming", testTriming),
+        TestCase("trimming empty", testTrimingEmpty),
+        TestCase("extract tags", testExtractTags),
+        TestCase("extract nil start", testExtractNilStart),
+        TestCase("extract nil end", testExtractNilEnd),
+        TestCase("extract missing start", testExtractMissingStart),
+        TestCase("extract missing end", testExtractMissingEnd),
+        TestCase("Line Reversal", testTextReversal),
+        TestCase("HTML Encoding", testHTMLEncoded),
+        TestCase("Codable", testCodable),
+        TestCase("URL & File Encoding", testEncoding),
     ]
 #endif
 }

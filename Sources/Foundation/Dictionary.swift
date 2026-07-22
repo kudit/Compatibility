@@ -86,3 +86,33 @@ public extension DictionaryConvertible where Value: Equatable, Element == (key: 
         return nil
     }
 }
+
+#if compiler(>=5.9)
+/// Portable coverage for the shared operators and reverse-lookup helpers.
+///
+/// Keeping this beside `DictionaryConvertible` ensures the app test UI exercises the same
+/// implementation that package clients compile, including Foundation-free and WASM builds.
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+#if !(os(WASM) || os(WASI))
+@MainActor
+#endif
+internal let dictionaryConvertibleTests: [TestCase] = [
+    TestCase("DictionaryConvertible merging and lookup") {
+        var dictionary = ["a": 1, "b": 2]
+        let ordered: OrderedDictionary = ["b": 20, "c": 3]
+        dictionary += ordered
+        try expectEqual(dictionary, ["a": 1, "b": 20, "c": 3])
+
+        let merged = ["a": 1, "b": 2] + ordered
+        try expectEqual(merged, ["a": 1, "b": 20, "c": 3])
+        try expectEqual(merged.firstKey(for: 20), "b")
+
+        final class Reference {}
+        let first = Reference()
+        let second = Reference()
+        let references = ["first": first, "second": second]
+        try expectEqual(references.firstKey(for: second), "second")
+        try expect(references.firstKey(for: Reference()) == nil)
+    },
+]
+#endif

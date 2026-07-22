@@ -10,7 +10,7 @@
 /// Unordered dictionary with String keys and MixedTypeField values.  If we need to encode ordered, will encode as key, value mixed array.
 public typealias MixedTypeDictionary = Dictionary<String,MixedTypeField?>
 public typealias MixedTypeArray = [MixedTypeField?]
-#if !(os(WASM) || os(WASI)) // not available in embedded Swift due to not being able to dynamically cast Any in encoding: function.
+#if !hasFeature(Embedded) // Embedded Swift cannot dynamically cast Any in the encoding initializer.
 public extension MixedTypeDictionary {
     /// Initializes with a Dictionary.  Returns nil if Dictionary.Key is not LosslessStringConvertible.
     init?<T>(dictionary: T) where T: DictionaryConvertible {
@@ -24,7 +24,8 @@ public extension MixedTypeDictionary {
     }
 }
 #endif
-#if !(os(WASM) || os(WASI)) && canImport(Foundation) // not available
+#if canImport(Foundation)
+// Foundation supplies the complete Codable machinery on full-runtime WebAssembly builds too.
 extension MixedTypeField: Codable {}
 #endif
 /// A recursive, type-safe representation of primitive values, arrays, and dictionaries commonly stored in JSON-like data.
@@ -41,7 +42,7 @@ public enum MixedTypeField: Equatable, Sendable, Hashable {
     case dictionary(MixedTypeDictionary)
     case array([MixedTypeField?])
 
-#if !(os(WASM) || os(WASI)) && canImport(Foundation) // not available
+#if canImport(Foundation)
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         
@@ -65,7 +66,7 @@ public enum MixedTypeField: Equatable, Sendable, Hashable {
     }
 #endif
     
-#if !(os(WASM) || os(WASI))
+#if !hasFeature(Embedded)
     public init?(encoding value: Any?) { // dynamic typecasting isn't available in embedded Swift :(
         guard let value else {
             self = .null
@@ -96,7 +97,7 @@ public enum MixedTypeField: Equatable, Sendable, Hashable {
     }
 #endif
     
-#if !(os(WASM) || os(WASI)) && canImport(Foundation) // not available
+#if canImport(Foundation)
     public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
         
@@ -192,13 +193,15 @@ public enum MixedTypeField: Equatable, Sendable, Hashable {
     }
 }
 
-#if compiler(>=5.9) && !(os(WASM) || os(WASI))
+#if compiler(>=5.9)
 @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
 public extension MixedTypeField {
     /// Shared value, formatting, and `Field` integration tests available to the in-app and Swift Testing runners.
+#if !hasFeature(Embedded)
     @MainActor
+#endif
     static let tests = [
-        Test("Descriptions, conformances, and Field conveniences") {
+        TestCase("Descriptions, conformances, and Field conveniences") {
             // Compile-time generic constraints ensure these public values remain safe across concurrency boundaries.
             func requireSendable<Value: Sendable>(_ value: Value) { _ = value }
 
@@ -259,7 +262,7 @@ public extension MixedTypeField {
 #endif
 
 // MARK: - Coding Support
-#if !(os(WASM) || os(WASI))
+#if !hasFeature(Embedded)
 public extension Encodable {
     func asMixedTypeField() throws -> MixedTypeField {
         let encoder = MixedTypeFieldEncoder()

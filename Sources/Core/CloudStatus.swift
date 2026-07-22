@@ -23,13 +23,15 @@ public enum CloudStatus: CustomStringConvertible, Sendable, CaseIterable, Symbol
     }
 }
 
-#if compiler(>=5.9) && !(os(WASM) || os(WASI))
+#if compiler(>=5.9)
 @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
 public extension CloudStatus {
     /// Shared enum behavior tests available to both the in-app test UI and Swift Testing bridge.
+#if !(os(WASM) || os(WASI))
     @MainActor
+#endif
     static let tests = [
-        Test("CloudStatus rotation") {
+        TestCase("CloudStatus rotation") {
             // Verify the shared postfix rotation operator advances through every case and wraps to the beginning.
             var status = CloudStatus.notSupported
             try expect(status == .notSupported)

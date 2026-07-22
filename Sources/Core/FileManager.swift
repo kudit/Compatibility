@@ -46,8 +46,8 @@ public extension FileManager {
 extension FileManager {
     /// Shared file-manager tests used by both the in-app runner and Swift Testing.
     @MainActor
-    internal static let tests: [Test] = [
-        Test("Visible directory entries") {
+    internal static let tests: [TestCase] = [
+        TestCase("Visible directory entries") {
             let manager = FileManager.default
             let fixture = manager.temporaryDirectory.appendingPathComponent("CompatibilityFileManagerTests-\(UUID().uuidString)", isDirectory: true)
             let visibleFile = fixture.appendingPathComponent("Visible.txt")

@@ -354,11 +354,13 @@ public extension Error {
 }
 
 
-// Testing is only supported with Swift 5.9+ && !WASM
-#if compiler(>=5.9) && !(os(WASM) || os(WASI))
+// Testing is supported on WASM as well; only the unavailable actor annotation is gated.
+#if compiler(>=5.9)
 @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
 public extension DebugLevel {
+#if !(os(WASM) || os(WASI))
     @MainActor
+#endif
     internal static let testDebugConfig: TestClosure = {
         // NOTE: This might happen concurrently with other tests so could cause issues with output...
         // preserve original settings
@@ -397,12 +399,12 @@ Normal output: \(defaultOutput)
         #else
         let timestamp = "UNABLE TO GET TIMESTAMP WITHOUT Foundation.Date"
         #endif
-        let debugText = debug("Test return output")
+        let debugText = debug("TestCase return output")
                 
         try expect(debugText.contains("!"), "expected debug warning symbol to be ! but found \(debugText)")
         try expect(debugText.contains(timestamp), "expected \(timestamp) but found \(debugText)")
 
-        let blankText = debug("Test return output", level: .DEBUG) // less than the current level so should be silent
+        let blankText = debug("TestCase return output", level: .DEBUG) // less than the current level so should be silent
         try expect(blankText == "", "expected empty string but found \(blankText)")
         
         // reset settings for other tests
@@ -412,7 +414,9 @@ Normal output: \(defaultOutput)
 //        debug("TEST OUTPUT", level: .ERROR)
     }
 
+#if !(os(WASM) || os(WASI))
     @MainActor
+#endif
     internal static let testDebug: TestClosure = {
         var debugError = CustomError("NOT OUTPUT")
         var output = "OVERWRITE"
@@ -436,10 +440,12 @@ Normal output: \(defaultOutput)
         }
     }
 
+#if !(os(WASM) || os(WASI))
     @MainActor
+#endif
     static let tests = [
-        Test("debug configuration tests", testDebugConfig),
-        Test("debug tests", testDebug),
+        TestCase("debug configuration tests", testDebugConfig),
+        TestCase("debug tests", testDebug),
     ]
 }
 #endif

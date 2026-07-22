@@ -791,7 +791,7 @@ extension OrderedDictionary {
 }
 
 // MARK: - Sorting
-#if !(os(WASM) || os(WASI)) // unable to throw custom error or convert Any types in embedded Swift.
+#if !hasFeature(Embedded) // Embedded Swift lacks the dynamic/error features used by these sorting overloads.
 extension OrderedDictionary {
     /// Returns the collection sorted using the given predicate as the
     /// comparison between elements.
@@ -1058,7 +1058,7 @@ extension OrderedDictionary {
 }
 
 // MARK: - Codable
-#if !(os(WASM) || os(WASI))
+#if !hasFeature(Embedded)
 extension OrderedDictionary: Encodable where Key: Encodable, Value: Encodable {
     /// Encodes the contents of this dictionary into the given encoder.
     ///
@@ -1141,10 +1141,10 @@ extension OrderedDictionary: Decodable where Key: Decodable, Value: Decodable {
 #endif
 internal var orderedDictionaryTests: TestClosure = {
     var ordered: OrderedDictionary = ["b": 2, "a": 1]
-#if !(os(WASM) || os(WASI))
     let manipulated = ordered.sorted().reversed()
     try expect(ordered["c", default: 4] == 4)
     try expect(manipulated == ordered)
+#if !(os(WASM) || os(WASI))
     let unordered = ordered.shuffled().dictionaryValue.dictionaryValue
     try expect(unordered.firstKey(for: 1) == "a")
     try expect(ordered.dictionaryValue == unordered)
@@ -1180,13 +1180,32 @@ internal var orderedDictionaryTests: TestClosure = {
 #endif
     let mapped = ordered.mapValues { $0 * 10 }
     let cm = ordered.compactMapValues { Int.random(in: 0...1) == 0 ? nil : $0 }
+
+    // Cover the mutation and sequence behaviors formerly exercised only by the Xcode test target.
+    var mutations: OrderedDictionary = ["a": 1, "b": 2, "c": 3]
+    try expectEqual(mutations.updateValue(10, forKey: "a"), 1)
+    try expect(mutations.removeValue(forKey: "missing") == nil)
+    try expectEqual(mutations.removeValue(forKey: "b"), 2)
+    try expectEqual(mutations.keys.elements, ["a", "c"])
+    mutations.swapAt(0, 1)
+    try expectEqual(mutations.keys.elements, ["c", "a"])
+    mutations.reverse()
+    try expectEqual(mutations.keys.elements, ["a", "c"])
+
+    let filteredPortable = mutations.filter { $0.value >= 3 }
+    try expectEqual(filteredPortable.keys.elements, ["a", "c"])
+    try expectEqual(mutations.mapValues(String.init)["a"], "10")
+    try expectEqual(mutations.compactMapValues { $0 == 3 ? nil : $0 }.keys.elements, ["a"])
+    try expectEqual(Array(mutations).count, mutations.count)
+    try expectEqual(Array(mutations.elements).map(\.0), mutations.keys.elements)
+    try expectEqual(OrderedDictionary<String, Int>().description, "[:]")
 }
 
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 #if !(os(WASM) || os(WASI))
 @MainActor
 #endif
-internal var dictionaryTests: [Test] = [
-    Test("Ordered Dictionary Tests", orderedDictionaryTests),
-]
+internal var dictionaryTests: [TestCase] = [
+    TestCase("Ordered Dictionary Tests", orderedDictionaryTests),
+] + dictionaryConvertibleTests
 #endif

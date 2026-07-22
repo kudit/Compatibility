@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.17.0 2026-07-21
+Added an ordered, empty-by-default `Module.tests` catalog and a public module test UI that identifies the source module and version.
+Introduced `TestCase`, lifecycle hooks, reusable expectation helpers, and one shared `Compatibility.tests` catalog for live apps, previews, and Swift Testing.
+Moved reusable tests beside the code they exercise, collected them in the shared catalog, and kept integration-only tests in the Development test target.
+Added `Task.main`, `Task.background`, `Task.sleep`, and `Task.delay` conveniences while preserving the existing `Compatibility` threading APIs and deprecated unqualified wrappers.
+Added `SourceContext` for carrying call-site information through asynchronous helpers.
+Improved portability across Apple platforms, Linux, WASM, WASI, and Embedded Swift, including Linux networking, full-runtime WASM Codable support, explicit unavailable-sleep warnings, and corrected availability checks.
+Improved test reliability and speed by running independent tests concurrently, tightening timing checks, and isolating tests from user files, pasteboards, persistent storage, and optional live services.
+Changed forgiving `Version` parsing so nonnumeric runs separate components instead of merging unrelated digits.  NOTE: This is technically a breaking change but should be better.  If you need the original parsing behavior, please consider using a custom parser.  This shouldn't change anything already in major.minor.patch format.
+
 ## v1.16.0 2026-07-17
 Added `Module` protocol as a template for all Modules including lazy asynchronous GitHub license discovery.
 Added dependency-aware module registration through `Build.allModules`, `Build.register`, and `Module.include()`, with automatic Compatibility registration and optional top-level module registration from `Application.track(including:)`.
@@ -554,7 +564,6 @@ Planned features and anticipated API changes.  If you want to contribute, this i
 This is where proposals can be discussed for potential movement to the roadmap.
 - [ ] 1.11.0: Remove Version from OperatingSystemVersion typealias so we don't have to do retroactive conformances?  Is there someplace where OperatingSystemVersion is used where a custom Version type would need to be bridged?
 - [ ] Have debugSuppress suppress all messages except expect debug messages which should always print normally.
-- [ ] should we rename `background {}` to `Background {}` and `Main {}` and `Delay(#) {}` to match `Task {}` and avoid conflicts with SwiftUI.View.background?
 - [ ] Debug: see if there's a way to add interpolation as a parameter to customize the output format.  Perhaps using a debug output formatter object that can be set?
 - [ ] Regroup String to better apply to StringProtocol and String seperately.  Also figure out how to optimize trim functions by returning Substrings?
 - [ ] Debug: allow setting a closure that will pre-process debug statements to allow for injection in debug statements?

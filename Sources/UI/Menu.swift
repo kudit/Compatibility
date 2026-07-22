@@ -82,7 +82,7 @@ public struct MenuTest: View {
     
     public var body: some View {
         Menu("Symbols") {
-            Text("Test menu with symbols")
+            Text("TestCase menu with symbols")
                 .onAppear {
                     debug("The menu is open! (via Text) - appears when menu first loads (view loads for toolbar, menu is first opened when in content")
                 }

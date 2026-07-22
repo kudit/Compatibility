@@ -69,7 +69,7 @@ public struct ClosureTestView: View {
     public init() {}
     public var body: some View {
         VStack {
-            Text("Test for availability")
+            Text("TestCase for availability")
             Text("conditional inclusion")
                 .closure { content in
                     if #available(iOS 999, macOS 999, tvOS 999, watchOS 999, visionOS 999, *) {
@@ -108,12 +108,12 @@ public struct ClosureTestView: View {
                 // toolbars are not shown in tvOS?
             }
         }
-        .backport.navigationTitle("Compatibility/Menu Test")
+        .backport.navigationTitle("Compatibility/Menu TestCase")
         .navigationWrapper()
     }
 }
 @available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
-#Preview("Closure Test") {
+#Preview("Closure TestCase") {
     ClosureTestView()
 }
 
@@ -177,7 +177,7 @@ public struct ConvertTestView: View {
     }
 }
 @available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
-#Preview("Convert Test") {
+#Preview("Convert TestCase") {
     ConvertTestView()
 }
 
@@ -332,7 +332,7 @@ public struct MaterialTestView: View {
 }
 
 @available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
-#Preview("Material Test") {
+#Preview("Material TestCase") {
     MaterialTestView()
 }
 

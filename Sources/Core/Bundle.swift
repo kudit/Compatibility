@@ -84,8 +84,8 @@ public extension Bundle {
 
     @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
     @MainActor
-    static var tests: [Test] = [
-        Test("Bundle Tests", bundleTests),
+    static var tests: [TestCase] = [
+        TestCase("Bundle Tests", bundleTests),
     ]
 #endif
 }

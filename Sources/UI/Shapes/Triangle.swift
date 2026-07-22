@@ -70,7 +70,7 @@ public struct TriangleShowcaseView: View {
             }
         }
         .backport.navigationDestination(isPresented: $showDetail) {
-            Button("Navigation Destination Test") {
+            Button("Navigation Destination TestCase") {
                 showDetail = false
             }
         }

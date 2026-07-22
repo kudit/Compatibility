@@ -123,6 +123,13 @@ public extension Int {
         return String(self)
     }
 }
+#if !(os(WASM) || os(WASI))
+@MainActor
+#endif
+internal let intStringTests: TestClosure = {
+//    try expect("\(1999)" == "1,999") only seems to happen in SwiftUI.Text("\(1999)")
+    try expect(1999.string == "1999")
+}
 
 // MARK: - Pluralization utility
 public extension Int {
@@ -146,9 +153,6 @@ internal let pluralTests: TestClosure = {
     try expect(0.pluralEnding() == "s")
     try expect(1.pluralEnding("teeth", singularEnding: "tooth") == "tooth")
     try expect(2.pluralEnding("teeth", singularEnding: "tooth") == "teeth")
-    
-//    try expect("\(1999)" == "1,999") only seems to happen in SwiftUI.Text("\(1999)")
-    try expect(1999.string == "1999")
 }
 
 // MARK: - Byte strings
@@ -229,13 +233,14 @@ extension Int {
 #if !(os(WASM) || os(WASI))
     @MainActor
 #endif
-    public static let tests: [Test] = [
-        Test("plusplus", testPlusPlus),
-        Test("minusminus", testMinusMinus),
-        Test("ordinals", ordinalTests),
-        Test("random", randomTests),
-        Test("strings", pluralTests),
-        Test("bytes", byteTests)
+    public static let tests: [TestCase] = [
+        TestCase("plusplus", testPlusPlus),
+        TestCase("minusminus", testMinusMinus),
+        TestCase("ordinals", ordinalTests),
+        TestCase("random", randomTests),
+        TestCase("strings", intStringTests),
+        TestCase("plural", pluralTests),
+        TestCase("bytes", byteTests)
     ]
 }
 

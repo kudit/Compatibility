@@ -213,12 +213,12 @@ public extension Date {
 public extension Date {
     @MainActor
     static let tests = [
-        Test("MySQL DateTime format string", testFormatStrings),
-        Test("init with format", testInit),
-        Test("formatted", testFormatted),
-        Test("pretty", testPretty),
-        Test("timestamp", testTime),
-        Test("times", testTimes),
+        TestCase("MySQL DateTime format string", testFormatStrings),
+        TestCase("init with format", testInit),
+        TestCase("formatted", testFormatted),
+        TestCase("pretty", testPretty),
+        TestCase("timestamp", testTime),
+        TestCase("times", testTimes),
     ]
 }
 

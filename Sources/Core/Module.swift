@@ -29,6 +29,18 @@ public protocol Module {
     /// information can be listed last.
     static var dependencies: [Module.Type] { get }
 
+#if compiler(>=5.9)
+    /// Reusable module tests grouped into ordered sections for test runners and live test UIs.
+    ///
+    /// The default is empty, so production-only modules do not need to declare tests. TestCase UI still
+    /// presents the module identity and an empty state, making installed-module diagnostics complete.
+#if !(os(WASM) || os(WASI))
+    @MainActor
+#endif
+    @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
+    static var tests: OrderedDictionary<String, [TestCase]> { get }
+#endif
+
     /// Structured module information that is immediately available without actor hops or deferred work.
     ///
     /// Keep portable values here so command-line tools, older Apple operating systems, WASM, and other
@@ -107,6 +119,17 @@ public extension Module {
     static var dependencies: [Module.Type] {
         return []
     }
+
+#if compiler(>=5.9)
+    /// Modules expose no tests unless the conformer provides ordered test sections.
+#if !(os(WASM) || os(WASI))
+    @MainActor
+#endif
+    @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
+    static var tests: OrderedDictionary<String, [TestCase]> {
+        return [:]
+    }
+#endif
 
     /// Modules are private by default so conformers must deliberately advertise a public source repository.
     static var openSourceRepository: String? {
@@ -237,7 +260,7 @@ private struct GitHubLicensePayload: Decodable {
 }
 #endif
 
-#if compiler(>=5.9) && !(os(WASM) || os(WASI))
+#if compiler(>=5.9)
 /// A private conformer verifies the protocol defaults without exposing test-only API to package clients.
 private enum ModuleTestFixture: Module {
     static let version: Version = "1.2.3"
@@ -254,9 +277,10 @@ private enum DependentModuleTestFixture: Module {
 
 /// Shared Module tests used by both the in-app All Tests UI and the Swift Testing bridge.
 @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
+#if !(os(WASM) || os(WASI))
 @MainActor
-internal let moduleTests: [Test] = [
-    Test("Module metadata and defaults") { @MainActor in
+#endif
+private func testModuleMetadataAndDefaults() async throws {
         // Verify the default name remains derived from the conforming type so modules do not need boilerplate.
         try expect(ModuleTestFixture.moduleName == "ModuleTestFixture", "Unexpected default module name: \(ModuleTestFixture.moduleName)")
         let defaultLicense = await ModuleTestFixture.openSourceLicense
@@ -265,6 +289,8 @@ internal let moduleTests: [Test] = [
         try expect(ModuleTestFixture.openSourceRepository == nil, "The default open-source repository should be nil")
         try expect(ModuleTestFixture.version == "1.2.3", "Unexpected fixture version: \(ModuleTestFixture.version)")
         try expect(ModuleTestFixture.moduleInfo == [Field("Fixture", "Available")], "Unexpected fixture module information")
+        try expect(ModuleTestFixture.tests.isEmpty, "Modules without declared tests should receive an empty ordered catalog")
+        try expect(Compatibility.tests.keys.elements.first == "Expectation Tests", "Compatibility should expose its complete ordered test catalog through Module.tests")
         try expect(await ModuleTestFixture.loadDetailedModuleInfo() == ModuleTestFixture.moduleInfo, "The default detailed information should return the portable fields")
         // Compatibility is open source and should provide stable metadata for Support framework reports.
         try expect(Compatibility.openSourceRepository == "https://github.com/kudit/Compatibility", "Unexpected Compatibility repository: \(Compatibility.openSourceRepository ?? "nil")")
@@ -300,6 +326,27 @@ internal let moduleTests: [Test] = [
             registeredIdentifiers.append(module.moduleIdentifier)
         }
         try expect(registeredIdentifiers == [ModuleTestFixture.moduleIdentifier, DependentModuleTestFixture.moduleIdentifier], "Dependencies should be registered once before their dependent module: \(registeredIdentifiers)")
-    },
+}
+
+// Preserve the hosted actor boundary without hiding this closure from WASM builds.
+#if !(os(WASM) || os(WASI))
+@available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
+private let moduleMetadataTest: TestClosure = { @MainActor in
+    try await testModuleMetadataAndDefaults()
+}
+#else
+@available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
+private let moduleMetadataTest: TestClosure = {
+    try await testModuleMetadataAndDefaults()
+}
+#endif
+
+/// The collection remains available to WASM; only the actor isolation needed by hosted Apple builds is conditional.
+@available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
+#if !(os(WASM) || os(WASI))
+@MainActor
+#endif
+internal let moduleTests: [TestCase] = [
+    TestCase("Module metadata and defaults", moduleMetadataTest),
 ]
 #endif

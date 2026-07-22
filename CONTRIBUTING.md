@@ -2,19 +2,26 @@
 
 Compatibility prioritizes portability, backwards compatibility, clear public documentation, and reviewable changes. Contributors and coding agents should follow these repository-specific rules.
 
-PROMPT for updating:
-Review this Swift package for adoption of the Module APIs introduced in github.com/kudit/Compatibility v1.16.0 or later. Inspect the package’s existing architecture and preserve its public behavior and platform compatibility. Add or update its Compatibility dependency if necessary. Apply an appropriate Module conformance, including its version, direct Compatibility dependency, module dependencies, immediately available moduleInfo, and opt-in open-source repository metadata when applicable. Register the package from its highest-level module or document how an application should register it through Application.track(including:). Add complete DocC documentation and update the README with Module registration and support-reporting examples. Put reusable tests in Compatibility’s custom Test collections so they run both in the in-app test UI and through the Swift Testing bridge; retain target-specific tests only where infrastructure requires them.  Follow this package’s existing CONTRIBUTING.md, changelog, versioning, formatting, availability, and compatibility conventions. Avoid unrelated reformatting and whitespace-only changes. Before changing version numbers, compare the current changelog version with the latest committed Git version.
+PROMPT prefix for Xcode or another context without memory for projects using Compatibility:
+Follow the included Compatibility `CONTRIBUTING.md` (or github.com/kudit/Compatibility/CONTRIBUTING.md), preserve existing edits, then complete this request:
+[REQUEST]
+
+PROMPT for updating Module packages:
+Review this Swift package for adoption of the Module APIs introduced in github.com/kudit/Compatibility v1.16.0 or later. Inspect the package’s existing architecture and preserve its public behavior and platform compatibility. Add or update its Compatibility dependency if necessary. Apply an appropriate Module conformance, including its version, direct Compatibility dependency, module dependencies, immediately available moduleInfo, ordered TestCase sections, and opt-in open-source repository metadata when applicable. Register the package from its highest-level module or document how an application should register it through Application.track(including:). Add complete inline DocC comments to the relevant public APIs so generated documentation can discover them. Do not create a .docc catalog, separate documentation articles, or another documentation folder. Preserve existing comments unless they are missing, unclear, or inaccurate. Put reusable tests in the module's TestCase collections so they run both in the in-app test UI and through the Swift Testing bridge; retain target-specific tests only where infrastructure requires them.  Follow this package’s existing CONTRIBUTING.md, changelog, versioning, formatting, availability, and compatibility conventions. Avoid unrelated reformatting and whitespace-only changes. Before changing version numbers, compare the current changelog version with the latest committed Git version.
 
 
 ## Version and changelog rules
 
 - Keep changelog entries in `## vX.X.X YYYY-MM-DD` format, with short line-separated notes under the current version.
 - Before editing the active changelog entry, compare its version with the latest committed Git version.
-- If those versions match, create a new version entry and update `Package.swift`, `Compatibility.version`, and the Xcode `MARKETING_VERSION` settings.
-- If those versions do not match, append to the current entry without changing version values.
+- If those versions match, create a patch-version entry by default and update `Package.swift`, `Compatibility.version`, and the Xcode `MARKETING_VERSION` settings. Use a minor or major bump only when the user requests it or has already created that version entry.
+- If an uncommitted manual version entry already differs from Git, use it and synchronize every version surface rather than choosing another version.
+- Treat a heading such as `## vX.Y.Z TODO` as an intentional version stub: synchronize all version surfaces and replace `TODO` with the current date.
+- If work is being applied to the active unpushed version and its date is not current, update that heading to the current date.
 - Append every prompt-driven request to the current entry as `PROMPT: [PROMPT TEXT]`, after the concise change summary and a blank line.
 - If a project has no changelog, offer to create one using this repository's `CHANGELOG.md` format.
 - Modules should have separate `README.md` and `CHANGELOG.md` files. Final apps may keep a Changelog section in their README.
+- When you notice existing/manual uncommitted edits, please automatically generate and add changelog comments for the manual changes.
 
 A full changelog outline may include:
 
@@ -52,7 +59,7 @@ Planned features grouped by future version.
 - Use Compatibility's `debug()` function instead of `print()` for logging.
 - Prefer availability checks and platform fallbacks over removing older behavior.
 - Keep Swift Playgrounds, non-Foundation, WASM, and older-platform builds working where practical.
-- Put reusable framework tests in the custom `Test` collections so the same checks appear in the in-app runner and the Swift Testing bridge. Keep infrastructure-specific tests in the Xcode/SwiftPM test target.
+- Put reusable framework tests beside their implementation and collect them in each module's ordered `TestCase` sections so the same checks appear in the in-app runner and the Swift Testing bridge. Keep only infrastructure-specific tests in the Xcode/SwiftPM test target.
 
 ## Design goals
 

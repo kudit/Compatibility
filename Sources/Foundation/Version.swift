@@ -14,6 +14,12 @@ public struct OperatingSystemVersion : Sendable {
     public let minorVersion: Int
     /// PATCH version when you make backward compatible bug fixes
     public let patchVersion: Int
+    /// Creates a version from explicit semantic-version components without parsing or validation.
+    ///
+    /// - Parameters:
+    ///   - majorVersion: The major component.
+    ///   - minorVersion: The minor component.
+    ///   - patchVersion: The patch component.
     public init(majorVersion: Int, minorVersion: Int, patchVersion: Int) {
         self.majorVersion = majorVersion
         self.minorVersion = minorVersion
@@ -66,6 +72,10 @@ extension Version: Swift.Decodable {
     enum CodingKeys: String, CodingKey {
         case majorVersion, minorVersion, patchVersion
     }
+    /// Decodes either the legacy keyed component representation or the current string representation.
+    ///
+    /// Keyed values must contain `majorVersion`, `minorVersion`, and `patchVersion`. String values
+    /// use the same forgiving conversion as a ``Version`` string literal.
     public init(from decoder: Decoder) throws {
         do {
             let values = try decoder.container(keyedBy: CodingKeys.self)
@@ -98,7 +108,12 @@ extension OperatingSystemVersion: @retroactive ExpressibleByUnicodeScalarLiteral
 #endif
 extension Version: Swift.ExpressibleByStringLiteral, Swift.ExpressibleByStringInterpolation { // @retroactive in Swift 6?
     // For ExpressibleByStringLiteral conformance
-    /// Any non-numeric text will be ignored, so if you have something like `23b123` it will be converted to `23123`.
+    /// Creates a forgiving version from a string literal.
+    ///
+    /// Runs of non-numeric characters become component separators, missing components become zero,
+    /// and components after the patch component are ignored. For example, `"23b123"` becomes
+    /// `23.123.0` and `"1.2-beta"` becomes `1.2.0`. Use ``init(parsing:)`` when invalid text should
+    /// return `nil`.
     public init(stringLiteral: String) {
         self.init(forcing: stringLiteral)
     }
@@ -106,6 +121,10 @@ extension Version: Swift.ExpressibleByStringLiteral, Swift.ExpressibleByStringIn
 extension Version: Swift.RawRepresentable { // @retroactive in Swift 6?
     // For RawRepresentable conformance (so we can store and make codable as a String)
     public typealias RawValue = String
+    /// Creates a forgiving version from its stored string representation.
+    ///
+    /// This behaves like ``init(stringLiteral:)`` and therefore never fails. Use
+    /// ``init(parsing:)`` when accepting only an exact numeric version.
     public init(rawValue: String) {
         self.init(stringLiteral: rawValue)
     }
@@ -115,6 +134,11 @@ extension Version: Swift.RawRepresentable { // @retroactive in Swift 6?
 }
 extension Version: Swift.LosslessStringConvertible { // @retroactive in Swift 6?
     // For LosslessStringConvertible conformance and failable init option.
+    /// Creates a forgiving version from text.
+    ///
+    /// This initializer exists for `LosslessStringConvertible` source compatibility but intentionally
+    /// never fails: nonnumeric runs separate numeric components and missing components become zero.
+    /// For validation, use ``init(parsing:)`` instead.
     public init(_ rawValue: String) {
         self.init(stringLiteral: rawValue)
     }
@@ -132,48 +156,44 @@ extension Version {
         }
         self = converted
     }
-    #if canImport(Foundation)
-    public static let validCharacters = CharacterSet(charactersIn: "0123456789.")
-    #endif
-    /// Create a version ignoring any text.  If a component contains non-numerics, it will force it to 0 and additional pieces (like 1.0.0.2) will be ignored.
+    /// Creates a version by treating each run of non-numeric characters as a component separator.
+    ///
+    /// Leading and trailing separators are discarded, repeated separators collapse, missing components
+    /// become zero, and only the first three numeric components are used. Thus `"23b123"` becomes
+    /// `23.123.0`, `"...1--2__3..."` becomes `1.2.3`, and `"1.0.0.2"` remains `1.0.0`.
+    /// This initializer is useful for display-oriented or legacy input. Use ``init(parsing:)`` for
+    /// strict validation.
     public init(forcing: String) {
-        // TODO: See if there is a better/faster way of stripping characters
-        #if canImport(Foundation)
-        let cleaned = forcing.replacingCharacters(in: Self.validCharacters.inverted, with: "")
-        let components = cleaned.components(separatedBy: ".")
-        let major = Int(components.first ?? "0") ?? 0
-        let minor: Int = components.count > 1 ? Int(components[1]) ?? 0 : 0
-        let patch: Int = components.count > 2 ? Int(components[2]) ?? 0 : 0
-        #else
-        // since Foundation is needed for components and character sets, create a fallback algorithm for WASM.
-        var parts = [0,0,0]
-        var section = 0
+        // Parse directly so Foundation, Linux, WASM, and WASI all apply identical forgiving rules.
+        var parsedComponents = [Int]()
+        var currentComponent = 0
+        var hasCurrentDigits = false
         for character in forcing {
-            if character == "." {
-                section++
-            } else if let num = Int(String(character)) {
-                if parts[section] == 0 {
-                    parts[section] = num
-                } else {
-                    parts[section] *= 10
-                    parts[section] += num
+            if let digit = character.wholeNumberValue {
+                currentComponent = currentComponent * 10 + digit
+                hasCurrentDigits = true
+            } else if hasCurrentDigits {
+                // A whole run of punctuation or text creates one separator because later characters
+                // encounter no pending digits until the next numeric component starts.
+                parsedComponents.append(currentComponent)
+                if parsedComponents.count == 3 {
+                    break
                 }
-            } else {
-                // invalid character.  Just ignore
-#if !(os(WASM) || os(WASI))
-                debug("Invalid character when parsing version: \(forcing) (\(character))", level: .SILENT)
-#else
-                debug("Invalid character when parsing version.", level: .SILENT)
-#endif
+                currentComponent = 0
+                hasCurrentDigits = false
             }
         }
-        let major = parts[0]
-        let minor = parts[1]
-        let patch = parts[2]
-        #endif
-        self.init(majorVersion: major, minorVersion: minor, patchVersion: patch)
+        if hasCurrentDigits && parsedComponents.count < 3 {
+            parsedComponents.append(currentComponent)
+        }
+        parsedComponents += Array(repeating: 0, count: 3 - parsedComponents.count)
+        self.init(majorVersion: parsedComponents[0], minorVersion: parsedComponents[1], patchVersion: parsedComponents[2])
     }
-    /// A failable initializer in case the parsing doesn't match exactly.
+    /// Creates a version only when the input is an exact numeric version with one to three components.
+    ///
+    /// Unlike the forgiving initializers, this returns `nil` for labels, suffixes, missing numeric
+    /// components, or extra components. For example, `"2.12.1"` succeeds while `"1.2.3b4"` and
+    /// `"alphabet"` fail.
     public init?(parsing: String) {
         // 1.0.1b5 should actually give us a valid version of 1.0.15 (will only fail if completely fails to give any numbers)
         let trimmed = parsing.trimmed // possibly 0, 0.0, or 0.0.0
@@ -259,7 +279,10 @@ public extension Version {
         let forced: Version = "2b.5.s"
         try expect(forced == "2.5.0")
         let expanded: Version = "1.2.3b4"
-        try expect(expanded == "1.2.34")
+        try expect(expanded == "1.2.3")
+        try expectEqual(Version(forcing: "23b123"), "23.123.0")
+        try expectEqual(Version(forcing: "...1--2__3..."), "1.2.3")
+        try expectEqual(Version(forcing: "1..2...3.4"), "1.2.3")
         let bad: Version = "alphabet soup"
         try expect(bad == .zero)
         try expect(Version(parsing: "alphabet") == nil)
@@ -294,7 +317,7 @@ public extension Version {
         try expect(rawVersions.rawValue.contains("2.1.2"))
         let duplicateVersions: [Version] = .init(rawValue: "1,1,2")
         try expect(Set(duplicateVersions.map(\.rawValue)).count == duplicateVersions.count)
-        let req: [Version] = .init(rawValue: "1,2.1.2,3", required: "4.3")
+        let req: [Version] = .init(rawValue: rawInput, required: "4.3")
         try expect(req.pretty == "v1.0, v2.1.2, v3.0, v4.3")
     }
 
@@ -343,9 +366,9 @@ public extension Version {
     @MainActor
 #endif
     @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
-    static var tests: [Test] = [
-        Test("Version Comparison Tests", testVersions),
-        Test("Version Codable Tests", versionCodableTest),
+    static var tests: [TestCase] = [
+        TestCase("Version Comparison Tests", testVersions),
+        TestCase("Version Codable Tests", versionCodableTest),
     ]
 #endif
 }
@@ -373,8 +396,11 @@ public extension [Version] {
 
 // The rawValue for an array of versions should be a comma-separated String, not an array of strings since this is easier to store
 extension [Version]: Swift.RawRepresentable {
+    /// Creates a sorted, duplicate-free list from comma-separated forgiving version strings.
+    ///
+    /// Each item uses `Version`'s forgiving conversion, so invalid items become ``Version/zero``.
     public init(rawValue: String) {
-        // remove duplicates and convert invalid values to 0.0.0
+        // Remove duplicates and convert invalid values to 0.0.0.
         let versions = Set(rawValue.split(separator: ",").map { Version(string: String($0), defaultValue: .zero) })
         // order
         self = versions.sorted()
@@ -384,6 +410,9 @@ extension [Version]: Swift.RawRepresentable {
         self.map { $0.rawValue }.joined(separator: ",")
     }
     
+    /// Creates a comma-separated version list and ensures that `required` is present.
+    ///
+    /// The resulting collection is sorted and duplicate-free.
     public init(rawValue: String, required: Version) {
         self.init(rawValue: "\(required),\(rawValue)")
     }

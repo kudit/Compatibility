@@ -425,7 +425,7 @@ public struct Build {
 
     /// Returns `true` when the current process is executing a test bundle, test runner, or app launched by Compatibility UI tests.
     ///
-    /// Xcode supplies `XCTestConfigurationFilePath` to XCTest-compatible runs. Test runners
+    /// Xcode supplies `XCTestConfigurationFilePath` to XCTest-compatible runs. TestCase runners
     /// also conventionally contain `xctest` or end in SwiftPM's generated `PackageTests`
     /// suffix. Modern SwiftPM launches Swift Testing through `swiftpm-testing-helper` with
     /// a `--testing-library` argument, so those runtime markers are recognized as well without
@@ -451,7 +451,7 @@ public struct Build {
             || arguments.contains("--testing-library")
             || isUITestHost
 #else
-        // Test-runner metadata is not portably available without Foundation.
+        // TestCase-runner metadata is not portably available without Foundation.
         return false
 #endif
     }

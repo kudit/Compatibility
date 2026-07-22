@@ -25,17 +25,17 @@ final class DemoFailureCounter: @unchecked Sendable {
 @available(iOS 15, macOS 12, tvOS 17, watchOS 8, *)
 @MainActor
 struct CompatibilityDemoView: View {
-    static let additionalTests: OrderedDictionary<String, [Test]> = [
+    static let additionalTests: OrderedDictionary<String, [TestCase]> = [
         "Injected Test": [
-            Test("FoObar") {
+            TestCase("FoObar") {
                 let foo = "bar"
                 try expect(foo == "bar")
             },
-            Test("Fail Test (should fail)") {
+            TestCase("Fail Test (should fail)") {
                 let runCount = DemoFailureCounter.shared.next()
                 try expect(false, "This has run \(runCount) times")
             },
-            Test("Availability Test") {
+            TestCase("Availability Test") {
                 let success: Bool
                 if #available(iOS 11, *) {
                     success = true
@@ -60,7 +60,7 @@ struct CompatibilityDemoView: View {
                         Text("DataStore")
                     }
             }
-            AllTestsListView(additionalNamedTests: Self.additionalTests)
+            AllTestsListView(additionalTests: Self.additionalTests)
                 .tabItem {
                     Text("All Tests")
                 }
