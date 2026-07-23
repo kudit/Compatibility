@@ -113,7 +113,7 @@ public extension CharacterSet {
     @MainActor
     internal static let testCharacterStrings: TestClosure = {
         let array = "hello".characterStrings
-#if !(os(WASM) || os(WASI))
+#if !hasFeature(Embedded)
         try expect(array == ["h","e","l","l","o"], String(describing:array))
 #endif
 

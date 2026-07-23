@@ -204,7 +204,7 @@ public struct Build {
         case playground = "Playground"
         case preview = "Preview"
         case realDevice = "Real Device"
-        case designedForiPad = "Designed for iPad"
+        case designedForiPad = "Designed for iPad" // @MainActor
         case macCatalyst = "Mac Catalyst"
 
         public var id: Self {
@@ -215,6 +215,7 @@ public struct Build {
         ///
         /// This is public so package clients can show the same environment state that
         /// Compatibility uses internally without duplicating the platform checks.
+        @MainActor
         public var test: Bool {
             switch self {
             case .debug: return Build.isDebug
@@ -225,7 +226,7 @@ public struct Build {
             case .playground: return Build.isPlayground
             case .preview: return Build.isPreview
             case .realDevice: return Build.isRealDevice
-            case .designedForiPad: return Build.isDesignedForiPad
+            case .designedForiPad: return Build.isDesignedForiPad // MainActor
             case .macCatalyst: return Build.isMacCatalyst
             }
         }
@@ -286,6 +287,7 @@ public struct Build {
     }
 
     /// Returns a set of Build.Environment objects where the test is true for this build.
+    @MainActor
     public static func environments() -> [Build.Environment] {
         return Build.Environment.allCases.filter(\.test)
     }
@@ -355,8 +357,9 @@ public struct Build {
     }
 
     /// Returns `true` if Built for iPad mode not a native mode (for macOS and visionOS).
+    @MainActor
     public static var isDesignedForiPad: Bool {
-#if targetEnvironment(macCatalyst) || os(watchOS) || os(tvOS) || os(WASM) || os(WASI) || os(Linux)
+#if targetEnvironment(macCatalyst) || os(watchOS) || os(tvOS) || arch(wasm32) || os(Linux)
         // Catalyst is a native Mac target rather than Apple's iPad-compatible app
         // runtime, so keep it separate from "Designed for iPad" reporting.
         return false

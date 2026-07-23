@@ -8,7 +8,7 @@
 
 public enum Compatibility: Module {
     /// The version of the Compatibility Library since cannot get directly from Package.swift.
-    public static let version: Version = "1.18.1"
+    public static let version: Version = "1.18.2"
 
     /// Public source repository for Compatibility so support reports can direct developers to its source and issue history.
     ///
@@ -30,7 +30,7 @@ public enum Compatibility: Module {
     /// Loads complete module information, including application details where that state is supported.
     @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
     public static func loadDetailedModuleInfo() async -> [Field] {
-#if canImport(Foundation) && !(os(WASM) || os(WASI))
+#if canImport(Foundation)
         // Application is main-actor isolated, so gather only its live values there instead of
         // imposing actor isolation on every Module conformer and every portable metadata field.
         let applicationDetails = await MainActor.run {
@@ -243,7 +243,7 @@ public extension Compatibility { // for brief period where Application wasn't av
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension Compatibility { // for brief period where Application and Build wasn't available.  Static computed properties apparently aren't supported in extensions in iOS <13?
     // MARK: - Entitlements Information
-#if canImport(Foundation) && !(os(WASM) || os(WASI))
+#if canImport(Foundation)
     @available(*, deprecated, renamed: "Application.iCloudSupported")
     @MainActor
     static var iCloudSupported: Bool {

@@ -1142,7 +1142,7 @@ internal var orderedDictionaryTests: TestClosure = {
     let manipulated = ordered.sorted().reversed()
     try expect(ordered["c", default: 4] == 4)
     try expect(manipulated == ordered)
-#if !(os(WASM) || os(WASI))
+#if !hasFeature(Embedded)
     let unordered = ordered.shuffled().dictionaryValue.dictionaryValue
     try expect(unordered.firstKey(for: 1) == "a")
     try expect(ordered.dictionaryValue == unordered)

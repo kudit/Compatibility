@@ -45,7 +45,7 @@ public func expect(_ condition: Bool, _ debugString: String? = nil, file: String
         if let debugString {
             throw CustomError(debugString)
         } else {
-#if canImport(Foundation) && !(os(WASM) || os(WASI))
+#if canImport(Foundation)
             let isMainThread = Thread.isMainThread
 #else
             let isMainThread = true
@@ -88,11 +88,11 @@ public func expectNotEqual<Value: Equatable>(_ actual: Value, _ unexpected: Valu
 /// Suppress debug messages during this execution block.  Allows fetching the debug string as normal.
 public func debugSuppress(_ block: () throws -> Void) rethrows {
     let log = Compatibility.settings.debugLog
-    #if canImport(Foundation) && !(os(WASM) || os(WASI))
+    #if canImport(Foundation)
     let suppressThread = Thread.current // restrict the silencing to this thread/closure assuming no background tasks are doing printing
     #endif
     Compatibility.settings.debugLog = { message in
-        #if canImport(Foundation) && !(os(WASM) || os(WASI))
+        #if canImport(Foundation)
         if Thread.current != suppressThread {
             log(message) // do normal logging
         }
@@ -337,10 +337,10 @@ public extension TestCase {
         tests["Bundle Tests"] = Bundle.tests
         tests["File Manager Tests"] = FileManager.tests
         tests["Pasteboard Tests"] = Pasteboard.tests
-        tests["Date Tests"] = Date.tests
         tests["CharacterSet Tests"] = CharacterSet.tests
-        tests["Threading Tests"] = Compatibility.threadingTests
         tests["URL Tests"] = URL.tests
+        tests["Date Tests"] = Date.tests
+        tests["Threading Tests"] = Compatibility.threadingTests
 #if canImport(Combine) || canImport(FoundationNetworking)
         // FoundationNetworking supplies URLSession through libcurl on Linux.
         tests["Network Tests"] = PostData.tests

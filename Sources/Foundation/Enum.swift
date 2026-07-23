@@ -22,7 +22,7 @@ public protocol CaseNameConvertible {
 public extension CaseNameConvertible {
     /// exposes the case name for an enum without having to have a string rawValue.
     var caseName: String {
-#if !(os(WASM) || os(WASI))
+#if !hasFeature(Embedded)
         // for enums
         (Mirror(reflecting: self).children.first?.label ?? String(describing: self))
 #else

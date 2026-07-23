@@ -828,7 +828,7 @@ let orderedSetTests = { @Sendable in
     copiedSet.shuffle()
     orderedSet.sort()
     try expect(orderedSet.isEqualSet(to: copiedSet))
-#if !(os(WASM) || os(WASI))
+#if !hasFeature(Embedded)
     try expect(!orderedSet.debugDescription.isEmpty)
     try expect(!orderedSet.description.isEmpty)
 #endif

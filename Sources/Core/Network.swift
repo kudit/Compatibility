@@ -165,10 +165,10 @@ extension Compatibility {
     /// Fetch data from URL including optional postData.  Will report included file information and automatically debug output to the logs.
     @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *) // for concurrency
     public static func fetchURLData(urlString: String, postData: PostData? = nil, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) async throws -> Data {
-#if !(os(WASM) || os(WASI))
+#if !hasFeature(Embedded)
         debug("Fetching URL [\(urlString)]...", level: .NOTICE, file: file, function: function, line: line, column: column)
 #else
-        debug("Fetchingi URL[\(urlString)]...", isMainThread: false, file: file, function: function, line: line, column: column)
+        debug("Fetching URL [\(urlString)]...", isMainThread: false, file: file, function: function, line: line, column: column)
 #endif
         // create the url with URL
         guard let url = URL(string: urlString) else {
@@ -216,7 +216,7 @@ extension Compatibility {
         // Check response status code exists (should nearly always pass)
         guard let statusCode = (response as? HTTPURLResponse)?.statusCode else {
             let debugMessage = "No status code in HTTP response.  Possibly offline?: \(String(describing: response))"
-#if !(os(WASM) || os(WASI))
+#if !hasFeature(Embedded)
             debug(debugMessage, level: .ERROR)
 #else
             debug(debugMessage, isMainThread: false, level: .ERROR)

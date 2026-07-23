@@ -12,7 +12,7 @@ import Compatibility
 import Testing
 import SwiftUI
 
-#if !(os(WASM) || os(WASI)) && canImport(Foundation)
+#if canImport(Foundation)
 extension CloudStatus: @retroactive CaseNameConvertible {}
 extension TestPerson: Codable {}
 #endif
@@ -32,7 +32,7 @@ private enum ModuleIntegrationTestFixture: Module {
     static let version: Version = "0.0.0"
 }
 
-#if canImport(Foundation) && !(os(WASM) || os(WASI))
+#if canImport(Foundation)
 
 // Helper model with @CloudStorage wrappers
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
@@ -216,7 +216,7 @@ struct CompatibilityTargetTests {
     }
     
     // MARK: DataStore tests
-#if !(os(WASM) || os(WASI))
+#if !hasFeature(Embedded)
     @available(iOS 16, macOS 13, tvOS 16, watchOS 9, *)
     func mockDataStoreSetGetAndRemove() {
         let ds = MockDataStore()
@@ -310,7 +310,7 @@ struct CompatibilityTargetTests {
         // --- Compatibility basics ---
         #expect(Compatibility.version.description == String(describing: Compatibility.version))
 
-        #if canImport(Foundation) && !(os(WASM) || os(WASI))
+        #if canImport(Foundation)
         // CloudStorage uses the process's configured persistent store, so require explicit integration-test opt-in.
         guard Build.runsIntegrationTests else {
             return
@@ -364,7 +364,7 @@ struct CompatibilityTargetTests {
             .dictionary(["k": .string("v")]),
             .array([.int(1), .null, .string("s")])
         ]
-#if !(os(WASM) || os(WASI)) && canImport(Foundation)
+#if canImport(Foundation)
         for f in fields {
             // encode/decode round trip
             #if canImport(Foundation)
@@ -402,7 +402,7 @@ struct CompatibilityTargetTests {
 #endif
         
         // MARK: - DataStore
-        #if compiler(>=5.9) && canImport(Foundation) && !(os(WASM) || os(WASI))
+        #if compiler(>=5.9) && canImport(Foundation)
         if #available(iOS 13, tvOS 13, watchOS 6, *) {
             let store: DataStore = UserDefaults.standard
             let key = "testKey"

@@ -5,7 +5,7 @@
 //  Created by Ben Ku on 7/3/24.
 //
 
-#if !canImport(Foundation) || (os(WASM) || os(WASI))
+#if !canImport(Foundation) || arch(wasm32)
 // Compatibility OperatingSystemVersion for Linux
 public struct OperatingSystemVersion : Sendable {
     /// MAJOR version when you make incompatible API changes
@@ -105,7 +105,7 @@ extension Version: Swift.Encodable {
 // even an empty extension would redeclare the conformance and produce a compiler warning.
 #endif
 
-#if canImport(Foundation) && compiler(>=6.0) && !canImport(Android) && !(os(WASM) || os(WASI))
+#if canImport(Foundation) && compiler(>=6.0) && !canImport(Android) && !arch(wasm32)
 // Foundation owns OperatingSystemVersion while Swift owns the literal protocols, so Swift 6
 // requires these intentionally retroactive conformances to be stated explicitly.
 extension OperatingSystemVersion: @retroactive ExpressibleByExtendedGraphemeClusterLiteral {}
@@ -210,7 +210,7 @@ extension Version {
         self = forced
     }
 }
-#if canImport(Foundation) && compiler(>=6.0) && !canImport(Android) && !os(Linux) && !(os(WASM) || os(WASI))
+#if canImport(Foundation) && compiler(>=6.0) && !canImport(Android) && !os(Linux) && !arch(wasm32)
 // This is an ownership annotation for Foundation's foreign type, not an availability workaround:
 // FoundationEssentials already supplies Equatable on Linux and Android, while the package-owned
 // WebAssembly fallback gains it from the local Comparable conformance.

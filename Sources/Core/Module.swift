@@ -152,7 +152,7 @@ public extension Module {
                 return nil
             }
             let unfetchableLicense = "Look for the project license at \(repository)"
-#if canImport(Foundation) && !(os(WASM) || os(WASI))
+#if canImport(Foundation) && (canImport(Darwin) || canImport(FoundationNetworking))
             guard let endpoint = githubLicenseEndpoint(for: repository) else {
                 return unfetchableLicense
             }
@@ -195,7 +195,7 @@ public extension Module {
     }
 }
 
-#if canImport(Foundation) && !(os(WASM) || os(WASI))
+#if canImport(Foundation) && (canImport(Darwin) || canImport(FoundationNetworking))
 #if canImport(FoundationNetworking)
 import FoundationNetworking
 #endif

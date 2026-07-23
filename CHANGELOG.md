@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.18.2 2026-07-23
+Fixed Swift Package Index build errors and warnings across SwiftUI and WebAssembly targets.
+Replaced conditional SwiftUI `Group` wrappers with direct `@ViewBuilder` results and concrete text-selection types.
+Audited WebAssembly gates to maximize full-runtime WASI code reuse while retaining focused fallbacks for architecture and Embedded Swift limitations.
+Corrected main-actor isolation, shared-test registration, networking capabilities, version ownership, and WASI debug calls.
+
 ## v1.18.1 2026-07-23
 Restored the concise synchronous `main {}` and `background {}` functions as nondeprecated, pre-concurrency-compatible APIs while retaining qualified `Compatibility` and iOS 13+ `Task` alternatives for ambiguous call sites.
 Documented SwiftUI's current whole-value text-selection behavior on iOS-family platforms without adding a UIKit-backed range-selection workaround.

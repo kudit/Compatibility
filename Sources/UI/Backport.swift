@@ -160,36 +160,35 @@ public extension Backport where Content: View {
     ///
     /// - Returns: A view that fires an action when the specified value changes.
     @available(iOS 14, macOS 11, tvOS 14, watchOS 7, *)
+    @ViewBuilder
     func onChange<V>(
         of value: V,
         initial: Bool = false,
         _ action: @escaping (_ oldValue: V, _ newValue: V) -> Void
     ) -> some View where V : Equatable {
-        Group {
-            if #available(iOS 17, macOS 14, tvOS 17, watchOS 10, *) {
+        if #available(iOS 17, macOS 14, tvOS 17, watchOS 10, *) {
 #if compiler(>=5.9)
-                content.onChange(of: value, initial: initial) { oldState, newState in
-                    action(oldState, newState)
-                }
+            content.onChange(of: value, initial: initial) { oldState, newState in
+                action(oldState, newState)
+            }
 #else
-                // probably never can be executed but just in case
-                content.onChange(of: value) { newState in
-                    action(value, newState) // in the closure, `value` will be the old value.
+            // probably never can be executed but just in case
+            content.onChange(of: value) { newState in
+                action(value, newState) // in the closure, `value` will be the old value.
+            }
+            .onAppear {
+                if initial {
+                    action(value, value)
                 }
-                .onAppear {
-                    if initial {
-                        action(value, value)
-                    }
-                }
+            }
 #endif
-            } else {
-                content.onChange(of: value) { newState in
-                    action(value, newState) // in the closure, `value` will be the old value.
-                }
-                .onAppear {
-                    if initial {
-                        action(value, value)
-                    }
+        } else {
+            content.onChange(of: value) { newState in
+                action(value, newState) // in the closure, `value` will be the old value.
+            }
+            .onAppear {
+                if initial {
+                    action(value, value)
                 }
             }
         }
@@ -203,75 +202,70 @@ public extension Backport where Content: View {
     
     
     // MARK: - Background/foreground/overlay and styling
+    @ViewBuilder
     func backgroundStyle<S>(_ style: S) -> some View where S : ShapeStyle {
-        Group {
-            if #available(iOS 16, macOS 13, tvOS 16, watchOS 9, *) {
-                content.backgroundStyle(style)
+        if #available(iOS 16, macOS 13, tvOS 16, watchOS 9, *) {
+            content.backgroundStyle(style)
+        } else {
+            // Fallback on earlier versions
+            if let color = style as? Color {
+                content.background(color)
             } else {
-                // Fallback on earlier versions
-                if let color = style as? Color {
-                    content.background(color)
-                } else {
-                    content // don't apply style if watchOS 6 or 7 or older tvOS
-                }
+                content // don't apply style if watchOS 6 or 7 or older tvOS
             }
         }
     }
+    @ViewBuilder
     func foregroundStyle<S>(_ style: S) -> some View where S : ShapeStyle {
-        Group {
-            if #available(iOS 16, macOS 13, tvOS 16, watchOS 9, *) {
-                content.foregroundStyle(style)
+        if #available(iOS 16, macOS 13, tvOS 16, watchOS 9, *) {
+            content.foregroundStyle(style)
+        } else {
+            // Fallback on earlier versions
+            if let color = style as? Color {
+                content.foregroundColor(color)
             } else {
-                // Fallback on earlier versions
-                if let color = style as? Color {
-                    content.foregroundColor(color)
-                } else {
-                    content // don't apply style if watchOS 6 or 7 or older tvOS
-                }
+                content // don't apply style if watchOS 6 or 7 or older tvOS
             }
         }
     }
     
     @MainActor
+    @ViewBuilder
     func background<V>(alignment: Alignment = .center, @ViewBuilder content: @escaping () -> V) -> some View where V : View {
-        Group {
-            if #available(iOS 15, macOS 12, tvOS 15, watchOS 8, *) {
-                self.content.background(alignment: alignment) {
-                    content()
-                }
-            } else {
-                // Fallback on earlier versions
-                ZStack(alignment: alignment) {
-                    self.content
-                    content()
-                }
+        if #available(iOS 15, macOS 12, tvOS 15, watchOS 8, *) {
+            self.content.background(alignment: alignment) {
+                content()
+            }
+        } else {
+            // Fallback on earlier versions
+            ZStack(alignment: alignment) {
+                self.content
+                content()
             }
         }
     }
+    @ViewBuilder
     func overlay<V>(alignment: Alignment = .center, @ViewBuilder content: @escaping () -> V) -> some View where V : View {
-        Group {
-            if #available(iOS 15, macOS 12, tvOS 15, watchOS 8, *) {
-                self.content.overlay(alignment: alignment) {
-                    content()
-                }
-            } else {
-                // Fallback on earlier versions
-                ZStack(alignment: alignment) {
-                    self.content
-                    content()
-                }
+        if #available(iOS 15, macOS 12, tvOS 15, watchOS 8, *) {
+            self.content.overlay(alignment: alignment) {
+                content()
+            }
+        } else {
+            // Fallback on earlier versions
+            ZStack(alignment: alignment) {
+                self.content
+                content()
             }
         }
     }
         
+    @ViewBuilder
     func ignoresSafeArea(_ regions: SafeAreaRegions = .all, edges: Edge.Set = .all) -> some View {
-        Group {
-            if #available(iOS 14, macOS 11, tvOS 14, watchOS 7, *) {
-                content.ignoresSafeArea(regions.swiftUIValue, edges: edges)
-            } else {
-                // Fallback on earlier versions
-                content
-            }
+        if #available(iOS 14, macOS 11, tvOS 14, watchOS 7, *) {
+            content.ignoresSafeArea(regions.swiftUIValue, edges: edges)
+        } else {
+            // Fallback on earlier versions
+            content
         }
     }
     func background(_ color: Color) -> some View {
@@ -375,14 +369,13 @@ public extension Backport where Content: View {
     ///
     /// - Parameter visibility: A value that indicates the visibility of the
     /// non-transient system views overlaying the app.
+    @ViewBuilder
     func persistentSystemOverlays(_ visibility: Visibility) -> some View {
-        Group {
-            if #available(iOS 16, macOS 13, tvOS 16, watchOS 9, *) {
-                content.persistentSystemOverlays(visibility.swiftUIValue)
-            } else {
-                // Fallback on earlier versions (just ignore since home indicator doesn't exist on touchID devices).
-                content
-            }
+        if #available(iOS 16, macOS 13, tvOS 16, watchOS 9, *) {
+            content.persistentSystemOverlays(visibility.swiftUIValue)
+        } else {
+            // Fallback on earlier versions (just ignore since home indicator doesn't exist on touchID devices).
+            content
         }
     }
 
@@ -407,27 +400,26 @@ public extension Backport where Content: View {
     ///
     /// - Parameters:
     ///    - visibility: the visibility to use for the background.
+    @ViewBuilder
     func scrollContentBackground(_ visibility: Visibility) -> some View {
 #if os(tvOS)
         content // this is specifically unavailable on tvOS
 #else
-        Group {
-            if #available(iOS 16, macOS 13, watchOS 9, *) {
-                content.scrollContentBackground(visibility.swiftUIValue)
-            } else {
+        if #available(iOS 16, macOS 13, watchOS 9, *) {
+            content.scrollContentBackground(visibility.swiftUIValue)
+        } else {
 #if canImport(UIKit) && !os(watchOS) && !os(tvOS)
-                // Fallback on earlier versions
-                content
-                    .onAppear {
-                        UITableView.appearance().backgroundColor = visibility.legacyColor
-                    }
-                    .onDisappear {
-                        UITableView.appearance().backgroundColor = .systemGroupedBackground
-                    }
+            // Fallback on earlier versions
+            content
+                .onAppear {
+                    UITableView.appearance().backgroundColor = visibility.legacyColor
+                }
+                .onDisappear {
+                    UITableView.appearance().backgroundColor = .systemGroupedBackground
+                }
 #else
-                content // ignore
+            content // ignore
 #endif
-            }
         }
 #endif
     }
@@ -450,14 +442,13 @@ public extension Backport where Content: View {
     /// See the `View/safeAreaInset(edge:alignment:spacing:content)`
     /// modifier for adding to the safe area based on the size of a
     /// view.
+    @ViewBuilder
     func safeAreaPadding(_ edges: Edge.Set = .all, _ length: CGFloat? = nil) -> some View {
-        Group {
-            if #available(iOS 17, macOS 14, tvOS 17, watchOS 10, *) {
-                content.safeAreaPadding(edges, length)
-            } else {
-                // Fallback on earlier versions
-                content // ignore
-            }
+        if #available(iOS 17, macOS 14, tvOS 17, watchOS 10, *) {
+            content.safeAreaPadding(edges, length)
+        } else {
+            // Fallback on earlier versions
+            content // ignore
         }
     }
 
@@ -470,16 +461,15 @@ public extension Backport where Content: View {
     ///   the system file dialog launches. If the given file dialog has
     ///   a `fileDialogCustomizationID` if stores the user-chosen directory and subsequently
     ///   opens with it, ignoring the default value provided in this modifier.
+    @ViewBuilder
     func fileDialogDefaultDirectory(_ defaultDirectory: URL?) -> some View {
 #if os(tvOS) || os(watchOS)
         content // do nothing - does not apply in tvOS or watchOS
 #else
-        Group {
-            if #available(iOS 17, macOS 14, *) {
-                content.fileDialogDefaultDirectory(defaultDirectory)
-            } else {
-                content
-            }
+        if #available(iOS 17, macOS 14, *) {
+            content.fileDialogDefaultDirectory(defaultDirectory)
+        } else {
+            content
         }
 #endif
     }
@@ -526,19 +516,18 @@ public extension Backport where Content: View {
     ///
     /// - Parameter controlSize: One of the control sizes specified in the
     ///   `ControlSize` enumeration.
+    @ViewBuilder
     func controlSize(_ controlSize: BackportControlSize) -> some View {
-        Group {
-            #if os(tvOS)
+#if os(tvOS)
+        content
+#else
+        if #available(iOS 15, macOS 11, tvOS 15, watchOS 9.0, *) { // supported on macOS 10.5 but 11 required for availability checking...
+            content.controlSize(controlSize.controlSize)
+        } else {
+            // Fallback on earlier versions
             content
-            #else
-            if #available(iOS 15, macOS 11, tvOS 15, watchOS 9.0, *) { // supported on macOS 10.5 but 11 required for availability checking...
-                content.controlSize(controlSize.controlSize)
-            } else {
-                // Fallback on earlier versions
-                content
-            }
-            #endif
         }
+#endif
     }
 }
 
@@ -627,19 +616,18 @@ public extension Backport where Content: View {
     ///
     /// - Parameter accentable: A Boolean value that indicates whether to add
     /// the view and its subviews to the accented group.
+    @ViewBuilder
     func widgetAccentable(_ accentable: Bool = true) -> some View {
-        Group {
 #if os(tvOS) || !canImport(WidgetKit)
-            content
+        content
 #else
-            if #available(iOS 16, macOS 13, watchOS 9, visionOS 26, *) {
-                content.widgetAccentable(accentable)
-            } else {
-                // Fallback on earlier versions
-                content
-            }
-#endif
+        if #available(iOS 16, macOS 13, watchOS 9, visionOS 26, *) {
+            content.widgetAccentable(accentable)
+        } else {
+            // Fallback on earlier versions
+            content
         }
+#endif
     }
 }
 
@@ -667,14 +655,13 @@ public extension Backport where Content: View {
         return Set(detents.map { $0.converted })
     }
     
+    @ViewBuilder
     func presentationDetents(_ detents: Set<BackportPresentationDetent>) -> some View {
-        Group {
-            if #available(iOS 16, macOS 13, tvOS 16, watchOS 9,  *) {
-                content.presentationDetents(convert(detents))
-            } else {
-                // Fallback on earlier versions
-                content // do nothing
-            }
+        if #available(iOS 16, macOS 13, tvOS 16, watchOS 9,  *) {
+            content.presentationDetents(convert(detents))
+        } else {
+            // Fallback on earlier versions
+            content // do nothing
         }
     }
 }
@@ -687,13 +674,12 @@ extension Backport where Content: View {
     ///   view is focusable.
     ///
     /// - Returns: A view that sets whether a view is focusable.
+    @ViewBuilder
     public func focusable(_ isFocusable: Bool = true) -> some View {
-        Group {
-            if #available(iOS 17, macOS 12, tvOS 15, watchOS 8, *) {
-                content.focusable(isFocusable)
-            } else {
-                content // ignore - okay to do nothing since this is all really just for tvOS anyways and all tvOS supports tvOS 15. (NOTE: the documentation says tvOS 17+ but the actual code has availability tvOS 15)
-            }
+        if #available(iOS 17, macOS 12, tvOS 15, watchOS 8, *) {
+            content.focusable(isFocusable)
+        } else {
+            content // ignore - okay to do nothing since this is all really just for tvOS anyways and all tvOS supports tvOS 15. (NOTE: the documentation says tvOS 17+ but the actual code has availability tvOS 15)
         }
     }
 }
@@ -759,14 +745,13 @@ extension Backport where Content: View {
     ///   scroll view clipping.
     ///
     /// - Returns: A view that disables or enables scroll view clipping.
+    @ViewBuilder
     public func scrollClipDisabled(_ disabled: Bool = true) -> some View {
-        Group {
-            if #available(iOS 17, macOS 14, tvOS 17, watchOS 10, *) {
-                content.scrollClipDisabled(disabled)
-            } else {
-                // Fallback on earlier versions
-                content
-            }
+        if #available(iOS 17, macOS 14, tvOS 17, watchOS 10, *) {
+            content.scrollClipDisabled(disabled)
+        } else {
+            // Fallback on earlier versions
+            content
         }
     }
 }
@@ -811,16 +796,15 @@ public extension Backport where Content: View {
     ///   - isPresented: A binding to a Boolean value that indicates whether
     ///     `destination` is currently presented.
     ///   - destination: A view to present.
+    @ViewBuilder
     func navigationDestination<V: View>(isPresented: Binding<Bool>, @ViewBuilder destination: () -> V) -> some View {
-        Group {
-            if #available(iOS 16, macOS 13, tvOS 16, watchOS 9, *) {
-                content.navigationDestination(isPresented: isPresented, destination: destination)
-            } else {
-                // Fallback on earlier versions (bury in the background)
-                ZStack {
-                    NavigationLink(isActive: isPresented, destination: destination) { EmptyView() }
-                    content
-                }
+        if #available(iOS 16, macOS 13, tvOS 16, watchOS 9, *) {
+            content.navigationDestination(isPresented: isPresented, destination: destination)
+        } else {
+            // Fallback on earlier versions (bury in the background)
+            ZStack {
+                NavigationLink(isActive: isPresented, destination: destination) { EmptyView() }
+                content
             }
         }
     }
@@ -830,18 +814,6 @@ public extension Backport where Content: View {
 public enum BackportTextSelectability {
     case enabled
     case disabled
-
-    @available(iOS 15.0, macOS 12.0, *)
-    @available(tvOS, unavailable)
-    @available(watchOS, unavailable)
-    var swiftUIValue: TextSelectability {
-        switch self {
-        case .enabled:
-            return .enabled
-        case .disabled:
-            return .disabled
-        }
-    }
 }
 
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
@@ -889,20 +861,26 @@ public extension Backport where Content: View {
     ///
     /// - Note: `Button` views don't support text selection.
     /// - Note: This is completely ignored in watchOS and tvOS but is here for simplified code compatibility.
+    @ViewBuilder
     func textSelection(_ selectability: BackportTextSelectability) -> some View {
-        Group {
 #if os(watchOS) || os(tvOS)
-            // These platforms do not support interactive text selection, so preserve the original content.
-            content
+        // These platforms do not support interactive text selection, so preserve the original content.
+        content
 #else
-            if #available(iOS 15, macOS 12, *) {
-                content.textSelection(selectability.swiftUIValue)
-            } else {
-                // Older SwiftUI versions keep the same read-only content without selection support.
-                content
+        if #available(iOS 15, macOS 12, *) {
+            // SwiftUI's modifier is generic over a concrete selectability type, so switch
+            // here instead of erasing `.enabled` or `.disabled` behind an existential.
+            switch selectability {
+            case .enabled:
+                content.textSelection(.enabled)
+            case .disabled:
+                content.textSelection(.disabled)
             }
-#endif
+        } else {
+            // Older SwiftUI versions keep the same read-only content without selection support.
+            content
         }
+#endif
     }
 }
 
@@ -910,68 +888,47 @@ public extension Backport where Content: View {
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension Backport where Content: View {
     //TODO: find a way to better consolidate code?  Possibly a protocol?)
+    @ViewBuilder
     func navigationTitle(_ title: Text) -> some View {
-        Group {
-            if #available(iOS 14, macOS 11, tvOS 14, watchOS 7, *) {
-                content.navigationTitle(title)
-            } else {
-                // Fallback on earlier versions
-                #if !os(macOS) // macOS 10.5 doesn't support this
-                    content.navigationBarTitle(title)
-                #else
-                    content
-                #endif
-            }
+        if #available(iOS 14, macOS 11, tvOS 14, watchOS 7, *) {
+            content.navigationTitle(title)
+        } else {
+            // Fallback on earlier versions
+#if !os(macOS) // macOS 10.5 doesn't support this
+            content.navigationBarTitle(title)
+#else
+            content
+#endif
         }
     }
 
+    @ViewBuilder
     func navigationTitle(_ titleKey: LocalizedStringKey) -> some View {
-        Group {
-            if #available(iOS 14, macOS 11, tvOS 14, watchOS 7, *) {
-                content.navigationTitle(titleKey)
-            } else {
-                // Fallback on earlier versions
-                #if !os(macOS) // macOS 10.5 doesn't support this
-                    content.navigationBarTitle(titleKey)
-                #else
-                    content
-                #endif
-            }
+        if #available(iOS 14, macOS 11, tvOS 14, watchOS 7, *) {
+            content.navigationTitle(titleKey)
+        } else {
+            // Fallback on earlier versions
+#if !os(macOS) // macOS 10.5 doesn't support this
+            content.navigationBarTitle(titleKey)
+#else
+            content
+#endif
         }
     }
 
+    @ViewBuilder
     func navigationTitle<S>(_ title: S) -> some View where S : StringProtocol {
-        Group {
-            if #available(iOS 14, macOS 11, tvOS 14, watchOS 7, *) {
-                content.navigationTitle(title)
-            } else {
-                // Fallback on earlier versions
-                #if !os(macOS) // macOS 10.5 doesn't support this
-                    content.navigationBarTitle(title)
-                #else
-                    content
-                #endif
-            }
+        if #available(iOS 14, macOS 11, tvOS 14, watchOS 7, *) {
+            content.navigationTitle(title)
+        } else {
+            // Fallback on earlier versions
+#if !os(macOS) // macOS 10.5 doesn't support this
+            content.navigationBarTitle(title)
+#else
+            content
+#endif
         }
     }
-
-//    func navigationTitle(_ title: Binding<String>) -> some View {
-//        Group {
-//            if #available(iOS 16, macOS 13, tvOS 16, watchOS 9, *) {
-//                content.navigationTitle(title)
-//            } else {
-//                // Fallback on earlier versions
-//                #if !os(macOS) // macOS 10.5 doesn't support this
-//                content.navigationBarTitle(title.wrappedValue)
-//                #else
-//                    content
-//                #endif
-//            }
-//        }
-//    }
-
-    // ONLY AVAILABLE IN WATCHOS 7
-//    func navigationTitle<V>(@ViewBuilder _ title: () -> V) -> some View where V : View {
 }
 
 
@@ -1058,22 +1015,21 @@ public extension Backport where Content: View {
     /// You typically use this modifier with a `GlassEffectContainer`
     /// to combine multiple glass shapes into a single shape that
     /// can morph shapes into one another.
+    @ViewBuilder
     func glassEffect(_ glass: Glass = .regular, in shape: some Shape = .capsule) -> some View {
-        Group {
 #if !os(visionOS)
-            if #available(iOS 26, macOS 26, tvOS 26, watchOS 26, *) {
+        if #available(iOS 26, macOS 26, tvOS 26, watchOS 26, *) {
 #if compiler(>=6.2)
-                content.glassEffect(glass.swiftUIValue, in: shape)
+            content.glassEffect(glass.swiftUIValue, in: shape)
 #else
-                content.backgroundMaterial()
+            content.backgroundMaterial()
 #endif
-            } else {
-                content.backgroundMaterial()
-            }
-#else
-            content
-#endif
+        } else {
+            content.backgroundMaterial()
         }
+#else
+        content
+#endif
     }
 }
 
@@ -1161,28 +1117,26 @@ public extension Backport where Content: View {
     ///
     /// - Parameter style: The shape style to use as the presentation
     ///   background.
+    @ViewBuilder
     func presentationBackground<S>(_ style: S) -> some View where S : ShapeStyle {
-        Group {
-            if #available(iOS 16.4, macOS 13.3, tvOS 16.4, watchOS 9.4, *) {
-                content.presentationBackground(style)
+        if #available(iOS 16.4, macOS 13.3, tvOS 16.4, watchOS 9.4, *) {
+            content.presentationBackground(style)
+        } else {
+            // Fallback on earlier versions
+            if let color = style as? Color {
+                content.background(color)
             } else {
-                // Fallback on earlier versions
-                if let color = style as? Color {
-                    content.background(color)
-                } else {
-                    content // ignore if older and unsupported
-                }
+                content // ignore if older and unsupported
             }
         }
     }
+    @ViewBuilder
     func presentationBackground(_ style: MaterialEnum) -> some View {
-        Group {
-            if #available(iOS 16.4, macOS 13.3, tvOS 16.4, watchOS 10, *) {
-                content.presentationBackground(style.swiftUIValue)
-            } else {
-                // Fallback on earlier versions
-                content // ignore if older and unsupported - likely only on watchOS < 10
-            }
+        if #available(iOS 16.4, macOS 13.3, tvOS 16.4, watchOS 10, *) {
+            content.presentationBackground(style.swiftUIValue)
+        } else {
+            // Fallback on earlier versions
+            content // ignore if older and unsupported - likely only on watchOS < 10
         }
     }
 
@@ -1258,23 +1212,22 @@ public extension Backport where Content: View {
     /// Sets the style for product views within a view.
     ///
     /// This modifier styles any `ProductView` or `StoreView` instances within a view.
+    @ViewBuilder
     func productViewStyle(_ style: Backport.ProductViewStyle) -> some View {
-        Group {
-            if #available(iOS 17, macOS 14, tvOS 17, watchOS 10, *) {
+        if #available(iOS 17, macOS 14, tvOS 17, watchOS 10, *) {
 #if os(visionOS) || os(watchOS)
-                    content.productViewStyle(.automatic)
+            content.productViewStyle(.automatic)
 #else
-                switch style {
-                case .automatic:
-                    content.productViewStyle(AutomaticProductViewStyle.automatic)
-                case .compact:
-                    content.productViewStyle(CompactProductViewStyle.compact)
-                }
-#endif
-            } else {
-                // Fallback on earlier versions (do nothing)
-                content
+            switch style {
+            case .automatic:
+                content.productViewStyle(AutomaticProductViewStyle.automatic)
+            case .compact:
+                content.productViewStyle(CompactProductViewStyle.compact)
             }
+#endif
+        } else {
+            // Fallback on earlier versions (do nothing)
+            content
         }
     }
     
@@ -1321,16 +1274,15 @@ public extension Backport where Content: View {
     ///     to present the sheet.
     ///   - onDismiss: The closure to execute when dismissing the modal view.
     ///   - content: A closure that returns the content of the modal view.
+    @ViewBuilder
     func fullScreenCover<CoverContent>(isPresented: Binding<Bool>, onDismiss: (() -> Void)? = nil, @ViewBuilder content: @escaping () -> CoverContent) -> some View where CoverContent : View {
-        Group {
-            if #available(iOS 14, macOS 99, tvOS 14, watchOS 7, *) {
+        if #available(iOS 14, macOS 99, tvOS 14, watchOS 7, *) {
 #if !os(macOS)
-                self.content.fullScreenCover(isPresented: isPresented, onDismiss: onDismiss, content: content)
+            self.content.fullScreenCover(isPresented: isPresented, onDismiss: onDismiss, content: content)
 #endif
-            } else {
-                // Fallback on earlier versions
-                self.content.sheet(isPresented: isPresented, onDismiss: onDismiss, content: content)
-            }
+        } else {
+            // Fallback on earlier versions
+            self.content.sheet(isPresented: isPresented, onDismiss: onDismiss, content: content)
         }
     }
 }
@@ -1412,23 +1364,22 @@ public extension Backport where Content: View {
     ///    - count: The number of taps or clicks required to trigger the action
     ///      closure provided in `action`. Defaults to `1`.
     ///    - action: The action to perform.
+    @ViewBuilder
     func onTapGesture(count: Int = 1, perform action: @escaping () -> Void) -> some View {
-        Group {
-            if #available(iOS 14, macOS 11, tvOS 14, watchOS 7, *) { // 10.15 but macOS 11 required for availability checks.  Same with iOS 13.  Same with watchOS 6.  Gives warning on Swift Playgrounds.
-                // have to re-order this way because apparently `else if #available` creates weird warnings.
-                if #available(tvOS 16, *) {
-                    content.onTapGesture(count: count, perform: action)
-                } else {
-                    // Fallback on earlier versions
-                    content.onLongPressGesture(minimumDuration: 0.01, pressing: { _ in }) {
-                        action()
-                    }
-                }
+        if #available(iOS 14, macOS 11, tvOS 14, watchOS 7, *) { // 10.15 but macOS 11 required for availability checks.  Same with iOS 13.  Same with watchOS 6.  Gives warning on Swift Playgrounds.
+            // have to re-order this way because apparently `else if #available` creates weird warnings.
+            if #available(tvOS 16, *) {
+                content.onTapGesture(count: count, perform: action)
             } else {
                 // Fallback on earlier versions
-                // ignore for earlier tvOS since we won't be supporting tvOS <17 realistically anyways.
-                content
+                content.onLongPressGesture(minimumDuration: 0.01, pressing: { _ in }) {
+                    action()
+                }
             }
+        } else {
+            // Fallback on earlier versions
+            // ignore for earlier tvOS since we won't be supporting tvOS <17 realistically anyways.
+            content
         }
     }
 }
@@ -1464,16 +1415,15 @@ private struct BackportTabViewContent<Content: View>: View {
         self.content = content()
     }
 
+    @ViewBuilder
     public var body: some View {
 #if os(watchOS)
-        Group {
-            if #available(watchOS 7, *) {
-                SwiftUI.TabView {
-                    content
-                }
-            } else {
-                fallback
+        if #available(watchOS 7, *) {
+            SwiftUI.TabView {
+                content
             }
+        } else {
+            fallback
         }
 #else
         SwiftUI.TabView {
@@ -1501,16 +1451,15 @@ private struct BackportSelectionTabViewContent<SelectionValue: Hashable, Content
         self.content = content()
     }
 
+    @ViewBuilder
     public var body: some View {
 #if os(watchOS)
-        Group {
-            if #available(watchOS 7, *) {
-                SwiftUI.TabView(selection: selection) {
-                    content
-                }
-            } else {
-                fallback
+        if #available(watchOS 7, *) {
+            SwiftUI.TabView(selection: selection) {
+                content
             }
+        } else {
+            fallback
         }
 #else
         SwiftUI.TabView(selection: selection) {
@@ -1629,17 +1578,17 @@ public extension Backport where Content: View {
     /// Sets the style for the tab view within the current environment.
     ///
     /// - Parameter style: The style to apply to this tab view.
-    @ViewBuilder func tabViewStyle(_ style: BackportTabViewStyle) -> some View {
-        Group {
-            #if os(macOS) || os(tvOS) // no longer supported in tvOS 17.2+?
-            content
-            #else
-            if #available(iOS 14, macOS 10.15, tvOS 14, watchOS 7, *) {
-                switch style {
-                case .automatic:
-                    content
-                case .page:
-                    content.tabViewStyle(.page)
+    @ViewBuilder
+    func tabViewStyle(_ style: BackportTabViewStyle) -> some View {
+#if os(macOS) || os(tvOS) // no longer supported in tvOS 17.2+?
+        content
+#else
+        if #available(iOS 14, macOS 10.15, tvOS 14, watchOS 7, *) {
+            switch style {
+            case .automatic:
+                content
+            case .page:
+                content.tabViewStyle(.page)
 //                case .pageIndex(let backportIndexDisplayMode):
 //                    content//.tabViewStyle(.page(backportIndexDisplayMode.converted))
 //                case .verticalPage: // only supported on watchOS
@@ -1668,13 +1617,12 @@ public extension Backport where Content: View {
         //            return .sidebarAdaptable
         //        case .tabBarOnly:
         //            return .tabBarOnly
-                }
-            } else {
-                // Fallback on earlier versions
-                content
             }
-            #endif
+        } else {
+            // Fallback on earlier versions
+            content
         }
+#endif
     }
 }
 
@@ -1750,27 +1698,32 @@ public struct BackportNavigationStack<Root: View>: View {
     }
 
     public var body: some View {
-        Group {
-            if #available(iOS 16, macOS 13, tvOS 16, watchOS 9, *) {
-                NavigationStack { // SwiftUI.NavigationStack
-                    root()
-                }
-            } else if #available(iOS 14, macOS 11, tvOS 14, watchOS 7, *) {
-                // Fallback on earlier versions
-                NavigationView {
-                    root()
-                }
-//#if !os(macOS)
-//                .navigationViewStyle(.stack) // seems to cause crash on iOS 15 (also leads to undefined behavior...)
-//#endif
-            } else {
-                root() // forget about wrapping...
-            }
-        }
+        navigationContent
 #if os(macOS)
         // default to the parent window size on macOS
         .frame(idealWidth: NSApp.keyWindow?.contentView?.bounds.width ?? 500, idealHeight: NSApp.keyWindow?.contentView?.bounds.height ?? 500)
 #endif
+    }
+
+    /// Builds the newest navigation container available without adding a
+    /// layout-transparent wrapper solely to host availability branches.
+    @ViewBuilder
+    private var navigationContent: some View {
+        if #available(iOS 16, macOS 13, tvOS 16, watchOS 9, *) {
+            NavigationStack { // SwiftUI.NavigationStack
+                root()
+            }
+        } else if #available(iOS 14, macOS 11, tvOS 14, watchOS 7, *) {
+            // Fallback on earlier versions
+            NavigationView {
+                root()
+            }
+//#if !os(macOS)
+//                .navigationViewStyle(.stack) // seems to cause crash on iOS 15 (also leads to undefined behavior...)
+//#endif
+        } else {
+            root() // forget about wrapping...
+        }
     }
 }
 

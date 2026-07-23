@@ -10,7 +10,7 @@ public protocol PropertyIterable {
     var allProperties: OrderedDictionary<String, Any> { get }
     var allKeyPaths: OrderedDictionary<String, PartialKeyPath<Self>> { get }
 }
-#if !(os(WASM) || os(WASI))
+#if !hasFeature(Embedded)
 public extension PropertyIterable {
     var allProperties: OrderedDictionary<String, Any> {
         var result = OrderedDictionary<String, Any>()
@@ -47,11 +47,11 @@ public extension PropertyIterable {
 #else
 public extension PropertyIterable {
     var allProperties: OrderedDictionary<String, Any> {
-        debug("Not implemented for non-WASM platforms.", level: .ERROR)
+        debug("Property reflection is unavailable in Embedded Swift.", level: .ERROR)
         return [:]
     }
     var allKeyPaths: OrderedDictionary<String, PartialKeyPath<Self>> {
-        debug("Not implemented for non-WASM platforms.", level: .ERROR)
+        debug("Property reflection is unavailable in Embedded Swift.", level: .ERROR)
         return [:]
     }
 }
@@ -67,15 +67,14 @@ public extension Equatable {
     }
 }
 
-#if (os(WASM) || os(WASI))
-@available(*, deprecated, message: "This is unavailable in WASM becuase dynamic casting isn't allowed in embedded Swfit.")
+#if hasFeature(Embedded)
+@available(*, deprecated, message: "This always returns false in Embedded Swift because dynamic casting is unavailable.")
 #endif
 public func areEqual(_ left: Any?, _ right: Any?) -> Bool {
-#if !(os(WASM) || os(WASI))
+#if !hasFeature(Embedded)
     guard let first = left as? any Equatable, let second = right as? any Equatable else { return false }
     return first.isEqual(second)
 #else
     return false
 #endif
 }
-

@@ -24,7 +24,7 @@ extension Double: DoubleConvertible {}
 extension Float: DoubleConvertible {}
 
 
-#if (os(WASM) || os(WASI))
+#if arch(wasm32)
 #if canImport(WASILibc) // either include from library or use fallback implementation
 import WASILibc
 #else

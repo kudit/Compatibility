@@ -174,7 +174,7 @@ public extension Date {
     @MainActor
     internal static let testTimes: TestClosure = {
         let nowTest = nowBackport
-        #if !(os(WASM) || os(WASI))
+        #if !hasFeature(Embedded)
         try expect(nowBackport.mysqlDateTime == nowTest.mysqlDateTime, "\(nowBackport) != \(nowTest)")
         // tests without expectations
         let tomorrow = Self.tomorrow
@@ -208,7 +208,7 @@ public extension Date {
 }
 
 // Testing is only supported with Swift 5.9+
-#if compiler(>=5.9) && canImport(Foundation) && !(os(WASM) || os(WASI))
+#if compiler(>=5.9) && canImport(Foundation)
 @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
 public extension Date {
     @MainActor

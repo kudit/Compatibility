@@ -31,7 +31,7 @@ public struct CompatibilityConfiguration: PropertyIterable {
         let message = "\(emojiSupported ? level.emoji : level.symbol) \(message)"
         var timestamp = ""
         if includeTimestamp {
-            #if canImport(Foundation) && !(os(WASM) || os(WASI))
+            #if canImport(Foundation)
             timestamp = "\(Date.nowBackport.mysqlDateTime): "
             #else
             timestamp = "UNABLE TO GET TIMESTAMP WITHOUT Foundation.Date: "
@@ -114,7 +114,7 @@ public struct CustomError: Error, Sendable {
     }
     @discardableResult
     func debug() -> String {
-#if !(os(WASM) || os(WASI))
+#if !hasFeature(Embedded)
         return Compatibility.debug(description, level: level ?? DebugLevel.defaultLevel, file: file, function: function, line: line, column: column)
 #else
         return Compatibility.debug(description, isMainThread: true, level: level ?? DebugLevel.defaultLevel, file: file, function: function, line: line, column: column)
@@ -265,7 +265,7 @@ public extension Compatibility {
      - Parameter line: For bubbling down the #line number from a call site.
      - Parameter column: For bubbling down the #column number from a call site. (Not used currently but here for completeness).
      */
-#if !(os(WASM) || os(WASI))
+#if !hasFeature(Embedded)
     @discardableResult
     static func debug(_ message: Any, level: DebugLevel = .defaultLevel, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) -> String {
 #if canImport(Foundation)
@@ -313,7 +313,7 @@ public extension Compatibility {
  - Parameter line: For bubbling down the #line number from a call site.
  - Parameter column: For bubbling down the #column number from a call site. (Not used currently but here for completeness).
  */
-#if !(os(WASM) || os(WASI))
+#if !hasFeature(Embedded)
 @discardableResult
 public func debug(_ message: Any, level: DebugLevel = .defaultLevel, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) -> String {
     return Compatibility.debug(message, level: level, file: file, function: function, line: line, column: column)
@@ -339,7 +339,7 @@ public extension Error {
      - Parameter column: For bubbling down the #column number from a call site. (Not used currently but here for completeness).
      */
     func debug(level: DebugLevel = .defaultLevel, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) -> Self {
-#if !(os(WASM) || os(WASI))
+#if !hasFeature(Embedded)
         Compatibility.debug(self.localizedDescription, level: level, file: file, function: function, line: line, column: column)
 #else
         Compatibility.debug(self.localizedDescription, isMainThread: true, level: level, file: file, function: function, line: line, column: column)
@@ -392,7 +392,7 @@ Normal output: \(defaultOutput)
 """
         }
         
-        #if canImport(Foundation) && !(os(WASM) || os(WASI))
+        #if canImport(Foundation)
         let timestamp = Date.nowBackport.mysqlDateTime
         #else
         let timestamp = "UNABLE TO GET TIMESTAMP WITHOUT Foundation.Date"

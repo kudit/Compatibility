@@ -20,7 +20,7 @@ struct Thread: Sendable, Equatable {
     static let current = Thread()
 }
 
-#if !(os(WASM) || os(WASI))
+#if !arch(wasm32)
 /// Minimal dispatch deadline used by platforms that lack Foundation but support callable closures.
 struct DispatchTime: Sendable, CustomStringConvertible {
 #if canImport(Foundation)
@@ -69,7 +69,7 @@ struct DispatchQueue: Sendable {
 #endif
 #endif
 
-#if canImport(Foundation) && !(os(WASM) || os(WASI))
+#if canImport(Foundation)
 /// Verifies that delayed work did not complete early or drift beyond the bounded host tolerance.
 private func timeTolerance(start: TimeInterval, end: TimeInterval, expected: TimeInterval) throws {
     let timeElapsed = end - start
@@ -83,7 +83,7 @@ private func timeTolerance(start: TimeInterval, end: TimeInterval, expected: Tim
 
 // MARK: - Sleep
 
-#if os(WASM) || os(WASI)
+#if arch(wasm32)
 public extension Compatibility {
     /// WebAssembly compatibility spelling for sleep.
     ///
@@ -98,7 +98,15 @@ public extension Compatibility {
     ) {
         // This gate describes the missing timer primitive, not missing Swift concurrency support:
         // browser hosts must schedule a JavaScript timer while WASI hosts use host-specific clocks.
-        Compatibility.debug("Sleep is unavailable on this WebAssembly runtime; no delay occurred. Prefer an asynchronous host timer for browser or WASI code.", level: .WARNING, file: file, function: function, line: line, column: column)
+        Compatibility.debug(
+            "Sleep is unavailable on this WebAssembly runtime; no delay occurred. Prefer an asynchronous host timer for browser or WASI code.",
+            isMainThread: true,
+            level: .WARNING,
+            file: file,
+            function: function,
+            line: line,
+            column: column
+        )
     }
 }
 
@@ -218,7 +226,7 @@ public extension Compatibility {
         line: Int = #line,
         column: Int = #column
     ) {
-#if os(WASM) || os(WASI)
+#if arch(wasm32)
         closure()
 #else
         DispatchQueue.global().async {
@@ -228,7 +236,7 @@ public extension Compatibility {
 #endif
     }
 
-#if !(os(WASM) || os(WASI))
+#if !arch(wasm32)
     /// Starts nonthrowing asynchronous work in a detached background task.
     @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
     static func background(_ closure: @Sendable @escaping () async -> Void) {
@@ -270,7 +278,7 @@ public func background(_ closure: @Sendable @escaping () -> Void) {
     Compatibility.background(closure)
 }
 
-#if !(os(WASM) || os(WASI))
+#if !arch(wasm32)
 /// Legacy unqualified asynchronous background helper retained for source compatibility.
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 @available(*, deprecated, renamed: "Task.background", message: "Use Compatibility.background or Task.background instead.")
@@ -335,7 +343,7 @@ private let backgroundTests: [TestCase] = [
 
 // MARK: - Main
 
-#if os(WASM) || os(WASI)
+#if arch(wasm32)
 public extension Compatibility {
     /// Executes main-actor work immediately because this WebAssembly compatibility path is single threaded.
     @MainActor
@@ -440,7 +448,7 @@ private let mainTests: [TestCase] = [
 public extension Compatibility {
     /// Runs a closure after a delay, using dispatch when Swift concurrency is unavailable.
     static func delay(_ seconds: Double, closure: @Sendable @escaping () -> Void) {
-#if os(WASM) || os(WASI)
+#if arch(wasm32)
         // WebAssembly has no blocking or asynchronous delay fallback in this compatibility layer.
         closure()
 #else
@@ -462,7 +470,7 @@ public func delay(_ seconds: Double, closure: @Sendable @escaping () -> Void) {
     Compatibility.delay(seconds, closure: closure)
 }
 
-#if !(os(WASM) || os(WASI))
+#if !arch(wasm32)
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension Task where Success == Never, Failure == Never {
     /// Preferred concise spelling for Compatibility's delayed closure helper.
@@ -490,12 +498,20 @@ private let delayTests: [TestCase] = [
 
 // MARK: - Tests and Previews
 
-#if compiler(>=5.9) && !(os(WASM) || os(WASI))
+#if compiler(>=5.9)
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension Compatibility {
     /// Reusable threading checks grouped without adding another public namespace.
     @MainActor
-    static let threadingTests: [TestCase] = sleepTests + backgroundTests + mainTests + delayTests
+    static let threadingTests: [TestCase] = {
+#if arch(wasm32)
+        // Generic WebAssembly hosts do not provide the timing guarantees these
+        // delay and dispatch tests assert, so retain the catalog as an empty API.
+        return []
+#else
+        return sleepTests + backgroundTests + mainTests + delayTests
+#endif
+    }()
 }
 
 #if canImport(SwiftUI) && canImport(Foundation)

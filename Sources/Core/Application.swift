@@ -80,7 +80,7 @@ public class Application: ObservableObject { // The private initializer preserve
     nonisolated // This computed compatibility forwarding value reads only nonisolated Build state.
     public static let DEBUG = Build.isDebug
 
-#if canImport(Foundation) && !(os(WASM) || os(WASI))
+#if canImport(Foundation)
     // MARK: - iCloud Support
     /// Use before tracking to disable iCloud checks to prevent crashes if we can't check for iCloud or for simulating behavior without iCloud support for CloudStorage.
     public static var iCloudSupported = true
@@ -172,12 +172,21 @@ public class Application: ObservableObject { // The private initializer preserve
         // Calling Application.main is what initializes the application and does the tracking.  This really should only be called once.  TODO: Should we check to make sure this isn't called twice??  Application.main singleton should only be inited once.
         debug("Application Tracking: \(Application.main.appName)", level: .NOTICE, file: file, function: function, line: line, column: column) // Initialize persisted version state synchronously before detached reporting begins.
         // Defer the complete report so modules may calculate or fetch metadata without blocking application launch.
+#if arch(wasm32)
+        // Full-runtime WebAssembly supports unstructured tasks, but the detached
+        // convenience wrappers require host scheduling facilities.
+        Task { @MainActor in
+            let description = await Application.main.loadDetailedDescription()
+            debug("Application Detailed Tracking:\n\(description)", level: .NOTICE, file: file, function: function, line: line, column: column)
+        }
+#else
         Task.background {
             let description = await Application.main.loadDetailedDescription()
             Task.main {
                 debug("Application Detailed Tracking:\n\(description)", level: .NOTICE, file: file, function: function, line: line, column: column)
             }
         }
+#endif
     }
 
     // MARK: - Application information
@@ -391,7 +400,7 @@ public class Application: ObservableObject { // The private initializer preserve
 
     /// Builds a complete detailed description after awaiting asynchronously generated module details.
     public func loadDetailedDescription() async -> String {
-#if !(os(WASM) || os(WASI))
+#if !hasFeature(Embedded)
         // Keep the registered metatypes within their owning actor while asynchronous module details load.
         let appInfo = self.info.description
         let moduleInfo = await Build.allModules.loadDetailedDescription()
@@ -404,7 +413,7 @@ public class Application: ObservableObject { // The private initializer preserve
 #endif
 
 #if compiler(>=5.9)
-#if canImport(Foundation) && !(os(WASM) || os(WASI))
+#if canImport(Foundation)
     internal static var applicationTests: TestClosure = { @MainActor in // ensure we're running these on the Main Actor so we don't have to worry about Application main actor access.
         try expect(Build.isDebug, "App should not be running in debug mode")
         for environment in Build.Environment.allCases {
@@ -433,7 +442,10 @@ public class Application: ObservableObject { // The private initializer preserve
     internal static var applicationTests: TestClosure = {
         try expect(Build.isDebug, "App should not be running in debug mode")
         for environment in Build.Environment.allCases {
-            try expect(environment.test == environment.test, "App \(environment) test")
+            // Environment classification is main-actor isolated because the
+            // Designed-for-iPad case consults UIKit application state.
+            let environmentIsActive = await environment.test
+            try expect(environmentIsActive == environmentIsActive, "App \(environment) test")
         }
     }
 #endif

@@ -42,7 +42,7 @@ public extension String {
 //s    1 or 2 digit second    2
 //a    AM/PM for 12-hour format
 
-#if canImport(Foundation) && !(os(WASM) || os(WASI)) // not available in WASM?
+#if canImport(Foundation) // not available in WASM?
 #if canImport(Combine) // not available in Linux
 @available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
 public extension DateFormatter.Style {
@@ -242,7 +242,7 @@ public protocol DateTimeRepresentable: DateRepresentable {}
 
 /// A string representation of a date time.  When getting this as a date, it will attempt to parse various formats the string could be in to allow a variety of formats.  You can add other formats here to expand the support.  Add mappings in the date initializer if you need other formats supported.
 public protocol DateStringRepresentation: RawRepresentable, Sendable, Hashable, Codable, Comparable, DateRepresentable, ExpressibleByStringLiteral, ExpressibleByStringInterpolation, LosslessStringConvertible where RawValue == String {
-#if canImport(Foundation) && !(os(WASM) || os(WASI)) // not available in WASM?
+#if canImport(Foundation) // not available in WASM?
     var date: Date? { get }
 #endif
     var rawValue: String { get set }
@@ -264,7 +264,7 @@ public extension DateStringRepresentation {
         return rawValue
     }
     
-#if canImport(Foundation) && !(os(WASM) || os(WASI)) // not available in WASM?
+#if canImport(Foundation) // not available in WASM?
     var date: Date? {
         return Date(parse: rawValue)
     }
@@ -288,7 +288,7 @@ public struct DateTimeString: DateStringRepresentation, DateTimeRepresentable {
     }
 }
 
-#if canImport(Foundation) && !(os(WASM) || os(WASI)) // not available in WASM?
+#if canImport(Foundation) // not available in WASM?
 // MARK: - Formatted output
 public extension DateRepresentable {
     // MARK: - Formatting using format strings and styles

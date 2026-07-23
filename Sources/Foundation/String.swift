@@ -415,7 +415,7 @@ public extension String {
 #endif
         // test for optional numeric ?? with String
         let opDouble: Double? = 2.34
-#if !(os(WASM) || os(WASI))
+#if !hasFeature(Embedded)
         try expect("\(opDouble ?? "nil")" == "2.34")
 #endif
     }
@@ -587,7 +587,7 @@ public extension String {
         try expect("1923".isPostIndustrialYear)
         var test = "the/quick/brown/fix.txt"
 
-#if canImport(Foundation) && !(os(WASM) || os(WASI))
+#if canImport(Foundation)
         try expect("\(Date.nowBackport.year)".isPostIndustrialYear)
         
 #if canImport(Combine)
@@ -648,7 +648,7 @@ public extension String {
         try expect(test.duplicateCharactersRemoved == "file:/thquckbrownx.")
         
         try expect("h\"\\ello".addSlashes() == "h\\\"\\\\ello")
-#if canImport(Foundation) && !(os(WASM) || os(WASI))
+#if canImport(Foundation)
         var json = ""
         debugSuppress {
             json = "foo".asErrorJSON() // outputs debug message
@@ -1051,7 +1051,7 @@ public extension String {
 @MainActor
     internal static let testSentenceCapitalized: TestClosure = {
         let capitalized = "hello world. goodbye world.".sentenceCapitalized
-#if !(os(WASM) || os(WASI))
+#if !hasFeature(Embedded)
         try expect(capitalized == "Hello world. Goodbye world.", String(describing:capitalized))
 #endif
     }
@@ -1321,35 +1321,35 @@ public extension String {
 @MainActor
     internal static let testExtractTags: TestClosure = {
         let extraction = TEST_STRING.extract(from: "<em>", to: "</em>") // should never fail
-#if !(os(WASM) || os(WASI))
+#if !hasFeature(Embedded)
         try expect(extraction == "intérressant" , String(describing:extraction))
 #endif
     }
 @MainActor
     internal static let testExtractNilStart: TestClosure = {
         let extraction = TEST_STRING.extract(from: nil, to: "string")
-#if !(os(WASM) || os(WASI))
+#if !hasFeature(Embedded)
         try expect(extraction == "A long " , String(describing:extraction))
 #endif
     }
 @MainActor
     internal static let testExtractNilEnd: TestClosure = {
         let extraction = TEST_STRING.extract(from: "</em>", to: nil)
-#if !(os(WASM) || os(WASI))
+#if !hasFeature(Embedded)
         try expect(extraction == " properties!" , String(describing:extraction))
 #endif
     }
 @MainActor
     internal static let testExtractMissingStart: TestClosure = {
         let extraction = TEST_STRING.extract(from: "<strong>", to: "</em>")
-#if !(os(WASM) || os(WASI))
+#if !hasFeature(Embedded)
         try expect(extraction == nil , String(describing:extraction))
 #endif
     }
 @MainActor
     internal static let testExtractMissingEnd: TestClosure = {
         let extraction = TEST_STRING.extract(from: "<em>", to: "</strong>")
-#if !(os(WASM) || os(WASI))
+#if !hasFeature(Embedded)
         try expect(extraction == nil , String(describing:extraction))
 #endif
     }
@@ -1390,7 +1390,7 @@ public extension String {
     
     /// Returns `self` as the `errorMessage` parameter of a JSON object with a `success` parameter equal to `false`.  Pass a debug `level` to also print a debug statement as the provided `level`.
     func asErrorJSON(level: DebugLevel = .NOTICE) -> String {
-#if !(os(WASM) || os(WASI))
+#if !hasFeature(Embedded)
         debug(self, level: level)
 #endif
         return """
@@ -1455,14 +1455,14 @@ public extension String {
             try expect(Character("😀").isEmoji)
             try expect("hello 😀".containsEmoji)
             try expectEqual("<tag>Dave & Buster's".htmlEncoded, "&lt;tag&gt;Dave &amp; Buster's")
-#if !(os(WASM) || os(WASI))
+#if !hasFeature(Embedded)
             try expect("123".isNumeric)
             try expect(!"12a".isNumeric)
             try expect("2000".isPostIndustrialYear)
 #endif
         },
         TestCase("HTML and Markdown attributed strings") {
-#if ((canImport(Foundation) && canImport(Combine)) || canImport(NSAttributedString)) && !(os(WASM) || os(WASI))
+#if ((canImport(Foundation) && canImport(Combine)) || canImport(NSAttributedString))
             // AttributedString itself begins at watchOS 8, while the surrounding String tests support older watches.
             if #available(iOS 15, macOS 12, tvOS 15, watchOS 8, *) {
                 let html = "This is <b>bold</b> and this is <i>italic</i>."
@@ -1493,7 +1493,7 @@ public extension String {
 
 // TODO: See where we can use @autoclosure in Kudit Frameworks to delay execution (particularly in test frameworks!)
 
-#if !(os(WASM) || os(WASI))
+#if !hasFeature(Embedded)
 public protocol Defaultable {}
 extension Bool: Defaultable {}
 extension Int: Defaultable {}

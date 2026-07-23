@@ -1,6 +1,6 @@
 // TODO: Do we want to restrict DataStore to the main thread?
 
-#if compiler(>=5.9) && canImport(Foundation) && !(os(WASM) || os(WASI))
+#if compiler(>=5.9) && canImport(Foundation)
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public enum DataStoreType: Sendable {
     case local
