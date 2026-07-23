@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.18.1 2026-07-23
+Restored the concise synchronous `main {}` and `background {}` functions as nondeprecated, pre-concurrency-compatible APIs while retaining qualified `Compatibility` and iOS 13+ `Task` alternatives for ambiguous call sites.
+Documented SwiftUI's current whole-value text-selection behavior on iOS-family platforms without adding a UIKit-backed range-selection workaround.
+Updated the shared main-thread test to protect the concise `main {}` spelling and its main-thread behavior.
+
 ## v1.18.0 2026-07-22
 Simplified the test UI to use the ordered, deduplicated modules already registered with `Build`, while preserving the focused single-module view and reversing only the all-modules presentation order.
 Started the complete shared test catalog eagerly and non-blockingly, and made failure details selectable through an availability-compatible text-selection backport.

@@ -260,9 +260,13 @@ public extension Compatibility {
 #endif
 }
 
-/// Legacy unqualified synchronous background helper retained for source compatibility.
-@available(*, deprecated, renamed: "Task.background", message: "Use Compatibility.background or Task.background instead.")
+/// Runs synchronous work away from the main queue using the concise, deployment-compatible spelling.
+///
+/// Use ``Compatibility/background(_:file:function:line:column:)`` when another API, such as
+/// SwiftUI's `View.background`, makes the unqualified name ambiguous. Callers that already require
+/// iOS 13, macOS 10.15, tvOS 13, or watchOS 6 can instead use `Task.background`.
 public func background(_ closure: @Sendable @escaping () -> Void) {
+    // Keep this concise API independent of Swift concurrency so callers can deploy before iOS 13.
     Compatibility.background(closure)
 }
 
@@ -346,8 +350,9 @@ public extension Compatibility {
     }
 }
 
-/// Legacy unqualified WebAssembly main helper retained for source compatibility.
-@available(*, deprecated, renamed: "Task.main", message: "Use Compatibility.main instead.")
+/// Runs work on the main actor using the concise spelling on WebAssembly.
+///
+/// Use ``Compatibility/main(_:file:function:line:column:)`` when an unqualified `main` name is ambiguous.
 @MainActor
 public func main(
     _ closure: @Sendable @MainActor @escaping () -> Void,
@@ -356,6 +361,7 @@ public func main(
     line: Int = #line,
     column: Int = #column
 ) {
+    // Forward through the shared implementation so the concise and qualified spellings remain equivalent.
     Compatibility.main(closure, file: file, function: function, line: line, column: column)
 }
 #else
@@ -381,8 +387,10 @@ public extension Compatibility {
     }
 }
 
-/// Legacy unqualified main-thread helper retained for source compatibility.
-@available(*, deprecated, renamed: "Task.main", message: "Use Compatibility.main or Task.main instead.")
+/// Schedules work on the main actor using the concise, deployment-compatible spelling.
+///
+/// Use ``Compatibility/main(_:file:function:line:column:)`` when an unqualified `main` name is ambiguous.
+/// Callers that already require iOS 13, macOS 10.15, tvOS 13, or watchOS 6 can instead use `Task.main`.
 public func main(
     _ closure: @Sendable @MainActor @escaping () -> Void,
     file: String = #file,
@@ -390,6 +398,7 @@ public func main(
     line: Int = #line,
     column: Int = #column
 ) {
+    // Keep this concise API available before Swift concurrency by forwarding to the dispatch-capable implementation.
     Compatibility.main(closure, file: file, function: function, line: line, column: column)
 }
 
@@ -410,17 +419,18 @@ public extension Task where Success == Never, Failure == Never {
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 @MainActor
 private let mainTests: [TestCase] = [
-    TestCase("Task.main") {
+    TestCase("main") {
 #if os(macOS) && canImport(Foundation)
         let volumesOutput = try safeShell("ls -la /Volumes")
         try expect(volumesOutput.contains("Macintosh HD"), "Unexpected shell output: \(volumesOutput)")
 #endif
         let ranOnMainThread = await withCheckedContinuation { continuation in
-            Task.main {
+            // Exercise the concise spelling so future deprecation or availability regressions are caught.
+            main {
                 continuation.resume(returning: Thread.isMainThread)
             }
         }
-        try expect(ranOnMainThread, "Task.main { } was not run on the main thread")
+        try expect(ranOnMainThread, "main { } was not run on the main thread")
     },
 ]
 #endif
