@@ -260,9 +260,7 @@ public extension Double {
     }
 #endif
 
-#if !(os(WASM) || os(WASI))
-    @MainActor
-#endif
+@MainActor
     internal static let doubleTests: TestClosure = {
         // Exercise every numeric convenience from the shared test collection so the demo and CI use identical coverage.
         try expect(Int(42).doubleValue == 42.0)
@@ -297,9 +295,7 @@ public extension Double {
 #if compiler(>=5.9)
 @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
 public extension Double {
-#if !(os(WASM) || os(WASI))
-    @MainActor
-#endif
+@MainActor
     static let tests = [
         TestCase("double tests", doubleTests),
     ]

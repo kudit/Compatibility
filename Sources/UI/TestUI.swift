@@ -1,4 +1,4 @@
-#if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation) && !(os(WASM) || os(WASI))
+#if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation)
 import SwiftUI
 
 // MARK: - TestCase UI
@@ -22,7 +22,9 @@ public struct TestRow: View {
                 }
             }
             if let errorMessage = test.errorMessage {
-                Text(errorMessage).font(.caption)
+                Text(errorMessage)
+                    .font(.caption)
+                    .backport.textSelection(.enabled)
             }
         }
     }
@@ -34,11 +36,6 @@ struct TestsRowsView: View {
     var body: some View {
         ForEach(tests, id: \.title) { item in
             TestRow(test: item)
-                .onAppear {
-                    if !item.isFinished() {
-                        item.run()
-                    }
-                }
         }
     }
 }
@@ -46,14 +43,26 @@ struct TestsRowsView: View {
 @available(iOS 15, macOS 12, tvOS 17, watchOS 8, *)
 @MainActor
 final class AllTestsListModel: ObservableObject {
-    let module: Module.Type
-    let namedTests: OrderedDictionary<String, [TestCase]>
+    let modules: [Module.Type]
+    let additionalTests: OrderedDictionary<String, [TestCase]>
+    private var didStartTests = false
 
-    init(module: Module.Type, additionalTests: OrderedDictionary<String, [TestCase]> = [:]) {
-        self.module = module
-        // Put caller-supplied checks first while retaining the module's declared section order.
-        self.namedTests = additionalTests.merging(module.tests) { additionalTests, moduleTests in
-            additionalTests + moduleTests
+    init(modules: [Module.Type]? = nil, additionalTests: OrderedDictionary<String, [TestCase]> = [:]) {
+        // Registration already handles recursive discovery, stable-identifier deduplication, and dependency order.
+        // Reverse that shared result so the UI presents specific modules before their foundational dependencies.
+        self.modules = modules ?? Array(Build.allModules.reversed())
+        self.additionalTests = additionalTests
+    }
+
+    func startAllTestsOnce() {
+        guard !didStartTests else { return }
+        didStartTests = true
+        // Starting is synchronous and cheap; each TestCase immediately moves its actual work off the main actor.
+        let moduleTests = modules.flatMap { $0.tests.values.flatMap { $0 } }
+        for test in additionalTests.values.flatMap({ $0 }) + moduleTests {
+            if case .notStarted = test.progress {
+                test.run()
+            }
         }
     }
 }
@@ -84,59 +93,82 @@ public struct ModuleTestsListView: View {
     
     // only necessary since in module and otherwise inaccessible outside package
     public init(module: Module.Type, additionalTests: OrderedDictionary<String, [TestCase]> = [:]) {
-        _model = StateObject(wrappedValue: AllTestsListModel(module: module, additionalTests: additionalTests))
+        _model = StateObject(wrappedValue: AllTestsListModel(modules: [module], additionalTests: additionalTests))
+        self.module = module
     }
+    private let module: Module.Type
     public var body: some View {
         List {
-            Section {
-                // A compact summary gives the module header real content on every SwiftUI List implementation.
-                Text(model.namedTests.isEmpty ? "No test sections" : "\(model.namedTests.count) test sections")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            } header: {
-                Text("\(model.module.moduleName) v\(model.module.version)")
-            }
-            if model.namedTests.isEmpty {
-                // Keep an explicit section for modules without tests so the screen is never ambiguous.
-                Section(model.module.moduleName) {
-                    Text("No tests provided")
-                        .foregroundStyle(.secondary)
-                }
-            } else {
-                ForEach(model.namedTests.keys.elements, id: \.self) { key in
-                    let tests = model.namedTests[key] ?? []
-                    Section(key) {
-                        TestsRowsView(tests: tests)
-                    }
-                }
-            }
+            ModuleTestSectionsView(modules: [module], additionalTests: model.additionalTests)
         }
         // test replacing background
         .backport.scrollContentBackground(.hidden)
         .background(.linearGradient(colors: [.red, .yellow, .green, .blue], startPoint: .topLeading, endPoint: .bottomTrailing))
+        .onAppear { model.startAllTestsOnce() }
     }
 }
 
-/// Compatibility's complete reusable test catalog.
+/// Renders registered modules without owning execution, allowing both public list views to share presentation.
+@available(iOS 15, macOS 12, tvOS 17, watchOS 8, *)
+private struct ModuleTestSectionsView: View {
+    let modules: [Module.Type]
+    let additionalTests: OrderedDictionary<String, [TestCase]>
+
+    var body: some View {
+        ForEach(additionalTests.keys.elements, id: \.self) { sectionName in
+            Section(sectionName) {
+                TestsRowsView(tests: additionalTests[sectionName] ?? [])
+            }
+        }
+        // Enumerated offsets avoid relying on metatype key paths while Build guarantees unique module identifiers.
+        ForEach(Array(modules.enumerated()), id: \.offset) { _, module in
+            Section {
+                if module.tests.isEmpty {
+                    Text("No tests provided")
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(module.tests.keys.elements, id: \.self) { sectionName in
+                        VStack(alignment: .leading) {
+                            Text(sectionName)
+                                .font(.headline)
+                            TestsRowsView(tests: module.tests[sectionName] ?? [])
+                        }
+                    }
+                }
+            } header: {
+                Text("\(module.moduleName) v\(module.version)")
+            }
+        }
+    }
+}
+
+/// Every reusable test exposed by the modules already registered with ``Build``.
 ///
-/// Use ``ModuleTestsListView`` when presenting another module or composing additional sections.
+/// ``Build/register(_:)`` recursively discovers dependencies and deduplicates them by stable module identifier.
+/// This view reverses that existing dependency-first registration order so application-specific modules appear
+/// first and foundational modules appear last. Use ``ModuleTestsListView`` for a focused single-module screen.
 @available(iOS 15, macOS 12, tvOS 17, watchOS 8, *)
 @MainActor
 public struct AllTestsListView: View {
-    private let additionalTests: OrderedDictionary<String, [TestCase]>
+    @StateObject private var model: AllTestsListModel
 
+    /// Creates Compatibility's complete test screen, optionally prefixed by application tests.
     public init(additionalTests: OrderedDictionary<String, [TestCase]> = [:]) {
-        self.additionalTests = additionalTests
+        _model = StateObject(wrappedValue: AllTestsListModel(additionalTests: additionalTests))
     }
 
     @available(*, deprecated, renamed: "init(additionalTests:)")
     public init(additionalNamedTests: OrderedDictionary<String, [TestCase]>) {
-        self.additionalTests = additionalNamedTests
+        _model = StateObject(wrappedValue: AllTestsListModel(additionalTests: additionalNamedTests))
     }
 
     public var body: some View {
-        // Preserve the familiar all-tests entry point while using the module-oriented presentation.
-        ModuleTestsListView(module: Compatibility.self, additionalTests: additionalTests)
+        List {
+            ModuleTestSectionsView(modules: model.modules, additionalTests: model.additionalTests)
+        }
+        .backport.scrollContentBackground(.hidden)
+        .background(.linearGradient(colors: [.red, .yellow, .green, .blue], startPoint: .topLeading, endPoint: .bottomTrailing))
+        .onAppear { model.startAllTestsOnce() }
     }
 }
 

@@ -275,14 +275,22 @@ public extension URL {
                 let (data, _) = try await request.legacyData(for: URLSession.shared)
                 return data
             }
-        } catch URLError.appTransportSecurityRequiresSecureConnection {
-            // replace http with https
+        } catch let error as URLError {
+#if canImport(Darwin)
+            guard error.code == .appTransportSecurityRequiresSecureConnection else {
+                throw error
+            }
+            // Apple platforms can retry an App Transport Security rejection with the secured URL.
             return try await self.secured.download()
+#else
+            // Non-Apple Foundation implementations do not define the App Transport Security error code.
+            throw error
+#endif
         }
     }
 }
 
-#if canImport(SwiftUI) && !(os(WASM) || os(WASI))
+#if canImport(SwiftUI)
 import SwiftUI
 @available(iOS 13, macOS 11, tvOS 13, watchOS 6, *)
 #Preview {

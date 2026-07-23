@@ -92,9 +92,7 @@ public extension CharacterSet {
 #if compiler(>=5.9)
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 extension CharacterSet {
-#if !(os(WASM) || os(WASI))
     @MainActor
-#endif
     public static let tests = [
         TestCase("character strings", testCharacterStrings),
     ]
@@ -112,9 +110,7 @@ public extension CharacterSet {
         #endif
         return filtered.map { String($0) }
     }
-#if !(os(WASM) || os(WASI))
     @MainActor
-#endif
     internal static let testCharacterStrings: TestClosure = {
         let array = "hello".characterStrings
 #if !(os(WASM) || os(WASI))

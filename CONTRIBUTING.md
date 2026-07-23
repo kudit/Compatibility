@@ -7,7 +7,7 @@ Follow the included Compatibility `CONTRIBUTING.md` (or github.com/kudit/Compati
 [REQUEST]
 
 PROMPT for updating Module packages:
-Review this Swift package for adoption of the Module APIs introduced in github.com/kudit/Compatibility v1.16.0 or later. Inspect the package’s existing architecture and preserve its public behavior and platform compatibility. Add or update its Compatibility dependency if necessary. Apply an appropriate Module conformance, including its version, direct Compatibility dependency, module dependencies, immediately available moduleInfo, ordered TestCase sections, and opt-in open-source repository metadata when applicable. Register the package from its highest-level module or document how an application should register it through Application.track(including:). Add complete inline DocC comments to the relevant public APIs so generated documentation can discover them. Do not create a .docc catalog, separate documentation articles, or another documentation folder. Preserve existing comments unless they are missing, unclear, or inaccurate. Put reusable tests in the module's TestCase collections so they run both in the in-app test UI and through the Swift Testing bridge; retain target-specific tests only where infrastructure requires them.  Follow this package’s existing CONTRIBUTING.md, changelog, versioning, formatting, availability, and compatibility conventions. Avoid unrelated reformatting and whitespace-only changes. Before changing version numbers, compare the current changelog version with the latest committed Git version. Please check that all deprecations (that can) have appropriate renamed clauses for easy fixits.
+Review this Swift package for adoption of the Module APIs introduced in github.com/kudit/Compatibility v1.16.0 or later. Inspect the package’s existing architecture and preserve its public behavior and platform compatibility. Add or update its Compatibility dependency if necessary. Apply an appropriate Module conformance, including its version, direct Compatibility dependency, module dependencies, immediately available moduleInfo, ordered TestCase sections, and opt-in open-source repository metadata when applicable. Register the package from its highest-level module or document how an application should register it through Application.track(including:). Add complete inline DocC comments to the relevant public APIs so generated documentation can discover them. Do not create a .docc catalog, separate documentation articles, or another documentation folder. Preserve existing comments unless they are missing, unclear, or inaccurate. Put reusable tests in the module's TestCase collections so they run both in the in-app test UI and through the Swift Testing bridge; retain target-specific tests only where infrastructure requires them. Follow this package’s existing CONTRIBUTING.md, changelog, versioning, formatting, availability, and compatibility conventions. Avoid unrelated reformatting and whitespace-only changes. Before changing version numbers, compare the current changelog version with the latest committed Git version. If the active working-tree changelog is already ahead of Git, do not choose another version; synchronize that active version across every package manifest, Xcode project, public source constant, test fixture or suite heading, README or documentation display, and other hard-coded version surface. Please check that all deprecations (that can) have appropriate renamed clauses for easy fixits.
 
 
 ## Version and changelog rules
@@ -22,6 +22,18 @@ Review this Swift package for adoption of the Module APIs introduced in github.c
 - If a project has no changelog, offer to create one using this repository's `CHANGELOG.md` format.
 - Modules should have separate `README.md` and `CHANGELOG.md` files. Final apps may keep a Changelog section in their README.
 - When you notice existing/manual uncommitted edits, please automatically generate and add changelog comments for the manual changes.
+
+## Post-prompt checklist
+
+After every prompt-driven change, contributors and coding agents must:
+
+1. Compare the active working-tree changelog version with the latest committed Git changelog/version before choosing a version.
+2. If the active version matches Git, create the normal patch entry unless the user requested another version.
+3. If an uncommitted active entry is already ahead of Git, keep that version and synchronize every version surface to it.
+4. Check `Package.swift`, the public `Compatibility.version` value, every Xcode `MARKETING_VERSION`, README/version displays, manifests, and every other hard-coded version surface.
+5. Refresh the active unpushed changelog date when work continues on a later date.
+6. Append the complete prompt as `PROMPT: [PROMPT TEXT]`.
+7. Review both the normal diff and an ignore-whitespace diff, remove unrelated or whitespace-only changes, run `git diff --check`, and run the repository's real build and tests.
 
 A full changelog outline may include:
 
@@ -60,6 +72,19 @@ Planned features grouped by future version.
 - Prefer availability checks and platform fallbacks over removing older behavior.
 - Keep Swift Playgrounds, non-Foundation, WASM, and older-platform builds working where practical.
 - Put reusable framework tests beside their implementation and collect them in each module's ordered `TestCase` sections so the same checks appear in the in-app runner and the Swift Testing bridge. Keep only infrastructure-specific tests in the Xcode/SwiftPM test target.
+
+### Portability and conditional compilation
+
+- Treat `hasFeature(Embedded)` as a compiler-mode capability check, not as a platform check. Ordinary Swift Package Index Apple, Linux, Android, and full-runtime WASM/WASI builds do not enable Embedded Swift merely because of their target platform.
+- Do not assume `os(WASM)` or `os(WASI)` implies Embedded Swift, and do not assume `hasFeature(Embedded)` implies WASM. Embedded Swift can target microcontrollers, bare-metal ARM or RISC-V, WASM, and other environments when the build explicitly enables Embedded mode.
+- Keep `@MainActor` and other actor-isolation annotations present in full-runtime WASM and in current Embedded Swift. Embedded concurrency is partial and experimental, but its supported single-threaded mode includes basic actors and tasks; removing isolation creates unsafe shared-state APIs and Swift 6 diagnostics.
+- Gate the smallest unavailable capability instead of an entire platform or actor boundary. Prefer `canImport(...)`, `#available`, `hasFeature(Embedded)`, or a narrowly documented OS check around the exact API that is missing, such as reflection, dynamic casting, Foundation coding, Dispatch, threads, blocking sleep, or an unsupported task primitive.
+- Do not combine `canImport(SwiftUI)` with a blanket `!(os(WASM) || os(WASI))` exclusion. If SwiftUI is unavailable, `canImport(SwiftUI)` already removes the code; if a compatible SwiftUI implementation becomes importable on WebAssembly, the capability check should allow that code to compile. Add narrower guards only for specific SwiftUI APIs that the imported implementation does not provide.
+- Before adding or retaining a WASM or Embedded exclusion, inspect the current compiler error and the exact build command. Do not preserve an old Swift Package Index workaround solely because an earlier toolchain lacked the feature.
+- Swift Package Index's standard WASM compatibility job uses the full-runtime WASI SDK and does not test Embedded mode. If Embedded compatibility matters for a change, run a separate target or fixture that explicitly enables Embedded Swift; a green SPI WASM result does not validate `hasFeature(Embedded)` branches.
+- Because Embedded Swift remains experimental, verify each concurrency runtime operation separately. If a specific operation such as task detachment or suspension is unsupported, provide a focused fallback while retaining valid actor annotations and isolation requirements.
+- Swift does not expose a general-purpose `hasFeature(Concurrency)` condition that proves a target has a scheduler, threads, Dispatch, or suspending timers. Use `canImport(Dispatch)` for Dispatch-backed implementations, availability checks for deployed Apple concurrency runtimes, `hasFeature(Embedded)` only for known Embedded restrictions, and narrowly documented platform checks for host facilities such as WebAssembly timers.
+- Do not gate `Equatable`, `Encodable`, or `Decodable` merely because a build targets Linux, Android, WASM, or WASI. Those protocols are part of full Swift runtimes. Before changing a conformance gate, also check whether the concrete type is locally owned, is a typealias to a Foundation type, already conforms on that Foundation implementation, or requires Swift 6's `@retroactive` ownership annotation.
 
 ## Design goals
 

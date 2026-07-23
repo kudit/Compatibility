@@ -67,7 +67,10 @@ extension Version: Swift.CustomStringConvertible { // @retroactive in Swift 6?
 }
 
 // MARK: - Codable conformance so stored as string rather than as a structure of values.
-#if !(os(WASM) || os(WASI) || os(Linux))
+#if !os(Linux)
+// Full-runtime WebAssembly supplies Swift's real coding protocols. Because its
+// OperatingSystemVersion fallback is owned here, it can use the same stable string representation
+// and legacy keyed decoder as Apple and Android instead of a synthesized keyed representation.
 extension Version: Swift.Decodable {
     enum CodingKeys: String, CodingKey {
         case majorVersion, minorVersion, patchVersion
@@ -98,11 +101,13 @@ extension Version: Swift.Encodable {
     }
 }
 #else
-extension Version: Decodable {}
-extension Version: Encodable {}
+// swift-corelibs-foundation already supplies these conformances for its OperatingSystemVersion;
+// even an empty extension would redeclare the conformance and produce a compiler warning.
 #endif
 
 #if canImport(Foundation) && compiler(>=6.0) && !canImport(Android) && !(os(WASM) || os(WASI))
+// Foundation owns OperatingSystemVersion while Swift owns the literal protocols, so Swift 6
+// requires these intentionally retroactive conformances to be stated explicitly.
 extension OperatingSystemVersion: @retroactive ExpressibleByExtendedGraphemeClusterLiteral {}
 extension OperatingSystemVersion: @retroactive ExpressibleByUnicodeScalarLiteral {}
 #endif
@@ -205,7 +210,10 @@ extension Version {
         self = forced
     }
 }
-#if canImport(Foundation) && compiler(>=6.0) && !canImport(Android) && !(os(WASM) || os(WASI))
+#if canImport(Foundation) && compiler(>=6.0) && !canImport(Android) && !os(Linux) && !(os(WASM) || os(WASI))
+// This is an ownership annotation for Foundation's foreign type, not an availability workaround:
+// FoundationEssentials already supplies Equatable on Linux and Android, while the package-owned
+// WebAssembly fallback gains it from the local Comparable conformance.
 extension Version: @retroactive Equatable {}
 #endif
 extension Version: Swift.Comparable { // @retroactive in Swift 6?
@@ -253,9 +261,7 @@ public extension Version {
 #endif
     
     // TODO: Convert to Swift Testing
-#if !(os(WASM) || os(WASI))
     @MainActor
-#endif
     internal static var testVersions: TestClosure = {
         // Keep formatting and component coverage in the framework-owned collection so it runs in the demo too.
         let v100 = Version(majorVersion: 1, minorVersion: 0, patchVersion: 0)
@@ -321,9 +327,7 @@ public extension Version {
         try expect(req.pretty == "v1.0, v2.1.2, v3.0, v4.3")
     }
 
-#if !(os(WASM) || os(WASI))
 @MainActor
-#endif
     internal static var versionCodableTest: TestClosure = {
         
 //        - [ ] Determine when Version should print 1.0.0 vs 1.0 vs 1 (do 1.0 at least, but if .0.0, just print the major and minor and not the patch) - see if there are best practices.
@@ -336,7 +340,6 @@ public extension Version {
         let b: Version = "2.0"
         let c: Version = "3.0.1"
         let array = [one, two, three, a, b, c]
-#if !(os(WASM) || os(WASI))
         let json = array.asJSON()
         let expected = """
 ["2.0","12.1","2.12.1","1.0","2.0","3.0.1"]
@@ -358,13 +361,10 @@ public extension Version {
         } catch is DecodingError {
             // The expected failure confirms corrupt legacy storage is not silently accepted.
         }
-#endif
     }
 
 #if compiler(>=5.9)
-#if !(os(WASM) || os(WASI))
     @MainActor
-#endif
     @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
     static var tests: [TestCase] = [
         TestCase("Version Comparison Tests", testVersions),
@@ -420,7 +420,7 @@ extension [Version]: Swift.RawRepresentable {
 
 
 
-#if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation) && !(os(WASM) || os(WASI))
+#if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation)
 // Don't know why this is necessary.  CustomStringConvertible should have covered this.
 import SwiftUI
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)

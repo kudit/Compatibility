@@ -8,7 +8,7 @@
 
 public enum Compatibility: Module {
     /// The version of the Compatibility Library since cannot get directly from Package.swift.
-    public static let version: Version = "1.17.1"
+    public static let version: Version = "1.18.0"
 
     /// Public source repository for Compatibility so support reports can direct developers to its source and issue history.
     ///
@@ -281,7 +281,7 @@ public extension Compatibility { // for brief period where Application and Build
     static let isMacCatalyst = Build.isMacCatalyst
 }
 
-#if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation) && !(os(WASM) || os(WASI))
+#if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation)
 import SwiftUI
 
 @available(iOS 15, macOS 12, tvOS 15, watchOS 9, *)

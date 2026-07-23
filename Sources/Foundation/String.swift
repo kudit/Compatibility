@@ -349,9 +349,7 @@ body {
 </html>
 """
     
-#if !(os(WASM) || os(WASI))
-    @MainActor
-#endif
+@MainActor
     internal static let testHTMLEncoded: TestClosure = {
         let encoded = """
         &lt;html&gt;
@@ -382,7 +380,7 @@ body {
     }
 }
 
-#if canImport(SwiftUI) && ((canImport(Combine) && canImport(Foundation)) || canImport(NSAttributedString)) && compiler(>=5.9) && !(os(WASM) || os(WASI))
+#if canImport(SwiftUI) && ((canImport(Combine) && canImport(Foundation)) || canImport(NSAttributedString)) && compiler(>=5.9)
 @available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
 #Preview("HTML") {
     ScrollView {
@@ -394,9 +392,7 @@ body {
 public extension String {
     static let INVALID_ENCODING = "INVALID_ENCODING"
     
-#if !(os(WASM) || os(WASI))
-    @MainActor
-#endif
+@MainActor
     internal static let testCodable: TestClosure = {
         let defaultString = String(string: nil, defaultValue: "default")
         try expect(Version(string: "a.b.c", defaultValue: "1.0.3") == "1.0.3")
@@ -581,9 +577,7 @@ public extension String {
         //return Array(self.characters).map { String($0) }
     }
     
-#if !(os(WASM) || os(WASI))
-    @MainActor
-#endif
+@MainActor
     internal static let testIntrospection: TestClosure = {
         try expect(!"a1923".isNumeric)
         try expect(!"a19x23".isNumeric)
@@ -754,9 +748,7 @@ public extension StringProtocol {
     }
 }
 public extension String {
-#if !(os(WASM) || os(WASI))
-    @MainActor
-#endif
+@MainActor
     internal static let testTriming: TestClosure = {
         var long = "ExampleWorld/world.json  "
             .trimmed
@@ -770,9 +762,7 @@ public extension String {
         trim.trim()
         try expect(trim.trimmingCharacters(in: "dol") == "r")
     }
-#if !(os(WASM) || os(WASI))
-    @MainActor
-#endif
+@MainActor
     internal static let testTrimingEmpty: TestClosure = {
         let long = "ExampleWorld/world.json"
         let trim = ""
@@ -994,9 +984,7 @@ public extension String {
         
         return result
     }
-#if !(os(WASM) || os(WASI))
-    @MainActor
-#endif
+@MainActor
     internal static let testSimpleTitleCase: TestClosure = {
         // Basic capitalization
         try expect("hello world".simpleTitleCase() == "Hello World")
@@ -1060,9 +1048,7 @@ public extension String {
         }
         return fixed.joined(separator: ".")
     }
-#if !(os(WASM) || os(WASI))
-    @MainActor
-#endif
+@MainActor
     internal static let testSentenceCapitalized: TestClosure = {
         let capitalized = "hello world. goodbye world.".sentenceCapitalized
 #if !(os(WASM) || os(WASI))
@@ -1188,9 +1174,7 @@ public extension String {
     }
 #endif
 
-#if !(os(WASM) || os(WASI))
-    @MainActor
-#endif
+@MainActor
     internal static let testEncoding: TestClosure = {
         let tags = "<p>Hello</p>"
         try expect(tags.tagsStripped == "Hello", "Unexpected stripped tags: \(tags.tagsStripped)")
@@ -1261,9 +1245,7 @@ public extension String {
     }
     
     // MARK: - Parsing
-#if !(os(WASM) || os(WASI))
-    @MainActor
-#endif
+@MainActor
     internal static let testSubstring: TestClosure = {
         #if canImport(Foundation)
         let extraction = TEST_STRING.substring(with: NSRange(7...12))
@@ -1336,45 +1318,35 @@ public extension String {
         return substr
     }
     internal static let TEST_STRING = "A long string with some <em>intérressant</em> properties!"
-#if !(os(WASM) || os(WASI))
-    @MainActor
-#endif
+@MainActor
     internal static let testExtractTags: TestClosure = {
         let extraction = TEST_STRING.extract(from: "<em>", to: "</em>") // should never fail
 #if !(os(WASM) || os(WASI))
         try expect(extraction == "intérressant" , String(describing:extraction))
 #endif
     }
-#if !(os(WASM) || os(WASI))
-    @MainActor
-#endif
+@MainActor
     internal static let testExtractNilStart: TestClosure = {
         let extraction = TEST_STRING.extract(from: nil, to: "string")
 #if !(os(WASM) || os(WASI))
         try expect(extraction == "A long " , String(describing:extraction))
 #endif
     }
-#if !(os(WASM) || os(WASI))
-    @MainActor
-#endif
+@MainActor
     internal static let testExtractNilEnd: TestClosure = {
         let extraction = TEST_STRING.extract(from: "</em>", to: nil)
 #if !(os(WASM) || os(WASI))
         try expect(extraction == " properties!" , String(describing:extraction))
 #endif
     }
-#if !(os(WASM) || os(WASI))
-    @MainActor
-#endif
+@MainActor
     internal static let testExtractMissingStart: TestClosure = {
         let extraction = TEST_STRING.extract(from: "<strong>", to: "</em>")
 #if !(os(WASM) || os(WASI))
         try expect(extraction == nil , String(describing:extraction))
 #endif
     }
-#if !(os(WASM) || os(WASI))
-    @MainActor
-#endif
+@MainActor
     internal static let testExtractMissingEnd: TestClosure = {
         let extraction = TEST_STRING.extract(from: "<em>", to: "</strong>")
 #if !(os(WASM) || os(WASI))
@@ -1446,9 +1418,7 @@ public extension String {
 // Testing is only supported with Swift 5.9+
 #if compiler(>=5.9)
     @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
-#if !(os(WASM) || os(WASI))
-    @MainActor
-#endif
+@MainActor
     static let tests = [
         TestCase("Foundation-independent conveniences") {
             // Keep portable behavior beside String so Linux, UI, and external runners execute one source of truth.
@@ -1562,9 +1532,7 @@ public extension String {
 #endif
 #endif
 
-#if !(os(WASM) || os(WASI))
 @MainActor
-#endif
 let testTextReversal: TestClosure = {
     let text = """
 v1.0.8 8/10/2022 Manually created initializers for SwiftUI views to prevent internal protection errors.
@@ -1652,7 +1620,7 @@ public extension String {
     var containsEmoji: Bool { contains { $0.isEmoji } }
 }
 
-#if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation) && !(os(WASM) || os(WASI))
+#if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation)
 import SwiftUI
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 #Preview("Tests") {

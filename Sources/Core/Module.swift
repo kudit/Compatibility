@@ -34,9 +34,7 @@ public protocol Module {
     ///
     /// The default is empty, so production-only modules do not need to declare tests. TestCase UI still
     /// presents the module identity and an empty state, making installed-module diagnostics complete.
-#if !(os(WASM) || os(WASI))
     @MainActor
-#endif
     @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
     static var tests: OrderedDictionary<String, [TestCase]> { get }
 #endif
@@ -110,6 +108,7 @@ public extension Module {
     }
 
     /// Registers this module and its dependencies for build and support reporting.
+    @MainActor
     static func include() {
         // Delegate traversal and uniqueness checks to Build so every registration entry point behaves identically.
         Build.register(Self.self)
@@ -122,9 +121,7 @@ public extension Module {
 
 #if compiler(>=5.9)
     /// Modules expose no tests unless the conformer provides ordered test sections.
-#if !(os(WASM) || os(WASI))
     @MainActor
-#endif
     @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
     static var tests: OrderedDictionary<String, [TestCase]> {
         return [:]
@@ -277,9 +274,7 @@ private enum DependentModuleTestFixture: Module {
 
 /// Shared Module tests used by both the in-app All Tests UI and the Swift Testing bridge.
 @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
-#if !(os(WASM) || os(WASI))
 @MainActor
-#endif
 private func testModuleMetadataAndDefaults() async throws {
         // Verify the default name remains derived from the conforming type so modules do not need boilerplate.
         try expect(ModuleTestFixture.moduleName == "ModuleTestFixture", "Unexpected default module name: \(ModuleTestFixture.moduleName)")
@@ -328,24 +323,15 @@ private func testModuleMetadataAndDefaults() async throws {
         try expect(registeredIdentifiers == [ModuleTestFixture.moduleIdentifier, DependentModuleTestFixture.moduleIdentifier], "Dependencies should be registered once before their dependent module: \(registeredIdentifiers)")
 }
 
-// Preserve the hosted actor boundary without hiding this closure from WASM builds.
-#if !(os(WASM) || os(WASI))
+/// Preserve the module test's actor boundary on every concurrency-capable target, including WebAssembly.
 @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
 private let moduleMetadataTest: TestClosure = { @MainActor in
     try await testModuleMetadataAndDefaults()
 }
-#else
-@available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
-private let moduleMetadataTest: TestClosure = {
-    try await testModuleMetadataAndDefaults()
-}
-#endif
 
-/// The collection remains available to WASM; only the actor isolation needed by hosted Apple builds is conditional.
+/// The collection remains main-actor isolated on every supported platform, including WebAssembly.
 @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
-#if !(os(WASM) || os(WASI))
 @MainActor
-#endif
 internal let moduleTests: [TestCase] = [
     TestCase("Module metadata and defaults", moduleMetadataTest),
 ]

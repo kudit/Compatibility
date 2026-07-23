@@ -107,8 +107,11 @@ public struct Field: Hashable, Sendable {
     }
 }
 
-#if !(os(WASM) || os(WASI)) && canImport(Foundation) // not available
-/// Adds standard coding support on platforms where ``MixedTypeField`` can also be encoded and decoded.
+#if canImport(Foundation) && !hasFeature(Embedded)
+/// Adds standard coding support wherever Foundation and the full Swift runtime provide coding.
+///
+/// Full-runtime WebAssembly includes Codable; only Embedded mode excludes the dynamic coding
+/// implementation used by ``MixedTypeField``.
 extension Field: Codable {}
 
 public extension [Field] {

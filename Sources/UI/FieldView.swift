@@ -5,7 +5,7 @@
 //  Created by Ben Ku on 7/14/26.
 //
 
-#if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation) && !(os(WASM) || os(WASI))
+#if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation)
 import SwiftUI
 
 @available(iOS 14, macOS 12, tvOS 15, watchOS 8, *)

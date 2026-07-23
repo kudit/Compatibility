@@ -23,9 +23,7 @@ import UIKit
 
 // MARK: - Application
 @available(macOS 10.15, iOS 13, tvOS 13, watchOS 6, *) // required since CloudStorage requires this and this is a property.  This is okay since the Build settings have been pulled out and this manages App specific behavior which isn't usually necessarily for a command line tool or non-app like a service.
-#if !(os(WASM) || os(WASI))
 @MainActor // Application owns observable, cloud-backed, and persisted app state, so one actor boundary keeps that shared state coherent.
-#endif
 public class Application: ObservableObject { // The private initializer preserves singleton construction without unnecessarily forbidding future in-module subclassing.
     public static var baseDomain = "com.kudit"
 
@@ -392,11 +390,10 @@ public class Application: ObservableObject { // The private initializer preserve
     }
 
     /// Builds a complete detailed description after awaiting asynchronously generated module details.
-    nonisolated
     public func loadDetailedDescription() async -> String {
 #if !(os(WASM) || os(WASI))
-        // Capture actor-owned application state briefly, then allow module loading and formatting to proceed off actor.
-        let appInfo = await MainActor.run { self.info.description }
+        // Keep the registered metatypes within their owning actor while asynchronous module details load.
+        let appInfo = self.info.description
         let moduleInfo = await Build.allModules.loadDetailedDescription()
         // Preserve clean app-only output when no modules were registered before detailed reporting.
         return moduleInfo.isEmpty ? appInfo : appInfo + "\n" + moduleInfo

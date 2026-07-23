@@ -121,9 +121,7 @@ public func debugSuppress(_ block: () async throws -> Void) async rethrows {
 // Testing is only supported with Swift 5.9+
 #if compiler(>=5.9)
 // Test Handlers
-#if !(os(WASM) || os(WASI))
 @MainActor
-#endif
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 /// A reusable named test that can run in Compatibility's live UI or an external test framework.
 ///
@@ -229,8 +227,8 @@ public final class TestCase: ObservableObject, @unchecked Sendable {
         let tearDown = self.tearDown
         let weakSelf = WeakReference(self)
         progress = .running
-#if !(os(WASM) || os(WASI))
-        // Run off the main actor, then publish the result back on the main actor.
+        // Run on the detached executor, then publish the result back on the main actor. WebAssembly's
+        // cooperative executor preserves the same actor semantics even when its host is single threaded.
         Task.detached(priority: .userInitiated) { [setUp, test, tearDown, weakSelf] in
             do {
                 do {
@@ -256,9 +254,6 @@ public final class TestCase: ObservableObject, @unchecked Sendable {
                 }
             }
         }
-#else
-        self.progress = .fail("Unable to run tests in WASM")
-#endif
     }
     
     public func isFinished() -> Bool {
@@ -311,9 +306,7 @@ public extension TestCase {
     ///
     /// This is the package's canonical test catalog. The in-app UI and Swift Testing bridge both
     /// consume this property so a test is authored once and remains runnable in either environment.
-#if !(os(WASM) || os(WASI))
     @MainActor
-#endif
     static let namedTests: OrderedDictionary<String, [TestCase]> = {
         var tests: OrderedDictionary = [
             "Expectation Tests": [
@@ -360,15 +353,13 @@ public extension TestCase {
 @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
 public extension Compatibility {
     /// Compatibility's global test catalog.
-#if !(os(WASM) || os(WASI))
     @MainActor
-#endif
     static var tests: OrderedDictionary<String, [TestCase]> {
         TestCase.namedTests
     }
 }
 
-#if canImport(SwiftUI) && canImport(Foundation) && !(os(WASM) || os(WASI))
+#if canImport(SwiftUI) && canImport(Foundation)
 import SwiftUI
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 #Preview {

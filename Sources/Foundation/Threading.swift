@@ -87,8 +87,8 @@ private func timeTolerance(start: TimeInterval, end: TimeInterval, expected: Tim
 public extension Compatibility {
     /// WebAssembly compatibility spelling for sleep.
     ///
-    /// The current embedded runtime cannot suspend, so this returns immediately while preserving
-    /// cross-platform source compatibility for code that does not require an actual delay.
+    /// A generic WebAssembly host does not guarantee a suspending timer, so this returns immediately
+    /// while preserving cross-platform source compatibility for code that does not require a delay.
     static func sleep(
         seconds: Double,
         file: String = #file,
@@ -96,9 +96,9 @@ public extension Compatibility {
         line: Int = #line,
         column: Int = #column
     ) {
-        // WebAssembly has no universal blocking sleep primitive: browser hosts must schedule a
-        // JavaScript timer, while WASI hosts may provide a different clock implementation.
-        debug("Sleep is unavailable on this WebAssembly runtime; no delay occurred. Prefer an asynchronous host timer for browser or WASI code.", level: .WARNING, file: file, function: function, line: line, column: column)
+        // This gate describes the missing timer primitive, not missing Swift concurrency support:
+        // browser hosts must schedule a JavaScript timer while WASI hosts use host-specific clocks.
+        Compatibility.debug("Sleep is unavailable on this WebAssembly runtime; no delay occurred. Prefer an asynchronous host timer for browser or WASI code.", level: .WARNING, file: file, function: function, line: line, column: column)
     }
 }
 
@@ -209,7 +209,8 @@ private let sleepTests: [TestCase] = [
 public extension Compatibility {
     /// Runs potentially long synchronous work away from the main queue when threads are available.
     ///
-    /// WebAssembly currently has no parallel fallback, so its implementation executes immediately.
+    /// WebAssembly currently has no universally available Dispatch fallback, so its synchronous
+    /// implementation executes immediately even though actor and task language features exist.
     static func background(
         _ closure: @Sendable @escaping () -> Void,
         file: String = #file,
@@ -332,9 +333,10 @@ private let backgroundTests: [TestCase] = [
 
 #if os(WASM) || os(WASI)
 public extension Compatibility {
-    /// Executes immediately because this WebAssembly compatibility path is single threaded.
+    /// Executes main-actor work immediately because this WebAssembly compatibility path is single threaded.
+    @MainActor
     static func main(
-        _ closure: @Sendable @escaping () -> Void,
+        _ closure: @Sendable @MainActor @escaping () -> Void,
         file: String = #file,
         function: String = #function,
         line: Int = #line,
@@ -346,8 +348,9 @@ public extension Compatibility {
 
 /// Legacy unqualified WebAssembly main helper retained for source compatibility.
 @available(*, deprecated, renamed: "Task.main", message: "Use Compatibility.main instead.")
+@MainActor
 public func main(
-    _ closure: @Sendable @escaping () -> Void,
+    _ closure: @Sendable @MainActor @escaping () -> Void,
     file: String = #file,
     function: String = #function,
     line: Int = #line,

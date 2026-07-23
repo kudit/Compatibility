@@ -1136,9 +1136,7 @@ extension OrderedDictionary: Decodable where Key: Decodable, Value: Decodable {
 #endif
 
 #if compiler(>=5.9)
-#if !(os(WASM) || os(WASI))
 @MainActor
-#endif
 internal var orderedDictionaryTests: TestClosure = {
     var ordered: OrderedDictionary = ["b": 2, "a": 1]
     let manipulated = ordered.sorted().reversed()
@@ -1202,9 +1200,7 @@ internal var orderedDictionaryTests: TestClosure = {
 }
 
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
-#if !(os(WASM) || os(WASI))
 @MainActor
-#endif
 internal var dictionaryTests: [TestCase] = [
     TestCase("Ordered Dictionary Tests", orderedDictionaryTests),
 ] + dictionaryConvertibleTests

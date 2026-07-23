@@ -13,13 +13,16 @@ public struct Build {
     /// Register top-level modules with ``register(_:)`` or ``Module/include()`` during process startup.
     /// Registration recursively includes dependencies and preserves the first occurrence of each
     /// ``Module/moduleIdentifier``. Registration is intended to finish before concurrent access begins.
+    @MainActor
     public private(set) static var allModules = [Module.Type]()
 
     /// Whether module registration has been closed for this process.
     ///
     /// ``Application/track(including:file:function:line:column:)`` closes registration after adding its
     /// top-level modules. Command-line tools can call ``finishModuleRegistration()`` after their startup
-    /// registrations. Once closed, the module list is immutable and safe for concurrent readers.
+    /// registrations. Every concurrency-capable target, including full-runtime WASM and current Embedded
+    /// Swift, serializes access through the main actor.
+    @MainActor
     public private(set) static var isModuleRegistrationFinished = false
 
     /// Registers one or more top-level modules and all of their dependencies.
@@ -29,6 +32,7 @@ public struct Build {
     /// are unique within ``allModules``.
     ///
     /// - Parameter modules: Top-level modules used by this process.
+    @MainActor
     public static func register(_ modules: Module.Type...) {
         // Forward variadic calls to the collection overload so app and command-line clients share one traversal.
         register(modules)
@@ -37,6 +41,7 @@ public struct Build {
     /// Registers a collection of top-level modules and all of their dependencies.
     ///
     /// - Parameter modules: Top-level modules used by this process.
+    @MainActor
     public static func register(_ modules: [Module.Type]) {
         guard !isModuleRegistrationFinished else {
             // Reject late mutation because support reports may already be reading the process-global list.
@@ -49,15 +54,17 @@ public struct Build {
         }
     }
 
-    /// Closes module registration so the resulting ordered list can be read concurrently without mutation.
+    /// Closes module registration so the resulting ordered list cannot be mutated by later registrations.
     ///
     /// Call this after startup registration in processes that do not use ``Application/track(including:file:function:line:column:)``.
+    @MainActor
     public static func finishModuleRegistration() {
         // A one-way state transition keeps the startup API simple on platforms without modern synchronization primitives.
         isModuleRegistrationFinished = true
     }
 
     /// Recursively registers one module while preventing dependency cycles from recursing forever.
+    @MainActor
     private static func register(_ module: Module.Type, visitingIdentifiers: inout [String]) {
         let identifier = module.moduleIdentifier
         guard !allModules.contains(where: { $0.moduleIdentifier == identifier }),
@@ -81,6 +88,7 @@ public struct Build {
 
 #if compiler(>=5.9)
     /// Replaces registration state so shared tests can restore the process-global registry after exercising it.
+    @MainActor
     internal static func replaceRegisteredModulesForTesting(with modules: [Module.Type], registrationFinished: Bool = false) {
         // Keep this test-only mutation internal so package clients cannot bypass normal dependency registration.
         allModules = modules

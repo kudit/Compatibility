@@ -93,9 +93,7 @@ public extension DictionaryConvertible where Value: Equatable, Element == (key: 
 /// Keeping this beside `DictionaryConvertible` ensures the app test UI exercises the same
 /// implementation that package clients compile, including Foundation-free and WASM builds.
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
-#if !(os(WASM) || os(WASI))
 @MainActor
-#endif
 internal let dictionaryConvertibleTests: [TestCase] = [
     TestCase("DictionaryConvertible merging and lookup") {
         var dictionary = ["a": 1, "b": 2]

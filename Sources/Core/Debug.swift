@@ -354,13 +354,11 @@ public extension Error {
 }
 
 
-// Testing is supported on WASM as well; only the unavailable actor annotation is gated.
+// Testing and main-actor isolation are supported on current full-runtime WASM builds.
 #if compiler(>=5.9)
 @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
 public extension DebugLevel {
-#if !(os(WASM) || os(WASI))
     @MainActor
-#endif
     internal static let testDebugConfig: TestClosure = {
         // NOTE: This might happen concurrently with other tests so could cause issues with output...
         // preserve original settings
@@ -414,9 +412,7 @@ Normal output: \(defaultOutput)
 //        debug("TEST OUTPUT", level: .ERROR)
     }
 
-#if !(os(WASM) || os(WASI))
     @MainActor
-#endif
     internal static let testDebug: TestClosure = {
         var debugError = CustomError("NOT OUTPUT")
         var output = "OVERWRITE"
@@ -440,9 +436,7 @@ Normal output: \(defaultOutput)
         }
     }
 
-#if !(os(WASM) || os(WASI))
     @MainActor
-#endif
     static let tests = [
         TestCase("debug configuration tests", testDebugConfig),
         TestCase("debug tests", testDebug),

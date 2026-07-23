@@ -1,6 +1,6 @@
 // This has been a godsend!  Backport instructions https://davedelong.com/blog/2021/10/09/simplifying-backwards-compatibility-in-swift/
 
-#if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation) && !(os(WASM) || os(WASI))
+#if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation)
 import SwiftUI
 
 @MainActor // for swift6 compliance and since this is SwiftUI, should be @MainActor anyways.
@@ -830,9 +830,21 @@ public extension Backport where Content: View {
 public enum BackportTextSelectability {
     case enabled
     case disabled
+
+    @available(iOS 15.0, macOS 12.0, *)
+    @available(tvOS, unavailable)
+    @available(watchOS, unavailable)
+    var swiftUIValue: TextSelectability {
+        switch self {
+        case .enabled:
+            return .enabled
+        case .disabled:
+            return .disabled
+        }
+    }
 }
 
-@available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension Backport where Content: View {
     /// Controls whether people can select text within this view.
     ///
@@ -880,13 +892,14 @@ public extension Backport where Content: View {
     func textSelection(_ selectability: BackportTextSelectability) -> some View {
         Group {
 #if os(watchOS) || os(tvOS)
+            // These platforms do not support interactive text selection, so preserve the original content.
             content
 #else
-            switch selectability {
-            case .enabled:
-                content.textSelection(.enabled)
-            case .disabled:
-                content.textSelection(.disabled)
+            if #available(iOS 15, macOS 12, *) {
+                content.textSelection(selectability.swiftUIValue)
+            } else {
+                // Older SwiftUI versions keep the same read-only content without selection support.
+                content
             }
 #endif
         }

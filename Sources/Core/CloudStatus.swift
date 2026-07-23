@@ -27,9 +27,7 @@ public enum CloudStatus: CustomStringConvertible, Sendable, CaseIterable, Symbol
 @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
 public extension CloudStatus {
     /// Shared enum behavior tests available to both the in-app test UI and Swift Testing bridge.
-#if !(os(WASM) || os(WASI))
     @MainActor
-#endif
     static let tests = [
         TestCase("CloudStatus rotation") {
             // Verify the shared postfix rotation operator advances through every case and wraps to the beginning.
@@ -46,7 +44,7 @@ public extension CloudStatus {
 }
 #endif
 
-#if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation) && !(os(WASM) || os(WASI))
+#if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation)
 import SwiftUI
 @available(iOS 13, macOS 11, tvOS 13, watchOS 6, *)
 #Preview {

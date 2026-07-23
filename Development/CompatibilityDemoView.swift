@@ -60,6 +60,7 @@ struct CompatibilityDemoView: View {
                         Text("DataStore")
                     }
             }
+            // Application tracking has already registered the complete ordered module graph consumed here.
             AllTestsListView(additionalTests: Self.additionalTests)
                 .tabItem {
                     Text("All Tests")

@@ -16,9 +16,7 @@
 public postfix func ++(x: inout Int) {
     x += 1
 }
-#if !(os(WASM) || os(WASI))
 @MainActor
-#endif
 internal let testPlusPlus: TestClosure = {
     var value = 3
     value++
@@ -30,9 +28,7 @@ internal let testPlusPlus: TestClosure = {
 public postfix func --(x: inout Int) {
     x -= 1
 }
-#if !(os(WASM) || os(WASI))
 @MainActor
-#endif
 internal let testMinusMinus: TestClosure = {
     var value = 3
     value--
@@ -51,9 +47,7 @@ public extension Int {
         return .random(in: 0..<max)
     }
 }
-#if !(os(WASM) || os(WASI))
 @MainActor
-#endif
 internal let randomTests: TestClosure = {
     try expect(Int.random(max: -2) == 0)
     try expect(Int.random(max: 0) == 0)
@@ -105,9 +99,7 @@ public extension Int {
         22: "nd",
     ]
 }
-#if !(os(WASM) || os(WASI))
 @MainActor
-#endif
 internal let ordinalTests: TestClosure = {
     var failedMessages = [String]()
     for (num, suffix) in Int.ordinalTestMap {
@@ -123,9 +115,7 @@ public extension Int {
         return String(self)
     }
 }
-#if !(os(WASM) || os(WASI))
 @MainActor
-#endif
 internal let intStringTests: TestClosure = {
 //    try expect("\(1999)" == "1,999") only seems to happen in SwiftUI.Text("\(1999)")
     try expect(1999.string == "1999")
@@ -146,9 +136,7 @@ public extension Int {
         }
     }
 }
-#if !(os(WASM) || os(WASI))
 @MainActor
-#endif
 internal let pluralTests: TestClosure = {
     try expect(0.pluralEnding() == "s")
     try expect(1.pluralEnding("teeth", singularEnding: "tooth") == "tooth")
@@ -190,9 +178,7 @@ public extension BinaryInteger {
     }
     #endif
 }
-#if !(os(WASM) || os(WASI))
     @MainActor
-#endif
 internal let byteTests: TestClosure = {
     let fileTests: [UInt64: String] = [
         12334: "12 KB",
@@ -230,9 +216,7 @@ internal let byteTests: TestClosure = {
 #if compiler(>=5.9)
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 extension Int {
-#if !(os(WASM) || os(WASI))
     @MainActor
-#endif
     public static let tests: [TestCase] = [
         TestCase("plusplus", testPlusPlus),
         TestCase("minusminus", testMinusMinus),
@@ -244,7 +228,7 @@ extension Int {
     ]
 }
 
-#if canImport(SwiftUI) && canImport(Foundation) && !(os(WASM) || os(WASI))
+#if canImport(SwiftUI) && canImport(Foundation)
 import SwiftUI
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 #Preview("Ordinals") {

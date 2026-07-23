@@ -197,9 +197,7 @@ public enum MixedTypeField: Equatable, Sendable, Hashable {
 @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
 public extension MixedTypeField {
     /// Shared value, formatting, and `Field` integration tests available to the in-app and Swift Testing runners.
-#if !hasFeature(Embedded)
     @MainActor
-#endif
     static let tests = [
         TestCase("Descriptions, conformances, and Field conveniences") {
             // Compile-time generic constraints ensure these public values remain safe across concurrency boundaries.
@@ -250,7 +248,7 @@ public extension MixedTypeField {
             try expect(symbolField.symbol == CloudStatus.available.symbolName)
             requireSendable(direct)
 
-#if canImport(Foundation)
+#if canImport(Foundation) && !hasFeature(Embedded)
             // Verify conditional Codable conformance preserves all public Field properties.
             let encodedField = try JSONEncoder().encode(direct)
             let decodedField = try JSONDecoder().decode(Field.self, from: encodedField)

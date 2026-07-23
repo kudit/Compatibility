@@ -203,7 +203,7 @@ public extension Compatibility {
     }
 }
 
-#if compiler(>=5.9) && !(os(WASM) || os(WASI))
+#if compiler(>=5.9)
 @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
 extension Pasteboard {
     /// Deterministic pasteboard tests shared by the in-app runner and Swift Testing.

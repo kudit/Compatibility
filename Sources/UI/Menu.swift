@@ -5,7 +5,7 @@
 //  Created by Ben Ku on 7/5/24.
 //
 
-#if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation) && !(os(WASM) || os(WASI))
+#if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation)
 import SwiftUI
 
 // MARK: - Menu compatibility for watchOS/tvOS

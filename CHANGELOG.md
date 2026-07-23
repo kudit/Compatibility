@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.18.0 2026-07-22
+Simplified the test UI to use the ordered, deduplicated modules already registered with `Build`, while preserving the focused single-module view and reversing only the all-modules presentation order.
+Started the complete shared test catalog eagerly and non-blockingly, and made failure details selectable through an availability-compatible text-selection backport.
+Strengthened Swift 6 concurrency safety by main-actor isolating mutable module registration and shared tests on all supported platforms, including WASM and WASI, and enabled detached `TestCase` execution on current WebAssembly runtimes.
+Replaced obsolete platform-wide exclusions with focused capability checks, enabling supported SwiftUI, Codable, pasteboard, actor-isolation, and test code on full-runtime WebAssembly while retaining fallbacks for genuinely unavailable threading, timer, reflection, and Embedded Swift features.
+Standardized WebAssembly `Version` coding and round-trip coverage, relied directly on Linux Foundation's existing conformances, and corrected cross-platform build issues involving debug lookup and Apple-only networking error values.
+Updated the demo, README, and contributor guidance for the registered-module test UI, conditional-compilation audits, Embedded Swift distinctions, version synchronization, and post-change validation.
+
 ## v1.17.1 2026-07-21
 Added compiler-assisted migration fix-its to deprecated collection and pasteboard APIs whose replacements preserve the original call semantics.
 Corrected existing deprecation rename spellings so dictionary and threading compatibility wrappers point to their complete replacement declarations.
