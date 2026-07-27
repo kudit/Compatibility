@@ -3,6 +3,7 @@ import Compatibility
 import Testing
 
 /// One reusable Compatibility `TestCase` presented as an individual Swift Testing argument.
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public struct ModuleTestEntry: Sendable, Identifiable {
     public let moduleIdentifier: String
     public let moduleName: String
@@ -33,12 +34,14 @@ public struct ModuleTestEntry: Sendable, Identifiable {
     }
 }
 
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 extension ModuleTestEntry: CustomTestStringConvertible {
     public var testDescription: String {
         "\(moduleName) › \(section) › \(testTitle)"
     }
 }
 
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 extension ModuleTestEntry: CustomTestArgumentEncodable {
     public func encodeTestArgument(to encoder: some Encoder) throws {
         var container = encoder.singleValueContainer()
@@ -46,6 +49,7 @@ extension ModuleTestEntry: CustomTestArgumentEncodable {
     }
 }
 
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension ModuleTestEntry {
     /// Registers the supplied top-level modules and flattens every module test into a named argument.
     @MainActor

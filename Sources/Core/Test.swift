@@ -128,6 +128,7 @@ public func debugSuppress(_ block: () async throws -> Void) async rethrows {
     }
     try await block()
 }
+
 // Testing is only supported with Swift 5.9+
 #if compiler(>=5.9)
 
