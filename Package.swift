@@ -15,39 +15,57 @@ import PackageDescription
 import AppleProductTypes
 #endif
 
+// Products define the executables and libraries a package produces, making them visible to other packages.
 var products = [
-    Product.library(
-        name: "\(packageLibraryName) Library",
-        targets: [packageLibraryName]
-    ),
+	Product.library(
+		name: "\(packageLibraryName) Library", // has to be named different from the iOSApplication or Swift Playgrounds won't open correctly
+		targets: [packageLibraryName]
+	),
 ]
 
+// Targets are the basic building blocks of a package, defining a module or a test suite.
+// Targets can depend on other targets in this package and products from dependencies.
 var targets = [
-    Target.target(
-        name: packageLibraryName,
-        dependencies: [],
-        path: "Sources",
-        exclude: ["CompatibilityTesting"]
-    ),
+	Target.target(
+		name: packageLibraryName,
+		dependencies: [
+//			.product(name: "Compatibility Library", package: "compatibility"), // apparently needs to be lowercase.  Also note this is "Compatibility Library" not "Compatibility"
+		],
+		path: "Sources",
+		exclude: ["CompatibilityTesting"]
+		// If resources need to be included in the module, include here
+//		,resources: [ // unfortuantely cannot be conditionally compiled based on Swift version since the tool seems to be run on latest version.
+//			Resource.process("Resources"),
+//		]
+//		,swiftSettings: [
+//			.enableUpcomingFeature("BareSlashRegexLiterals")
+//		]
+	),
 ]
 
 var platforms: [SupportedPlatform] = [
-    .macOS("10.10"),
-    .tvOS("11"),
-    .watchOS("4"),
+	.macOS("10.10"), // SwiftPM's oldest supported macOS declaration; newer APIs remain availability-gated.
+	.tvOS("11"), // 13 minimum for SwiftUI, 15 minimum for Date.now, 17 minimum for Menu
+	.watchOS("4"), // 6 minimum for SwiftUI, watchOS 7 typically needed for most UI, 8 for Date.now, however (for #buildAvailability) so really should be watchOS 9+.
 ]
 
 #if SwiftPlaygrounds || canImport(PlaygroundSupport)
-platforms += [.iOS("15.2")]
+platforms += [
+	.iOS("15.2"), // minimum for Swift Playgrounds support (maximum version for test iPhone 7)
+]
 #else
-platforms += [.iOS("11")]
+platforms += [
+	.iOS("11"), // 13 minimum for Combine/SwiftUI, 15 minimum for Date.now, (maximum version for test iPhone 7)
+]
 #endif
 
 #if compiler(>=5.9) && os(visionOS)
-platforms += [.visionOS("1.0")]
+platforms += [
+	.visionOS("1.0"), // PackageDescription 5.9 supports visionOS, so SPI and visionOS clients can see the platform explicitly.
+]
 #endif
 
-#if canImport(AppleProductTypes)
+#if canImport(AppleProductTypes) // swift package dump-package fails because of this
 import AppleProductTypes
 
 let executableTargetName = "\(packageLibraryName)TestAppModule"
@@ -59,77 +77,102 @@ let appName = "\(packageLibraryName) App"
 #endif
 
 products += [
-    .iOSApplication(
-        name: appName,
-        targets: [executableTargetName],
-        teamIdentifier: "3QPV894C33",
-        displayVersion: version,
-        bundleVersion: "1",
-        appIcon: .asset("AppIcon"),
-        accentColor: .presetColor(.orange),
-        supportedDeviceFamilies: [.pad, .phone],
-        supportedInterfaceOrientations: [
-            .portrait,
-            .landscapeRight,
-            .landscapeLeft,
-            .portraitUpsideDown(.when(deviceFamilies: [.pad])),
-        ],
-        capabilities: [.outgoingNetworkConnections()],
-        appCategory: .developerTools
-    ),
+	.iOSApplication(
+		name: appName, // needs to match package name to open properly in Swift Playgrounds <v4.5, but must be different to run in v4.6 and greater.
+		targets: [executableTargetName],
+//		bundleIdentifier: "com.kudit.compatibility", // ignored in playgrounds
+		teamIdentifier: "3QPV894C33",
+		displayVersion: version,
+		bundleVersion: "1",
+		appIcon: .asset("AppIcon"),
+		accentColor: .presetColor(.orange),
+		supportedDeviceFamilies: [
+			.pad,
+			.phone
+		],
+		supportedInterfaceOrientations: [
+			.portrait,
+			.landscapeRight,
+			.landscapeLeft,
+			.portraitUpsideDown(.when(deviceFamilies: [.pad]))
+		],
+		capabilities: [
+			.outgoingNetworkConnections() // for networking tests
+		],
+		appCategory: .developerTools
+	),
 ]
 
 targets += [
-    .executableTarget(
-        name: executableTargetName,
-        dependencies: [.init(stringLiteral: packageLibraryName)],
-        path: "Development",
-        exclude: ["Resources", "CompatibilityTests", "CompatibilitySwiftPMTests", "compatibilityCLI"],
-        resources: []
-    ),
+	.executableTarget(
+		name: executableTargetName,
+		dependencies: [
+			.init(stringLiteral: packageLibraryName), // have to use init since normally would be assignable by string literal but we're not using a string literal
+		],
+		path: "Development"
+		,exclude: ["Resources", "CompatibilityTests", "CompatibilitySwiftPMTests", "compatibilityCLI"]
+		// Include test app resources.
+		,resources: [
+//            .process("PlaygroundsAssets.xcassets")
+		]
+//		,swiftSettings: [
+//            .define("COMPATIBILITY_CUSTOM_SETTINGS"),
+//			.enableUpcomingFeature("BareSlashRegexLiterals"),
+//		]
+	),
 ]
-#endif
 
-// Test-only products remain in the same package and therefore appear in the same .swiftpm project.
+#endif // for Swift Package compiling for https://swiftpackageindex.com/add-a-package
+
+// MARK: - Command-line demonstration and package tests
+// These targets intentionally stay out of Swift Playgrounds, whose app-package
+// manifest only supports the existing iOS application target. SwiftPM and Xcode
+// on macOS still discover them, so maintainers can build the CLI and run tests.
 #if !SwiftPlaygrounds && !canImport(PlaygroundSupport)
 products += [
-    .library(
-        name: "Compatibility Testing Library",
-        targets: ["CompatibilityTesting"]
-    ),
-    .executable(
-        name: "compatibilityCLI",
-        targets: ["compatibilityCLI"]
-    ),
+	.library(
+		name: "Compatibility Testing Library",
+		targets: ["CompatibilityTesting"]
+	),
+	.executable(
+		name: "compatibilityCLI",
+		targets: ["compatibilityCLI"]
+	),
 ]
 
 targets += [
-    .target(
-        name: "CompatibilityTesting",
-        dependencies: [.init(stringLiteral: packageLibraryName)],
-        path: "Sources/CompatibilityTesting"
-    ),
-    .executableTarget(
-        name: "compatibilityCLI",
-        dependencies: [.init(stringLiteral: packageLibraryName)],
-        path: "Development/compatibilityCLI"
-    ),
-    .testTarget(
-        name: "\(packageLibraryName)Tests",
+	.target(
+		name: "CompatibilityTesting",
+		dependencies: [.init(stringLiteral: packageLibraryName)],
+		path: "Sources/CompatibilityTesting"
+	),
+	.executableTarget(
+		name: "compatibilityCLI",
+		dependencies: [.init(stringLiteral: packageLibraryName)],
+		path: "Development/compatibilityCLI"
+	),
+	.testTarget(
+		name: "\(packageLibraryName)Tests",
         dependencies: [
             .init(stringLiteral: packageLibraryName),
             "CompatibilityTesting",
-        ],
-        path: "Development/CompatibilityTests",
-        exclude: ["CompatibilityTest.xctestplan"]
-    ),
+        ],// have to use init since normally would be assignable by string literal but we're not using a string literal
+		path: "Development/CompatibilityTests",
+		// The Xcode project consumes this test plan directly, while SwiftPM has no
+		// declaration for it and otherwise warns that the file is unhandled.
+		exclude: ["CompatibilityTest.xctestplan"]
+	),
 ]
 #endif
 
 let package = Package(
-    name: packageLibraryName,
-    platforms: platforms,
-    products: products,
-    dependencies: [],
-    targets: targets
+	name: packageLibraryName,
+	platforms: platforms,
+	products: products,
+	// include dependencies
+	dependencies: [
+		// Dependencies declare other packages that this package depends on.
+//		.package(url: "https://github.com/kudit/Compatibility.git", from: "1.10.0"),
+	],
+	targets: targets
 )
