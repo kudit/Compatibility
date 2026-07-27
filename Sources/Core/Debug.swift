@@ -1,6 +1,43 @@
 
 
 // Here since all releated to Debug code.
+#if hasFeature(Embedded)
+public typealias DebugMessage = String
+#else
+public typealias DebugMessage = Any
+#endif
+
+/// Named values supplied to a custom debug formatter.
+public struct DebugFormatContext: Sendable {
+    public let message: String
+    public let level: DebugLevel
+    public let isMainThread: Bool
+    public let emojiSupported: Bool
+    public let includeContext: Bool
+    public let includeTimestamp: Bool
+    public let source: SourceContext
+
+    public init(
+        message: String,
+        level: DebugLevel,
+        isMainThread: Bool,
+        emojiSupported: Bool,
+        includeContext: Bool,
+        includeTimestamp: Bool,
+        source: SourceContext
+    ) {
+        self.message = message
+        self.level = level
+        self.isMainThread = isMainThread
+        self.emojiSupported = emojiSupported
+        self.includeContext = includeContext
+        self.includeTimestamp = includeTimestamp
+        self.source = source
+    }
+}
+
+public typealias DebugFormatter = (DebugFormatContext) -> String
+
 public struct CompatibilityConfiguration: PropertyIterable {
     /// Override to change the which debug levels are output.  This level and higher (more important) will be output.
     public var debugLevelCurrent: DebugLevel = Build.isDebug ? .DEBUG : .WARNING
@@ -49,6 +86,58 @@ public struct CompatibilityConfiguration: PropertyIterable {
             return "\(timestamp)\(simplerFile)(\(line)) : \(simplerFunction)\(threadInfo)\(level == .OFF ? "" : "\n\(message)")"
         } else {
             return "\(timestamp)\(message)"
+        }
+    }
+
+    /// Preferred labeled alternative to the legacy positional `debugFormat` closure.
+    /// Assigning either property updates the same underlying formatter.
+    public var debugFormatter: DebugFormatter {
+        get {
+            let legacyFormatter = debugFormat
+            return { context in
+                legacyFormatter(
+                    context.message,
+                    context.level,
+                    context.isMainThread,
+                    context.emojiSupported,
+                    context.includeContext,
+                    context.includeTimestamp,
+                    context.source.file,
+                    context.source.function,
+                    context.source.line,
+                    context.source.column
+                )
+            }
+        }
+        set {
+            debugFormat = {
+                message,
+                level,
+                isMainThread,
+                emojiSupported,
+                includeContext,
+                includeTimestamp,
+                file,
+                function,
+                line,
+                column in
+                newValue(
+                    DebugFormatContext(
+                        message: message,
+                        level: level,
+                        isMainThread: isMainThread,
+                        emojiSupported: emojiSupported,
+                        includeContext: includeContext,
+                        includeTimestamp: includeTimestamp,
+                        source: SourceContext(
+                            file: file,
+                            function: function,
+                            line: line,
+                            column: column
+                        )
+                    )
+                )
+            }
         }
     }
     
@@ -114,11 +203,11 @@ public struct CustomError: Error, Sendable {
     }
     @discardableResult
     func debug() -> String {
-#if !hasFeature(Embedded)
-        return Compatibility.debug(description, level: level ?? DebugLevel.defaultLevel, file: file, function: function, line: line, column: column)
-#else
-        return Compatibility.debug(description, isMainThread: true, level: level ?? DebugLevel.defaultLevel, file: file, function: function, line: line, column: column)
-#endif
+        Compatibility.debug(
+            description,
+            level: level ?? DebugLevel.defaultLevel,
+            source: SourceContext(file: file, function: function, line: line, column: column)
+        )
     }
 }
 extension CustomError: CustomStringConvertible {
@@ -265,19 +354,34 @@ public extension Compatibility {
      - Parameter line: For bubbling down the #line number from a call site.
      - Parameter column: For bubbling down the #column number from a call site. (Not used currently but here for completeness).
      */
-#if !hasFeature(Embedded)
     @discardableResult
-    static func debug(_ message: Any, level: DebugLevel = .defaultLevel, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) -> String {
+    static func debug(_ message: DebugMessage, level: DebugLevel = .defaultLevel, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) -> String {
+#if hasFeature(Embedded)
+        return debug(message, isMainThread: true, level: level, file: file, function: function, line: line, column: column)
+#else
 #if canImport(Foundation)
         let isMainThread = Thread.isMainThread // capture before we switch to main thread for printing
 #else
         let isMainThread = true
 #endif
         let message = String(describing: message) // convert to sendable item to avoid any thread issues.
-        
         return debug(message, isMainThread: isMainThread, level: level, file: file, function: function, line: line, column: column)
-    }
 #endif
+    }
+
+    /// Logs a message using an already-captured source location.
+    @discardableResult
+    static func debug(_ message: DebugMessage, level: DebugLevel = .defaultLevel, source: SourceContext) -> String {
+        debug(
+            message,
+            level: level,
+            file: source.file,
+            function: source.function,
+            line: source.line,
+            column: source.column
+        )
+    }
+
     /// Put most of the business logic here for compatibility with WASM.  isMainThread: is required to differentiate but can be removed in global definition
     @discardableResult
     static func debug(_ message: String, isMainThread: Bool, level: DebugLevel = .defaultLevel, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) -> String {
@@ -313,18 +417,16 @@ public extension Compatibility {
  - Parameter line: For bubbling down the #line number from a call site.
  - Parameter column: For bubbling down the #column number from a call site. (Not used currently but here for completeness).
  */
-#if !hasFeature(Embedded)
 @discardableResult
-public func debug(_ message: Any, level: DebugLevel = .defaultLevel, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) -> String {
-    return Compatibility.debug(message, level: level, file: file, function: function, line: line, column: column)
+public func debug(_ message: DebugMessage, level: DebugLevel = .defaultLevel, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) -> String {
+    Compatibility.debug(message, level: level, file: file, function: function, line: line, column: column)
 }
-#else
+
+/// Logs a message using an already-captured source location.
 @discardableResult
-public func debug(_ message: String, level: DebugLevel = .defaultLevel, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) -> String {
-    // go directly to alternate version since dynamic casting is unavailable in WASM
-    return Compatibility.debug(message, isMainThread: true, level: level, file: file, function: function, line: line, column: column)
+public func debug(_ message: DebugMessage, level: DebugLevel = .defaultLevel, source: SourceContext) -> String {
+    Compatibility.debug(message, level: level, source: source)
 }
-#endif
 
 // MARK: Debug(error)
 // This is to provide debugging at calltime when creating errors.
@@ -339,11 +441,7 @@ public extension Error {
      - Parameter column: For bubbling down the #column number from a call site. (Not used currently but here for completeness).
      */
     func debug(level: DebugLevel = .defaultLevel, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) -> Self {
-#if !hasFeature(Embedded)
         Compatibility.debug(self.localizedDescription, level: level, file: file, function: function, line: line, column: column)
-#else
-        Compatibility.debug(self.localizedDescription, isMainThread: true, level: level, file: file, function: function, line: line, column: column)
-#endif
         return self
     }
     #if !canImport(Foundation)
@@ -351,6 +449,15 @@ public extension Error {
         "There was an error but without Foundation, we're using the default `localizedDescription`."
     }
     #endif
+}
+
+public extension TestFailure {
+    /// Logs this failure at its original source location and returns it for throwing.
+    @discardableResult
+    func debug(level: DebugLevel = .ERROR) -> Self {
+        Compatibility.debug(message, level: level, source: source)
+        return self
+    }
 }
 
 
