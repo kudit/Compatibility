@@ -359,8 +359,6 @@ public extension Compatibility {
         let isMainThread = true
 #else
         let isMainThread = Thread.isMainThread // capture before we switch to main thread for printing
-#endif
-#if canImport(Foundation)
         let message = String(describing: message) // convert to sendable item to avoid any thread issues.
 #endif
         return debug(message, isMainThread: isMainThread, level: level, file: file, function: function, line: line, column: column)

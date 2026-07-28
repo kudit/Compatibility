@@ -534,14 +534,19 @@ public extension String {
 #endif
         return URL(string: self)
     }
-    
+#endif
+
     /// Get last "path" component of a string (basically everything from the last `/` to the end)
     var lastPathComponent: String {
+        // ensure lastPathComponent is always available regardless of Foundation support by moving fallback code into the function.
+        #if canImport(Foundation)
         let parts = self.components(separatedBy: "/")
         let last = parts.last ?? self
+        #else
+        let last = self.split(whereSeparator: { $0 == "/" || $0 == "\\" }).last.map(String.init) ?? self
+        #endif
         return last
     }
-#endif
     
     /// `true` if the byte length of the `String` is larger than 100k (the exact threashold may change)
     var isLarge: Bool {
