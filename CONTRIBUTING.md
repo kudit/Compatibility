@@ -10,6 +10,19 @@ PROMPT for updating Module packages:
 Review this Swift package for adoption of the Module APIs introduced in github.com/kudit/Compatibility v1.16.0 or later. Inspect the package’s existing architecture and preserve its public behavior and platform compatibility. Add or update its Compatibility dependency if necessary. Apply an appropriate Module conformance, including its version, direct Compatibility dependency, module dependencies, immediately available moduleInfo, ordered TestCase sections, and opt-in open-source repository metadata when applicable. Register the package from its highest-level module or document how an application should register it through Application.track(including:). Add complete inline DocC comments to the relevant public APIs so generated documentation can discover them. Do not create a .docc catalog, separate documentation articles, or another documentation folder. Preserve existing comments unless they are missing, unclear, or inaccurate. Put reusable tests in the module's TestCase collections so they run both in the in-app test UI and through the Swift Testing bridge; retain target-specific tests only where infrastructure requires them. Follow this package’s existing CONTRIBUTING.md, changelog, versioning, formatting, availability, and compatibility conventions. Avoid unrelated reformatting and whitespace-only changes. Before changing version numbers, compare the current changelog version with the latest committed Git version. If the active working-tree changelog is already ahead of Git, do not choose another version; synchronize that active version across every package manifest, Xcode project, public source constant, test fixture or suite heading, README or documentation display, and other hard-coded version surface. Please check that all deprecations (that can) have appropriate renamed clauses for easy fixits.
 
 
+## Collaborative coding workflow
+
+When working interactively with a maintainer, generally (this shouldn't be meant to override thread instructions but are here as a default):
+- Work in small, reviewable stages rather than delivering a large implementation all at once.
+- Present one immediate decision or action at a time and pause for maintainer feedback unless instructed to do a batch.
+- Explain design choices briefly and answer questions before continuing implementation.
+- Preserve and review the maintainer's local edits before adding further changes.
+- Let the maintainer build, edit, commit, and push between stages when practical.
+- After each pushed maintainer change, review the latest commit before proposing or applying the next change.
+- Keep pull requests in draft until the implementation is compiled, exercised by real tests, and fully reviewed.
+- Avoid unrelated cleanup, broad reformatting, and speculative changes that make the diff harder to reason about.
+
+
 ## Version and changelog rules
 
 - Keep changelog entries in `## vX.X.X YYYY-MM-DD` format, with short line-separated notes under the current version.
