@@ -1,5 +1,18 @@
 # Changelog
 
+# TODO:
+Testing required before release:
+
+- Build the package in Xcode with ⌘B.
+- Run the full test plan with ⌘U.
+- Confirm `Compatibility Module Test Entries` displays each reusable `TestCase` separately.
+- Confirm the new entries execute successfully and preserve readable module, section, and test names.
+- Remove the older grouped module-test bridge after the new adapter is verified, then rerun the tests.
+- Run SwiftPM and supported-platform validation before tagging the release.
+
+## v1.18.3 2026-07-28
+TODO: Implement a comment matching this pull request changes.
+
 ## v1.18.2 2026-07-23
 Fixed Swift Package Index build errors and warnings across SwiftUI and WebAssembly targets.
 Replaced conditional SwiftUI `Group` wrappers with direct `@ViewBuilder` results and concrete text-selection types.
