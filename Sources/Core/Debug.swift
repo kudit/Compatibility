@@ -1,6 +1,6 @@
+// TODO: Needs a real file header documentation/comment.
 
-
-// Here since all releated to Debug code.
+// Here since all releated to Debug code to simplify conditional code gates.
 #if hasFeature(Embedded)
 public typealias DebugMessage = String
 #else
@@ -328,9 +328,9 @@ public enum DebugLevel: Comparable, CustomStringConvertible, CaseIterable, Senda
 }
 
 /// Generates context string
-#if !DEBUG
 @available(*, deprecated, message: "Use Compatibility.settings.debugFormat with the desired formatting options instead.")
 public func debugContext(isMainThread: Bool, file: String, function: String, line: Int, column: Int) -> String {
+    // TODO: Convert this to the debugFormatter callsite for clarity
     Compatibility.settings.debugFormat(
         "",
         .OFF,
@@ -340,12 +340,11 @@ public func debugContext(isMainThread: Bool, file: String, function: String, lin
         Compatibility.settings.debugIncludeTimestamp,
         file, function, line, column)
 }
-#endif
 
 // MARK: - Debug
 public extension Compatibility {
     /**
-     Ku: Debug helper for printing info to screen including file and line info of call site.  Also can provide a log level for use in loggers or for globally turning on/off logging. (Modify DebugLevel.currentLevel to set level to output.  When launching app, probably can set this to DebugLevel.OFF
+     Debug helper for printing info to screen including file and line info of call site.  Also can provide a log level for use in loggers or for globally turning on/off logging. (Modify DebugLevel.currentLevel to set level to output.  When launching app, set this to DebugLevel.OFF for release builds.
      
      - Parameter message: The message to report.
      - Parameter level: The logging level to use.
@@ -356,17 +355,15 @@ public extension Compatibility {
      */
     @discardableResult
     static func debug(_ message: DebugMessage, level: DebugLevel = .defaultLevel, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) -> String {
-#if hasFeature(Embedded)
-        return debug(message, isMainThread: true, level: level, file: file, function: function, line: line, column: column)
-#else
-#if canImport(Foundation)
-        let isMainThread = Thread.isMainThread // capture before we switch to main thread for printing
-#else
+#if hasFeature(Embedded) || !canImport(Foundation)
         let isMainThread = true
+#else
+        let isMainThread = Thread.isMainThread // capture before we switch to main thread for printing
 #endif
+#if canImport(Foundation)
         let message = String(describing: message) // convert to sendable item to avoid any thread issues.
-        return debug(message, isMainThread: isMainThread, level: level, file: file, function: function, line: line, column: column)
 #endif
+        return debug(message, isMainThread: isMainThread, level: level, file: file, function: function, line: line, column: column)
     }
 
     /// Logs a message using an already-captured source location.
@@ -408,8 +405,8 @@ public extension Compatibility {
 }
 //DebugLevel.currentLevel = .ERROR
 /**
- Ku: Debug helper for printing info to screen including file and line info of call site.  Also can provide a log level for use in loggers or for globally turning on/off logging. (Modify DebugLevel.currentLevel to set level to output.  When launching app, probably can set this to DebugLevel.OFF
- 
+ Debug helper for printing info to screen including file and line info of call site.  Also can provide a log level for use in loggers or for globally turning on/off logging. (Modify DebugLevel.currentLevel to set level to output.  When launching app, set this to DebugLevel.OFF for release builds.
+
  - Parameter message: The message to report.
  - Parameter level: The logging level to use.
  - Parameter file: For bubbling down the #file name from a call site.
@@ -419,13 +416,13 @@ public extension Compatibility {
  */
 @discardableResult
 public func debug(_ message: DebugMessage, level: DebugLevel = .defaultLevel, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) -> String {
-    Compatibility.debug(message, level: level, file: file, function: function, line: line, column: column)
+    return Compatibility.debug(message, level: level, file: file, function: function, line: line, column: column)
 }
 
 /// Logs a message using an already-captured source location.
 @discardableResult
 public func debug(_ message: DebugMessage, level: DebugLevel = .defaultLevel, source: SourceContext) -> String {
-    Compatibility.debug(message, level: level, source: source)
+    return Compatibility.debug(message, level: level, source: source)
 }
 
 // MARK: Debug(error)

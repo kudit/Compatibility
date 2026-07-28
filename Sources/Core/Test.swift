@@ -26,7 +26,7 @@ public struct SourceContext: Sendable, CustomStringConvertible {
     }
 
     public var description: String {
-        "\(file):\(line):\(column) in \(function)"
+        "\(file.lastPathComponent):\(line):\(column) in \(function)"
     }
 }
 
