@@ -523,7 +523,7 @@ public extension Build.Environment {
         case .designedForiPad:
             return .purple
         case .macCatalyst:
-            if #available(iOS 15.0, macCatalyst 15.0, tvOS 15.0, macOS 12.0, watchOS 8.0, *) {
+            if #available(iOS 15, macCatalyst 15, tvOS 15, macOS 12, watchOS 8, *) {
                 return .teal
             } else {
                 return .purple

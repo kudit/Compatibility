@@ -273,7 +273,7 @@ private enum DependentModuleTestFixture: Module {
 }
 
 /// Shared Module tests used by both the in-app All Tests UI and the Swift Testing bridge.
-@available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 @MainActor
 private func testModuleMetadataAndDefaults() async throws {
         // Verify the default name remains derived from the conforming type so modules do not need boilerplate.
@@ -324,13 +324,13 @@ private func testModuleMetadataAndDefaults() async throws {
 }
 
 /// Preserve the module test's actor boundary on every concurrency-capable target, including WebAssembly.
-@available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 private let moduleMetadataTest: TestClosure = { @MainActor in
     try await testModuleMetadataAndDefaults()
 }
 
 /// The collection remains main-actor isolated on every supported platform, including WebAssembly.
-@available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 @MainActor
 internal let moduleTests: [TestCase] = [
     TestCase("Module metadata and defaults", moduleMetadataTest),

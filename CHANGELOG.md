@@ -3,8 +3,6 @@
 # TODO:
 Testing required before release:
 
-- Build the package in Xcode with ⌘B.
-- Run the full test plan with ⌘U.
 - Confirm `Compatibility Module Test Entries` displays each reusable `TestCase` separately.
 - Confirm the new entries execute successfully and preserve readable module, section, and test names.
 - Confirm the serialized debug tests restore `Compatibility.settings` even when an expectation throws.

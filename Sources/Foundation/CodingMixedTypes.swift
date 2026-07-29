@@ -194,7 +194,7 @@ public enum MixedTypeField: Equatable, Sendable, Hashable {
 }
 
 #if compiler(>=5.9)
-@available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension MixedTypeField {
     /// Shared value, formatting, and `Field` integration tests available to the in-app and Swift Testing runners.
     @MainActor

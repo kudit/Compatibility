@@ -430,7 +430,7 @@ public extension TestCase {
     }
 }
 
-@available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension TestCase {
     /// Every reusable Compatibility test, grouped in deterministic display and execution order.
     ///
@@ -480,7 +480,7 @@ public extension TestCase {
     }()
 }
 
-@available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension Compatibility {
     /// Compatibility's global test catalog.
     @MainActor

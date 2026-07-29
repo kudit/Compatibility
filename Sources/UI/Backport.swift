@@ -35,7 +35,7 @@ extension Backport where Content == Any {
     }
 }
 
-@available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 extension Backport where Content == Any {
     @ViewBuilder public static func LabeledContent(_ titleKey: String, value: some StringProtocol) -> some View {
         if titleKey.count > 35 {

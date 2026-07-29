@@ -24,7 +24,7 @@ public enum CloudStatus: CustomStringConvertible, Sendable, CaseIterable, Symbol
 }
 
 #if compiler(>=5.9)
-@available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension CloudStatus {
     /// Shared enum behavior tests available to both the in-app test UI and Swift Testing bridge.
     @MainActor

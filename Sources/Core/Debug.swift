@@ -458,7 +458,7 @@ public extension TestFailure {
 
 // Testing and main-actor isolation are supported on current full-runtime WASM builds.
 #if compiler(>=5.9)
-@available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension DebugLevel {
     @MainActor
     internal static let testDebugConfig: TestClosure = {

@@ -209,7 +209,7 @@ public extension Date {
 
 // Testing is only supported with Swift 5.9+
 #if compiler(>=5.9) && canImport(Foundation)
-@available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension Date {
     @MainActor
     static let tests = [
@@ -224,7 +224,7 @@ public extension Date {
 
 #if canImport(SwiftUI)
 import SwiftUI
-@available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 #Preview {
     VStack {
         Text("\(String(describing: Date(from: "2023-01-02 17:12:00", format: "yyyy-MM-dd HH:mm:ss")))")
@@ -233,7 +233,7 @@ import SwiftUI
         Text("\(String(describing: Date(from: "2023-01-02 17:12:00", format: "yyyy-MM-dd HH:mm:ss")?.pretty))")
     }
 }
-@available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 #Preview("Tests") {
     TestsListView(tests: Date.tests)
 }
