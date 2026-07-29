@@ -462,9 +462,18 @@ public extension TestFailure {
 public extension DebugLevel {
     @MainActor
     internal static let testDebugConfig: TestClosure = {
-        // NOTE: This might happen concurrently with other tests so could cause issues with output...
-        // preserve original settings
+        // These tests temporarily replace process-global debug settings. Capture the complete
+        // configuration before making any changes so the surrounding application or test suite
+        // observes exactly the same settings after this test finishes.
         let previousSettings = Compatibility.settings
+
+        // `defer` runs whether the test succeeds or throws. This is important because an
+        // expectation failure exits the closure immediately; a normal assignment at the bottom
+        // would be skipped and could leave later tests using this temporary logger or formatter.
+        defer {
+            Compatibility.settings = previousSettings
+        }
+
         DebugLevel.defaultLevel = .WARNING // testing override default level
         DebugLevel.currentLevel = .NOTICE // testing override current level
 
@@ -506,10 +515,9 @@ Normal output: \(defaultOutput)
 
         let blankText = debug("TestCase return output", level: .DEBUG) // less than the current level so should be silent
         try expect(blankText == "", "expected empty string but found \(blankText)")
-        
-        // reset settings for other tests
-        Compatibility.settings = previousSettings
-        // output messages that happened concurrently
+
+        // `previousSettings` is restored automatically by the `defer` above.
+        // Output captured while the temporary logger was active remains intentionally suppressed.
 //        Compatibility.settings.debugLog(concurrentOutput)
 //        debug("TEST OUTPUT", level: .ERROR)
     }
@@ -540,8 +548,11 @@ Normal output: \(defaultOutput)
 
     @MainActor
     static let tests = [
-        TestCase("debug configuration tests", testDebugConfig),
-        TestCase("debug tests", testDebug),
+        // Both tests mutate process-global debug state (`Compatibility.settings` or the
+        // logger used by `debugSuppress`). Serialized mode prevents them from overlapping
+        // each other or any parallel reusable test while those temporary changes are active.
+        TestCase("debug configuration tests", executionMode: .serialized, testDebugConfig),
+        TestCase("debug tests", executionMode: .serialized, testDebug),
     ]
 }
 #endif
