@@ -16,11 +16,14 @@ struct ModuleTestEntryTests {
     @Test(
         "Compatibility Module Test",
         arguments: await MainActor.run {
-            ModuleTestEntry.entries(including: Compatibility.self)
+            ModuleTestEntry.entries(
+                for: Compatibility.self,
+                tests: Compatibility.tests
+            )
         }
     )
     @MainActor
-    @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
+    @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
     func moduleTest(entry: ModuleTestEntry) async throws {
         try await entry.execute()
     }
