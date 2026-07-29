@@ -51,55 +51,38 @@ extension ModuleTestEntry: CustomTestArgumentEncodable {
 
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension ModuleTestEntry {
-    /// Flattens the supplied modules and their dependencies into individually named test arguments.
+    /// Flattens an explicitly supplied module test catalog into individually named test arguments.
     ///
-    /// Test discovery intentionally builds a local module list instead of mutating `Build.allModules`.
-    /// A test process may have already finished application module registration before Swift Testing
-    /// evaluates parameterized arguments; relying on that process-global registry could therefore
-    /// produce an empty argument list and cause the entire parameterized test to be skipped.
+    /// The caller supplies the concrete module's `tests` value so Swift does not fall back to a
+    /// protocol-extension default when a downstream package has an overly restrictive availability
+    /// annotation. Dependency traversal remains the responsibility of Compatibility's existing
+    /// `Build` registration graph rather than being duplicated in the testing adapter.
+    @MainActor
+    static func entries(
+        for module: Module.Type,
+        tests: OrderedDictionary<String, [TestCase]>
+    ) -> [ModuleTestEntry] {
+        tests.flatMap { section, tests in
+            tests.enumerated().map { index, testCase in
+                ModuleTestEntry(
+                    module: module,
+                    section: section,
+                    index: index,
+                    testCase: testCase
+                )
+            }
+        }
+    }
+
+    /// Flattens each supplied module's protocol-visible catalog.
+    ///
+    /// This convenience remains useful once conforming modules expose `tests` at the same
+    /// availability as the `Module` requirement. Call ``entries(for:tests:)`` while migrating an
+    /// older conformer whose test catalog has a stricter availability annotation.
     @MainActor
     static func entries(including modules: Module.Type...) -> [ModuleTestEntry] {
-        var orderedModules = [Module.Type]()
-        var includedIdentifiers = Set<String>()
-        var visitingIdentifiers = Set<String>()
-
-        func include(_ module: Module.Type) {
-            let identifier = module.moduleIdentifier
-
-            // Ignore modules already emitted and stop circular dependency traversal.
-            guard !includedIdentifiers.contains(identifier),
-                  !visitingIdentifiers.contains(identifier) else {
-                return
-            }
-
-            visitingIdentifiers.insert(identifier)
-            for dependency in module.dependencies {
-                include(dependency)
-            }
-            visitingIdentifiers.remove(identifier)
-
-            // A sibling dependency may have emitted this module during recursive traversal.
-            guard includedIdentifiers.insert(identifier).inserted else {
-                return
-            }
-            orderedModules.append(module)
-        }
-
-        for module in modules {
-            include(module)
-        }
-
-        return orderedModules.flatMap { module in
-            module.tests.flatMap { section, tests in
-                tests.enumerated().map { index, testCase in
-                    ModuleTestEntry(
-                        module: module,
-                        section: section,
-                        index: index,
-                        testCase: testCase
-                    )
-                }
-            }
+        modules.flatMap { module in
+            entries(for: module, tests: module.tests)
         }
     }
 }
