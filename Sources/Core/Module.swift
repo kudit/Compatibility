@@ -35,7 +35,7 @@ public protocol Module {
     /// The default is empty, so production-only modules do not need to declare tests. TestCase UI still
     /// presents the module identity and an empty state, making installed-module diagnostics complete.
     @MainActor
-    @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
+    @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
     static var tests: OrderedDictionary<String, [TestCase]> { get }
 #endif
 
@@ -122,7 +122,7 @@ public extension Module {
 #if compiler(>=5.9)
     /// Modules expose no tests unless the conformer provides ordered test sections.
     @MainActor
-    @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
+    @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
     static var tests: OrderedDictionary<String, [TestCase]> {
         return [:]
     }

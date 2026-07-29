@@ -7,11 +7,15 @@ Testing required before release:
 - Run the full test plan with ⌘U.
 - Confirm `Compatibility Module Test Entries` displays each reusable `TestCase` separately.
 - Confirm the new entries execute successfully and preserve readable module, section, and test names.
-- Remove the older grouped module-test bridge after the new adapter is verified, then rerun the tests.
+- Confirm the serialized debug tests restore `Compatibility.settings` even when an expectation throws.
 - Run SwiftPM and supported-platform validation before tagging the release.
 
 ## v1.18.3 2026-07-28
-TODO: Implement a comment matching this pull request changes.
+Added the reusable `Compatibility Testing Library` product and `ModuleTestEntry` adapter so each module `TestCase` appears as an individually named Swift Testing result.
+Unified `TestCase.execute()` and live test execution through one lifecycle implementation with explicit parallel and serialized execution modes.
+Added source-aware test failures, labeled debug-format context, and source-context debugging conveniences while preserving existing debug-format call sites.
+Made debug tests run exclusively and restore process-global debug settings with `defer`, including when an expectation throws.
+Expanded contributor guidance for short, staged, maintainer-reviewed coding workflows.
 
 ## v1.18.2 2026-07-23
 Fixed Swift Package Index build errors and warnings across SwiftUI and WebAssembly targets.
