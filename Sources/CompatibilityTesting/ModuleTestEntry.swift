@@ -51,11 +51,45 @@ extension ModuleTestEntry: CustomTestArgumentEncodable {
 
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension ModuleTestEntry {
-    /// Registers the supplied top-level modules and flattens every module test into a named argument.
+    /// Flattens the supplied modules and their dependencies into individually named test arguments.
+    ///
+    /// Test discovery intentionally builds a local module list instead of mutating `Build.allModules`.
+    /// A test process may have already finished application module registration before Swift Testing
+    /// evaluates parameterized arguments; relying on that process-global registry could therefore
+    /// produce an empty argument list and cause the entire parameterized test to be skipped.
     @MainActor
     static func entries(including modules: Module.Type...) -> [ModuleTestEntry] {
-        Build.register(modules)
-        return Build.allModules.flatMap { module in
+        var orderedModules = [Module.Type]()
+        var includedIdentifiers = Set<String>()
+        var visitingIdentifiers = Set<String>()
+
+        func include(_ module: Module.Type) {
+            let identifier = module.moduleIdentifier
+
+            // Ignore modules already emitted and stop circular dependency traversal.
+            guard !includedIdentifiers.contains(identifier),
+                  !visitingIdentifiers.contains(identifier) else {
+                return
+            }
+
+            visitingIdentifiers.insert(identifier)
+            for dependency in module.dependencies {
+                include(dependency)
+            }
+            visitingIdentifiers.remove(identifier)
+
+            // A sibling dependency may have emitted this module during recursive traversal.
+            guard includedIdentifiers.insert(identifier).inserted else {
+                return
+            }
+            orderedModules.append(module)
+        }
+
+        for module in modules {
+            include(module)
+        }
+
+        return orderedModules.flatMap { module in
             module.tests.flatMap { section, tests in
                 tests.enumerated().map { index, testCase in
                     ModuleTestEntry(
