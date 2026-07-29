@@ -7,11 +7,15 @@ Testing required before release:
 - Run the full test plan with ⌘U.
 - Confirm `Compatibility Module Test Entries` displays each reusable `TestCase` separately.
 - Confirm the new entries execute successfully and preserve readable module, section, and test names.
-- Remove the older grouped module-test bridge after the new adapter is verified, then rerun the tests.
+- Confirm the serialized debug tests restore `Compatibility.settings` even when an expectation throws.
 - Run SwiftPM and supported-platform validation before tagging the release.
 
-## v1.18.3 2026-07-28
-TODO: Implement a comment matching this pull request changes.
+## v1.19.0 2026-07-28
+Added the reusable `Compatibility Testing Library` product and `ModuleTestEntry` adapter so each module `TestCase` appears as an individually named Swift Testing result.
+Unified `TestCase.execute()` and live test execution through one lifecycle implementation with explicit parallel and serialized execution modes.
+Added source-aware test failures, labeled debug-format context, and source-context debugging conveniences while preserving existing debug-format call sites.
+Made debug tests run exclusively and restore process-global debug settings with `defer`, including when an expectation throws.
+Expanded contributor guidance for short, staged, maintainer-reviewed coding workflows.
 
 ## v1.18.2 2026-07-23
 Fixed Swift Package Index build errors and warnings across SwiftUI and WebAssembly targets.
@@ -166,7 +170,7 @@ Fixed documentation warnings (Swift 6.2 on macOS).
 Fixed typo with last changelog date.  Added simpleTitleCase() function that just makes the first letter of each word capitalized.  Don't affect other characters (if you want that, you can lowercase() and then titleCase()).
 
 ## v1.12.0 2025-10-13
-Refactored build flags into a `Build` struct so that we can use in legacy versions that don't support `ObservableObject` required by `Application` (which also allows us to simplify configurations since these values no longer require Foundation).  Added `floor()` function when not available (like in WASM).  Added `widgetAccentable()` backport.  Added Build.Environment enum to facilitate iteration of build properties. ** Passes all Swift Package Index Checks! **
+Refactored build flags into a `Build` struct so that we can use in legacy versions that don't support `ObservableObject` required by `Application` (which also allows us to simplify configurations since these values no longer require Foundation).  Added `floor()` function when not available (like in WASM).  Added `widgetAccentable()` backport. ** Passes all Swift Package Index Checks! **
 
 ## v1.11.32 2025-10-08
 Old Linux support for Swift 5.10. **Supports all platforms including WASM and Android and passes all Swift Package Index Checks!**
@@ -178,7 +182,7 @@ Added stub mock conformance of Version to Codable on WASM.
 Additional WASM conditional checks.
 
 ## v1.11.29 2025-10-06
-Added precision backport for Double in WASM.  Added backports for `replacingOccurrences(of:[String])` for WASM.  Migrated `CharacterSet` additions and backport to separate file. **Supports all platforms EXCEPT WASM but passes all other Swift Package Index Checks!**
+Added precision backport for Double in WASM.  Added backports for `replacingOccurrences(of:[String])` for WASM.  Migrated CharacterSet additions and backport to separate file. **Supports all platforms EXCEPT WASM but passes all other Swift Package Index Checks!**
 
 ## v1.11.28 2025-10-06
 Added Codable protocol for WASM so that we don't have to conditionally conform in WASM. **Supports all platforms including WASM and Android and passes all Swift Package Index Checks!**
@@ -187,7 +191,7 @@ Added Codable protocol for WASM so that we don't have to conditionally conform i
 Missed a conditional check around the date requirement of `DateStringRepresentation` since this isn't present in WASM. **Supports all platforms including WASM and Android and passes all Swift Package Index Checks!**
 
 ## v1.11.26 2025-10-05
-Added back `DateString` as a type so that we can use in WASM as a type (but without working date features).
+Added back `DateString` as a type so that it can be used but until we have a backport, there will not be a way to get this to work on WASM.
 
 ## v1.11.25 2025-10-05
 Added `CaseNameConvertible` stub for WASM so that it can be used but until we have a backport, there will not be a way to get this to work on WASM.
@@ -292,7 +296,7 @@ Fixed issue where [Color] not available on non-Apple platforms.  Added missing T
 Extracted `.rainbow` included for previews to use the Color version when available.  Improved RadialLayout preview.  Added public initializer for RadialLayout so can be used outside project.  Removed warnings running in Swift Playgrounds for Application tests.  Note: When building, Swift Playgrounds 4.6.4 currently has a bug where it has trouble choosing the root application target rather than included module app targets which causes issues for #Previews.  Removed requirement of Darwin.C when not Linux and can't import Darwin (was the cause of WASM and Android compile failures).  Removed odd instances of availability checking for tvOS 20 (which now that we have tvOS 26, that passes).  Added Collection conformance to OrderedSet.  Added tests to bring test coverage to 47%. (Failed Linux, WASM, Android)
 
 ## v1.10.10 2025-06-06
-Added public visibility of Visibility backport.  Added `persistentSystemOverlays` backport.  Added tests to bring test coverage to 46%.  Updated Version string parsing.  Added a failable initializer for parsing strings.  Updated the implementation of the `string:defaultValue:` initializer.  Fixed so version character stripping isn't just trimming.
+Added public visibility of Visibility backport.  Added `persistentSystemOverlays` backport.  Added tests to bring test coverage to 46%.  Updated Version string parsing.  Added a failable initializer for parsing strings.  Updated the implementation of the `string:defaultValue:` initializer.
 
 ## v1.10.9 2025-05-14
 re-worked compiler directives to fix issues with Linux visibility.
@@ -370,7 +374,7 @@ Changed so `normalized` returns a non-optional.  This is technically a breaking 
 Fixed since `.focusable` is not available in iOS < 17.  Fixed missing package version update in v1.6.7.  Found a fix for packages and Swift Playgrounds v4.6+ (the iOSApplication name needs to be DIFFERENT whereas previous versions required it to be the SAME).
 
 ## v1.6.7 2025-03-10
-Shifted around `Version.zero` to non-constrained extension to make more sense.  Added `resetVersionsRun()` for testing.  Fixed internal scoping of String versions run keys just in case we need to use outside the framework.  Added `tomorrow` and `tomorrowMidnight` date values.  Added test section for output formats.  Improved `Backport.LabeledContent` for compatibility with older devices (but now requires iOS 15 to use).  Removed pageViewStyle from TabViews on tvOS since it doesn't really work.
+Shifted around `Version.zero` to non-constrained extension to make more sense.  Works fine under Swift Playgrounds 4.5.1 but not under Swift Playgrounds 4.6.2 (and 4.6?).  Added `Version.zero`.
 
 ## v1.6.6 2025-02-28
 Fixed internal `Version.zero` (doh!).
@@ -379,7 +383,7 @@ Fixed internal `Version.zero` (doh!).
 Cleaned up redundant code for `Date.pretty()`.  Works fine under Swift Playgrounds 4.5.1 but not under Swift Playgrounds 4.6.2 (and 4.6?).  Added `Version.zero`.
 
 ## v1.6.4 2025-01-17
-Added debugging output when replacing the identifier in preview/playground environment to fix issue with Score identifier being com.kudit.Score-.  Added check to prevent preview output alerting that iCloud doesn't work from spamming the logs.  Added in app name and identifier to compatibility info.  Fixed unnecessary check for iOS warning in Backport.
+Added debugging output when replacing the identifier in preview/playground environment to fix issue with Score identifier being com.kudit.Score-.  Added check to prevent preview output alerting that iCloud doesn't work from spamming the logs.
 
 ## v1.6.3 2025-01-15
 Added some documentation to `asJSON()` function.  Fixed internal definition of Triangle initializer.
@@ -388,7 +392,7 @@ Added some documentation to `asJSON()` function.  Fixed internal definition of T
 Fixed double encoding of ampersands in `htmlEncoded` strings due to random access nature of dictionaries.  Added test.  Added double quote `"` to `&quot;` encoding.
 
 ## v1.6.1 2025-01-14
-Fixed build limited availablility issue with watchOS.
+Fixed Linux compile error.
 
 ## v1.6.0 2025-01-14
 Added `pluralEnding()`.  Added `.backport.onTapGesture {}`.
@@ -403,7 +407,7 @@ Attempted additional fixes to support Swift 5.8.  Assumed returns are made expli
 #Preview isn't the issue, it's literally the @available checks we need to filter out.  `swift(` doesn't seem to work so trying replacing them all with `compiler(`.
 
 ## v1.5.1 2024-11-26
-Added `#if swift(>=5.9)` checks around `#Preview` macros which aren't supported in Swift 5.8.  If this doesn't work, try replacing `#if swift(` with `#if compiler(`.
+Added `#if swift(>=5.9)` checks around `#Preview` macros which aren't supported in Swift 5.8.  If this doesn't work, try replacing `#if swift(`.
 
 ## v1.5.0 2024-11-26
 Removed duplicate `delay` code to fix errors with Swift 6.  Does mean that some code may not work and will need to be adjusted (if you need `delay { @MainActor in`, simply do `delay { main {` instead).
@@ -439,7 +443,7 @@ Added import of Color when available in Radial Layout previews.
 Added OverlappingStack and RadialLayout.
 
 ## v1.4.1 2024-11-04
-Added compiler check for Threading `background` tasks so that warnings are silenced in Swift 6 but still works in Swift Playgrounds.  Removed URL comparison since causes warnings in Swift 6 and doesn't seem used most places (and where used, can simply reference the path comparison that it wraps).  Fixed issues with watchOS.  Fixed compile issues with Linux by removing `iCloudToken` variable.  Addressed @retroactive warnings in a way that works with Swift Playgrounds.  Added Embossed modifier.
+Added compiler check for Threading `background` tasks so that warnings are silenced in Swift 6 but still works in Swift Playgrounds.  Removed URL comparison since causes warnings in Swift 6 and doesn't seem used most places (and where used, can simply reference the path comparison that it wraps).  Fixed issues with watchOS.  Added Embossed modifier.
 
 ## v1.4.0 2024-11-04
 Fixed some preview issues with legacy deprecated compatibility code.  Added `scrollContentBackground` backport.  Added `safeAreaPadding` backport.  Added `disableSmartQuotes` view modifier.  Can simulate @CloudStorage acting like UserDefaults by setting `Application.iCloudSupported = false`.  Removed cloud monitoring notifications when using UserDefaults.  Added `.precision(significantFigures)` output for Doubles.
@@ -514,13 +518,13 @@ Fixed several data race safety issues.  Fixed linux support.
 Standardized Package.swift, CHANGELOG.md, README.md, and LICENSE.txt files.  Standardized deployment targets.  Added DataStore code and added tests.  Added Date.nowBackport for supporting earlier versions.  Moved Environmental checks from Device so we can use in more places and needed for testing DataStores in previews.  Added `asDictionary()` method for Codable objects similar to `asJSON()`.  Standardized ordering and labelling of all `available` checks to iOS, macOS, tvOS, watchOS, visionOS (the order in which each platform got swift language support).  Also removed unnecessary `.0` from versions and unnecessary `macCatalyst` checks.  Fixed `Version` so that when encoded it stores as a `String` instead of as a struct.  Changed `Compatibility` to enum since it isn't really a structure and avoids accidentally instantiating.  Updated `ClearableTextField` to only update value when the field looses focus instead of every character (also fixed issue where that was not public).
 
 ## v1.2.1 2024-07-27
-Moved fetchURL code into a Compatibility extension so can specifically target.  Doh!  Debug was printing at the right time I think, they were just set to .SILENT!  Fix for data race error.  Added additional sendable conformances on enums and made FileManager extension public.  Changed documentation for delay to be clear it runs on the same thread and doesn't force to main or background.
+Moved fetchURL code into a Compatibility extension so can specifically target.  Doh!  Debug was printing at the right time I think, they were just set to .SILENT!  Fix for data race error.  Made `FileManager` extension public.  Changed documentation for delay to be clear it runs on the same thread and doesn't force to main or background.
 
 ## v1.2.0 2024-07-25
 Added additional onChange 2 parameter compatibility version and added ability to specify initial setting (and added documentation to match the new (current) implementations).  Moved threading functions into static Compatibility functions so that we can reference in case we're in a class that shadows the same function name (like running background {} from within a view that is trying to create a view).  Added returning background { } calls for cases where we need to await the results of the long-running background task.  Re-worked debugLevel features of debug statements so we aren't switching threads with the print statement to ensure debug statements output immediately and don't get printed out of order.  Added Compatibility.isDebug flag for testing if we've built for release or debug.  Added additional Backport code including `scrollClipDisabled()`.  Added set additions for OrderedSet and OrderedDictionary and added merging/interoperability between OrderedDictionary and Dictionary.
 
 ## v1.1.0 2024-07-19
-Added withoutZeros function to Double.  Added .backport.navigationTitle() function for older iOS.  Fixed JSON coding issue (since we're using codable, don't need to verify that all the contents are actually JSON supported NSObjects).  Added additional version tests.  Added injection tests with a count to include expected failure and run count.  Fixed so debug breakpoints are accessible from the proper thread instead of being stranded on the main thread.  Added Placard shape.  Added Triangle shaped.  Fixed .backport.background(color)
+Added withoutZeros function to Double.  Added `.backport.navigationTitle()` function for older iOS.  Fixed JSON coding issue (since we're using codable, don't need to verify that all the contents are actually JSON supported NSObjects).  Added additional version tests.  Added injection tests with a count to include expected failure and run count.  Fixed so debug breakpoints are accessible from the proper thread instead of being stranded on the main thread.  Added Placard shape.  Added Triangle shaped.  Fixed `.backport.background(color)`.
 
 ## v1.0.18 2024-07-17
 Added license usage example.  Added ability to pass in additional tests to the AllTestsListView(["Section Name": tests, "Section Name 2": tests2]).  Added fix for OperatingSystemVersion in swift Playgrounds (needed to do typalias wrapper trick).  Needed to make Linux hack of ObservableObject have public send() function to prevent complaints about internal acccess.  Added OrderedDictionary and OrderedSet based on swift-collections code but simplified (originally tried adding swift-collections as a dependency but it doesn't support watchOS 4).
@@ -535,7 +539,7 @@ Added public intializer for BytesView.
 Added check for macOS 12 in Development app.  Improved demo app.  Added BytesView.  Added improved test views.
 
 ## v1.0.14 2024-07-12
-Removed unnecessary utf8data extension since Data(String.utf8) works as a non-optional.  Added Codable conformance for Version.  Updated/enhanced Version tests.  Added JSON encoding/decoding simple functions and removed unnecessary similar code.  Removed unnecessary Foundation imports.  Made changes to get Linux support validation (passes all SwiftPackageIndex tests for all platforms and safe from data races!).
+Removed unnecessary utf8data extension since Data(String.utf8) works as a non-optional.  Added Codable conformance for Version.  Updated/enhanced Version tests.  Added JSON encoding/decoding simple functions and removed unnecessary similar code.  Made changes to get Linux support validation (passes all SwiftPackageIndex tests for all platforms and safe from data races!).
 
 ## v1.0.13 2024-07-11
 Undid structure form of HTML and PostData since it won't code/decode properly automatically in KuditFrameworks.  Seeing if typealias will work again (it does if we wrap the typealias in a structure).  Added an HTML test for attributedString.  Removed redundant old attributedStringFromHTML code.
@@ -565,13 +569,13 @@ Broke macOS and watchOS with last update.  Re-worked TabView Backport to be more
 Updated Xcode minimum versions to match package.  Added Backport .overlay and .foregroundStyle and .background for older tvOS.
 
 ## v1.0.4 2024-07-08
-Attempted to fix issues with Linux compatibility (swapped legacyData around so extension of URLRequest instead of URLSession).  Added additional #if canImport(Combine) checks.
+Attempted to fix issues with Linux compatibility (swapped legacyData around so extension of URLRequest instead of URLSession).  Fixed target versions (Xcode project).
 
 ## v1.0.3 2024-07-08
 Reduced tvOS version requirements to tvOS 13 (though menu and other UI features are not supported).
 
 ## v1.0.2 2024-07-08
-Fixed some data race issues and fixed breaking support for watchOS and Linux.  Added condition for @Published to ensure compilation on Linux.  Made PostData require a Sendable type and added Sendable conformance to NetworkError.  Fixed sendability of Message to prevent issues using `debug()`.
+Fixed several data race safety issues and fixed breaking support for watchOS and Linux.  Added condition for @Published to ensure compilation on Linux.  Made PostData require a Sendable type and added Sendable conformance to NetworkError.  Fixed sendability of Message to prevent issues using `debug()`.
 
 ## v1.0.1 2024-07-07
 Fixed missing date in changelog.  Moved DebugLevel.defaultLevel in initializers into nil initializers so can make sure to reference static property not in the initializer.  Changed default color to orange.  Changed several static vars to lets for concurrency safety.  Enabled `main {}` to be used with throwing functions.  Added `.spi.yml` file for Swift Package Index compiler.
