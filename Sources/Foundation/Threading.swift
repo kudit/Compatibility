@@ -83,52 +83,10 @@ private func timeTolerance(start: TimeInterval, end: TimeInterval, expected: Tim
 
 // MARK: - Sleep
 
-#if arch(wasm32)
-public extension Compatibility {
-    /// WebAssembly compatibility spelling for sleep.
-    ///
-    /// A generic WebAssembly host does not guarantee a suspending timer, so this returns immediately
-    /// while preserving cross-platform source compatibility for code that does not require a delay.
-    static func sleep(
-        seconds: Double,
-        file: String = #file,
-        function: String = #function,
-        line: Int = #line,
-        column: Int = #column
-    ) {
-        sleep(
-            seconds: seconds,
-            source: SourceContext(file: file, function: function, line: line, column: column)
-        )
-    }
-
-    /// Source-forwarding form for helpers that already captured the original call site.
-    static func sleep(seconds: Double, source: SourceContext) {
-        // This gate describes the missing timer primitive, not missing Swift concurrency support:
-        // browser hosts must schedule a JavaScript timer while WASI hosts use host-specific clocks.
-        Compatibility.debug(
-            "Sleep is unavailable on this WebAssembly runtime; no delay occurred. Prefer an asynchronous host timer for browser or WASI code.",
-            level: .WARNING,
-            source: source
-        )
-    }
-}
-
-/// Legacy WebAssembly sleep spelling retained as an immediate compatibility fallback.
-@available(*, deprecated, renamed: "Compatibility.sleep(seconds:)", message: "Use Compatibility.sleep(seconds:) instead.")
-public func sleep(
-    seconds: Double,
-    file: String = #file,
-    function: String = #function,
-    line: Int = #line,
-    column: Int = #column
-) {
-    Compatibility.sleep(
-        seconds: seconds,
-        source: SourceContext(file: file, function: function, line: line, column: column)
-    )
-}
-#else
+// A sleep helper must actually suspend for the requested duration. Generic WASM hosts and Embedded
+// Swift do not provide the timer guarantees required by this API, so do not expose a no-op spelling
+// that silently returns immediately and masks timing assumptions in portable code.
+#if !arch(wasm32) && !hasFeature(Embedded)
 public extension Compatibility {
     /// Suspends the current asynchronous task for a number of seconds.
     ///
@@ -432,13 +390,12 @@ private let mainTests: [TestCase] = [
 
 // MARK: - Delay
 
+// A delay helper must actually postpone execution. Generic WASM hosts and Embedded Swift do not
+// provide the timing guarantees required here, so omit the API instead of executing immediately.
+#if !arch(wasm32) && !hasFeature(Embedded)
 public extension Compatibility {
     /// Runs a closure after a delay, using dispatch when Swift concurrency is unavailable.
     static func delay(_ seconds: Double, closure: @Sendable @escaping () -> Void) {
-#if arch(wasm32)
-        // WebAssembly has no blocking or asynchronous delay fallback in this compatibility layer.
-        closure()
-#else
         if #available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *) {
             Task {
                 await Task.sleep(seconds: seconds)
@@ -447,7 +404,6 @@ public extension Compatibility {
         } else {
             DispatchQueue.global().asyncAfter(deadline: DispatchTime.now() + seconds, execute: closure)
         }
-#endif
     }
 }
 
@@ -457,7 +413,6 @@ public func delay(_ seconds: Double, closure: @Sendable @escaping () -> Void) {
     Compatibility.delay(seconds, closure: closure)
 }
 
-#if !arch(wasm32)
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension Task where Success == Never, Failure == Never {
     /// Preferred concise spelling for Compatibility's delayed closure helper.
@@ -491,8 +446,8 @@ public extension Compatibility {
     @MainActor
     static let threadingTests: [TestCase] = {
 #if arch(wasm32) || hasFeature(Embedded)
-        // WASM/Embedded intentionally omit background/main helpers rather than providing synchronous
-        // semantic fallbacks, and generic WASM hosts do not provide the timing guarantees tested here.
+        // WASM/Embedded intentionally omit sleep, background, main, and delay rather than providing
+        // semantic no-op fallbacks, so there are no threading/timing tests to register there.
         return []
 #else
         return sleepTests + backgroundTests + mainTests + delayTests
