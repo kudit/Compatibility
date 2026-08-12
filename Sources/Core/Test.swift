@@ -12,7 +12,7 @@ public struct SourceContext: Sendable, CustomStringConvertible {
     public let line: Int
     public let column: Int
 
-    /// Captures the call site by default.
+    /// Captures the call site when its individual defaults are used directly by a caller.
     public init(
         file: String = #file,
         function: String = #function,
@@ -35,7 +35,16 @@ public struct TestFailure: Error, Sendable, CustomStringConvertible {
     public let message: String
     public let source: SourceContext
 
-    public init(_ message: String, source: SourceContext = SourceContext()) {
+    /// Caller-capturing convenience that preserves the source of a naked `TestFailure("...")` call.
+    public init(_ message: String, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) {
+        self.init(
+            message,
+            source: SourceContext(file: file, function: function, line: line, column: column)
+        )
+    }
+
+    /// Source-forwarding form for callers that have already captured their own call site.
+    public init(_ message: String, source: SourceContext) {
         self.message = message
         self.source = source
     }
@@ -67,10 +76,18 @@ extension TestFailure: LocalizedError {
 /// The source location defaults mirror Swift Testing's diagnostics while remaining callable from
 /// live applications, previews, older systems, and test runners that do not provide Swift Testing.
 public func expect(_ condition: Bool, _ debugString: String? = nil, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) throws {
+    try expect(
+        condition,
+        debugString,
+        source: SourceContext(file: file, function: function, line: line, column: column)
+    )
+}
+
+/// Source-forwarding form for reusable expectation helpers.
+public func expect(_ condition: Bool, _ debugString: String? = nil, source: SourceContext) throws {
     guard condition else {
         let message = debugString ?? "Expectation failed"
-        let source = SourceContext(file: file, function: function, line: line, column: column)
-        debug(message, level: .ERROR, file: file, function: function, line: line, column: column)
+        debug(message, level: .ERROR, source: source)
         throw TestFailure(message, source: source)
     }
 }
@@ -82,16 +99,44 @@ public func expect(_ condition: Bool, _ debugString: String? = nil, file: String
 ///   - expected: The value the test requires.
 ///   - message: Optional context appended to the generated actual-versus-expected diagnostic.
 public func expectEqual<Value: Equatable>(_ actual: Value, _ expected: Value, _ message: String? = nil, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) throws {
+    try expectEqual(
+        actual,
+        expected,
+        message,
+        source: SourceContext(file: file, function: function, line: line, column: column)
+    )
+}
+
+/// Source-forwarding form for APIs that already captured the original comparison call site.
+public func expectEqual<Value: Equatable>(_ actual: Value, _ expected: Value, _ message: String? = nil, source: SourceContext) throws {
     // Build the comparison text here so UI runs receive the same useful values that Swift Testing displays.
     let context = message.map { " \($0)" } ?? ""
-    try expect(actual == expected, "Expected \(String(reflecting: expected)), but received \(String(reflecting: actual)).\(context)", file: file, function: function, line: line, column: column)
+    try expect(
+        actual == expected,
+        "Expected \(String(reflecting: expected)), but received \(String(reflecting: actual)).\(context)",
+        source: source
+    )
 }
 
 /// Requires two equatable values to differ and reports the shared value when they do not.
 public func expectNotEqual<Value: Equatable>(_ actual: Value, _ unexpected: Value, _ message: String? = nil, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) throws {
+    try expectNotEqual(
+        actual,
+        unexpected,
+        message,
+        source: SourceContext(file: file, function: function, line: line, column: column)
+    )
+}
+
+/// Source-forwarding form for APIs that already captured the original comparison call site.
+public func expectNotEqual<Value: Equatable>(_ actual: Value, _ unexpected: Value, _ message: String? = nil, source: SourceContext) throws {
     // Include the unexpected value so a failure remains actionable outside a debugger.
     let context = message.map { " \($0)" } ?? ""
-    try expect(actual != unexpected, "Expected a value other than \(String(reflecting: unexpected)), but received it.\(context)", file: file, function: function, line: line, column: column)
+    try expect(
+        actual != unexpected,
+        "Expected a value other than \(String(reflecting: unexpected)), but received it.\(context)",
+        source: source
+    )
 }
 
 // NOTE: Really wish there was a way of writing a possibly async function or doing this using a generic so we don't have to duplicate code.
@@ -311,28 +356,39 @@ public final class TestCase: ObservableObject, @unchecked Sendable {
     }
     @Published public var progress: TestProgress = .notStarted
 
-    /// Creates a reusable test with optional lifecycle closures.
-    ///
-    /// Teardown is attempted even when setup or the test throws, matching the cleanup expectation
-    /// familiar from XCTest without claiming `XCTestCase` API or inheritance compatibility.
+    /// Creates a reusable test with optional lifecycle closures while capturing its declaration site.
+    public convenience init(
+        _ title: String,
+        executionMode: TestExecutionMode = .parallel,
+        setUp: TestClosure? = nil,
+        test: @escaping TestClosure,
+        tearDown: TestClosure? = nil,
+        file: String = #file,
+        function: String = #function,
+        line: Int = #line,
+        column: Int = #column
+    ) {
+        self.init(
+            title,
+            executionMode: executionMode,
+            setUp: setUp,
+            test: test,
+            tearDown: tearDown,
+            source: SourceContext(file: file, function: function, line: line, column: column)
+        )
+    }
+
+    /// Source-forwarding form for callers that already captured the declaration site.
     public init(
         _ title: String,
         executionMode: TestExecutionMode = .parallel,
         setUp: TestClosure? = nil,
         test: @escaping TestClosure,
         tearDown: TestClosure? = nil,
-        source: SourceContext? = nil,
-        file: String = #file,
-        function: String = #function,
-        line: Int = #line,
-        column: Int = #column
+        source: SourceContext
     ) {
         self.title = title
-        // Do not use `SourceContext()` as a default argument here. Nested default arguments are
-        // evaluated at this initializer declaration, which would make failures point into Test.swift.
-        // Capture the compiler literals directly on this initializer so omitted source information
-        // identifies the TestCase declaration at the caller. An explicit source still wins.
-        self.source = source ?? SourceContext(file: file, function: function, line: line, column: column)
+        self.source = source
         self.executionMode = executionMode
         self.setUp = setUp
         self.test = test
@@ -343,7 +399,6 @@ public final class TestCase: ObservableObject, @unchecked Sendable {
     public convenience init(
         _ title: String,
         executionMode: TestExecutionMode = .parallel,
-        source: SourceContext? = nil,
         file: String = #file,
         function: String = #function,
         line: Int = #line,
@@ -354,12 +409,18 @@ public final class TestCase: ObservableObject, @unchecked Sendable {
             title,
             executionMode: executionMode,
             test: test,
-            source: source,
-            file: file,
-            function: function,
-            line: line,
-            column: column
+            source: SourceContext(file: file, function: function, line: line, column: column)
         )
+    }
+
+    /// Source-forwarding trailing-closure form.
+    public convenience init(
+        _ title: String,
+        executionMode: TestExecutionMode = .parallel,
+        source: SourceContext,
+        _ test: @escaping TestClosure
+    ) {
+        self.init(title, executionMode: executionMode, test: test, source: source)
     }
 
     private var execution: TestExecution {
