@@ -27,5 +27,11 @@ struct ModuleTestEntryTests {
     func moduleTest(entry: ModuleTestEntry) async throws {
         try await entry.execute()
     }
+
+    /// Simple static control used to verify that Xcode discovers and expands parameterized cases.
+    @Test("Parameter display test", arguments: [1, 2, 3])
+    func parameterDisplayTest(value: Int) {
+        #expect((1...3).contains(value))
+    }
 }
 #endif
