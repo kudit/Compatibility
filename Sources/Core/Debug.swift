@@ -358,13 +358,18 @@ public extension Compatibility {
     @discardableResult
     static func debug(_ message: DebugMessage, level: DebugLevel = .defaultLevel, source: SourceContext) -> String {
 #if hasFeature(Embedded) || !canImport(Foundation)
+        // Single-threaded or Foundation-less runtimes cannot provide Foundation.Thread identity.
         let isMainThread = true
 #else
-        let isMainThread = Thread.isMainThread
+        let isMainThread = Thread.isMainThread // capture before we switch to main thread for printing
 #endif
 
+        // Embedded Swift already narrows `DebugMessage` to `String`, so no dynamic conversion is needed.
 #if !hasFeature(Embedded)
-        let message = String(describing: message)
+        // Full Swift runtimes without Foundation still allow `DebugMessage == Any`; stringify before
+        // forwarding to the shared String-based formatter just as Foundation-backed builds do.  We have
+        // a backport for String(describing: message) so we don't need to worry about canImport(Foundation) for this line.
+        let message = String(describing: message) // convert to sendable item to avoid any thread issues.
 #endif
         return debug(message, isMainThread: isMainThread, level: level, source: source)
     }
@@ -383,8 +388,8 @@ public extension Compatibility {
     /// Internal formatter implementation once source context and thread identity are known.
     @discardableResult
     internal static func debug(_ message: String, isMainThread: Bool, level: DebugLevel = .defaultLevel, source: SourceContext) -> String {
-        guard DebugLevel.isAtLeast(level) else {
-            return ""
+        guard DebugLevel.isAtLeast(level) else { // check current debug level from settings
+            return "" // don't actually print
         }
         let debugMessage = Compatibility.settings.debugFormatter(
             DebugFormatContext(
@@ -396,10 +401,14 @@ public extension Compatibility {
                 includeTimestamp: Compatibility.settings.debugLevelsToIncludeTimestamp.contains(level),
                 source: source
             )
+            // possible future hook to log message
         )
 
         Compatibility.settings.debugLog(debugMessage)
+
+        // do this AFTER Printing so we can see what the message is in the console
         checkBreakpoint(level: level)
+
         return debugMessage
     }
 }
@@ -488,6 +497,7 @@ public extension DebugLevel {
         try expect(Compatibility.settings.debugLevelDefault == .WARNING, "expected default debug level to be .WARNING but found \(Compatibility.settings.debugLevelDefault)")
 
         Compatibility.settings.debugEmojiSupported = false // testing symbols
+        //        Compatibility.settings.debugIncludeTimestamp = true // test deprecated code
         Compatibility.settings.debugLevelsToIncludeTimestamp = .all // test timestamps
         let defaultFormatter = Compatibility.settings.debugFormatter
         Compatibility.settings.debugFormatter = { context in

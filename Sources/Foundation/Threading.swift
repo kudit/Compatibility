@@ -155,7 +155,10 @@ public extension Compatibility {
         let duration = UInt64(seconds * 1_000_000_000)
         do {
             try await Task.sleep(nanoseconds: duration)
+            // Potential fallback for earlier versions/backport?  Likely unnecessary/unusable due to async but may be useful for a synchronous fallback?:
+            // sleep(UInt32(seconds)) // give fetch from server time to finish
         } catch {
+            // do nothing but make debug log if we can.
             Compatibility.debug("Sleep function was interrupted", level: .DEBUG, source: source)
         }
     }
@@ -259,6 +262,7 @@ public extension Compatibility {
         closure()
 #else
         DispatchQueue.global().async {
+//          Compatibility.debug("Running background block", level: .DEBUG, source: source)
             closure()
         }
 #endif
@@ -267,8 +271,9 @@ public extension Compatibility {
 #if !arch(wasm32)
     /// Starts nonthrowing asynchronous work in a detached background task.
     @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
-    static func background(_ closure: @Sendable @escaping () async -> Void) {
+    static func background(_ closure: @Sendable @escaping () async -> Void) { // TODO: Should this capture SourceContext for debugging?
         Task.detached(priority: .background) {
+//            Compatibility.debug("Running asynchronous background block", level: .DEBUG, source: SourceContext(file: file, function: function, line: line, column: column))
             await closure()
         }
     }
@@ -299,8 +304,9 @@ public extension Compatibility {
 ///
 /// Use ``Compatibility/background(_:file:function:line:column:)`` when another API, such as
 /// SwiftUI's `View.background`, makes the unqualified name ambiguous. Callers that already require
-/// iOS 13, macOS 10.15, tvOS 13, or watchOS 6 can instead use `Task.background`.
+/// iOS 13, macOS 10.15, tvOS 13, or watchOS 6 should instead use `Task.background`.
 public func background(_ closure: @Sendable @escaping () -> Void) {
+    // Keep this concise API independent of Swift concurrency so callers can deploy before iOS 13.
     Compatibility.background(closure)
 }
 
@@ -431,6 +437,7 @@ public extension Compatibility {
         _ = source
         if #available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *) {
             Task { @MainActor in
+                //                debug("Running main-thread block", level: .DEBUG, file: file, function: function, line: line, column: column)
                 closure()
             }
         } else {
@@ -452,6 +459,7 @@ public func main(
     line: Int = #line,
     column: Int = #column
 ) {
+    // Keep this concise API available before Swift concurrency by forwarding to the dispatch-capable implementation.
     Compatibility.main(
         closure,
         source: SourceContext(file: file, function: function, line: line, column: column)

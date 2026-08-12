@@ -180,28 +180,33 @@ extension Compatibility {
 #else
         Compatibility.debug("Fetching URL [\(urlString)]...", isMainThread: false, level: .NOTICE, source: source)
 #endif
+        // create the url with URL
         guard let url = URL(string: urlString) else {
             throw NetworkError.urlParsing(urlString: urlString).debug(level: .ERROR, source: source)
         }
         
+        // now create the URLRequest object using the url object
         var request = URLRequest(url: url)
         
+        // encode the postData if provided, otherwise set the method to GET.
         if let parameters = postData {
-            request.httpMethod = "POST"
+            request.httpMethod = "POST" //set http method as POST
             guard let data = postData?.queryEncoded else {
                 throw NetworkError.postDataEncoding(parameters).debug(level: .ERROR, source: source)
             }
             request.httpBody = data
         } else {
-            request.httpMethod = "GET"
+            request.httpMethod = "GET" //set http method as GET
         }
         
         var data: Data
         var response: URLResponse
+        // create dataTask using the session object to send data to the server
         do {
             if #available(iOS 15, macOS 12, watchOS 8, tvOS 15, *) {
                 (data, response) = try await URLSession.shared.data(for: request)
             } else {
+                // Fallback on earlier versions
                 (data, response) = try await request.legacyData(for: URLSession.shared)
             }
         } catch {
@@ -212,6 +217,7 @@ extension Compatibility {
             }
         }
 
+        // Check response status code exists (should nearly always pass)
         guard let statusCode = (response as? HTTPURLResponse)?.statusCode else {
             let debugMessage = "No status code in HTTP response.  Possibly offline?: \(String(describing: response))"
 #if !hasFeature(Embedded)
@@ -222,6 +228,7 @@ extension Compatibility {
             throw NetworkError.invalidResponse().debug(level: .ERROR, source: source)
         }
 
+        // check status code (should always be 200)
         guard statusCode == 200 else {
             throw NetworkError.invalidResponse(code: statusCode).debug(level: .ERROR, source: source)
         }
@@ -245,6 +252,7 @@ extension Compatibility {
     public static func fetchURL(urlString: String, postData: PostData? = nil, encoding: String.Encoding = .utf8, source: SourceContext) async throws -> String {
         let data = try await fetchURLData(urlString: urlString, postData: postData, source: source)
 
+        // convert result data to string
         guard let responseString = String(data: data, encoding: encoding) else {
 #if compiler(>=5.9)
             throw NetworkError.dataError(data).debug(level: .ERROR, source: source)
