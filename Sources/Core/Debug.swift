@@ -355,16 +355,16 @@ public extension Compatibility {
      */
     @discardableResult
     static func debug(_ message: DebugMessage, level: DebugLevel = .defaultLevel, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) -> String {
-#if hasFeature(Embedded)
+#if hasFeature(Embedded) || !canImport(Foundation)
         // Embedded Swift already narrows `DebugMessage` to `String`, so no dynamic conversion is needed.
         let isMainThread = true
-#elseif !canImport(Foundation)
-        // Full Swift runtimes without Foundation still allow `DebugMessage == Any`; stringify before
-        // forwarding to the shared String-based formatter just as Foundation-backed builds do.
-        let isMainThread = true
-        let message = String(describing: message)
 #else
         let isMainThread = Thread.isMainThread // capture before we switch to main thread for printing
+#endif
+
+#if !hasFeature(Embedded)
+        // Full Swift runtimes without Foundation still allow `DebugMessage == Any`; stringify before
+        // forwarding to the shared String-based formatter just as Foundation-backed builds do.
         let message = String(describing: message) // convert to sendable item to avoid any thread issues.
 #endif
         return debug(message, isMainThread: isMainThread, level: level, file: file, function: function, line: line, column: column)

@@ -3,12 +3,13 @@
 # TODO:
 Testing required before release:
 
-- Confirm `Compatibility Module Test Entries` displays each reusable `TestCase` separately.
-- Confirm the new entries execute successfully and preserve readable module, section, and test names.
-- Confirm the serialized debug tests restore `Compatibility.settings` even when an expectation throws.
+- Confirm `Compatibility Module Test Entries` displays each reusable `TestCase` separately. (I do not see))
+- Confirm the new entries execute successfully and preserve readable module, section, and test names. (do not see))
+- Confirm the serialized debug tests restore `Compatibility.settings` even when an expectation throws. (how do I do this?)
 - Run SwiftPM and supported-platform validation before tagging the release.
+I do not see each reusable TestCase separately in the test navigator in Xcode.  I just see Compatibility Module Test and Compatibility Target Tests.
 
-## v1.18.3 2026-07-28
+## v1.18.3 2026-08-12
 Added the reusable `Compatibility Testing Library` product and `ModuleTestEntry` adapter so each module `TestCase` appears as an individually named Swift Testing result.
 Unified `TestCase.execute()` and live test execution through one lifecycle implementation with explicit parallel and serialized execution modes.
 Added source-aware test failures, labeled debug-format context, and source-context debugging conveniences while preserving existing debug-format call sites.
