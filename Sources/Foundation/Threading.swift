@@ -96,16 +96,21 @@ public extension Compatibility {
         line: Int = #line,
         column: Int = #column
     ) {
+        sleep(
+            seconds: seconds,
+            source: SourceContext(file: file, function: function, line: line, column: column)
+        )
+    }
+
+    /// Source-forwarding form for helpers that already captured the original call site.
+    static func sleep(seconds: Double, source: SourceContext) {
         // This gate describes the missing timer primitive, not missing Swift concurrency support:
         // browser hosts must schedule a JavaScript timer while WASI hosts use host-specific clocks.
         Compatibility.debug(
             "Sleep is unavailable on this WebAssembly runtime; no delay occurred. Prefer an asynchronous host timer for browser or WASI code.",
             isMainThread: true,
             level: .WARNING,
-            file: file,
-            function: function,
-            line: line,
-            column: column
+            source: source
         )
     }
 }
@@ -119,7 +124,10 @@ public func sleep(
     line: Int = #line,
     column: Int = #column
 ) {
-    Compatibility.sleep(seconds: seconds, file: file, function: function, line: line, column: column)
+    Compatibility.sleep(
+        seconds: seconds,
+        source: SourceContext(file: file, function: function, line: line, column: column)
+    )
 }
 #else
 public extension Compatibility {
@@ -135,14 +143,20 @@ public extension Compatibility {
         line: Int = #line,
         column: Int = #column
     ) async {
+        await sleep(
+            seconds: seconds,
+            source: SourceContext(file: file, function: function, line: line, column: column)
+        )
+    }
+
+    /// Source-forwarding form for helpers that already captured the original call site.
+    @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+    static func sleep(seconds: Double, source: SourceContext) async {
         let duration = UInt64(seconds * 1_000_000_000)
         do {
             try await Task.sleep(nanoseconds: duration)
-            //            // Fallback on earlier versions
-            //            sleep(UInt32(seconds)) // give fetch from server time to finish
         } catch {
-            // do nothing but make debug log if we can.
-            debug("Sleep function was interrupted", level: .DEBUG, file: file, function: function, line: line, column: column)
+            Compatibility.debug("Sleep function was interrupted", level: .DEBUG, source: source)
         }
     }
 }
@@ -157,7 +171,10 @@ public func sleep(
     line: Int = #line,
     column: Int = #column
 ) async {
-    await Compatibility.sleep(seconds: seconds, file: file, function: function, line: line, column: column)
+    await Compatibility.sleep(
+        seconds: seconds,
+        source: SourceContext(file: file, function: function, line: line, column: column)
+    )
 }
 
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
@@ -170,7 +187,10 @@ public extension Task where Success == Never, Failure == Never {
         line: Int = #line,
         column: Int = #column
     ) async {
-        await Compatibility.sleep(seconds: seconds, file: file, function: function, line: line, column: column)
+        await Compatibility.sleep(
+            seconds: seconds,
+            source: SourceContext(file: file, function: function, line: line, column: column)
+        )
     }
 }
 
@@ -226,11 +246,19 @@ public extension Compatibility {
         line: Int = #line,
         column: Int = #column
     ) {
+        background(
+            closure,
+            source: SourceContext(file: file, function: function, line: line, column: column)
+        )
+    }
+
+    /// Source-forwarding form for helpers that already captured the original call site.
+    static func background(_ closure: @Sendable @escaping () -> Void, source: SourceContext) {
+        _ = source
 #if arch(wasm32)
         closure()
 #else
         DispatchQueue.global().async {
-//            debug("Running background block", level: .DEBUG, file: file, function: function, line: line, column: column)
             closure()
         }
 #endif
@@ -241,7 +269,6 @@ public extension Compatibility {
     @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
     static func background(_ closure: @Sendable @escaping () async -> Void) {
         Task.detached(priority: .background) {
-//            debug("Running asynchronous background block", level: .DEBUG)
             await closure()
         }
     }
@@ -274,7 +301,6 @@ public extension Compatibility {
 /// SwiftUI's `View.background`, makes the unqualified name ambiguous. Callers that already require
 /// iOS 13, macOS 10.15, tvOS 13, or watchOS 6 can instead use `Task.background`.
 public func background(_ closure: @Sendable @escaping () -> Void) {
-    // Keep this concise API independent of Swift concurrency so callers can deploy before iOS 13.
     Compatibility.background(closure)
 }
 
@@ -354,6 +380,16 @@ public extension Compatibility {
         line: Int = #line,
         column: Int = #column
     ) {
+        main(
+            closure,
+            source: SourceContext(file: file, function: function, line: line, column: column)
+        )
+    }
+
+    /// Source-forwarding form for helpers that already captured the original call site.
+    @MainActor
+    static func main(_ closure: @Sendable @MainActor @escaping () -> Void, source: SourceContext) {
+        _ = source
         closure()
     }
 }
@@ -369,8 +405,10 @@ public func main(
     line: Int = #line,
     column: Int = #column
 ) {
-    // Forward through the shared implementation so the concise and qualified spellings remain equivalent.
-    Compatibility.main(closure, file: file, function: function, line: line, column: column)
+    Compatibility.main(
+        closure,
+        source: SourceContext(file: file, function: function, line: line, column: column)
+    )
 }
 #else
 public extension Compatibility {
@@ -382,9 +420,17 @@ public extension Compatibility {
         line: Int = #line,
         column: Int = #column
     ) {
+        main(
+            closure,
+            source: SourceContext(file: file, function: function, line: line, column: column)
+        )
+    }
+
+    /// Source-forwarding form for helpers that already captured the original call site.
+    static func main(_ closure: @Sendable @MainActor @escaping () -> Void, source: SourceContext) {
+        _ = source
         if #available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *) {
             Task { @MainActor in
-//                debug("Running main-thread block", level: .DEBUG, file: file, function: function, line: line, column: column)
                 closure()
             }
         } else {
@@ -406,8 +452,10 @@ public func main(
     line: Int = #line,
     column: Int = #column
 ) {
-    // Keep this concise API available before Swift concurrency by forwarding to the dispatch-capable implementation.
-    Compatibility.main(closure, file: file, function: function, line: line, column: column)
+    Compatibility.main(
+        closure,
+        source: SourceContext(file: file, function: function, line: line, column: column)
+    )
 }
 
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
@@ -420,7 +468,10 @@ public extension Task where Success == Never, Failure == Never {
         line: Int = #line,
         column: Int = #column
     ) {
-        Compatibility.main(closure, file: file, function: function, line: line, column: column)
+        Compatibility.main(
+            closure,
+            source: SourceContext(file: file, function: function, line: line, column: column)
+        )
     }
 }
 
@@ -497,7 +548,6 @@ private let delayTests: [TestCase] = [
 #endif
 
 // MARK: - Tests and Previews
-
 #if compiler(>=5.9)
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension Compatibility {
