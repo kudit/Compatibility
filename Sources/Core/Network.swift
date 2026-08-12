@@ -175,11 +175,7 @@ extension Compatibility {
     /// Source-forwarding form for APIs that have already captured their caller's location.
     @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *) // for concurrency
     public static func fetchURLData(urlString: String, postData: PostData? = nil, source: SourceContext) async throws -> Data {
-#if !hasFeature(Embedded)
         Compatibility.debug("Fetching URL [\(urlString)]...", level: .NOTICE, source: source)
-#else
-        Compatibility.debug("Fetching URL [\(urlString)]...", isMainThread: false, level: .NOTICE, source: source)
-#endif
         // create the url with URL
         guard let url = URL(string: urlString) else {
             throw NetworkError.urlParsing(urlString: urlString).debug(level: .ERROR, source: source)
@@ -220,11 +216,7 @@ extension Compatibility {
         // Check response status code exists (should nearly always pass)
         guard let statusCode = (response as? HTTPURLResponse)?.statusCode else {
             let debugMessage = "No status code in HTTP response.  Possibly offline?: \(String(describing: response))"
-#if !hasFeature(Embedded)
             Compatibility.debug(debugMessage, level: .ERROR, source: source)
-#else
-            Compatibility.debug(debugMessage, isMainThread: false, level: .ERROR, source: source)
-#endif
             throw NetworkError.invalidResponse().debug(level: .ERROR, source: source)
         }
 
