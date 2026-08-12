@@ -15,6 +15,7 @@ Unified `TestCase.execute()` and live test execution through one lifecycle imple
 Added source-aware test failures, labeled debug-format context, and source-context debugging conveniences while preserving existing debug-format call sites.
 Made debug tests run exclusively and restore process-global debug settings with `defer`, including when an expectation throws.
 Expanded contributor guidance for short, staged, maintainer-reviewed coding workflows.
+Consolidated debug and main and background code and removed support for WASM/Embedded since those were dangerous masks.
 
 ## v1.18.2 2026-07-23
 Fixed Swift Package Index build errors and warnings across SwiftUI and WebAssembly targets.

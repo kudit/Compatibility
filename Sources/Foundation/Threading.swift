@@ -269,12 +269,8 @@ public extension Compatibility {
     static func background<ReturnType: Sendable>(
         _ closure: @Sendable @escaping () async throws -> ReturnType
     ) async throws -> ReturnType {
-#if canImport(Foundation)
-        return try await Task.detached(priority: .background, operation: closure).value
-#else
         // A full Swift runtime can still provide detached tasks without Foundation.
         return try await Task.detached(priority: .background, operation: closure).value
-#endif
     }
 
     /// Runs nonthrowing asynchronous work that returns an optional value.
