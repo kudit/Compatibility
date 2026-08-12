@@ -18,6 +18,36 @@
             endingLineNumber = "319"
             landmarkName = "pretty"
             landmarkType = "24">
+            <Locations>
+               <Location
+                  uuid = "F9758060-9212-4EF8-BA2E-7BBC62B80B84 - a1bb127fbbe1e75a"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "Compatibility.DateRepresentable.pretty.getter : Swift.String"
+                  moduleName = "CompatibilityTest.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/ben/Documents/Kudit/Kudits/Library/Compatibility.swiftpm/Sources/Foundation/DateString.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "319"
+                  endingLineNumber = "319">
+               </Location>
+               <Location
+                  uuid = "F9758060-9212-4EF8-BA2E-7BBC62B80B84 - a27f35ef3e64ecab"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "Compatibility.DateRepresentable.pretty.getter : Swift.String"
+                  moduleName = "CompatibilityTests"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/ben/Documents/Kudit/Kudits/Library/Compatibility.swiftpm/Sources/Foundation/DateString.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "319"
+                  endingLineNumber = "319">
+               </Location>
+            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -34,6 +64,36 @@
             endingLineNumber = "95"
             landmarkName = "init?(encoding:)"
             landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "1725B103-B284-4FEF-9CE9-184DD8CE5F01 - 63a125b52ed7ac2c"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "Compatibility.MixedTypeField.init(encoding: Swift.Optional&lt;Any&gt;) -&gt; Swift.Optional&lt;Compatibility.MixedTypeField&gt;"
+                  moduleName = "CompatibilityTest.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/ben/Documents/Kudit/Kudits/Library/Compatibility.swiftpm/Sources/Foundation/CodingMixedTypes.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "96"
+                  endingLineNumber = "96">
+               </Location>
+               <Location
+                  uuid = "1725B103-B284-4FEF-9CE9-184DD8CE5F01 - 60650225ab52a7dd"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "Compatibility.MixedTypeField.init(encoding: Swift.Optional&lt;Any&gt;) -&gt; Swift.Optional&lt;Compatibility.MixedTypeField&gt;"
+                  moduleName = "CompatibilityTests"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/ben/Documents/Kudit/Kudits/Library/Compatibility.swiftpm/Sources/Foundation/CodingMixedTypes.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "96"
+                  endingLineNumber = "96">
+               </Location>
+            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -50,6 +110,36 @@
             endingLineNumber = "64"
             landmarkName = "init(from:)"
             landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "29849320-9AFA-4CAC-929F-2BDBE8C388A8 - 24d5166e438ef2a9"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "Compatibility.MixedTypeField.init(from: Swift.Decoder) throws -&gt; Compatibility.MixedTypeField"
+                  moduleName = "CompatibilityTest.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/ben/Documents/Kudit/Kudits/Library/Compatibility.swiftpm/Sources/Foundation/CodingMixedTypes.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "64"
+                  endingLineNumber = "64">
+               </Location>
+               <Location
+                  uuid = "29849320-9AFA-4CAC-929F-2BDBE8C388A8 - 271131fec60bf958"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "Compatibility.MixedTypeField.init(from: Swift.Decoder) throws -&gt; Compatibility.MixedTypeField"
+                  moduleName = "CompatibilityTests"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/ben/Documents/Kudit/Kudits/Library/Compatibility.swiftpm/Sources/Foundation/CodingMixedTypes.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "64"
+                  endingLineNumber = "64">
+               </Location>
+            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -66,6 +156,36 @@
             endingLineNumber = "342"
             landmarkName = "pretty"
             landmarkType = "24">
+            <Locations>
+               <Location
+                  uuid = "3C628A12-F6B4-44C9-94F7-72E2A449B1FC - 3fd40b604cf351a2"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "Compatibility.DateTimeRepresentable.pretty.getter : Swift.String"
+                  moduleName = "CompatibilityTest.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/ben/Documents/Kudit/Kudits/Library/Compatibility.swiftpm/Sources/Foundation/DateString.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "342"
+                  endingLineNumber = "342">
+               </Location>
+               <Location
+                  uuid = "3C628A12-F6B4-44C9-94F7-72E2A449B1FC - 3c102cf0c9765a53"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "Compatibility.DateTimeRepresentable.pretty.getter : Swift.String"
+                  moduleName = "CompatibilityTests"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/ben/Documents/Kudit/Kudits/Library/Compatibility.swiftpm/Sources/Foundation/DateString.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "342"
+                  endingLineNumber = "342">
+               </Location>
+            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

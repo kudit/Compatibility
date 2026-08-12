@@ -372,7 +372,11 @@ public extension Compatibility {
         let isMainThread = Thread.isMainThread // capture before we switch to main thread for printing
 #endif
 
+        // Embedded Swift already narrows `DebugMessage` to `String`, so no dynamic conversion is needed.
 #if !hasFeature(Embedded)
+        // Full Swift runtimes without Foundation still allow `DebugMessage == Any`; stringify before
+        // forwarding to the shared String-based formatter just as Foundation-backed builds do.  We have
+        // a backport for String(describing: message) so we don't need to worry about canImport(Foundation) for this line.
         let message = String(describing: message) // convert to sendable item to avoid any thread issues.
 #endif
         return debug(message, isMainThread: isMainThread, level: level, source: source)
@@ -389,7 +393,7 @@ public extension Compatibility {
         )
     }
 
-    /// Core debug implementation once source context and thread identity are known.
+    /// Core debug implementation once source context and thread identity are known.  This is the main function all conveniences should eventually delegate to.
     @discardableResult
     static func debug(_ message: String, isMainThread: Bool, level: DebugLevel = .defaultLevel, source: SourceContext) -> String {
         guard DebugLevel.isAtLeast(level) else { // check current debug level from settings
