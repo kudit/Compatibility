@@ -321,10 +321,18 @@ public final class TestCase: ObservableObject, @unchecked Sendable {
         setUp: TestClosure? = nil,
         test: @escaping TestClosure,
         tearDown: TestClosure? = nil,
-        source: SourceContext = SourceContext()
+        source: SourceContext? = nil,
+        file: String = #file,
+        function: String = #function,
+        line: Int = #line,
+        column: Int = #column
     ) {
         self.title = title
-        self.source = source
+        // Do not use `SourceContext()` as a default argument here. Nested default arguments are
+        // evaluated at this initializer declaration, which would make failures point into Test.swift.
+        // Capture the compiler literals directly on this initializer so omitted source information
+        // identifies the TestCase declaration at the caller. An explicit source still wins.
+        self.source = source ?? SourceContext(file: file, function: function, line: line, column: column)
         self.executionMode = executionMode
         self.setUp = setUp
         self.test = test
@@ -335,10 +343,23 @@ public final class TestCase: ObservableObject, @unchecked Sendable {
     public convenience init(
         _ title: String,
         executionMode: TestExecutionMode = .parallel,
-        source: SourceContext = SourceContext(),
+        source: SourceContext? = nil,
+        file: String = #file,
+        function: String = #function,
+        line: Int = #line,
+        column: Int = #column,
         _ test: @escaping TestClosure
     ) {
-        self.init(title, executionMode: executionMode, test: test, source: source)
+        self.init(
+            title,
+            executionMode: executionMode,
+            test: test,
+            source: source,
+            file: file,
+            function: function,
+            line: line,
+            column: column
+        )
     }
 
     private var execution: TestExecution {
