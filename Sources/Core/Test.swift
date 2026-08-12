@@ -87,7 +87,7 @@ public func expect(_ condition: Bool, _ debugString: String? = nil, file: String
 public func expect(_ condition: Bool, _ debugString: String? = nil, source: SourceContext) throws {
     guard condition else {
         let message = debugString ?? "Expectation failed"
-        debug(message, level: .ERROR, source: source)
+        Compatibility.debug(message, level: .ERROR, source: source)
         throw TestFailure(message, source: source)
     }
 }
