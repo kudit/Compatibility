@@ -335,65 +335,36 @@ public func debugContext(isMainThread: Bool, file: String, function: String, lin
 
 // MARK: - Debug
 public extension Compatibility {
-    /**
-     Debug helper for printing info to screen including file and line info of call site.  Also can provide a log level for use in loggers or for globally turning on/off logging. (Modify DebugLevel.currentLevel to set level to output.  When launching app, set this to DebugLevel.OFF for release builds.
-     
-     - Parameter message: The message to report.
-     - Parameter level: The logging level to use.
-     - Parameter file: For bubbling down the #file name from a call site.
-     - Parameter function: For bubbling down the #function name from a call site.
-     - Parameter line: For bubbling down the #line number from a call site.
-     - Parameter column: For bubbling down the #column number from a call site. (Not used currently but here for completeness).
-     */
-    @discardableResult
-    static func debug(_ message: DebugMessage, level: DebugLevel = .defaultLevel, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) -> String {
-        Compatibility.debug(
-            message,
-            level: level,
-            source: SourceContext(file: file, function: function, line: line, column: column)
-        )
-    }
-
-    /// Canonical source-forwarding debug API for helpers that have already captured their caller.
+    /// Canonical debug implementation for APIs that have already captured their caller's source context.
+    ///
+    /// Normal application code should generally use the unqualified ``debug(_:level:file:function:line:column:)``
+    /// convenience below. Helper APIs that intentionally preserve their own caller's source location can capture
+    /// a ``SourceContext`` once and forward it here.
     @discardableResult
     static func debug(_ message: DebugMessage, level: DebugLevel = .defaultLevel, source: SourceContext) -> String {
-#if hasFeature(Embedded) || !canImport(Foundation)
-        // Single-threaded or Foundation-less runtimes cannot provide Foundation.Thread identity.
-        let isMainThread = true
-#else
-        let isMainThread = Thread.isMainThread // capture before we switch to main thread for printing
-#endif
-
-        // Embedded Swift already narrows `DebugMessage` to `String`, so no dynamic conversion is needed.
-#if !hasFeature(Embedded)
-        // Full Swift runtimes without Foundation still allow `DebugMessage == Any`; stringify before
-        // forwarding to the shared String-based formatter just as Foundation-backed builds do.  We have
-        // a backport for String(describing: message) so we don't need to worry about canImport(Foundation) for this line.
-        let message = String(describing: message) // convert to sendable item to avoid any thread issues.
-#endif
-        return debug(message, isMainThread: isMainThread, level: level, source: source)
-    }
-
-    /// Legacy lower-level caller-capturing formatter path retained for source compatibility.
-    @discardableResult
-    static func debug(_ message: String, isMainThread: Bool, level: DebugLevel = .defaultLevel, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) -> String {
-        debug(
-            message,
-            isMainThread: isMainThread,
-            level: level,
-            source: SourceContext(file: file, function: function, line: line, column: column)
-        )
-    }
-
-    /// Internal formatter implementation once source context and thread identity are known.
-    @discardableResult
-    internal static func debug(_ message: String, isMainThread: Bool, level: DebugLevel = .defaultLevel, source: SourceContext) -> String {
         guard DebugLevel.isAtLeast(level) else { // check current debug level from settings
             return "" // don't actually print
         }
+
+#if hasFeature(Embedded) || !canImport(Foundation)
+        // Embedded/Foundation-less runtimes do not expose Foundation.Thread identity. Their supported
+        // execution model is treated as main-thread work rather than accepting a manually supplied override.
+        let isMainThread = true
+#else
+        let isMainThread = Thread.isMainThread // capture before any logger/formatter implementation can switch threads
+#endif
+
+#if hasFeature(Embedded)
+        // Embedded Swift already narrows `DebugMessage` to `String`, so no dynamic conversion is needed.
+        let messageString = message
+#else
+        // Full Swift runtimes allow `DebugMessage == Any`; stringify exactly once before formatting/logging.
+        let messageString = String(describing: message)
+#endif
+
         let debugMessage = Compatibility.settings.debugFormatter(
             DebugFormatContext(
-                message: message,
+                message: messageString,
                 level: level,
                 isMainThread: isMainThread,
                 emojiSupported: Compatibility.settings.debugEmojiSupported,
