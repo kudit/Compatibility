@@ -355,37 +355,43 @@ public extension Compatibility {
      */
     @discardableResult
     static func debug(_ message: DebugMessage, level: DebugLevel = .defaultLevel, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) -> String {
+        debug(
+            message,
+            level: level,
+            source: SourceContext(file: file, function: function, line: line, column: column)
+        )
+    }
+
+    /// Logs a message using an already-captured source location. This is the core forwarding path.
+    @discardableResult
+    static func debug(_ message: DebugMessage, level: DebugLevel = .defaultLevel, source: SourceContext) -> String {
 #if hasFeature(Embedded) || !canImport(Foundation)
-        // Embedded Swift already narrows `DebugMessage` to `String`, so no dynamic conversion is needed.
+        // Single-threaded or Foundation-less runtimes cannot provide Foundation.Thread identity.
         let isMainThread = true
 #else
         let isMainThread = Thread.isMainThread // capture before we switch to main thread for printing
 #endif
 
 #if !hasFeature(Embedded)
-        // Full Swift runtimes without Foundation still allow `DebugMessage == Any`; stringify before
-        // forwarding to the shared String-based formatter just as Foundation-backed builds do.
         let message = String(describing: message) // convert to sendable item to avoid any thread issues.
 #endif
-        return debug(message, isMainThread: isMainThread, level: level, file: file, function: function, line: line, column: column)
+        return debug(message, isMainThread: isMainThread, level: level, source: source)
     }
 
-    /// Logs a message using an already-captured source location.
+    /// Caller-capturing compatibility wrapper for the lower-level formatter path.
     @discardableResult
-    static func debug(_ message: DebugMessage, level: DebugLevel = .defaultLevel, source: SourceContext) -> String {
+    static func debug(_ message: String, isMainThread: Bool, level: DebugLevel = .defaultLevel, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) -> String {
         debug(
             message,
+            isMainThread: isMainThread,
             level: level,
-            file: source.file,
-            function: source.function,
-            line: source.line,
-            column: source.column
+            source: SourceContext(file: file, function: function, line: line, column: column)
         )
     }
 
-    /// Put most of the business logic here for compatibility with WASM.  isMainThread: is required to differentiate but can be removed in global definition
+    /// Core debug implementation once source context and thread identity are known.
     @discardableResult
-    static func debug(_ message: String, isMainThread: Bool, level: DebugLevel = .defaultLevel, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) -> String {
+    static func debug(_ message: String, isMainThread: Bool, level: DebugLevel = .defaultLevel, source: SourceContext) -> String {
         guard DebugLevel.isAtLeast(level) else { // check current debug level from settings
             return "" // don't actually print
         }
@@ -396,7 +402,7 @@ public extension Compatibility {
             Compatibility.settings.debugEmojiSupported,
             Compatibility.settings.debugLevelsToIncludeContext.contains(level),
             Compatibility.settings.debugLevelsToIncludeTimestamp.contains(level),
-            file, function, line, column)
+            source.file, source.function, source.line, source.column)
         
         // log message
         Compatibility.settings.debugLog(debugMessage)
@@ -420,13 +426,17 @@ public extension Compatibility {
  */
 @discardableResult
 public func debug(_ message: DebugMessage, level: DebugLevel = .defaultLevel, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) -> String {
-    return Compatibility.debug(message, level: level, file: file, function: function, line: line, column: column)
+    Compatibility.debug(
+        message,
+        level: level,
+        source: SourceContext(file: file, function: function, line: line, column: column)
+    )
 }
 
 /// Logs a message using an already-captured source location.
 @discardableResult
 public func debug(_ message: DebugMessage, level: DebugLevel = .defaultLevel, source: SourceContext) -> String {
-    return Compatibility.debug(message, level: level, source: source)
+    Compatibility.debug(message, level: level, source: source)
 }
 
 // MARK: Debug(error)
@@ -434,17 +444,20 @@ public func debug(_ message: DebugMessage, level: DebugLevel = .defaultLevel, so
 public extension Error {
     /**
      Outputs the error's localized description at the specified debug level and return.  Can append to errors to debug output at the throwing location rather than the caught location.
-     
-     - Parameter level: The logging level to use.
-     - Parameter file: For bubbling down the #file name from a call site.
-     - Parameter function: For bubbling down the #function name from a call site.
-     - Parameter line: For bubbling down the #line number from a call site.
-     - Parameter column: For bubbling down the #column number from a call site. (Not used currently but here for completeness).
      */
     func debug(level: DebugLevel = .defaultLevel, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) -> Self {
-        Compatibility.debug(self.localizedDescription, level: level, file: file, function: function, line: line, column: column)
+        debug(
+            level: level,
+            source: SourceContext(file: file, function: function, line: line, column: column)
+        )
+    }
+
+    /// Logs this error using an already-captured source location and returns it for throwing.
+    func debug(level: DebugLevel = .defaultLevel, source: SourceContext) -> Self {
+        Compatibility.debug(self.localizedDescription, level: level, source: source)
         return self
     }
+
     #if !canImport(Foundation)
     var localizedDescription: String {
         "There was an error but without Foundation, we're using the default `localizedDescription`."
