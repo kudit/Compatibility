@@ -17,9 +17,42 @@ public struct TestRow: View {
                 Text(test.progress.symbol)
                 Text(test.title)
                 Spacer()
-                Button("▶️") {
-                    test.run()
+                Group {
+                    if #available(iOS 26, macOS 26, tvOS 26, watchOS 26, *) {
+                        Button {
+                            test.run()
+                        } label: {
+                            Image(systemName: "play.fill")
+                                .font(.system(size: 12, weight: .semibold))
+                                .frame(width: 28, height: 28)
+                        }
+                        .buttonStyle(.glass)
+                        .buttonBorderShape(.circle)
+                    } else if #available(iOS 15, macOS 12, tvOS 15, watchOS 8, *) {
+                        Button {
+                            test.run()
+                        } label: {
+                            Image(systemName: "play.fill")
+                                .font(.system(size: 12, weight: .semibold))
+                                .frame(width: 28, height: 28)
+                                .background(.regularMaterial, in: Circle())
+                                .contentShape(Circle())
+                        }
+                        .buttonStyle(.plain)
+                    } else {
+                        Button {
+                            test.run()
+                        } label: {
+                            Image(systemName: "play.fill")
+                                .font(.system(size: 12, weight: .semibold))
+                                .frame(width: 28, height: 28)
+                                .background(Circle().fill(Color.secondary.opacity(0.15)))
+                                .contentShape(Circle())
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
+                .accessibilityLabel("Run test")
             }
             if let errorMessage = test.errorMessage {
                 Text(errorMessage)
