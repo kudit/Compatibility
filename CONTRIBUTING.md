@@ -51,6 +51,8 @@ After every prompt-driven change, contributors and coding agents must:
 5. Refresh the active unpushed changelog date when work continues on a later date.
 6. Append the complete prompt as `PROMPT: [PROMPT TEXT]`.
 7. Review both the normal diff and an ignore-whitespace diff, remove unrelated or whitespace-only changes, run `git diff --check`, and run the repository's real build and tests.
+8. For multi-file edits, patch each repository or external file separately. After every patch, verify the tool result, inspect the exact diff, run syntax checks, and search for the removed symbol or dependency. Never report the overall change as complete when any hunk failed or remains unverified. Always list changed files and show all deltas using a diff editor (if in Codex).
+
 
 A full changelog outline may include:
 
