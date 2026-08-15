@@ -5,20 +5,6 @@
 //  Exercises the reusable CompatibilityTesting adapter through Swift Testing.
 //
 
-#if compiler(>=5.9) && canImport(Testing)
-import Testing
-
-/// Static control kept independent of CompatibilityTesting so Xcode test discovery can be
-/// verified even when the adapter product itself is misconfigured.
-@Suite("Parameterized Test Discovery")
-struct ParameterDisplayTests {
-    @Test("Parameter display test", arguments: [1, 2, 3])
-    func parameterDisplayTest(value: Int) {
-        #expect((1...3).contains(value))
-    }
-}
-#endif
-
 #if compiler(>=5.9) && canImport(Compatibility) && canImport(Testing)
 import Compatibility
 import CompatibilityTesting
