@@ -157,10 +157,7 @@ targets += [
             .init(stringLiteral: packageLibraryName),
             "CompatibilityTesting",
         ],// have to use init since normally would be assignable by string literal but we're not using a string literal
-		path: "Development/CompatibilityTests",
-		// The Xcode project consumes this test plan directly, while SwiftPM has no
-		// declaration for it and otherwise warns that the file is unhandled.
-		exclude: ["CompatibilityTest.xctestplan"]
+		path: "Development/CompatibilityTests"
 	),
 ]
 #endif
