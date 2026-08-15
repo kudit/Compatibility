@@ -314,12 +314,12 @@ private let backgroundTests: [TestCase] = [
 
 // MARK: - Main
 
-// As with background work, do not claim a main-dispatch helper exists on WASM/Embedded by simply
-// executing the closure inline. Code that requires this scheduling API should fail to compile there
-// until that runtime has a real implementation with the advertised semantics.
-#if !arch(wasm32) && !hasFeature(Embedded)
+// Embedded Swift cannot provide the scheduling semantics promised here, so omit the API there.
+// Full-runtime WebAssembly does have Swift concurrency, so it can use the same MainActor scheduling
+// implementation while simply skipping the Dispatch fallback that is unavailable on wasm32.
+#if !hasFeature(Embedded)
 public extension Compatibility {
-    /// Schedules work on the main actor using concurrency or the older dispatch fallback.
+    /// Schedules work on the main actor using Swift concurrency or the older dispatch fallback.
     static func main(
         _ closure: @Sendable @MainActor @escaping () -> Void,
         file: String = #file,
@@ -327,6 +327,11 @@ public extension Compatibility {
         line: Int = #line,
         column: Int = #column
     ) {
+#if arch(wasm32)
+        Task { @MainActor in
+            closure()
+        }
+#else
         if #available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *) {
             Task { @MainActor in
                 //                debug("Running main-thread block", level: .DEBUG, file: file, function: function, line: line, column: column)
@@ -337,6 +342,7 @@ public extension Compatibility {
                 closure()
             }
         }
+#endif
     }
 }
 
@@ -351,7 +357,6 @@ public func main(
     line: Int = #line,
     column: Int = #column
 ) {
-    // Keep this concise API available before Swift concurrency by forwarding to the dispatch-capable implementation.
     Compatibility.main(closure, file: file, function: function, line: line, column: column)
 }
 
@@ -446,8 +451,8 @@ public extension Compatibility {
     @MainActor
     static let threadingTests: [TestCase] = {
 #if arch(wasm32) || hasFeature(Embedded)
-        // WASM/Embedded intentionally omit sleep, background, main, and delay rather than providing
-        // semantic no-op fallbacks, so there are no threading/timing tests to register there.
+        // WASM/Embedded omit sleep, background, and delay rather than providing semantic no-op fallbacks.
+        // WebAssembly still exposes real MainActor scheduling, but its host-independent test catalog remains empty.
         return []
 #else
         return sleepTests + backgroundTests + mainTests + delayTests
