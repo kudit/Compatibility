@@ -315,8 +315,8 @@ private let backgroundTests: [TestCase] = [
 // MARK: - Main
 
 // Embedded Swift cannot provide the scheduling semantics promised here, so omit the API there.
-// Full-runtime WebAssembly does have Swift concurrency, so it can use the same MainActor scheduling
-// implementation while simply skipping the Dispatch fallback that is unavailable on wasm32.
+// Full-runtime WebAssembly has Swift concurrency and follows the same modern availability branch;
+// only the legacy Dispatch fallback is conditionally compiled where Dispatch is actually available.
 #if !hasFeature(Embedded)
 public extension Compatibility {
     /// Schedules work on the main actor using Swift concurrency or the older dispatch fallback.
@@ -327,17 +327,14 @@ public extension Compatibility {
         line: Int = #line,
         column: Int = #column
     ) {
-#if arch(wasm32)
-        Task { @MainActor in
-            closure()
-        }
-#else
         if #available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *) {
             Task { @MainActor in
                 //                debug("Running main-thread block", level: .DEBUG, file: file, function: function, line: line, column: column)
                 closure()
             }
-        } else {
+        }
+#if canImport(Dispatch)
+        else {
             DispatchQueue.main.async { @MainActor in
                 closure()
             }
