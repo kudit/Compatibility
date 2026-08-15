@@ -13,8 +13,8 @@
 		B51B70C62C5D6DBF001F7DCF /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = B51B70C42C5D6DBF001F7DCF /* PrivacyInfo.xcprivacy */; };
 		B5209EE32C431CF800FBA30B /* CompatibilityDemoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5209EE22C431CF800FBA30B /* CompatibilityDemoView.swift */; };
 		B5209EE42C431CF800FBA30B /* CompatibilityDemoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5209EE22C431CF800FBA30B /* CompatibilityDemoView.swift */; };
+		B523074630300B5C00036874 /* Compatibility Testing Library in Frameworks */ = {isa = PBXBuildFile; productRef = B523074530300B5C00036874 /* Compatibility Testing Library */; };
 		B52C8E0F2C38CA76008EBD2D /* MyApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5E5FC3A2C3860EC004F2009 /* MyApp.swift */; };
-		B52DEB233019BA54003291D0 /* Compatibility Testing Library in Frameworks */ = {isa = PBXBuildFile; productRef = B52DEB223019BA54003291D0 /* Compatibility Testing Library */; };
 		B569253B2E8715550045FFC6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B5E5FC822C3863B9004F2009 /* Assets.xcassets */; };
 		B579D4A52C46FF1A009A037A /* Compatibility Library in Frameworks */ = {isa = PBXBuildFile; productRef = B579D4A42C46FF1A009A037A /* Compatibility Library */; };
 		B58B5C452C38F98800689837 /* (null) in Sources */ = {isa = PBXBuildFile; };
@@ -92,7 +92,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B52DEB233019BA54003291D0 /* Compatibility Testing Library in Frameworks */,
+				B523074630300B5C00036874 /* Compatibility Testing Library in Frameworks */,
 				B594CFB72DB0BACA001E8658 /* Compatibility Library in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -229,7 +229,7 @@
 			name = CompatibilityTests;
 			packageProductDependencies = (
 				B594CFB62DB0BACA001E8658 /* Compatibility Library */,
-				B52DEB223019BA54003291D0 /* Compatibility Testing Library */,
+				B523074530300B5C00036874 /* Compatibility Testing Library */,
 			);
 			productName = CompatibilityTests;
 			productReference = B594CFA92DB0B838001E8658 /* CompatibilityTests.xctest */;
@@ -817,7 +817,7 @@
 			package = B52C8E0D2C3886E6008EBD2D /* XCLocalSwiftPackageReference ".." */;
 			productName = "Compatibility Library";
 		};
-		B52DEB223019BA54003291D0 /* Compatibility Testing Library */ = {
+		B523074530300B5C00036874 /* Compatibility Testing Library */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = "Compatibility Testing Library";
 		};
