@@ -332,14 +332,15 @@ public extension Compatibility {
                 //                debug("Running main-thread block", level: .DEBUG, file: file, function: function, line: line, column: column)
                 closure()
             }
-        }
-#if canImport(Dispatch)
-        else {
+        } else {
+#if !canImport(Dispatch)
             DispatchQueue.main.async { @MainActor in
                 closure()
             }
-        }
+#else
+            // CODEX TODO: Implement reasonable fallback without Dispatch on older iOS.  Would it be possible to just run the closure?
 #endif
+        }
     }
 }
 
