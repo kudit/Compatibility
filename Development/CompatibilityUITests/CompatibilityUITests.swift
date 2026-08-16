@@ -32,9 +32,10 @@ private extension XCUIElement {
 
 /// UI coverage for the Compatibility demo application.
 ///
-/// The app launches once and the test advances through the real page-style `TabView` in declaration order.
+/// The app launches once and the test advances through the real `TabView` in declaration order.
 /// This deliberately avoids numeric selection tags so inserting or rearranging demo tabs does not require
-/// keeping a second set of tab indices synchronized.
+/// keeping a second set of tab indices synchronized. Navigation follows the native platform presentation:
+/// page gestures on touch platforms, the popup/menu control on macOS, and remote navigation on tvOS.
 final class CompatibilityUITests: XCTestCase {
     private struct DemoScreen {
         let name: String
@@ -77,7 +78,7 @@ final class CompatibilityUITests: XCTestCase {
             exercise(screenAt: index, in: app)
 
             if index < screens.count - 1 {
-                advanceToNextPage(in: app)
+                navigate(to: screens[index + 1], in: app)
             }
         }
     }
@@ -129,8 +130,18 @@ final class CompatibilityUITests: XCTestCase {
     }
 
     @MainActor
-    private func advanceToNextPage(in app: XCUIApplication) {
-#if os(tvOS)
+    private func navigate(to screen: DemoScreen, in app: XCUIApplication) {
+#if os(macOS)
+        // Page-style TabView is exposed as a popup/menu control to macOS accessibility rather than
+        // as a swipeable page. Exercise that native presentation instead of emulating UIKit behavior.
+        let tabSelector = app.popUpButtons.firstMatch
+        XCTAssertTrue(tabSelector.waitForExistence(timeout: 5), "macOS should expose the TabView selector as a popup button.")
+        tabSelector.backport.tap()
+
+        let item = app.menuItems[screen.name]
+        XCTAssertTrue(item.waitForExistence(timeout: 5), "The TabView selector should contain \(screen.name).")
+        item.backport.tap()
+#elseif os(tvOS)
         XCUIRemote.shared.press(.right)
 #else
         app.swipeLeft()
