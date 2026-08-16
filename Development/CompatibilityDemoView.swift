@@ -49,25 +49,19 @@ struct CompatibilityDemoView: View {
          ]
     ]
 
-    // UI coverage tests can request a specific page directly. This avoids depending on
-    // platform-specific TabView accessibility while still rendering the real demo screens.
-    @State private var selectedTab = Int(ProcessInfo.processInfo.environment["COMPATIBILITY_DEMO_TAB"] ?? "") ?? 0
-
     var body: some View {
-        TabView(selection: $selectedTab) {
+        TabView {
             if #available(watchOS 9, *) {
                 CompatibilityEnvironmentTestView()
                     .accessibilityIdentifier("demo.compatibility")
                     .tabItem {
                         Text("Compatibility")
                     }
-                    .tag(0)
                 DataStoreTestView()
                     .accessibilityIdentifier("demo.datastore")
                     .tabItem {
                         Text("DataStore")
                     }
-                    .tag(1)
             }
             // Application tracking has already registered the complete ordered module graph consumed here.
             AllTestsListView(additionalTests: Self.additionalTests)
@@ -75,49 +69,41 @@ struct CompatibilityDemoView: View {
                 .tabItem {
                     Text("All Tests")
                 }
-                .tag(2)
             ClosureTestView()
                 .accessibilityIdentifier("demo.closure")
                 .tabItem {
                     Text("Closure")
                 }
-                .tag(3)
             RandomBytesTestView()
                 .accessibilityIdentifier("demo.randomBytes")
                 .tabItem {
                     Text("Random Bytes")
                 }
-                .tag(4)
             ConvertTestView()
                 .accessibilityIdentifier("demo.convert")
                 .tabItem {
                     Text("Convert")
                 }
-                .tag(5)
             TriangleShowcaseView()
                 .accessibilityIdentifier("demo.triangle")
                 .tabItem {
                     Text("Triangle Showcase")
                 }
-                .tag(6)
             FillAndStrokeTest()
                 .accessibilityIdentifier("demo.fillAndStroke")
                 .tabItem {
                     Text("Fill & Stroke")
                 }
-                .tag(7)
             PlacardShowcaseView()
                 .accessibilityIdentifier("demo.placard")
                 .tabItem {
                     Text("Placard Showcase")
                 }
-                .tag(8)
             MaterialTestView()
                 .accessibilityIdentifier("demo.material")
                 .tabItem {
                     Text("Material")
                 }
-                .tag(9)
         }
         .backport.tabViewStyle(.page)
     }
