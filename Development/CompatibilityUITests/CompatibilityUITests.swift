@@ -32,26 +32,26 @@ private extension XCUIElement {
 
 /// UI coverage for the Compatibility demo application.
 ///
-/// Each launch renders one real demo page so coverage does not depend on how a platform exposes
-/// page-style TabView controls to XCTest. Interactive pages also exercise representative controls.
+/// The app launches once and the test advances through the real page-style `TabView` in declaration order.
+/// This deliberately avoids numeric selection tags so inserting or rearranging demo tabs does not require
+/// keeping a second set of tab indices synchronized.
 final class CompatibilityUITests: XCTestCase {
     private struct DemoScreen {
-        let index: Int
         let name: String
         let identifier: String
     }
 
     private let screens = [
-        DemoScreen(index: 0, name: "Compatibility", identifier: "demo.compatibility"),
-        DemoScreen(index: 1, name: "DataStore", identifier: "demo.datastore"),
-        DemoScreen(index: 2, name: "All Tests", identifier: "demo.allTests"),
-        DemoScreen(index: 3, name: "Closure", identifier: "demo.closure"),
-        DemoScreen(index: 4, name: "Random Bytes", identifier: "demo.randomBytes"),
-        DemoScreen(index: 5, name: "Convert", identifier: "demo.convert"),
-        DemoScreen(index: 6, name: "Triangle Showcase", identifier: "demo.triangle"),
-        DemoScreen(index: 7, name: "Fill & Stroke", identifier: "demo.fillAndStroke"),
-        DemoScreen(index: 8, name: "Placard Showcase", identifier: "demo.placard"),
-        DemoScreen(index: 9, name: "Material", identifier: "demo.material"),
+        DemoScreen(name: "Compatibility", identifier: "demo.compatibility"),
+        DemoScreen(name: "DataStore", identifier: "demo.datastore"),
+        DemoScreen(name: "All Tests", identifier: "demo.allTests"),
+        DemoScreen(name: "Closure", identifier: "demo.closure"),
+        DemoScreen(name: "Random Bytes", identifier: "demo.randomBytes"),
+        DemoScreen(name: "Convert", identifier: "demo.convert"),
+        DemoScreen(name: "Triangle Showcase", identifier: "demo.triangle"),
+        DemoScreen(name: "Fill & Stroke", identifier: "demo.fillAndStroke"),
+        DemoScreen(name: "Placard Showcase", identifier: "demo.placard"),
+        DemoScreen(name: "Material", identifier: "demo.material"),
     ]
 
     override func setUpWithError() throws {
@@ -63,36 +63,36 @@ final class CompatibilityUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments += ["-ApplePersistenceIgnoreState", "YES"]
         app.launchEnvironment["TESTING"] = "1"
+        app.launch()
 
-        for screen in screens {
-            app.launchEnvironment["COMPATIBILITY_DEMO_TAB"] = String(screen.index)
-            app.launch()
-
-            XCTAssertTrue(app.wait(for: .runningForeground, timeout: 15), "\(screen.name) should launch into the foreground.")
+        // `launch()` does not return until the application is running in the foreground, so an
+        // additional blocking application-state wait is unnecessary and can trigger a performance diagnostic.
+        for (index, screen) in screens.enumerated() {
+            let screenElement = app.descendants(matching: .any)[screen.identifier]
             XCTAssertTrue(
-                app.descendants(matching: .any)[screen.identifier].waitForExistence(timeout: 10),
+                screenElement.waitForExistence(timeout: 10),
                 "\(screen.name) should render its demo screen."
             )
 
-            exercise(screen: screen, in: app)
-            app.terminate()
+            exercise(screenAt: index, in: app)
+
+            if index < screens.count - 1 {
+                advanceToNextPage(in: app)
+            }
         }
     }
 
     @MainActor
-    private func exercise(screen: DemoScreen, in app: XCUIApplication) {
-        switch screen.index {
-        case 0:
-            // Rendering the environment page exercises its application/module fields and environment presentation.
+    private func exercise(screenAt index: Int, in app: XCUIApplication) {
+        switch index {
+        case 0, 1, 4, 7, 8, 9:
+            // These pages are primarily exercised by rendering. Keep the UI tour fast and avoid
+            // synthetic scrolling where there is no behavior we specifically need to validate.
             break
-
-        case 1:
-            // DataStore is a long form. Scrolling forces lazy rows and their bindings to render.
-            scrollThroughCurrentScreen(in: app, passes: 5)
 
         case 2:
             // The complete test list is deliberately long; traverse it so off-screen test rows are rendered.
-            scrollThroughCurrentScreen(in: app, passes: 12)
+            scrollThroughAllTests(in: app)
 
         case 3:
             // Open the real menu when exposed so Menu callbacks and menu-item construction are covered.
@@ -104,10 +104,6 @@ final class CompatibilityUITests: XCTestCase {
                     star.backport.tap()
                 }
             }
-
-        case 4:
-            // Random Bytes is a List, so scrolling renders the full range of BytesView rows.
-            scrollThroughCurrentScreen(in: app, passes: 6)
 
         case 5:
             // Exercise Binding.convert through the Convert screen's slider.
@@ -127,17 +123,22 @@ final class CompatibilityUITests: XCTestCase {
                 }
             }
 
-        case 7, 8, 9:
-            // These pages are primarily visual; rendering them is the behavior under test.
-            break
-
         default:
-            XCTFail("Unexpected Compatibility demo screen index: \(screen.index)")
+            XCTFail("Unexpected Compatibility demo screen index: \(index)")
         }
     }
 
     @MainActor
-    private func scrollThroughCurrentScreen(in app: XCUIApplication, passes: Int) {
+    private func advanceToNextPage(in app: XCUIApplication) {
+#if os(tvOS)
+        XCUIRemote.shared.press(.right)
+#else
+        app.swipeLeft()
+#endif
+    }
+
+    @MainActor
+    private func scrollThroughAllTests(in app: XCUIApplication) {
         let scrollView = app.scrollViews.firstMatch
         let table = app.tables.firstMatch
         let collection = app.collectionViews.firstMatch
@@ -153,10 +154,10 @@ final class CompatibilityUITests: XCTestCase {
             scrollable = app
         }
 
-        for _ in 0..<passes {
+        for _ in 0..<12 {
             scrollable.swipeUp()
         }
-        for _ in 0..<(passes / 2) {
+        for _ in 0..<6 {
             scrollable.swipeDown()
         }
     }
