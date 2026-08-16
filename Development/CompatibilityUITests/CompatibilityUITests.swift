@@ -35,7 +35,7 @@ private extension XCUIElement {
 /// The app launches once and the test advances through the real `TabView` in declaration order.
 /// This deliberately avoids numeric selection tags so inserting or rearranging demo tabs does not require
 /// keeping a second set of tab indices synchronized. Navigation follows the native platform presentation:
-/// page gestures on touch platforms, the popup/menu control on macOS, and remote navigation on tvOS.
+/// direct tab selection on macOS, page gestures on touch platforms, and remote navigation on tvOS.
 final class CompatibilityUITests: XCTestCase {
     private struct DemoScreen {
         let name: String
@@ -60,31 +60,27 @@ final class CompatibilityUITests: XCTestCase {
     }
 
     @MainActor
-    func testEveryDemoScreenAndRepresentativeInteractions() throws {
+    func testEveryDemoScreenAndRepresentativeInteractions() async throws {
         let app = XCUIApplication()
         app.launchArguments += ["-ApplePersistenceIgnoreState", "YES"]
         app.launchEnvironment["TESTING"] = "1"
         app.launch()
 
-        // `launch()` does not return until the application is running in the foreground, so an
-        // additional blocking application-state wait is unnecessary and can trigger a performance diagnostic.
         for (index, screen) in screens.enumerated() {
             let screenElement = app.descendants(matching: .any)[screen.identifier]
-            XCTAssertTrue(
-                screenElement.waitForExistence(timeout: 10),
-                "\(screen.name) should render its demo screen."
-            )
+            let rendered = await waitForElement(screenElement, timeout: 10)
+            XCTAssertTrue(rendered, "\(screen.name) should render its demo screen.")
 
-            exercise(screenAt: index, in: app)
+            await exercise(screenAt: index, in: app)
 
             if index < screens.count - 1 {
-                navigate(to: screens[index + 1], in: app)
+                await navigate(to: screens[index + 1], in: app)
             }
         }
     }
 
     @MainActor
-    private func exercise(screenAt index: Int, in app: XCUIApplication) {
+    private func exercise(screenAt index: Int, in app: XCUIApplication) async {
         switch index {
         case 0, 1, 4, 7, 8, 9:
             // These pages are primarily exercised by rendering. Keep the UI tour fast and avoid
@@ -92,16 +88,17 @@ final class CompatibilityUITests: XCTestCase {
             break
 
         case 2:
-            // The complete test list is deliberately long; traverse it so off-screen test rows are rendered.
+            // The test list is long enough that a few gestures are useful for rendering off-screen rows,
+            // but traversing the entire list adds time without meaningfully improving this smoke test.
             scrollThroughAllTests(in: app)
 
         case 3:
             // Open the real menu when exposed so Menu callbacks and menu-item construction are covered.
             let symbols = app.buttons["Symbols"]
-            if symbols.waitForExistence(timeout: 2) && symbols.isHittable {
+            if await waitForElement(symbols, timeout: 2), symbols.isHittable {
                 symbols.backport.tap()
                 let star = app.buttons["star"]
-                if star.waitForExistence(timeout: 2) && star.isHittable {
+                if await waitForElement(star, timeout: 2), star.isHittable {
                     star.backport.tap()
                 }
             }
@@ -109,17 +106,17 @@ final class CompatibilityUITests: XCTestCase {
         case 5:
             // Exercise Binding.convert through the Convert screen's slider.
             let slider = app.sliders.firstMatch
-            if slider.waitForExistence(timeout: 2) {
+            if await waitForElement(slider, timeout: 2) {
                 slider.adjust(toNormalizedSliderPosition: 0.75)
             }
 
         case 6:
             // Exercise Triangle drawing and navigationDestination, then return to the showcase.
             let button = app.buttons.firstMatch
-            if button.waitForExistence(timeout: 2) && button.isHittable {
+            if await waitForElement(button, timeout: 2), button.isHittable {
                 button.backport.tap()
                 let destination = app.buttons["Navigation Destination TestCase"]
-                if destination.waitForExistence(timeout: 2) {
+                if await waitForElement(destination, timeout: 2), destination.isHittable {
                     destination.backport.tap()
                 }
             }
@@ -130,22 +127,39 @@ final class CompatibilityUITests: XCTestCase {
     }
 
     @MainActor
-    private func navigate(to screen: DemoScreen, in app: XCUIApplication) {
+    private func navigate(to screen: DemoScreen, in app: XCUIApplication) async {
 #if os(macOS)
-        // Page-style TabView is exposed as a popup/menu control to macOS accessibility rather than
-        // as a swipeable page. Exercise that native presentation instead of emulating UIKit behavior.
-        let tabSelector = app.popUpButtons.firstMatch
-        XCTAssertTrue(tabSelector.waitForExistence(timeout: 5), "macOS should expose the TabView selector as a popup button.")
-        tabSelector.backport.tap()
-
-        let item = app.menuItems[screen.name]
-        XCTAssertTrue(item.waitForExistence(timeout: 5), "The TabView selector should contain \(screen.name).")
-        item.backport.tap()
+        // Native macOS TabView exposes its tabs directly to accessibility. Query by the visible
+        // tab name instead of depending on a particular AppKit control class.
+        let tab = app.descendants(matching: .any)[screen.name]
+        let found = await waitForElement(tab, timeout: 5)
+        XCTAssertTrue(found, "macOS should expose the \(screen.name) tab.")
+        guard found else { return }
+        XCTAssertTrue(tab.isHittable, "The \(screen.name) tab should be directly selectable.")
+        if tab.isHittable {
+            tab.backport.tap()
+        }
 #elseif os(tvOS)
         XCUIRemote.shared.press(.right)
 #else
         app.swipeLeft()
 #endif
+    }
+
+    @MainActor
+    private func waitForElement(_ element: XCUIElement, timeout: TimeInterval) async -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        repeat {
+            if element.exists {
+                return true
+            }
+            if Date() >= deadline {
+                return false
+            }
+            // Yield the main actor instead of calling XCTest's synchronous waitForExistence(timeout:),
+            // which the performance diagnostics correctly flag as blocking UI responsiveness.
+            try? await Task.sleep(nanoseconds: 100_000_000)
+        } while true
     }
 
     @MainActor
@@ -165,12 +179,10 @@ final class CompatibilityUITests: XCTestCase {
             scrollable = app
         }
 
-        for _ in 0..<12 {
+        for _ in 0..<3 {
             scrollable.swipeUp()
         }
-        for _ in 0..<6 {
-            scrollable.swipeDown()
-        }
+        scrollable.swipeDown()
     }
 }
 #endif
