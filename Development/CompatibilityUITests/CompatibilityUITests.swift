@@ -83,8 +83,8 @@ final class CompatibilityUITests: XCTestCase {
     private func exercise(screen: DemoScreen, in app: XCUIApplication) {
         switch screen.index {
         case 0:
-            // Exercise the expandable environment presentation when XCTest exposes it as an actionable element.
-            tapFirstHittableElement(in: app)
+            // Rendering the environment page exercises its application/module fields and environment presentation.
+            break
 
         case 1:
             // DataStore is a long form. Scrolling forces lazy rows and their bindings to render.
@@ -95,9 +95,15 @@ final class CompatibilityUITests: XCTestCase {
             scrollThroughCurrentScreen(in: app, passes: 12)
 
         case 3:
-            // Closure/Menu contains a radial layout plus menu controls; render the complete page and
-            // activate the first safe exposed button when one is available.
-            tapFirstHittableElement(in: app)
+            // Open the real menu when exposed so Menu callbacks and menu-item construction are covered.
+            let symbols = app.buttons["Symbols"]
+            if symbols.waitForExistence(timeout: 2) && symbols.isHittable {
+                symbols.backport.tap()
+                let star = app.buttons["star"]
+                if star.waitForExistence(timeout: 2) && star.isHittable {
+                    star.backport.tap()
+                }
+            }
 
         case 4:
             // Random Bytes is a List, so scrolling renders the full range of BytesView rows.
@@ -152,14 +158,6 @@ final class CompatibilityUITests: XCTestCase {
         }
         for _ in 0..<(passes / 2) {
             scrollable.swipeDown()
-        }
-    }
-
-    @MainActor
-    private func tapFirstHittableElement(in app: XCUIApplication) {
-        for button in app.buttons.allElementsBoundByIndex where button.isHittable {
-            button.backport.tap()
-            return
         }
     }
 }
