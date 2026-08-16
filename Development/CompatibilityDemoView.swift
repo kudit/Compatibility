@@ -107,18 +107,17 @@ struct CompatibilityDemoView: View {
     }
 
     var body: some View {
+        TabView {
+            demoTabs
+        }.closure { view in
 #if os(macOS)
-        // Use SwiftUI's native macOS tab presentation. Page style collapses many pages behind a
-        // Navigation Tab Bar menu, which is less useful for this desktop test/demo application.
-        TabView {
-            demoTabs
-        }
+            // Use SwiftUI's native macOS tab presentation. Page style collapses many pages behind a
+            // Navigation Tab Bar menu, which is less useful for this desktop test/demo application.
+            view
 #else
-        TabView {
-            demoTabs
-        }
-        .backport.tabViewStyle(.page)
+            view.backport.tabViewStyle(.page)
 #endif
+        }
     }
 }
 
