@@ -5,7 +5,7 @@
 //  Created by Ben Ku on 7/13/24.
 //
 
-#if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation)
+#if canImport(SwUI) && compiler(>=5.9) && canImport(Foundation)
 import SwiftUI
 import Foundation
 import Compatibility
@@ -49,63 +49,76 @@ struct CompatibilityDemoView: View {
          ]
     ]
 
-    var body: some View {
-        TabView {
-            if #available(watchOS 9, *) {
-                CompatibilityEnvironmentTestView()
-                    .accessibilityIdentifier("demo.compatibility")
-                    .tabItem {
-                        Text("Compatibility")
-                    }
-                DataStoreTestView()
-                    .accessibilityIdentifier("demo.datastore")
-                    .tabItem {
-                        Text("DataStore")
-                    }
-            }
-            // Application tracking has already registered the complete ordered module graph consumed here.
-            AllTestsListView(additionalTests: Self.additionalTests)
-                .accessibilityIdentifier("demo.allTests")
+    @ViewBuilder
+    private var demoTabs: some View {
+        if #available(watchOS 9, *) {
+            CompatibilityEnvironmentTestView()
+                .accessibilityIdentifier("demo.compatibility")
                 .tabItem {
-                    Text("All Tests")
+                    Text("Compatibility")
                 }
-            ClosureTestView()
-                .accessibilityIdentifier("demo.closure")
+            DataStoreTestView()
+                .accessibilityIdentifier("demo.datastore")
                 .tabItem {
-                    Text("Closure")
-                }
-            RandomBytesTestView()
-                .accessibilityIdentifier("demo.randomBytes")
-                .tabItem {
-                    Text("Random Bytes")
-                }
-            ConvertTestView()
-                .accessibilityIdentifier("demo.convert")
-                .tabItem {
-                    Text("Convert")
-                }
-            TriangleShowcaseView()
-                .accessibilityIdentifier("demo.triangle")
-                .tabItem {
-                    Text("Triangle Showcase")
-                }
-            FillAndStrokeTest()
-                .accessibilityIdentifier("demo.fillAndStroke")
-                .tabItem {
-                    Text("Fill & Stroke")
-                }
-            PlacardShowcaseView()
-                .accessibilityIdentifier("demo.placard")
-                .tabItem {
-                    Text("Placard Showcase")
-                }
-            MaterialTestView()
-                .accessibilityIdentifier("demo.material")
-                .tabItem {
-                    Text("Material")
+                    Text("DataStore")
                 }
         }
+        // Application tracking has already registered the complete ordered module graph consumed here.
+        AllTestsListView(additionalTests: Self.additionalTests)
+            .accessibilityIdentifier("demo.allTests")
+            .tabItem {
+                Text("All Tests")
+            }
+        ClosureTestView()
+            .accessibilityIdentifier("demo.closure")
+            .tabItem {
+                Text("Closure")
+            }
+        RandomBytesTestView()
+            .accessibilityIdentifier("demo.randomBytes")
+            .tabItem {
+                Text("Random Bytes")
+            }
+        ConvertTestView()
+            .accessibilityIdentifier("demo.convert")
+            .tabItem {
+                Text("Convert")
+            }
+        TriangleShowcaseView()
+            .accessibilityIdentifier("demo.triangle")
+            .tabItem {
+                Text("Triangle Showcase")
+            }
+        FillAndStrokeTest()
+            .accessibilityIdentifier("demo.fillAndStroke")
+            .tabItem {
+                Text("Fill & Stroke")
+            }
+        PlacardShowcaseView()
+            .accessibilityIdentifier("demo.placard")
+            .tabItem {
+                Text("Placard Showcase")
+            }
+        MaterialTestView()
+            .accessibilityIdentifier("demo.material")
+            .tabItem {
+                Text("Material")
+            }
+    }
+
+    var body: some View {
+#if os(macOS)
+        // Use SwiftUI's native macOS tab presentation. Page style collapses many pages behind a
+        // Navigation Tab Bar menu, which is less useful for this desktop test/demo application.
+        TabView {
+            demoTabs
+        }
+#else
+        TabView {
+            demoTabs
+        }
         .backport.tabViewStyle(.page)
+#endif
     }
 }
 
