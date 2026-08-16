@@ -111,15 +111,15 @@ struct CoverageGapTests {
             IdentifiableFixture(id: 1, value: "one"),
             IdentifiableFixture(id: 2, value: "two"),
         ]
-        #expect(values[id: 2]?.value == "two")
-        values[id: 2] = IdentifiableFixture(id: 2, value: "updated")
-        #expect(values[id: 2]?.value == "updated")
+        #expect(values[2]?.value == "two")
+        values[2] = IdentifiableFixture(id: 2, value: "updated")
+        #expect(values[2]?.value == "updated")
 
         // These intentionally leave the array unchanged while exercising the guarded setter paths.
-        values[id: 99] = IdentifiableFixture(id: 99, value: "missing")
-        values[id: 1] = nil
+        values[99] = IdentifiableFixture(id: 99, value: "missing")
+        values[1] = nil
         #expect(values.count == 2)
-        #expect(values[id: 1]?.value == "one")
+        #expect(values[1]?.value == "one")
     }
 #endif
 
