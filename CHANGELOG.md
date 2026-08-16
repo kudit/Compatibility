@@ -1,12 +1,19 @@
 # Changelog
 
-## v1.18.3 2026-08-12
-Added the reusable `Compatibility Testing Library` product and `ModuleTestEntry` adapter so each module `TestCase` appears as an individually named Swift Testing result.
-Unified `TestCase.execute()` and live test execution through one lifecycle implementation with explicit parallel and serialized execution modes.
-Added source-aware test failures, labeled debug-format context, and source-context debugging conveniences while preserving existing debug-format call sites.
-Made debug tests run exclusively and restore process-global debug settings with `defer`, including when an expectation throws.
+I would like the UI tests to visit every screen and be sure to scroll down on the tests screen.  It can also exercise buttons where appropriate to actually test the interactive features.
+
+I also decided we can compromise by setting the version to 1.19 so that code can still update but it is more than just a bug fix patch.
+
+
+## v1.19.0 2026-08-15
+Added `Compatibility Testing Library` and `ModuleTestEntry` so reusable module `TestCase`s run as named parameterized Swift Testing cases in SwiftPM and Xcode.
+Unified reusable test execution through one lifecycle with parallel/serialized modes, source-aware failures, and reliable cleanup of mutable debug settings.
+Consolidated debug formatting and source-context handling, and removed unnecessary main-actor isolation from debug logging.
+Corrected `main` so it can be called from any thread while only its closure is main-actor isolated; full-runtime WebAssembly now uses real Swift concurrency for main-actor scheduling.
+Removed misleading WASM/Embedded fallbacks for `sleep`, `background`, and `delay`; these APIs are now unavailable there rather than silently providing incorrect semantics. `main` remains available on full-runtime WASM but is unavailable in Embedded Swift.
+Improved the reusable test UI and Xcode/SwiftPM test integration, including parameterized Test Navigator results and unified unit/UI test execution.
 Expanded contributor guidance for short, staged, maintainer-reviewed coding workflows.
-Consolidated debug and main and background code and removed support for WASM/Embedded since those were dangerous masks.
+Increased automated code coverage to XX%.
 
 ## v1.18.2 2026-07-23
 Fixed Swift Package Index build errors and warnings across SwiftUI and WebAssembly targets.
