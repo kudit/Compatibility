@@ -77,8 +77,16 @@ public enum Compatibility: Module {
 
 /*
   
+ Apple Platform / Swift Generation Reference
+
+ This is primarily a developer reference for choosing useful compile-time
+ generation checks. `canImport(...)` confirms that a module exists in the
+ current SDK/toolchain; it does NOT prove that the running OS satisfies the
+ framework's deployment availability. Use `#available(...)` for runtime
+ availability and explicit compiler checks for Swift-language features.
+
  For module checks to conditionally compile for versions:
- 
+
  canImport(StoreKit)
      iOS 3.0+
      iPadOS 3.0+
@@ -163,22 +171,23 @@ public enum Compatibility: Module {
      visionOS 1.0+
      SF Symbols 4.0
 
- 2023 Swift 5.8 (March), Swift 5.9 (September) (added #Preview syntax and @availability syntax)
- canImport(SwiftData)
+ 2023 Swift 5.8 (March), Swift 5.9 (September) (added #Preview syntax, @availability syntax, and macros)
+     canImport(SwiftData)
      iOS 17+
      iPadOS 17.0+
-     macOS 14+
+     macOS 14+ Sonoma
      Mac Catalyst 17.0+
      tvOS 17+
      watchOS 10+ (practical minimum for WidgetKit (due to requirement of WidgetConfigurationIntent which is only available on iOS 17, macOS 14, and watchOS 10)
      visionOS 1.0+
      SF Symbols 5.0
+     Xcode 15
 
 2024 Swift 5.10 (March), Swift 6 (September)
-canImport(Testing)
+    canImport(Testing) // earliest Embedded Swift versions
     iOS 18+
     iPadOS 18+
-    macOS 15+
+    macOS 15+ Sequoia
     Mac Catalyst 18+
     tvOS 18+
     watchOS 11+
@@ -189,9 +198,10 @@ canImport(Testing)
  Swift Playgrounds 4.6.4 - Swift 6.0 Compiler
  
  2025 Swift 6.1 (March), Swift 6.2 (September)
+    Apple platform version numbers synchronized!
     iOS 26+
     iPadOS 26+
-    macOS 26+
+    macOS 26+ Tahoe
     Mac Catalyst 26+
     tvOS 26+
     watchOS 26+
@@ -199,7 +209,10 @@ canImport(Testing)
     SF Symbols 7.0
     Xcode 26
 
- In Swift 6.2, Foundation is not available in WASM
+ 2026 Swift 6.3 (March), Swift 6.4? (September)
+    xOS 27+ Golden Gate
+    SF Symbols 8.0
+    Xcode 27
  
  */
 // MARK: - Configuration

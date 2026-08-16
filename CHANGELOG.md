@@ -1,10 +1,5 @@
 # Changelog
 
-I would like the UI tests to visit every screen and be sure to scroll down on the tests screen.  It can also exercise buttons where appropriate to actually test the interactive features.
-
-I also decided we can compromise by setting the version to 1.19 so that code can still update but it is more than just a bug fix patch.
-
-
 ## v1.19.0 2026-08-15
 Added `Compatibility Testing Library` and `ModuleTestEntry` so reusable module `TestCase`s run as named parameterized Swift Testing cases in SwiftPM and Xcode.
 Unified reusable test execution through one lifecycle with parallel/serialized modes, source-aware failures, and reliable cleanup of mutable debug settings.
