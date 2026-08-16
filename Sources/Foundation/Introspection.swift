@@ -78,3 +78,41 @@ public func areEqual(_ left: Any?, _ right: Any?) -> Bool {
     return false
 #endif
 }
+
+#if compiler(>=5.9) && !hasFeature(Embedded)
+private struct IntrospectionTestFixture: PropertyIterable {
+    let name: String
+    let count: Int
+}
+
+private enum IntrospectionNonObjectTestFixture: PropertyIterable {
+    case value
+}
+
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+@MainActor
+let introspectionTests: [TestCase] = [
+    TestCase("Property iteration and dynamic equality") {
+        let fixture = IntrospectionTestFixture(name: "Compatibility", count: 19)
+        let properties = fixture.allProperties
+        try expect(properties.count == 2)
+        try expect(properties["name"] as? String == "Compatibility")
+        try expect(properties["count"] as? Int == 19)
+
+        let keyPaths = fixture.allKeyPaths
+        try expect(keyPaths.count == 2)
+        if let nameKeyPath = keyPaths["name"] {
+            try expect(fixture[keyPath: nameKeyPath] as? String == "Compatibility")
+        } else {
+            try expect(false, "Expected name key path")
+        }
+
+        try expect(IntrospectionNonObjectTestFixture.value.allProperties.isEmpty)
+        try expect(42.isEqual(42))
+        try expect(!42.isEqual("42"))
+        try expect(areEqual(42, 42))
+        try expect(!areEqual(42, "42"))
+        try expect(!areEqual(nil, nil))
+    },
+]
+#endif
