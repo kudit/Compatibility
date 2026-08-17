@@ -49,9 +49,7 @@ final class CompatibilityUITests: XCTestCase {
         DemoScreen(name: "Closure", identifier: "demo.closure"),
         DemoScreen(name: "Random Bytes", identifier: "demo.randomBytes"),
         DemoScreen(name: "Convert", identifier: "demo.convert"),
-        DemoScreen(name: "Triangle Showcase", identifier: "demo.triangle"),
-        DemoScreen(name: "Fill & Stroke", identifier: "demo.fillAndStroke"),
-        DemoScreen(name: "Placard Showcase", identifier: "demo.placard"),
+        DemoScreen(name: "Visual Showcase", identifier: "demo.visualShowcase"),
         DemoScreen(name: "Material", identifier: "demo.material"),
     ]
 
@@ -85,7 +83,7 @@ final class CompatibilityUITests: XCTestCase {
     @MainActor
     private func exercise(screenAt index: Int, screenElement: XCUIElement, in app: XCUIApplication) async {
         switch index {
-        case 0, 1, 4, 7, 8, 9:
+        case 0, 1, 4:
             // These pages are primarily exercised by rendering. Keep the UI tour fast and avoid
             // synthetic scrolling where there is no behavior we specifically need to validate.
             break
@@ -114,12 +112,28 @@ final class CompatibilityUITests: XCTestCase {
             }
 
         case 6:
-            // Exercise Triangle drawing and navigationDestination, then return to the showcase.
-            let button = screenElement.descendants(matching: .button).firstMatch
-            if await waitForElement(button, timeout: 2), button.isHittable {
-                button.backport.tap()
+            // The visual showcase intentionally contains several layouts below the fold. A few passes
+            // cause SwiftUI to lay out representative Embossed, OverlappingStack, AdaptiveLayout,
+            // RadialStack, ClearableTextField, Placard, Triangle, and fill/stroke examples.
+            scrollVisualShowcase(screenElement)
+
+        case 7:
+            // Material owns the navigation-destination test now. Also exercise its sheet so the material,
+            // presentation-detent/background, toolbar, and dismissal paths are rendered during UI coverage.
+            let glass = app.buttons["Glass"]
+            if await waitForElement(glass, timeout: 2), glass.isHittable {
+                glass.backport.tap()
+                let close = app.buttons["Close"]
+                if await waitForElement(close, timeout: 3), close.isHittable {
+                    close.backport.tap()
+                }
+            }
+
+            let navigation = app.buttons["Navigation Test"]
+            if await waitForElement(navigation, timeout: 2), navigation.isHittable {
+                navigation.backport.tap()
                 let destination = app.buttons["Navigation Destination TestCase"]
-                if await waitForElement(destination, timeout: 2), destination.isHittable {
+                if await waitForElement(destination, timeout: 3), destination.isHittable {
                     destination.backport.tap()
                 }
             }
@@ -176,9 +190,9 @@ final class CompatibilityUITests: XCTestCase {
             return nil
         }
 
-        // A few small passes are enough to reveal the ten demo destinations without sending the
-        // sidebar all the way to an extreme and making the test unnecessarily slow.
-        for _ in 0..<4 {
+        // A few small passes are enough to reveal the demo destinations without sending the sidebar
+        // all the way to an extreme and making the test unnecessarily slow.
+        for _ in 0..<3 {
             sidebar.swipeUp()
             try? await Task.sleep(nanoseconds: 150_000_000)
             if let match = visibleMatch() {
@@ -187,7 +201,7 @@ final class CompatibilityUITests: XCTestCase {
         }
 
         // Restore roughly toward the top so subsequent navigation remains predictable.
-        for _ in 0..<4 {
+        for _ in 0..<3 {
             sidebar.swipeDown()
             try? await Task.sleep(nanoseconds: 100_000_000)
             if let match = visibleMatch() {
@@ -217,25 +231,38 @@ final class CompatibilityUITests: XCTestCase {
 
     @MainActor
     private func scrollThroughAllTests(_ screenElement: XCUIElement) {
-        let scrollView = screenElement.descendants(matching: .scrollView).firstMatch
-        let table = screenElement.descendants(matching: .table).firstMatch
-        let collection = screenElement.descendants(matching: .collectionView).firstMatch
-
-        let scrollable: XCUIElement
-        if scrollView.exists {
-            scrollable = scrollView
-        } else if table.exists {
-            scrollable = table
-        } else if collection.exists {
-            scrollable = collection
-        } else {
-            scrollable = screenElement
-        }
-
+        let scrollable = contentScrollable(in: screenElement)
         // A couple of passes are enough to instantiate representative off-screen rows for coverage.
         scrollable.swipeUp()
         scrollable.swipeUp()
         scrollable.swipeDown()
+    }
+
+    @MainActor
+    private func scrollVisualShowcase(_ screenElement: XCUIElement) {
+        let scrollable = contentScrollable(in: screenElement)
+        for _ in 0..<4 {
+            scrollable.swipeUp()
+        }
+        scrollable.swipeDown()
+    }
+
+    @MainActor
+    private func contentScrollable(in screenElement: XCUIElement) -> XCUIElement {
+        let scrollView = screenElement.descendants(matching: .scrollView).firstMatch
+        let table = screenElement.descendants(matching: .table).firstMatch
+        let collection = screenElement.descendants(matching: .collectionView).firstMatch
+
+        if scrollView.exists {
+            return scrollView
+        }
+        if table.exists {
+            return table
+        }
+        if collection.exists {
+            return collection
+        }
+        return screenElement
     }
 }
 #endif
