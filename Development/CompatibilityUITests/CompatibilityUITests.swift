@@ -129,7 +129,8 @@ final class CompatibilityUITests: XCTestCase {
                 }
             }
 
-            let navigation = app.buttons["Material"]
+            // Material's navigation trigger is intentionally a tappable Text rather than a Button.
+            let navigation = screenElement.staticTexts["Material"]
             if await waitForElement(navigation, timeout: 2), navigation.isHittable {
                 navigation.backport.tap()
                 let destination = app.buttons["Navigation Destination TestCase"]
