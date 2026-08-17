@@ -27,11 +27,14 @@ public extension View {
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension View {
     /// Applies the given transform if the given condition evaluates to `true`.
+    ///
+    /// The transform is a `ViewBuilder`, so it can use normal SwiftUI branching without requiring
+    /// `Group` or `AnyView` solely to reconcile different view types.
     /// - Parameters:
     ///   - condition: The condition to evaluate.
     ///   - transform: The transform to apply to the source `View`.
     /// - Returns: Either the original `View` or the modified `View` if the condition is `true`.
-    @ViewBuilder func `if`<Content: View>(_ condition: Bool, transform: (Self) -> Content) -> some View {
+    @ViewBuilder func `if`<Content: View>(_ condition: Bool, @ViewBuilder transform: (Self) -> Content) -> some View {
         if condition {
             transform(self)
         } else {
@@ -53,11 +56,14 @@ public extension View {
 
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension View {
-    /// Applies the given transform.  If using a branching call, both views must be the identical type or use `AnyView(erasing: VIEWCODE)` or a `Group { }` wrapper..
+    /// Applies the given transform to this view.
+    ///
+    /// The transform is a `ViewBuilder`, so it can use conditional compilation, availability checks,
+    /// and normal SwiftUI branching without requiring `Group` or `AnyView` solely for type erasure.
     /// - Parameters:
     ///   - transform: The transform to apply to the source `View`.
     /// - Returns: The modified `View`.
-    @ViewBuilder func closure<Content: View>(transform: (Self) -> Content) -> some View {
+    @ViewBuilder func closure<Content: View>(@ViewBuilder transform: (Self) -> Content) -> some View {
         transform(self)
     }
 }
@@ -73,9 +79,9 @@ public struct ClosureTestView: View {
             Text("conditional inclusion")
                 .closure { content in
                     if #available(iOS 999, macOS 999, tvOS 999, watchOS 999, visionOS 999, *) {
-                        AnyView(erasing: content.padding().background(.red).border(.yellow, width: 4))
+                        content.padding().background(.red).border(.yellow, width: 4)
                     } else {
-                        AnyView(erasing: content.padding().background(.blue).border(.green, width: 4))
+                        content.padding().background(.blue).border(.green, width: 4)
                     }
                 }
             Text("Open Source projects used include [Compatibility](https://github.com/kudit/Compatibility) v\(Compatibility.version)")
