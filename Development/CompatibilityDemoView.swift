@@ -29,6 +29,7 @@ final class DemoFailureCounter: @unchecked Sendable {
 @MainActor
 struct VisualShowcaseView: View {
     @State private var clearableText: String? = "Clearable text"
+    private let colors: [Color] = [.red, .orange, .yellow, .green, .blue, .purple]
 
     var body: some View {
         ScrollView {
@@ -81,7 +82,7 @@ struct VisualShowcaseView: View {
                         OverlappingHStack {
                             ForEach(0..<8) { index in
                                 Circle()
-                                    .fill([Color].rainbow[nth: index])
+                                    .fill(colors[index % colors.count])
                                     .frame(size: 54)
                             }
                         }
@@ -90,7 +91,7 @@ struct VisualShowcaseView: View {
                         OverlappingHStack(alignment: .bottom) {
                             ForEach(0..<6) { index in
                                 RoundedRectangle(cornerRadius: 8)
-                                    .fill([Color].rainbow[nth: index])
+                                    .fill(colors[index % colors.count])
                                     .frame(width: 70, height: CGFloat(24 + index * 6))
                             }
                         }
@@ -171,7 +172,7 @@ struct VisualShowcaseView: View {
                     VStack(spacing: 12) {
                         RadialStack {
                             ForEach(0..<6) { index in
-                                Circle().fill([Color].rainbow[nth: index])
+                                Circle().fill(colors[index % colors.count])
                             }
                         }
                         .frame(width: 180, height: 180)
@@ -196,7 +197,7 @@ struct VisualShowcaseView: View {
         OverlappingVStack(alignment: alignment) {
             ForEach(0..<5) { index in
                 Circle()
-                    .fill([Color].rainbow[nth: index])
+                    .fill(colors[index % colors.count])
                     .frame(width: CGFloat(32 + index * 5), height: 48)
             }
         }
