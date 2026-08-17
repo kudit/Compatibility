@@ -25,11 +25,10 @@ final class DemoFailureCounter: @unchecked Sendable {
 
 /// Collects representative visual Compatibility APIs in one scrollable screen so the demo and UI
 /// coverage tour exercise the real layouts/modifiers without maintaining a separate tab for each one.
-@available(iOS 15, macOS 12, tvOS 17, watchOS 9, *)
+@available(iOS 15, macOS 12, tvOS 17, watchOS 8, *)
 @MainActor
 struct VisualShowcaseView: View {
     @State private var clearableText: String? = "Clearable text"
-    private let colors: [Color] = [.red, .orange, .yellow, .green, .blue, .purple]
 
     var body: some View {
         ScrollView {
@@ -82,7 +81,7 @@ struct VisualShowcaseView: View {
                         OverlappingHStack {
                             ForEach(0..<8) { index in
                                 Circle()
-                                    .fill(colors[index % colors.count])
+                                    .fill([Color].rainbow[nth: index])
                                     .frame(size: 54)
                             }
                         }
@@ -91,7 +90,7 @@ struct VisualShowcaseView: View {
                         OverlappingHStack(alignment: .bottom) {
                             ForEach(0..<6) { index in
                                 RoundedRectangle(cornerRadius: 8)
-                                    .fill(colors[index % colors.count])
+                                    .fill([Color].rainbow[nth: index])
                                     .frame(width: 70, height: CGFloat(24 + index * 6))
                             }
                         }
@@ -172,7 +171,7 @@ struct VisualShowcaseView: View {
                     VStack(spacing: 12) {
                         RadialStack {
                             ForEach(0..<6) { index in
-                                Circle().fill(colors[index % colors.count])
+                                Circle().fill([Color].rainbow[nth: index])
                             }
                         }
                         .frame(width: 180, height: 180)
@@ -197,7 +196,7 @@ struct VisualShowcaseView: View {
         OverlappingVStack(alignment: alignment) {
             ForEach(0..<5) { index in
                 Circle()
-                    .fill(colors[index % colors.count])
+                    .fill([Color].rainbow[nth: index])
                     .frame(width: CGFloat(32 + index * 5), height: 48)
             }
         }
@@ -231,7 +230,6 @@ struct MaterialNavigationTestView: View {
 @MainActor
 struct CompatibilityDemoView: View {
     static let additionalTests: OrderedDictionary<String, [TestCase]> = [
-        "Introspection Tests": introspectionTests,
         "Injected Test": [
             TestCase("FoObar") {
                 let foo = "bar"
@@ -289,13 +287,11 @@ struct CompatibilityDemoView: View {
             .tabItem {
                 Text("Convert")
             }
-        if #available(watchOS 9, *) {
-            VisualShowcaseView()
-                .accessibilityIdentifier("demo.visualShowcase")
-                .tabItem {
-                    Text("Visual Showcase")
-                }
-        }
+        VisualShowcaseView()
+            .accessibilityIdentifier("demo.visualShowcase")
+            .tabItem {
+                Text("Visual Showcase")
+            }
         MaterialNavigationTestView()
             .accessibilityIdentifier("demo.material")
             .tabItem {
