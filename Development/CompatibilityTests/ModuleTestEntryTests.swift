@@ -16,9 +16,11 @@ struct ModuleTestEntryTests {
     @Test(
         "Compatibility Module Test",
         arguments: await MainActor.run {
-            ModuleTestEntry.entries(
+            var tests = Compatibility.tests
+            tests["Introspection Tests"] = introspectionTests
+            return ModuleTestEntry.entries(
                 for: Compatibility.self,
-                tests: Compatibility.tests
+                tests: tests
             )
         }
     )
