@@ -33,17 +33,12 @@ public struct AdaptiveLayout<PContent, LContent>: View where PContent: View, LCo
     public var body: some View {
         switch orientation {
         case .horizontal:
-            // Explicit landscape mode avoids GeometryReader so fixed-orientation uses do
-            // not unexpectedly expand inside compact parent layouts.
             landscape()
         case .vertical:
-            // Explicit portrait mode avoids GeometryReader so fixed-orientation uses do
-            // not unexpectedly expand inside compact parent layouts.
             portrait()
         case .adaptive:
             GeometryReader { proxy in
                 if orientation.resolved(for: proxy) == .horizontal {
-                    // landscape
                     landscape()
                 } else {
                     portrait()
@@ -68,8 +63,6 @@ public struct AStack: View {
         case adaptive
 
         fileprivate func resolved(for proxy: GeometryProxy) -> Orientation {
-            // `.adaptive` preserves the original width-vs-height behavior while the concrete
-            // cases give callers a stable layout when the surrounding view already knows best.
             if self == .adaptive {
                 return proxy.size.width > proxy.size.height ? .horizontal : .vertical
             }
@@ -135,35 +128,45 @@ public struct AStack: View {
     }
 }
 
+/// Shows the adaptive stack and layout behaviors used by the preview and demo application.
 @available(iOS 15, macOS 12, tvOS 17, watchOS 8, *)
-#Preview("Adpative Layouts") {
-    AStack { orientation in
-        ZStack {
-            if orientation == .horizontal {
-                Color.yellow
-            } else {
-                Color.yellow.opacity(0.5)
-            }
-            HStack {
-                AStack {
-                    Color.red
-                    Color.blue
-                }
-                AStack {
-                    Color.red
+public struct AdaptiveLayoutsShowcaseView: View {
+    public init() {}
+
+    public var body: some View {
+        AStack { orientation in
+            ZStack {
+                if orientation == .horizontal {
                     Color.yellow
-                    Color.green
+                } else {
+                    Color.yellow.opacity(0.5)
                 }
-            }.padding()
-        }
-        ZStack {
-            Color.orange
-            VStack {
-                LinearGradient(colors: .rainbow, startPoint: .leading, endPoint: .trailing)
-                LinearGradient(colors: [.blue, .white, .red], startPoint: .leading, endPoint: .trailing)
-            }.padding()
+                HStack {
+                    AStack {
+                        Color.red
+                        Color.blue
+                    }
+                    AStack {
+                        Color.red
+                        Color.yellow
+                        Color.green
+                    }
+                }.padding()
+            }
+            ZStack {
+                Color.orange
+                VStack {
+                    LinearGradient(colors: .rainbow, startPoint: .leading, endPoint: .trailing)
+                    LinearGradient(colors: [.blue, .white, .red], startPoint: .leading, endPoint: .trailing)
+                }.padding()
+            }
         }
     }
+}
+
+@available(iOS 15, macOS 12, tvOS 17, watchOS 8, *)
+#Preview("Adpative Layouts") {
+    AdaptiveLayoutsShowcaseView()
 }
 
 #endif
