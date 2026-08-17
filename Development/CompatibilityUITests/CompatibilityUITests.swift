@@ -35,7 +35,7 @@ private extension XCUIElement {
 /// The app launches once and the test advances through the real `TabView` in declaration order.
 /// This deliberately avoids numeric selection tags so inserting or rearranging demo tabs does not require
 /// keeping a second set of tab indices synchronized. Navigation follows the native platform presentation:
-/// direct tab selection on macOS, page gestures on touch platforms, and remote navigation on tvOS.
+/// sidebar selection on macOS, page gestures on touch platforms, and remote navigation on tvOS.
 final class CompatibilityUITests: XCTestCase {
     private struct DemoScreen {
         let name: String
@@ -65,13 +65,16 @@ final class CompatibilityUITests: XCTestCase {
         app.launchArguments += ["-ApplePersistenceIgnoreState", "YES"]
         app.launchEnvironment["TESTING"] = "1"
         app.launch()
+        app.activate()
 
         for (index, screen) in screens.enumerated() {
+            app.activate()
+
             let screenElement = app.descendants(matching: .any)[screen.identifier]
             let rendered = await waitForElement(screenElement, timeout: 10)
             XCTAssertTrue(rendered, "\(screen.name) should render its demo screen.")
 
-            await exercise(screenAt: index, in: app)
+            await exercise(screenAt: index, screenElement: screenElement, in: app)
 
             if index < screens.count - 1 {
                 await navigate(to: screens[index + 1], in: app)
@@ -80,7 +83,7 @@ final class CompatibilityUITests: XCTestCase {
     }
 
     @MainActor
-    private func exercise(screenAt index: Int, in app: XCUIApplication) async {
+    private func exercise(screenAt index: Int, screenElement: XCUIElement, in app: XCUIApplication) async {
         switch index {
         case 0, 1, 4, 7, 8, 9:
             // These pages are primarily exercised by rendering. Keep the UI tour fast and avoid
@@ -88,9 +91,9 @@ final class CompatibilityUITests: XCTestCase {
             break
 
         case 2:
-            // The test list is long enough that a few gestures are useful for rendering off-screen rows,
-            // but traversing the entire list adds time without meaningfully improving this smoke test.
-            scrollThroughAllTests(in: app)
+            // Scroll only within the All Tests content. On macOS the app also contains a scrollable
+            // sidebar, so querying from XCUIApplication would otherwise scroll the navigation sidebar.
+            scrollThroughAllTests(screenElement)
 
         case 3:
             // Open the real menu when exposed so Menu callbacks and menu-item construction are covered.
@@ -112,7 +115,7 @@ final class CompatibilityUITests: XCTestCase {
 
         case 6:
             // Exercise Triangle drawing and navigationDestination, then return to the showcase.
-            let button = app.buttons.firstMatch
+            let button = screenElement.descendants(matching: .button).firstMatch
             if await waitForElement(button, timeout: 2), button.isHittable {
                 button.backport.tap()
                 let destination = app.buttons["Navigation Destination TestCase"]
@@ -129,15 +132,15 @@ final class CompatibilityUITests: XCTestCase {
     @MainActor
     private func navigate(to screen: DemoScreen, in app: XCUIApplication) async {
 #if os(macOS)
-        // Native macOS TabView exposes its tabs directly to accessibility. Query by the visible
-        // tab name instead of depending on a particular AppKit control class.
-        let tab = app.descendants(matching: .any)[screen.name]
-        let found = await waitForElement(tab, timeout: 5)
-        XCTAssertTrue(found, "macOS should expose the \(screen.name) tab.")
-        guard found else { return }
-        XCTAssertTrue(tab.isHittable, "The \(screen.name) tab should be directly selectable.")
-        if tab.isHittable {
+        app.activate()
+
+        // sidebarAdaptable exposes destinations through the macOS sidebar. Later destinations can be
+        // outside the visible portion of the sidebar, so scroll the sidebar while searching rather than
+        // assuming every tab label already exists in the accessibility hierarchy.
+        if let tab = await visibleSidebarTab(named: screen.name, in: app) {
             tab.backport.tap()
+        } else {
+            XCTFail("macOS should expose the \(screen.name) tab in the sidebar.")
         }
 #elseif os(tvOS)
         XCUIRemote.shared.press(.right)
@@ -145,6 +148,56 @@ final class CompatibilityUITests: XCTestCase {
         app.swipeLeft()
 #endif
     }
+
+#if os(macOS)
+    @MainActor
+    private func visibleSidebarTab(named name: String, in app: XCUIApplication) async -> XCUIElement? {
+        func visibleMatch() -> XCUIElement? {
+            // SwiftUI/AppKit may expose a sidebar destination as a button, static text, or generic
+            // accessibility element depending on the OS version. Prefer actionable controls first.
+            let candidates = [
+                app.buttons[name],
+                app.staticTexts[name],
+                app.descendants(matching: .any)[name],
+            ]
+            return candidates.first { $0.exists && $0.isHittable }
+        }
+
+        if let match = visibleMatch() {
+            return match
+        }
+
+        // sidebarAdaptable currently presents its navigation list as an outline on macOS. Fall back
+        // to the first scrollable navigation container if accessibility exposes it differently.
+        let outline = app.outlines.firstMatch
+        let scrollArea = app.scrollViews.firstMatch
+        let sidebar = outline.exists ? outline : scrollArea
+        guard sidebar.exists else {
+            return nil
+        }
+
+        // A few small passes are enough to reveal the ten demo destinations without sending the
+        // sidebar all the way to an extreme and making the test unnecessarily slow.
+        for _ in 0..<4 {
+            sidebar.swipeUp()
+            try? await Task.sleep(nanoseconds: 150_000_000)
+            if let match = visibleMatch() {
+                return match
+            }
+        }
+
+        // Restore roughly toward the top so subsequent navigation remains predictable.
+        for _ in 0..<4 {
+            sidebar.swipeDown()
+            try? await Task.sleep(nanoseconds: 100_000_000)
+            if let match = visibleMatch() {
+                return match
+            }
+        }
+
+        return nil
+    }
+#endif
 
     @MainActor
     private func waitForElement(_ element: XCUIElement, timeout: TimeInterval) async -> Bool {
@@ -163,10 +216,10 @@ final class CompatibilityUITests: XCTestCase {
     }
 
     @MainActor
-    private func scrollThroughAllTests(in app: XCUIApplication) {
-        let scrollView = app.scrollViews.firstMatch
-        let table = app.tables.firstMatch
-        let collection = app.collectionViews.firstMatch
+    private func scrollThroughAllTests(_ screenElement: XCUIElement) {
+        let scrollView = screenElement.descendants(matching: .scrollView).firstMatch
+        let table = screenElement.descendants(matching: .table).firstMatch
+        let collection = screenElement.descendants(matching: .collectionView).firstMatch
 
         let scrollable: XCUIElement
         if scrollView.exists {
@@ -176,12 +229,12 @@ final class CompatibilityUITests: XCTestCase {
         } else if collection.exists {
             scrollable = collection
         } else {
-            scrollable = app
+            scrollable = screenElement
         }
 
-        for _ in 0..<3 {
-            scrollable.swipeUp()
-        }
+        // A couple of passes are enough to instantiate representative off-screen rows for coverage.
+        scrollable.swipeUp()
+        scrollable.swipeUp()
         scrollable.swipeDown()
     }
 }
