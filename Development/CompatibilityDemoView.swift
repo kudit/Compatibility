@@ -29,153 +29,232 @@ final class DemoFailureCounter: @unchecked Sendable {
 @MainActor
 struct VisualShowcaseView: View {
     @State private var clearableText: String? = "Clearable text"
+    @State private var conditionalEnabled = true
+    @State private var backportSelection = 0
     private let colors: [Color] = [.red, .orange, .yellow, .green, .blue, .purple]
 
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
-                GroupBox("Triangles") {
-                    HStack {
-                        ForEach(Edge.allCases, id: \.self) { edge in
-                            Triangle(flatEdge: edge)
-                                .fill(.green, strokeBorder: .yellow, lineWidth: 3)
-                                .frame(size: 64)
-                        }
-                    }
-                    .padding()
-                }
-
-                GroupBox("Placards") {
-                    HStack(spacing: 12) {
-                        ForEach(0..<4) { index in
-                            Placard()
-                                .fill(colors[nth: index], strokeBorder: .primary, lineWidth: 2)
-                                .aspectRatio(1.4, contentMode: .fit)
-                        }
-                    }
-                    .frame(height: 80)
-                    .padding()
-                }
-
-                GroupBox("Fill & Stroke") {
-                    HStack {
-                        Circle()
-                            .fill(.green, strokeBorder: .blue, lineWidth: 8)
-                        RoundedRectangle(cornerRadius: 18)
-                            .fill(.tertiary, strokeBorder: .tint, lineWidth: 5)
-                    }
-                    .frame(height: 100)
-                    .padding()
-                }
-
-                GroupBox("Embossed") {
-                    HStack(spacing: 24) {
-                        Text("Raised")
-                            .padding()
-                            .background(.gray.opacity(0.25))
-                            .embossed()
-                        Text("Sharp")
-                            .padding()
-                            .background(.gray.opacity(0.25))
-                            .embossed(offset: 2, blur: 0)
-                    }
-                    .padding()
-                }
-
-                GroupBox("Overlapping Stacks") {
-                    VStack(spacing: 16) {
-                        OverlappingHStack {
-                            ForEach(0..<8) { index in
-                                Circle()
-                                    .fill(colors[nth: index])
-                                    .frame(size: 54)
+                NavigationLink {
+                    TriangleShowcaseView()
+                        .accessibilityIdentifier("showcase.triangles.destination")
+                } label: {
+                    GroupBox("Triangles") {
+                        HStack {
+                            ForEach(Edge.allCases, id: \.self) { edge in
+                                Triangle(flatEdge: edge)
+                                    .fill(.green, strokeBorder: .yellow, lineWidth: 3)
+                                    .frame(size: 64)
                             }
                         }
-                        .frame(height: 60)
-
-                        OverlappingHStack(alignment: .bottom) {
-                            ForEach(0..<6) { index in
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(colors[nth: index])
-                                    .frame(width: 70, height: CGFloat(24 + index * 6))
-                            }
-                        }
-                        .frame(height: 70)
-
-                        HStack(spacing: 20) {
-                            overlappingVertical(alignment: .leading)
-                            overlappingVertical(alignment: .center)
-                            overlappingVertical(alignment: .trailing)
-                        }
-                        .frame(height: 150)
-
-                        // Exercise the layout's zero- and one-child placement paths as well.
-                        OverlappingHStack {
-                            ForEach(0..<0) { _ in
-                                Color.clear
-                            }
-                        }
-                        .frame(height: 1)
-                        OverlappingHStack {
-                            Circle().fill(.secondary).frame(size: 30)
-                        }
-                        .frame(height: 32)
+                        .padding()
                     }
-                    .padding()
                 }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("showcase.triangles.link")
 
-                GroupBox("Adaptive Layouts") {
+                NavigationLink {
+                    PlacardShowcaseView()
+                        .accessibilityIdentifier("showcase.placards.destination")
+                } label: {
+                    GroupBox("Placards") {
+                        HStack(spacing: 12) {
+                            ForEach(0..<4) { index in
+                                Placard()
+                                    .fill(colors[nth: index], strokeBorder: .primary, lineWidth: 2)
+                                    .aspectRatio(1.4, contentMode: .fit)
+                            }
+                        }
+                        .frame(height: 80)
+                        .padding()
+                    }
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("showcase.placards.link")
+
+                NavigationLink {
+                    FillAndStrokeTest()
+                        .accessibilityIdentifier("showcase.fillStroke.destination")
+                } label: {
+                    GroupBox("Fill & Stroke") {
+                        HStack {
+                            Circle()
+                                .fill(.green, strokeBorder: .blue, lineWidth: 8)
+                            RoundedRectangle(cornerRadius: 18)
+                                .fill(.tertiary, strokeBorder: .tint, lineWidth: 5)
+                        }
+                        .frame(height: 100)
+                        .padding()
+                    }
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("showcase.fillStroke.link")
+
+                NavigationLink {
+                    EmbossedShowcaseView()
+                        .accessibilityIdentifier("showcase.embossed.destination")
+                } label: {
+                    GroupBox("Embossed") {
+                        HStack(spacing: 24) {
+                            Text("Raised")
+                                .padding()
+                                .background(.gray.opacity(0.25))
+                                .embossed()
+                            Text("Sharp")
+                                .padding()
+                                .background(.gray.opacity(0.25))
+                                .embossed(offset: 2, blur: 0)
+                        }
+                        .padding()
+                    }
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("showcase.embossed.link")
+
+                NavigationLink {
+                    OverlappingStackShowcaseView()
+                        .accessibilityIdentifier("showcase.overlapping.destination")
+                } label: {
+                    GroupBox("Overlapping Stacks") {
+                        VStack(spacing: 16) {
+                            OverlappingHStack {
+                                ForEach(0..<8) { index in
+                                    Circle()
+                                        .fill(colors[nth: index])
+                                        .frame(size: 54)
+                                }
+                            }
+                            .frame(height: 60)
+
+                            OverlappingHStack(alignment: .bottom) {
+                                ForEach(0..<6) { index in
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(colors[nth: index])
+                                        .frame(width: 70, height: CGFloat(24 + index * 6))
+                                }
+                            }
+                            .frame(height: 70)
+
+                            HStack(spacing: 20) {
+                                overlappingVertical(alignment: .leading)
+                                overlappingVertical(alignment: .center)
+                                overlappingVertical(alignment: .trailing)
+                            }
+                            .frame(height: 150)
+
+                            // Exercise the layout's zero- and one-child placement paths as well.
+                            OverlappingHStack {
+                                ForEach(0..<0) { _ in
+                                    Color.clear
+                                }
+                            }
+                            .frame(height: 1)
+                            OverlappingHStack {
+                                Circle().fill(.secondary).frame(size: 30)
+                            }
+                            .frame(height: 32)
+                        }
+                        .padding()
+                    }
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("showcase.overlapping.link")
+
+                NavigationLink {
+                    AdaptiveLayoutsShowcaseView()
+                        .accessibilityIdentifier("showcase.adaptive.destination")
+                } label: {
+                    GroupBox("Adaptive Layouts") {
+                        VStack(spacing: 12) {
+                            AdaptiveLayout(orientation: .horizontal) {
+                                layoutSample("Portrait branch", color: .blue)
+                            } landscape: {
+                                layoutSample("Landscape branch", color: .green)
+                            }
+                            .frame(height: 44)
+
+                            AdaptiveLayout(orientation: .vertical) {
+                                layoutSample("Portrait branch", color: .blue)
+                            } landscape: {
+                                layoutSample("Landscape branch", color: .green)
+                            }
+                            .frame(height: 44)
+
+                            HStack {
+                                AdaptiveLayout {
+                                    layoutSample("Adaptive portrait", color: .orange)
+                                } landscape: {
+                                    layoutSample("Adaptive landscape", color: .purple)
+                                }
+                                .frame(width: 90, height: 130)
+
+                                AdaptiveLayout {
+                                    layoutSample("Adaptive portrait", color: .orange)
+                                } landscape: {
+                                    layoutSample("Adaptive landscape", color: .purple)
+                                }
+                                .frame(width: 180, height: 70)
+                            }
+
+                            AStack(alignment: .topOrLeading, orientation: .horizontal) { orientation in
+                                layoutSample("Top/Leading \(String(describing: orientation))", color: .red)
+                                layoutSample("Second item", color: .yellow)
+                            }
+                            .frame(height: 50)
+
+                            AStack(alignment: .center, orientation: .adaptive) {
+                                layoutSample("Adaptive", color: .cyan)
+                                layoutSample("Center", color: .mint)
+                            }
+                            .frame(height: 60)
+
+                            AStack(alignment: .bottomOrTrailing, orientation: .vertical) {
+                                layoutSample("Vertical", color: .indigo)
+                                layoutSample("Bottom/Trailing", color: .pink)
+                            }
+                            .frame(height: 90)
+                        }
+                        .padding()
+                    }
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("showcase.adaptive.link")
+
+                GroupBox("Backport APIs") {
                     VStack(spacing: 12) {
-                        AdaptiveLayout(orientation: .horizontal) {
-                            layoutSample("Portrait branch", color: .blue)
-                        } landscape: {
-                            layoutSample("Landscape branch", color: .green)
+                        Backport.TabView {
+                            Text("Backport TabView")
                         }
                         .frame(height: 44)
 
-                        AdaptiveLayout(orientation: .vertical) {
-                            layoutSample("Portrait branch", color: .blue)
-                        } landscape: {
-                            layoutSample("Landscape branch", color: .green)
+                        Backport.TabView(selection: $backportSelection) {
+                            Text("Selected Backport Tab")
+                                .tag(0)
                         }
                         .frame(height: 44)
 
                         HStack {
-                            AdaptiveLayout {
-                                layoutSample("Adaptive portrait", color: .orange)
-                            } landscape: {
-                                layoutSample("Adaptive landscape", color: .purple)
+                            Backport.Image(systemName: "calendar")
+                            Backport.Image(systemName: "applelogo")
+                            Backport.Image(systemName: "star.fill")
+                        }
+
+                        ScrollView(.horizontal) {
+                            HStack {
+                                ForEach(0..<12) { index in
+                                    Text("\(index)")
+                                        .frame(size: 32)
+                                        .background(colors[nth: index].opacity(0.25))
+                                }
                             }
-                            .frame(width: 90, height: 130)
-
-                            AdaptiveLayout {
-                                layoutSample("Adaptive portrait", color: .orange)
-                            } landscape: {
-                                layoutSample("Adaptive landscape", color: .purple)
-                            }
-                            .frame(width: 180, height: 70)
                         }
-
-                        AStack(alignment: .topOrLeading, orientation: .horizontal) { orientation in
-                            layoutSample("Top/Leading \(String(describing: orientation))", color: .red)
-                            layoutSample("Second item", color: .yellow)
-                        }
-                        .frame(height: 50)
-
-                        AStack(alignment: .center, orientation: .adaptive) {
-                            layoutSample("Adaptive", color: .cyan)
-                            layoutSample("Center", color: .mint)
-                        }
-                        .frame(height: 60)
-
-                        AStack(alignment: .bottomOrTrailing, orientation: .vertical) {
-                            layoutSample("Vertical", color: .indigo)
-                            layoutSample("Bottom/Trailing", color: .pink)
-                        }
-                        .frame(height: 90)
+                        .frame(height: 40)
+                        .backport.scrollDisabled(false)
                     }
                     .padding()
                 }
+                .accessibilityIdentifier("showcase.backport")
 
                 GroupBox("Other View Utilities") {
                     VStack(spacing: 12) {
@@ -186,11 +265,21 @@ struct VisualShowcaseView: View {
                         }
                         .frame(width: 180, height: 180)
 
-                        Text("Conditional modifier")
-                            .if(true) { view in
-                                view.bold()
+                        Toggle("Apply conditional modifier", isOn: $conditionalEnabled)
+                            .accessibilityIdentifier("showcase.conditional.toggle")
+
+                        Text(conditionalEnabled ? "Conditional modifier applied" : "Conditional modifier not applied")
+                            .if(conditionalEnabled) { view in
+                                view
+                                    .bold()
+                                    .padding(size: 6)
+                                    .background(.yellow.opacity(0.25))
+                                    .overlay {
+                                        RoundedRectangle(cornerRadius: 6)
+                                            .stroke(.orange, lineWidth: 2)
+                                    }
                             }
-                            .padding(size: 6)
+                            .accessibilityIdentifier("showcase.conditional.result")
 
                         ClearableTextField(label: "Clearable", text: $clearableText)
                     }
@@ -199,6 +288,7 @@ struct VisualShowcaseView: View {
             }
             .padding()
         }
+        .navigationWrapper()
     }
 
     @ViewBuilder
