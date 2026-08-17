@@ -99,11 +99,16 @@ private enum IntrospectionEnumFixture: PropertyIterable {
     case value(Int)
 }
 
+private enum CaseNameFixture: CaseNameConvertible {
+    case plain
+    case associated(Int)
+}
+
 private struct IntrospectionNonEquatableFixture {
     let value: Int
 }
 
-/// Reusable tests for reflection/key-path helpers and type-erased equality.
+/// Reusable tests for reflection/key-path helpers, enum case names, and type-erased equality.
 ///
 /// The app's All Tests screen and the Swift Testing adapter both consume this same list so the
 /// introspection implementation remains testable without maintaining a target-specific duplicate.
@@ -146,6 +151,14 @@ public let introspectionTests: [TestCase] = [
 #else
         let fixture = IntrospectionClassFixture(enabled: true, value: 4.5)
         try expect(fixture.allProperties.isEmpty)
+#endif
+    },
+    TestCase("Enum case names") {
+#if !hasFeature(Embedded)
+        try expectEqual(CaseNameFixture.plain.caseName, "plain")
+        try expectEqual(CaseNameFixture.associated(42).caseName, "associated")
+#else
+        try expectEqual(CaseNameFixture.plain.caseName, ".unknown")
 #endif
     },
     TestCase("Type-erased equality") {
