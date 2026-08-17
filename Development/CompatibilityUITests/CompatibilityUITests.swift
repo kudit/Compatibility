@@ -42,6 +42,11 @@ final class CompatibilityUITests: XCTestCase {
         let identifier: String
     }
 
+    private struct ShowcaseDestination {
+        let linkIdentifier: String
+        let destinationIdentifier: String
+    }
+
     private let screens = [
         DemoScreen(name: "Compatibility", identifier: "demo.compatibility"),
         DemoScreen(name: "DataStore", identifier: "demo.datastore"),
@@ -51,6 +56,15 @@ final class CompatibilityUITests: XCTestCase {
         DemoScreen(name: "Convert", identifier: "demo.convert"),
         DemoScreen(name: "Visual Showcase", identifier: "demo.visualShowcase"),
         DemoScreen(name: "Material", identifier: "demo.material"),
+    ]
+
+    private let showcaseDestinations = [
+        ShowcaseDestination(linkIdentifier: "showcase.triangles.link", destinationIdentifier: "showcase.triangles.destination"),
+        ShowcaseDestination(linkIdentifier: "showcase.placards.link", destinationIdentifier: "showcase.placards.destination"),
+        ShowcaseDestination(linkIdentifier: "showcase.fillStroke.link", destinationIdentifier: "showcase.fillStroke.destination"),
+        ShowcaseDestination(linkIdentifier: "showcase.embossed.link", destinationIdentifier: "showcase.embossed.destination"),
+        ShowcaseDestination(linkIdentifier: "showcase.overlapping.link", destinationIdentifier: "showcase.overlapping.destination"),
+        ShowcaseDestination(linkIdentifier: "showcase.adaptive.link", destinationIdentifier: "showcase.adaptive.destination"),
     ]
 
     override func setUpWithError() throws {
@@ -112,36 +126,115 @@ final class CompatibilityUITests: XCTestCase {
             }
 
         case 6:
-            // The visual showcase intentionally contains several layouts below the fold. A few passes
-            // cause SwiftUI to lay out representative Embossed, OverlappingStack, AdaptiveLayout,
-            // RadialStack, ClearableTextField, Placard, Triangle, and fill/stroke examples.
-            scrollVisualShowcase(screenElement)
+            await exerciseVisualShowcase(screenElement, in: app)
 
         case 7:
-            // Material owns the navigation-destination test now. Also exercise its sheet so the material,
-            // presentation-detent/background, toolbar, and dismissal paths are rendered during UI coverage.
-            let glass = app.buttons["Glass"]
-            if await waitForElement(glass, timeout: 2), glass.isHittable {
-                glass.backport.tap()
-                let close = app.buttons["Close"]
-                if await waitForElement(close, timeout: 3), close.isHittable {
-                    close.backport.tap()
-                }
-            }
-
-            // Material's navigation trigger is intentionally a tappable Text rather than a Button.
-            let navigation = screenElement.staticTexts["Material"]
-            if await waitForElement(navigation, timeout: 2), navigation.isHittable {
-                navigation.backport.tap()
-                let destination = app.buttons["Navigation Destination TestCase"]
-                if await waitForElement(destination, timeout: 3), destination.isHittable {
-                    destination.backport.tap()
-                }
-            }
+            await exerciseMaterial(screenElement, in: app)
 
         default:
             XCTFail("Unexpected Compatibility demo screen index: \(index)")
         }
+    }
+
+    @MainActor
+    private func exerciseVisualShowcase(_ screenElement: XCUIElement, in app: XCUIApplication) async {
+        let scrollable = contentScrollable(in: screenElement)
+
+        for showcase in showcaseDestinations {
+            let link = app.descendants(matching: .any)[showcase.linkIdentifier]
+            let found = await reveal(link, byScrolling: scrollable)
+            XCTAssertTrue(found, "Visual Showcase should expose \(showcase.linkIdentifier).")
+            guard found else { return }
+
+            link.backport.tap()
+            let destination = app.descendants(matching: .any)[showcase.destinationIdentifier]
+            let rendered = await waitForElement(destination, timeout: 4)
+            XCTAssertTrue(rendered, "Visual Showcase destination \(showcase.destinationIdentifier) should render.")
+            guard rendered else { return }
+
+            // Leave the destination visible long enough for SwiftUI to execute its body/layout work before returning.
+            try? await Task.sleep(nanoseconds: 250_000_000)
+            let back = navigationBackButton(in: app)
+            let canReturn = await waitForElement(back, timeout: 3)
+            XCTAssertTrue(canReturn, "Each Visual Showcase destination should expose navigation back.")
+            guard canReturn else { return }
+            back.backport.tap()
+            XCTAssertTrue(await waitForElement(screenElement, timeout: 4), "Visual Showcase should return after visiting a detail.")
+        }
+
+        let backportSection = app.descendants(matching: .any)["showcase.backport"]
+        XCTAssertTrue(await reveal(backportSection, byScrolling: scrollable), "Backport API examples should render in Visual Showcase.")
+
+        let conditionalToggle = app.descendants(matching: .any)["showcase.conditional.toggle"]
+        XCTAssertTrue(await reveal(conditionalToggle, byScrolling: scrollable), "Conditional modifier toggle should be reachable.")
+        guard conditionalToggle.exists else { return }
+
+        // Start on, turn it off to execute the original-view path, then turn it back on to execute the transform path again.
+        conditionalToggle.backport.tap()
+        try? await Task.sleep(nanoseconds: 150_000_000)
+        conditionalToggle.backport.tap()
+    }
+
+    @MainActor
+    private func exerciseMaterial(_ screenElement: XCUIElement, in app: XCUIApplication) async {
+        // Exercise the sheet so material, presentation-detent/background, toolbar, and dismissal paths render.
+        let glass = app.buttons["Glass"]
+        XCTAssertTrue(await waitForElement(glass, timeout: 2), "Material should expose the Glass sheet control.")
+        if glass.exists && glass.isHittable {
+            glass.backport.tap()
+            let close = app.buttons["Close"]
+            XCTAssertTrue(await waitForElement(close, timeout: 3), "Material sheet should expose Close.")
+            if close.exists && close.isHittable {
+                close.backport.tap()
+            }
+        }
+
+        // Material's navigation trigger is intentionally a tappable Text rather than a Button.
+        let navigation = screenElement.staticTexts["Material"]
+        XCTAssertTrue(await waitForElement(navigation, timeout: 2), "Material navigation trigger should be present.")
+        guard navigation.exists && navigation.isHittable else {
+            XCTFail("Material navigation trigger should be hittable.")
+            return
+        }
+
+        navigation.backport.tap()
+        let destination = app.buttons["Navigation Destination TestCase"]
+        let destinationRendered = await waitForElement(destination, timeout: 4)
+        XCTAssertTrue(destinationRendered, "Material navigation should show Navigation Destination TestCase.")
+        guard destinationRendered else { return }
+
+        // Keep the destination visibly presented briefly so the test proves the navigation actually happened.
+        try? await Task.sleep(nanoseconds: 400_000_000)
+        destination.backport.tap()
+        XCTAssertTrue(await waitForElement(navigation, timeout: 4), "Material navigation destination should dismiss back to Material.")
+    }
+
+    @MainActor
+    private func reveal(_ element: XCUIElement, byScrolling scrollable: XCUIElement) async -> Bool {
+        if element.exists && element.isHittable {
+            return true
+        }
+        for _ in 0..<5 {
+            scrollable.swipeUp()
+            try? await Task.sleep(nanoseconds: 120_000_000)
+            if element.exists && element.isHittable {
+                return true
+            }
+        }
+        return element.exists && element.isHittable
+    }
+
+    @MainActor
+    private func navigationBackButton(in app: XCUIApplication) -> XCUIElement {
+        let namedBack = app.buttons["Back"]
+        if namedBack.exists {
+            return namedBack
+        }
+        let navigationBarButton = app.navigationBars.buttons.firstMatch
+        if navigationBarButton.exists {
+            return navigationBarButton
+        }
+        return app.buttons.firstMatch
     }
 
     @MainActor
@@ -236,15 +329,6 @@ final class CompatibilityUITests: XCTestCase {
         // A couple of passes are enough to instantiate representative off-screen rows for coverage.
         scrollable.swipeUp()
         scrollable.swipeUp()
-        scrollable.swipeDown()
-    }
-
-    @MainActor
-    private func scrollVisualShowcase(_ screenElement: XCUIElement) {
-        let scrollable = contentScrollable(in: screenElement)
-        for _ in 0..<4 {
-            scrollable.swipeUp()
-        }
         scrollable.swipeDown()
     }
 
