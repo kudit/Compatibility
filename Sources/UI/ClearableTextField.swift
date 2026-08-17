@@ -12,7 +12,7 @@ import Combine
 // https://fatbobman.com/en/posts/textfield-event-focus-keyboard/
 
 // TODO: Allow selection when tapping? https://stackoverflow.com/questions/67502138/select-all-text-in-textfield-upon-click-swiftui
-@available(iOS 15, macOS 12, tvOS 15, watchOS 9, *)
+@available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
 public struct ClearableTextField: View {
     @State var label: String
     @Binding var text: String?
