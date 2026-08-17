@@ -114,8 +114,8 @@ struct CompatibilityDemoView: View {
             // Use SwiftUI's native macOS tab presentation. Page style collapses many pages behind a
             // Navigation Tab Bar menu, which is less useful for this desktop test/demo application.
             if #available(macOS 15.0, *) {
-                view.tabViewStyle(.tabBarOnly)
-                //            view.backport.tabViewStyle(.sidebarAdaptable)
+//                view.tabViewStyle(.tabBarOnly)
+                view.tabViewStyle(.sidebarAdaptable)
             } else {
                 // Fallback on earlier versions
                 view.tabViewStyle(.automatic)

@@ -8,6 +8,7 @@ Corrected `main` so it can be called from any thread while only its closure is m
 Removed misleading WASM/Embedded fallbacks for `sleep`, `background`, and `delay`; these APIs are now unavailable there rather than silently providing incorrect semantics. `main` remains available on full-runtime WASM but is unavailable in Embedded Swift.
 Improved the reusable test UI and Xcode/SwiftPM test integration, including parameterized Test Navigator results and unified unit/UI test execution.
 Expanded contributor guidance for short, staged, maintainer-reviewed coding workflows.
+Updated `closure` and `if` view modifiers to take `@ViewBuilder` so that contents don't need to be wrapped in `Group {}`.
 Increased automated code coverage to XX%.
 
 ## v1.18.2 2026-07-23
