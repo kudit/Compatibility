@@ -206,7 +206,7 @@ struct VisualShowcaseView: View {
 
 /// Keeps the Material demo and navigation-destination compatibility check together now that the
 /// visual-only shape demos share a single showcase tab.
-@available(iOS 15, macOS 12, tvOS 17, watchOS 9, *)
+@available(iOS 15, macOS 12, tvOS 17, watchOS 8, *)
 @MainActor
 struct MaterialNavigationTestView: View {
     @State private var showNavigationDetail = false
@@ -289,11 +289,13 @@ struct CompatibilityDemoView: View {
             .tabItem {
                 Text("Convert")
             }
-        VisualShowcaseView()
-            .accessibilityIdentifier("demo.visualShowcase")
-            .tabItem {
-                Text("Visual Showcase")
-            }
+        if #available(watchOS 9, *) {
+            VisualShowcaseView()
+                .accessibilityIdentifier("demo.visualShowcase")
+                .tabItem {
+                    Text("Visual Showcase")
+                }
+        }
         MaterialNavigationTestView()
             .accessibilityIdentifier("demo.material")
             .tabItem {
