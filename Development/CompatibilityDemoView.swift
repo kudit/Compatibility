@@ -29,6 +29,7 @@ final class DemoFailureCounter: @unchecked Sendable {
 @MainActor
 struct VisualShowcaseView: View {
     @State private var clearableText: String? = "Clearable text"
+    private let colors: [Color] = [.red, .orange, .yellow, .green, .blue, .purple]
 
     var body: some View {
         ScrollView {
@@ -44,11 +45,16 @@ struct VisualShowcaseView: View {
                     .padding()
                 }
 
-                GroupBox("Placard") {
-                    Placard()
-                        .fill(.blue, strokeBorder: .primary, lineWidth: 2)
-                        .frame(height: 120)
-                        .padding()
+                GroupBox("Placards") {
+                    HStack(spacing: 12) {
+                        ForEach(0..<4) { index in
+                            Placard()
+                                .fill(colors[nth: index], strokeBorder: .primary, lineWidth: 2)
+                                .aspectRatio(1.4, contentMode: .fit)
+                        }
+                    }
+                    .frame(height: 80)
+                    .padding()
                 }
 
                 GroupBox("Fill & Stroke") {
@@ -81,7 +87,7 @@ struct VisualShowcaseView: View {
                         OverlappingHStack {
                             ForEach(0..<8) { index in
                                 Circle()
-                                    .fill([Color].rainbow[nth: index])
+                                    .fill(colors[nth: index])
                                     .frame(size: 54)
                             }
                         }
@@ -90,7 +96,7 @@ struct VisualShowcaseView: View {
                         OverlappingHStack(alignment: .bottom) {
                             ForEach(0..<6) { index in
                                 RoundedRectangle(cornerRadius: 8)
-                                    .fill([Color].rainbow[nth: index])
+                                    .fill(colors[nth: index])
                                     .frame(width: 70, height: CGFloat(24 + index * 6))
                             }
                         }
@@ -121,48 +127,52 @@ struct VisualShowcaseView: View {
                 GroupBox("Adaptive Layouts") {
                     VStack(spacing: 12) {
                         AdaptiveLayout(orientation: .horizontal) {
-                            Text("Portrait")
+                            layoutSample("Portrait branch", color: .blue)
                         } landscape: {
-                            HStack { Text("Landscape"); Spacer() }
+                            layoutSample("Landscape branch", color: .green)
                         }
-                        .frame(height: 30)
+                        .frame(height: 44)
 
                         AdaptiveLayout(orientation: .vertical) {
-                            VStack { Text("Portrait") }
+                            layoutSample("Portrait branch", color: .blue)
                         } landscape: {
-                            Text("Landscape")
+                            layoutSample("Landscape branch", color: .green)
                         }
-                        .frame(height: 30)
+                        .frame(height: 44)
 
                         HStack {
                             AdaptiveLayout {
-                                Text("Adaptive portrait")
+                                layoutSample("Adaptive portrait", color: .orange)
                             } landscape: {
-                                Text("Adaptive landscape")
+                                layoutSample("Adaptive landscape", color: .purple)
                             }
                             .frame(width: 90, height: 130)
 
                             AdaptiveLayout {
-                                Text("Adaptive portrait")
+                                layoutSample("Adaptive portrait", color: .orange)
                             } landscape: {
-                                Text("Adaptive landscape")
+                                layoutSample("Adaptive landscape", color: .purple)
                             }
                             .frame(width: 180, height: 70)
                         }
 
                         AStack(alignment: .topOrLeading, orientation: .horizontal) { orientation in
-                            Text("Top/Leading \(String(describing: orientation))")
-                            Text("Horizontal")
-                        }
-                        AStack(alignment: .center, orientation: .adaptive) {
-                            Text("Adaptive")
-                            Text("Center")
+                            layoutSample("Top/Leading \(String(describing: orientation))", color: .red)
+                            layoutSample("Second item", color: .yellow)
                         }
                         .frame(height: 50)
-                        AStack(alignment: .bottomOrTrailing, orientation: .vertical) {
-                            Text("Vertical")
-                            Text("Bottom/Trailing")
+
+                        AStack(alignment: .center, orientation: .adaptive) {
+                            layoutSample("Adaptive", color: .cyan)
+                            layoutSample("Center", color: .mint)
                         }
+                        .frame(height: 60)
+
+                        AStack(alignment: .bottomOrTrailing, orientation: .vertical) {
+                            layoutSample("Vertical", color: .indigo)
+                            layoutSample("Bottom/Trailing", color: .pink)
+                        }
+                        .frame(height: 90)
                     }
                     .padding()
                 }
@@ -171,7 +181,7 @@ struct VisualShowcaseView: View {
                     VStack(spacing: 12) {
                         RadialStack {
                             ForEach(0..<6) { index in
-                                Circle().fill([Color].rainbow[nth: index])
+                                Circle().fill(colors[nth: index])
                             }
                         }
                         .frame(width: 180, height: 180)
@@ -196,10 +206,23 @@ struct VisualShowcaseView: View {
         OverlappingVStack(alignment: alignment) {
             ForEach(0..<5) { index in
                 Circle()
-                    .fill([Color].rainbow[nth: index])
+                    .fill(colors[nth: index])
                     .frame(width: CGFloat(32 + index * 5), height: 48)
             }
         }
+    }
+
+    private func layoutSample(_ title: String, color: Color) -> some View {
+        Text(title)
+            .font(.caption)
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(4)
+            .background(color.opacity(0.18))
+            .overlay {
+                RoundedRectangle(cornerRadius: 6)
+                    .stroke(color, lineWidth: 2)
+            }
     }
 }
 
