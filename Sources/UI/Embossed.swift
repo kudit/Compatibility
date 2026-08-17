@@ -22,21 +22,30 @@ public extension View {
     }
 }
 
+/// Shows the embossed modifier across each triangle orientation.
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
-#Preview("Embossed") {
-    ZStack {
-        Color.yellow.backport.ignoresSafeArea()
-        VStack {
-            ForEach(Edge.allCases, id: \.self) { edge in
-                Triangle(flatEdge: edge)
-                    .fill(.yellow)
-                    .embossed(blur: 0)
-                    .padding()
-                    .padding()
-                    .padding()
-                    .aspectRatio(1, contentMode: .fit)
+public struct EmbossedShowcaseView: View {
+    public init() {}
+    public var body: some View {
+        ZStack {
+            Color.yellow.backport.ignoresSafeArea()
+            VStack {
+                ForEach(Edge.allCases, id: \.self) { edge in
+                    Triangle(flatEdge: edge)
+                        .fill(.yellow)
+                        .embossed(blur: 0)
+                        .padding()
+                        .padding()
+                        .padding()
+                        .aspectRatio(1, contentMode: .fit)
+                }
             }
         }
     }
+}
+
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+#Preview("Embossed") {
+    EmbossedShowcaseView()
 }
 #endif
