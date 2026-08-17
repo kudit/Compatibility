@@ -528,6 +528,7 @@ public extension TestCase {
                     try expectNotEqual(Compatibility.version, Version("0.0.0"))
                 },
             ],
+            "Introspection Tests": introspectionTests,
             "String Tests": String.tests,
             "Dictionary Tests": dictionaryTests,
             "Mixed Type Field Tests": MixedTypeField.tests,
