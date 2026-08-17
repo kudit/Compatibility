@@ -298,6 +298,7 @@ public extension View {
 
 @available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
 public struct MaterialTestView: View {
+    @State private var showNavigationDetail = false
     @State var showSheet: Bool = false
     public init() {}
     public var body: some View {
@@ -306,6 +307,9 @@ public struct MaterialTestView: View {
             HStack {
                 Text("Material")
                     .backgroundMaterial()
+                    .onTapGesture {
+                        showNavigationDetail = true
+                    }
                 Button {
                     showSheet = true
                 } label: {
@@ -314,26 +318,33 @@ public struct MaterialTestView: View {
                 }
                 .backport.glassEffect(.regular.interactive())
             }
-        }.background(.conicGradient(colors: [.red, .green, .blue], center: .center))
-            .sheet(isPresented: $showSheet) {
-                ZStack {
-//                    Color.blue
-                    AStack {
-                        Color.yellow
-                        Color.green
-                    }.padding()
-                }
-                .toolbar {
-                    ToolbarItem(placement: .bottomBackport) {
-                        Button("Close") {
-                            showSheet = false
-                        }
+        }
+        .background(.conicGradient(colors: [.red, .green, .blue], center: .center))
+        .sheet(isPresented: $showSheet) {
+            ZStack {
+                //                    Color.blue
+                AStack {
+                    Color.yellow
+                    Color.green
+                }.padding()
+            }
+            .toolbar {
+                ToolbarItem(placement: .bottomBackport) {
+                    Button("Close") {
+                        showSheet = false
                     }
                 }
-                .navigationWrapper()
-                .backport.presentationDetents([.fraction(1/3), .medium, .large])
-                .backport.presentationBackground(.ultraThinMaterial)
             }
+            .navigationWrapper()
+            .backport.presentationDetents([.fraction(1/3), .medium, .large])
+            .backport.presentationBackground(.ultraThinMaterial)
+        }
+        .backport.navigationDestination(isPresented: $showNavigationDetail) {
+            Button("Navigation Destination TestCase") {
+                showNavigationDetail = false
+            }
+        }
+        .navigationWrapper()
     }
 }
 

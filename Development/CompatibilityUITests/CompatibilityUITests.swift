@@ -129,7 +129,7 @@ final class CompatibilityUITests: XCTestCase {
                 }
             }
 
-            let navigation = app.buttons["Navigation Test"]
+            let navigation = app.buttons["Material"]
             if await waitForElement(navigation, timeout: 2), navigation.isHittable {
                 navigation.backport.tap()
                 let destination = app.buttons["Navigation Destination TestCase"]

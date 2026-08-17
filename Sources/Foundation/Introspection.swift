@@ -107,6 +107,7 @@ private struct IntrospectionNonEquatableFixture {
 ///
 /// The app's All Tests screen and the Swift Testing adapter both consume this same list so the
 /// introspection implementation remains testable without maintaining a target-specific duplicate.
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 @MainActor
 public let introspectionTests: [TestCase] = [
     TestCase("Struct properties and key paths") {
