@@ -139,7 +139,7 @@ private struct RadialLayoutRoot: _VariadicView_MultiViewRoot {
 // For #Previews
 // Color framework provides better rainbow variable with 7 colors.  This is 6 colors.
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
-public extension Array where Element == Color {
+extension Array where Element == Color {
     /// 6 color ROYGBV(purple for violet)
     static var rainbow: [Color] {
         [.red, .orange, .yellow, .green, .blue, .purple]
