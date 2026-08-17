@@ -230,6 +230,7 @@ struct MaterialNavigationTestView: View {
 @MainActor
 struct CompatibilityDemoView: View {
     static let additionalTests: OrderedDictionary<String, [TestCase]> = [
+        "Introspection Tests": introspectionTests,
         "Injected Test": [
             TestCase("FoObar") {
                 let foo = "bar"
