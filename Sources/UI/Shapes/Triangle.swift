@@ -48,33 +48,21 @@ public struct Triangle: Shape {
 
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public struct TriangleShowcaseView: View {
-    @State var showDetail = false
     public init() {}
     public var body: some View {
         VStack {
             ForEach(Edge.allCases, id: \.self) { edge in
-                Button {
-                    showDetail = true
-                } label: {
-                    Color.blue
-                        .clipShape(RoundedRectangle(cornerRadius: 15))
-                        .backport.overlay {
-                            Triangle(flatEdge: edge)
-                                .fill(.green, strokeBorder: .yellow, lineWidth: 4)
-                                .backport.background(.red)
-                                .padding()
-                        }
-                }
-                .buttonStyle(.plain)
-                .frame(size: 100)
+                Color.blue
+                    .clipShape(RoundedRectangle(cornerRadius: 15))
+                    .backport.overlay {
+                        Triangle(flatEdge: edge)
+                            .fill(.green, strokeBorder: .yellow, lineWidth: 4)
+                            .backport.background(.red)
+                            .padding()
+                    }
+                    .frame(size: 100)
             }
         }
-        .backport.navigationDestination(isPresented: $showDetail) {
-            Button("Navigation Destination TestCase") {
-                showDetail = false
-            }
-        }
-        .navigationWrapper()
     }
 }
 
