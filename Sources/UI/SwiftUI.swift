@@ -137,7 +137,7 @@ public extension Binding {
             
         Binding<TInt> (
             get: { TInt(floatBinding.wrappedValue) },
-            set: { intBinding.wrappedValue = TFloat($0) }
+            set: { floatBinding.wrappedValue = TFloat($0) }
         )
     }
 }
