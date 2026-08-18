@@ -255,6 +255,128 @@ public extension MixedTypeField {
             try expect(decodedField == direct)
 #endif
         },
+#if !hasFeature(Embedded)
+        TestCase("Mixed type accessors and coding containers") {
+            // Exercise every public accessor's matching and non-matching paths, including exact conversion
+            // between integral doubles and Int plus the intentionally lossy-rejected fractional case.
+            try expect(MixedTypeField.string("value").stringValue == "value")
+            try expect(MixedTypeField.int(1).stringValue == nil)
+            try expect(MixedTypeField.bool(true).boolValue == true)
+            try expect(MixedTypeField.string("true").boolValue == nil)
+            try expect(MixedTypeField.int(7).intValue == 7)
+            try expect(MixedTypeField.double(7).intValue == 7)
+            try expect(MixedTypeField.double(7.5).intValue == nil)
+            try expect(MixedTypeField.double(2.5).doubleValue == 2.5)
+            try expect(MixedTypeField.int(2).doubleValue == 2)
+            try expect(MixedTypeField.string("2").doubleValue == nil)
+            try expect(MixedTypeField.dictionary(["a": .int(1)]).dictionaryValue?["a"] == .int(1))
+            try expect(MixedTypeField.int(1).dictionaryValue == nil)
+            try expect(MixedTypeField.array([.int(1)]).arrayValue == [.int(1)])
+            try expect(MixedTypeField.int(1).arrayValue == nil)
+
+            // Exercise the dynamic encoding initializer's primitive, collection, dictionary, passthrough,
+            // nil, and unsupported-value branches without relying on Foundation JSON behavior.
+            try expect(MixedTypeField(encoding: nil) == .null)
+            try expect(MixedTypeField(encoding: MixedTypeField.string("already")) == .string("already"))
+            try expect(MixedTypeField(encoding: true) == .bool(true))
+            try expect(MixedTypeField(encoding: Int8(8)) == .int(8))
+            try expect(MixedTypeField(encoding: Float(1.5)) == .double(1.5))
+            try expect(MixedTypeField(encoding: "text") == .string("text"))
+            try expect(MixedTypeField(encoding: [1, "two"] as [Any]) == .array([.int(1), .string("two")]))
+            try expect(MixedTypeField(encoding: ["answer": 42]) == .dictionary(["answer": .int(42)]))
+            struct UnsupportedValue {}
+            var unsupported: MixedTypeField?
+            debugSuppress {
+                unsupported = MixedTypeField(encoding: UnsupportedValue())
+            }
+            try expect(unsupported == nil)
+
+            // Custom probes deliberately call container APIs that synthesized Codable commonly bypasses,
+            // so their behavior remains covered by the same reusable tests on SwiftPM and in the demo app.
+            struct KeyedNilPayload: Encodable {
+                enum CodingKeys: String, CodingKey { case value, nothing }
+                func encode(to encoder: Encoder) throws {
+                    var container = encoder.container(keyedBy: CodingKeys.self)
+                    try container.encode("value", forKey: .value)
+                    try container.encodeNil(forKey: .nothing)
+                }
+            }
+            let keyedEncoded = try KeyedNilPayload().asMixedTypeField()
+            let keyedDictionary = keyedEncoded.dictionaryValue
+            try expect((keyedDictionary?["value"] ?? nil) == .string("value"))
+            try expect((keyedDictionary?["nothing"] ?? nil) == .null)
+
+            struct KeyedProbe: Decodable {
+                enum CodingKeys: String, CodingKey { case value, nothing, missing }
+                let value: String
+                let containsValue: Bool
+                let containsMissing: Bool
+                let nothingIsNil: Bool
+                init(from decoder: Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    containsValue = container.contains(.value)
+                    containsMissing = container.contains(.missing)
+                    nothingIsNil = try container.decodeNil(forKey: .nothing)
+                    value = try container.decode(String.self, forKey: .value)
+                }
+            }
+            let keyedProbe = try KeyedProbe(fromMixedTypeField: .dictionary([
+                "value": .string("decoded"),
+                "nothing": .null,
+            ]))
+            try expect(keyedProbe.value == "decoded")
+            try expect(keyedProbe.containsValue)
+            try expect(!keyedProbe.containsMissing)
+            try expect(keyedProbe.nothingIsNil)
+
+            struct UnkeyedNilPayload: Encodable {
+                func encode(to encoder: Encoder) throws {
+                    var container = encoder.unkeyedContainer()
+                    try container.encodeNil()
+                    try container.encode(9)
+                }
+            }
+            try expect(try UnkeyedNilPayload().asMixedTypeField() == .array([.null, .int(9)]))
+
+            struct UnkeyedProbe: Decodable {
+                let count: Int?
+                let firstIsNil: Bool
+                let second: Int
+                init(from decoder: Decoder) throws {
+                    var container = try decoder.unkeyedContainer()
+                    count = container.count
+                    firstIsNil = try container.decodeNil()
+                    second = try container.decode(Int.self)
+                }
+            }
+            let unkeyedProbe = try UnkeyedProbe(fromMixedTypeField: .array([.null, .int(11)]))
+            try expect(unkeyedProbe.count == 2)
+            try expect(unkeyedProbe.firstIsNil)
+            try expect(unkeyedProbe.second == 11)
+
+            // Float has a dedicated SingleValueDecodingContainer overload that otherwise remained unexecuted.
+            let float = try Float(fromMixedTypeField: .double(3.25))
+            try expect(float == 3.25)
+
+            // Validate representative decoder errors rather than merely executing them for coverage.
+            do {
+                let _: Int = try .init(fromMixedTypeField: .string("not an int"))
+                try expect(false, "Expected a typeMismatch decoding error")
+            } catch DecodingError.typeMismatch {
+                // Expected.
+            }
+
+            struct RequiredValue: Decodable {
+                let required: String
+            }
+            do {
+                let _: RequiredValue = try .init(fromMixedTypeField: .dictionary([:]))
+                try expect(false, "Expected a keyNotFound decoding error")
+            } catch DecodingError.keyNotFound {
+                // Expected.
+            }
+        },
+#endif
     ]
 }
 #endif
