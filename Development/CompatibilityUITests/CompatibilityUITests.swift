@@ -138,13 +138,14 @@ final class CompatibilityUITests: XCTestCase {
 
     @MainActor
     private func exerciseVisualShowcase(_ screenElement: XCUIElement, in app: XCUIApplication) async {
-        let scrollable = contentScrollable(in: screenElement)
-
         for showcase in showcaseDestinations {
-            let link = app.descendants(matching: .any)[showcase.linkIdentifier]
-            let found = await reveal(link, byScrolling: scrollable)
-            XCTAssertTrue(found, "Visual Showcase should expose \(showcase.linkIdentifier).")
-            guard found else { return }
+            // Reacquire both the destination query and the scroll view after every navigation round-trip.
+            // SwiftUI can rebuild the NavigationStack hierarchy when returning, so retaining the first
+            // scroll-view element made later swipes target a stale accessibility object on macOS.
+            guard let link = await reveal(identifier: showcase.linkIdentifier, in: screenElement, app: app) else {
+                XCTFail("Visual Showcase should scroll far enough to expose \(showcase.linkIdentifier).")
+                return
+            }
 
             link.backport.tap()
             let destination = app.descendants(matching: .any)[showcase.destinationIdentifier]
@@ -153,7 +154,7 @@ final class CompatibilityUITests: XCTestCase {
             guard rendered else { return }
 
             // Leave the destination visible long enough for SwiftUI to execute its body/layout work before returning.
-            try? await Task.sleep(nanoseconds: 250_000_000)
+            try? await Task.sleep(nanoseconds: 350_000_000)
             let back = navigationBackButton(in: app)
             let canReturn = await waitForElement(back, timeout: 3)
             XCTAssertTrue(canReturn, "Each Visual Showcase destination should expose navigation back.")
@@ -161,21 +162,73 @@ final class CompatibilityUITests: XCTestCase {
             back.backport.tap()
             let returned = await waitForElement(screenElement, timeout: 4)
             XCTAssertTrue(returned, "Visual Showcase should return after visiting a detail.")
+            guard returned else { return }
         }
 
-        let backportSection = app.descendants(matching: .any)["showcase.backport"]
-        let backportRendered = await reveal(backportSection, byScrolling: scrollable)
-        XCTAssertTrue(backportRendered, "Backport API examples should render in Visual Showcase.")
+        guard await reveal(identifier: "showcase.backport", in: screenElement, app: app) != nil else {
+            XCTFail("Backport API examples should render in Visual Showcase.")
+            return
+        }
 
-        let conditionalToggle = app.descendants(matching: .any)["showcase.conditional.toggle"]
-        let toggleReachable = await reveal(conditionalToggle, byScrolling: scrollable)
-        XCTAssertTrue(toggleReachable, "Conditional modifier toggle should be reachable.")
-        guard conditionalToggle.exists else { return }
+        // Exercise the selection-bound Backport.TabView from outside the tab content. This demonstrates
+        // that the Binding supplied to Backport.TabView participates in normal SwiftUI state updates.
+        guard let selectionToggle = await reveal(identifier: "showcase.backport.selection.toggle", in: screenElement, app: app) else {
+            XCTFail("Selection-bound Backport.TabView control should be reachable.")
+            return
+        }
+        selectionToggle.backport.tap()
+        let selectionOne = app.staticTexts["Bound selection: 1"]
+        let selectionChanged = await waitForElement(selectionOne, timeout: 3)
+        XCTAssertTrue(selectionChanged, "Selection-bound Backport.TabView should change to tag 1.")
+
+#if os(macOS) || os(iOS)
+        // Start the symbol field empty so typeText() can enter a complete SF Symbol name without platform-specific
+        // Select All keyboard shortcuts. Leaving the field commits ClearableTextField's value to its binding.
+        guard let symbolFieldContainer = await reveal(identifier: "showcase.symbol.field", in: screenElement, app: app) else {
+            XCTFail("SF Symbol ClearableTextField should be reachable.")
+            return
+        }
+        let symbolField = app.textFields["SF Symbol name"]
+        let symbolFieldFound = await waitForElement(symbolField, timeout: 2)
+        XCTAssertTrue(symbolFieldFound, "Visual Showcase should expose the SF Symbol text field.")
+        guard symbolFieldFound else { return }
+        symbolField.backport.tap()
+        symbolField.typeText("star.fill")
+
+        // Scrolling to and activating the next control intentionally moves focus away from the text field,
+        // which causes ClearableTextField to persist the edited value before we verify the bound status text.
+        _ = symbolFieldContainer
+#endif
+
+        guard let scrollToggle = await reveal(identifier: "showcase.backport.scroll.toggle", in: screenElement, app: app) else {
+            XCTFail("scrollDisabled Backport toggle should be reachable.")
+            return
+        }
+        scrollToggle.backport.tap()
+
+#if os(macOS) || os(iOS)
+        let symbolStatus = app.staticTexts["Current symbol: star.fill"]
+        let symbolChanged = await waitForElement(symbolStatus, timeout: 3)
+        XCTAssertTrue(symbolChanged, "Entering an SF Symbol name should update the Backport.Image example.")
+#endif
+
+        // Toggle back to the enabled-scrolling state so both values flow through Backport.scrollDisabled.
+        scrollToggle.backport.tap()
+
+        guard let conditionalToggle = await reveal(identifier: "showcase.conditional.toggle", in: screenElement, app: app) else {
+            XCTFail("Conditional modifier toggle should be reachable.")
+            return
+        }
 
         // Start on, turn it off to execute the original-view path, then turn it back on to execute the transform path again.
         conditionalToggle.backport.tap()
-        try? await Task.sleep(nanoseconds: 150_000_000)
+        let conditionalOff = app.staticTexts["Conditional modifier not applied"]
+        let offRendered = await waitForElement(conditionalOff, timeout: 2)
+        XCTAssertTrue(offRendered, "Conditional modifier example should visibly change when disabled.")
         conditionalToggle.backport.tap()
+        let conditionalOn = app.staticTexts["Conditional modifier applied"]
+        let onRendered = await waitForElement(conditionalOn, timeout: 2)
+        XCTAssertTrue(onRendered, "Conditional modifier example should visibly change when re-enabled.")
     }
 
     @MainActor
@@ -209,26 +262,41 @@ final class CompatibilityUITests: XCTestCase {
         XCTAssertTrue(destinationRendered, "Material navigation should show Navigation Destination TestCase.")
         guard destinationRendered else { return }
 
-        // Keep the destination visibly presented briefly so the test proves the navigation actually happened.
-        try? await Task.sleep(nanoseconds: 400_000_000)
+        // Keep this visibly presented for a full second: besides executing the destination body, this makes
+        // the navigation step observable when watching the UI test rather than appearing as an instant flicker.
+        try? await Task.sleep(nanoseconds: 1_000_000_000)
         destination.backport.tap()
         let materialReturned = await waitForElement(navigation, timeout: 4)
         XCTAssertTrue(materialReturned, "Material navigation destination should dismiss back to Material.")
     }
 
+    /// Scrolls the current Visual Showcase hierarchy until an accessibility identifier is hittable.
+    ///
+    /// The showcase contains several intentionally substantial preview sections. A later destination can require
+    /// much more than five gestures from the top, and returning from NavigationStack may rebuild the scroll view.
+    /// Resolve both objects again for every pass rather than assuming the first XCUIElement remains current.
     @MainActor
-    private func reveal(_ element: XCUIElement, byScrolling scrollable: XCUIElement) async -> Bool {
-        if element.exists && element.isHittable {
-            return true
-        }
-        for _ in 0..<5 {
-            scrollable.swipeUp()
-            try? await Task.sleep(nanoseconds: 120_000_000)
+    private func reveal(identifier: String, in screenElement: XCUIElement, app: XCUIApplication) async -> XCUIElement? {
+        for attempt in 0..<18 {
+            let element = app.descendants(matching: .any)[identifier]
             if element.exists && element.isHittable {
-                return true
+                return element
             }
+
+            let scrollable = contentScrollable(in: screenElement)
+            guard scrollable.exists else {
+                return nil
+            }
+            scrollable.swipeUp()
+            try? await Task.sleep(nanoseconds: 140_000_000)
+
+            // Eighteen passes is deliberately generous because the inline visual previews are large. The loop
+            // still exits immediately as soon as the requested control becomes hittable.
+            _ = attempt
         }
-        return element.exists && element.isHittable
+
+        let element = app.descendants(matching: .any)[identifier]
+        return element.exists && element.isHittable ? element : nil
     }
 
     @MainActor
