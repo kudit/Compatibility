@@ -57,6 +57,9 @@ public struct EnvironmentsView: View {
             toggleExpanded()
         }
         .accessibilityAddTraits(.isButton)
+        // Stable identifiers let the UI tour exercise both the compact and expanded branches
+        // without depending on whichever environment labels happen to be active on this runtime.
+        .accessibilityIdentifier("environments.toggle")
     }
 
     private func environmentIcon(environment: Build.Environment, enabled: Bool) -> some View {
@@ -94,6 +97,7 @@ public struct EnvironmentsView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel((enabled ? "Is" : "Not") + " " + environment.label)
+        .accessibilityIdentifier("environment.\(environment.caseName)")
     }
 }
 
