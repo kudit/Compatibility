@@ -36,17 +36,27 @@ public extension Bundle {
     var version: Version { Version(string: getInfo("CFBundleShortVersionString"), defaultValue: .zero) } // "⚠️.⚠️" - not a valid version
     //public var appVersionShort: String { getInfo("CFBundleShortVersion") }
     
-    /// Returns an approximation of when this bundle was built using the modification date of its `Info.plist`.
+    /// Returns an approximation of when this bundle was built using bundle-file modification metadata.
     ///
-    /// This is not an embedded compiler timestamp. Installation and compatibility runtimes can copy a bundle
-    /// while preserving the plist modification date, so callers should treat this as diagnostic metadata.
+    /// The `Info.plist` modification date is preferred. Some modern app bundles do not expose `Info.plist`
+    /// as a normal resource path, so the executable modification date is used as a secondary approximation.
+    /// Installation and compatibility runtimes can preserve or rewrite either timestamp, so callers should
+    /// treat this as diagnostic metadata rather than an embedded compiler timestamp.
+    ///
+    /// If neither timestamp can be read, `.distantPast` is returned rather than `Date()`. Returning the
+    /// current time would make an unknown build date falsely look like a freshly built application.
     var buildDate: Date {
-        if let infoPath = Bundle.main.path(forResource: "Info", ofType: "plist"),
+        if let infoPath = path(forResource: "Info", ofType: "plist"),
            let infoAttr = try? FileManager.default.attributesOfItem(atPath: infoPath),
            let infoDate = infoAttr[.modificationDate] as? Date {
             return infoDate
         }
-        return Date()
+        if let executablePath = executableURL?.path,
+           let executableAttr = try? FileManager.default.attributesOfItem(atPath: executablePath),
+           let executableDate = executableAttr[.modificationDate] as? Date {
+            return executableDate
+        }
+        return .distantPast
     }
     
     /// Returns a number representing the time that this bundle was built.
@@ -83,19 +93,17 @@ public extension Bundle {
                 try expect(Bundle.main.version > "0.1", "Expected app bundle version but got: \(Bundle.main.version)")
             }
 
-            // Info.plist modification time is a useful approximation of build time, but compatible-app
-            // runtimes (for example Designed for iPad on macOS) may preserve a copied bundle's timestamp.
-            // Validate that the value is sane rather than assuming every runtime rewrites it today.
             let buildDate = Bundle.main.buildDate
-            debug("Bundle Info.plist modification date (buildDate): \(buildDate)", level: .DEBUG)
+            debug("Bundle file modification date (buildDate): \(buildDate)", level: .DEBUG)
+            try expect(buildDate != .distantPast, "Expected readable Info.plist or executable modification metadata for buildDate.")
             if await Build.isDesignedForiPad {
-                // Designed-for-iPad runs can preserve the copied/repackaged app bundle's Info.plist
-                // modification time. There is no meaningful age assertion for that runtime, so expose
-                // the value diagnostically instead of replacing the normal check with an arbitrary floor.
+                // Designed-for-iPad runs can preserve the copied/repackaged app bundle's file timestamps.
+                // There is no meaningful age assertion for that runtime, so expose the value diagnostically
+                // instead of replacing the normal check with an arbitrary minimum date.
                 debug("Skipping recent buildDate assertion in Designed for iPad runtime.", level: .DEBUG)
             } else {
                 try expect(buildDate > Date.yesterday && buildDate < Date.tomorrow,
-                           "Expected a recently built bundle but got Info.plist modification date: \(buildDate)")
+                           "Expected a recently built bundle but got bundle modification date: \(buildDate)")
             }
             try expect(Bundle.main.buildNumber > 0)
             try expect(!String.appIconName.isEmpty, "Expected app icon name but got: \(String.appIconName)")
