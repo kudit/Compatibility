@@ -74,6 +74,9 @@ public struct ClearableTextField: View {
                     .padding(.leading, 10)
                     #endif
                 }
+                // Give UI tests and VoiceOver a stable semantic name rather than exposing the
+                // implementation detail of whichever symbol/text fallback draws the clear control.
+                .accessibilityLabel("Clear \(label)")
                 .buttonStyle(.plain)                        // ensures the clear button isn't automatically invoked when tapping on row.
             }
         }
