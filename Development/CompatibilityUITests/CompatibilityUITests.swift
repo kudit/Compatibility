@@ -98,7 +98,10 @@ final class CompatibilityUITests: XCTestCase {
     @MainActor
     private func exercise(screenAt index: Int, screenElement: XCUIElement, in app: XCUIApplication) async {
         switch index {
-        case 0, 1, 4:
+        case 0:
+            await exerciseCompatibilityEnvironment(in: app)
+
+        case 1, 4:
             // These pages are primarily exercised by rendering. Keep the UI tour fast and avoid
             // synthetic scrolling where there is no behavior we specifically need to validate.
             break
@@ -106,25 +109,37 @@ final class CompatibilityUITests: XCTestCase {
         case 2:
             // Scroll only within the All Tests content. On macOS the app also contains a scrollable
             // sidebar, so querying from XCUIApplication would otherwise scroll the navigation sidebar.
-            scrollThroughAllTests(screenElement)
+            await scrollThroughAllTests(screenElement)
 
         case 3:
-            // Open the real menu when exposed so Menu callbacks and menu-item construction are covered.
+            // Open a real menu item and verify the binding changes. This covers both construction and
+            // the action path rather than merely opening the menu and tapping an ambiguous label.
             let symbols = app.buttons["Symbols"]
             if await waitForElement(symbols, timeout: 2), symbols.isHittable {
                 symbols.backport.tap()
-                let star = app.buttons["star"]
-                if await waitForElement(star, timeout: 2), star.isHittable {
-                    star.backport.tap()
+                let starFill = app.buttons["star.fill"]
+                let starFillFound = await waitForElement(starFill, timeout: 2)
+                XCTAssertTrue(starFillFound, "Radial Layout Symbols menu should expose star.fill.")
+                if starFillFound && starFill.isHittable {
+                    starFill.backport.tap()
+                    let selected = app.staticTexts["Selected symbol: star.fill"]
+                    let selectedRendered = await waitForElement(selected, timeout: 2)
+                    XCTAssertTrue(selectedRendered, "Selecting a radial menu symbol should update its binding.")
                 }
             }
 
         case 5:
-            // Exercise Binding.convert through the Convert screen's slider. Move only one nearby step;
-            // a long animated slider travel provides no extra coverage and makes the UI tour slower.
+            // Exercise Binding.convert at roughly 75%, but jump directly to the coordinate instead of
+            // using adjust(toNormalizedSliderPosition:), whose deliberately human-like drag is slow.
             let slider = app.sliders.firstMatch
             if await waitForElement(slider, timeout: 2) {
-                slider.adjust(toNormalizedSliderPosition: 0.45)
+#if os(macOS)
+                slider.coordinate(withNormalizedOffset: CGVector(dx: 0.75, dy: 0.5)).click()
+#elseif os(iOS)
+                slider.coordinate(withNormalizedOffset: CGVector(dx: 0.75, dy: 0.5)).tap()
+#else
+                slider.adjust(toNormalizedSliderPosition: 0.75)
+#endif
             }
 
         case 6:
@@ -139,6 +154,25 @@ final class CompatibilityUITests: XCTestCase {
         default:
             XCTFail("Unexpected Compatibility demo screen index: \(index)")
         }
+    }
+
+    @MainActor
+    private func exerciseCompatibilityEnvironment(in app: XCUIApplication) async {
+        // EnvironmentsView has substantially different compact and expanded bodies. Exercise both so
+        // the compatibility page verifies the interactive disclosure instead of only rendering its icons.
+        let environmentToggle = app.descendants(matching: .any)["environments.toggle"]
+        let toggleFound = await waitForElement(environmentToggle, timeout: 3)
+        XCTAssertTrue(toggleFound, "Compatibility should expose the expandable environment summary.")
+        guard toggleFound && environmentToggle.isHittable else { return }
+
+        environmentToggle.backport.tap()
+        let debugEnvironment = app.descendants(matching: .any)["environment.debug"]
+        let expanded = await waitForElement(debugEnvironment, timeout: 2)
+        XCTAssertTrue(expanded, "Expanding environments should render the labeled environment rows.")
+        guard expanded else { return }
+
+        // Collapse again so both sides of the state transition execute and the page ends in its compact form.
+        environmentToggle.backport.tap()
     }
 
     @MainActor
@@ -226,37 +260,50 @@ final class CompatibilityUITests: XCTestCase {
         }
 #endif
 
+        guard await reveal(identifier: "backport.scroll.strip", in: screenElement, app: app) != nil else {
+            XCTFail("scrollDisabled example should expose its horizontal strip.")
+            return
+        }
+        let strip = app.scrollViews["backport.scroll.strip"]
+        let stripFound = await waitForElement(strip, timeout: 2)
+        XCTAssertTrue(stripFound, "Backport scrolling example should expose a horizontal ScrollView.")
+        guard stripFound else { return }
+
+        // First prove the strip can move while scrolling is enabled. Return to the start before disabling it
+        // so the same gesture provides a visible before/after comparison when watching the UI test.
+        strip.swipeLeft()
+        try? await Task.sleep(nanoseconds: 250_000_000)
+        let endItem = app.descendants(matching: .any)["backport.scroll.item.11"]
+        XCTAssertTrue(endItem.exists && endItem.isHittable, "Enabled numbered strip should scroll to its final item.")
+        strip.swipeRight()
+        try? await Task.sleep(nanoseconds: 250_000_000)
+
         guard let scrollToggle = await reveal(identifier: "backport.scroll.toggle", in: screenElement, app: app) else {
             XCTFail("scrollDisabled Backport toggle should be reachable.")
             return
         }
         scrollToggle.backport.tap()
 
-        // Toggle back to the enabled-scrolling state so both values flow through Backport.scrollDisabled.
+        let firstItem = app.descendants(matching: .any)["backport.scroll.item.0"]
+        strip.swipeLeft()
+        try? await Task.sleep(nanoseconds: 250_000_000)
+        XCTAssertTrue(firstItem.exists && firstItem.isHittable,
+                      "Disabled numbered strip should remain at its starting position after a scroll gesture.")
+        XCTAssertFalse(endItem.exists && endItem.isHittable,
+                       "Disabled numbered strip should not reveal its final item after a scroll gesture.")
+
+        // Restore the enabled state for anyone continuing to inspect the demo after the automated tour.
         scrollToggle.backport.tap()
     }
 
     @MainActor
     private func exerciseMaterial(_ screenElement: XCUIElement, in app: XCUIApplication) async {
-        // Exercise the sheet so material, presentation-detent/background, toolbar, and dismissal paths render.
-        let glass = app.buttons["Glass"]
-        let glassFound = await waitForElement(glass, timeout: 2)
-        XCTAssertTrue(glassFound, "Material should expose the Glass sheet control.")
-        if glass.exists && glass.isHittable {
-            glass.backport.tap()
-            let close = app.buttons["Close"]
-            let closeFound = await waitForElement(close, timeout: 3)
-            XCTAssertTrue(closeFound, "Material sheet should expose Close.")
-            if close.exists && close.isHittable {
-                close.backport.tap()
-            }
-        }
-
-        // Material's navigation trigger is intentionally a tappable Text rather than a Button.
-        let navigation = screenElement.staticTexts["Material"]
-        let navigationFound = await waitForElement(navigation, timeout: 2)
+        // Material is intentionally a tappable Text rather than a Button. Exercise it first so the
+        // navigation behavior and conditional view utilities are verified before ending with the Glass sheet.
+        let navigation = app.descendants(matching: .any)["material.navigation.trigger"]
+        let navigationFound = await waitForElement(navigation, timeout: 3)
         XCTAssertTrue(navigationFound, "Material navigation trigger should be present.")
-        guard navigation.exists && navigation.isHittable else {
+        guard navigationFound && navigation.isHittable else {
             XCTFail("Material navigation trigger should be hittable.")
             return
         }
@@ -289,8 +336,26 @@ final class CompatibilityUITests: XCTestCase {
         XCTAssertTrue(dismissFound, "Material navigation destination should expose its return control.")
         guard dismissFound else { return }
         destination.backport.tap()
-        let materialReturned = await waitForElement(navigation, timeout: 4)
+
+        let materialScreen = app.descendants(matching: .any)["demo.material"]
+        let materialReturned = await waitForElement(materialScreen, timeout: 4)
         XCTAssertTrue(materialReturned, "Material navigation destination should dismiss back to Material.")
+        guard materialReturned else { return }
+
+        // Exercise the sheet last so the Material tab finishes on the visually distinct Glass presentation.
+        let glass = app.buttons["Glass"]
+        let glassFound = await waitForElement(glass, timeout: 2)
+        XCTAssertTrue(glassFound, "Material should expose the Glass sheet control.")
+        if glass.exists && glass.isHittable {
+            glass.backport.tap()
+            let close = app.buttons["Close"]
+            let closeFound = await waitForElement(close, timeout: 3)
+            XCTAssertTrue(closeFound, "Material sheet should expose Close.")
+            if close.exists && close.isHittable {
+                try? await Task.sleep(nanoseconds: 500_000_000)
+                close.backport.tap()
+            }
+        }
     }
 
     /// Reveals the next Visual Showcase section by advancing one viewport at a time.
@@ -448,14 +513,19 @@ final class CompatibilityUITests: XCTestCase {
     }
 
     @MainActor
-    private func scrollThroughAllTests(_ screenElement: XCUIElement) {
+    private func scrollThroughAllTests(_ screenElement: XCUIElement) async {
         let scrollable = contentScrollable(in: screenElement)
-        // Move quickly in one direction so the UI instantiates the complete list while the intentionally
-        // slow two- and three-second reusable tests are still running. Scrolling back adds no coverage.
-        scrollable.swipeUp()
-        scrollable.swipeUp()
-        scrollable.swipeUp()
-        scrollable.swipeUp()
+        // Start scrolling as soon as the screen is available and fling repeatedly without inter-gesture
+        // sleeps. This should reach the end while the intentionally slow two- and three-second tests run.
+        scrollable.swipeUp(velocity: .fast)
+        scrollable.swipeUp(velocity: .fast)
+        scrollable.swipeUp(velocity: .fast)
+        scrollable.swipeUp(velocity: .fast)
+        scrollable.swipeUp(velocity: .fast)
+        scrollable.swipeUp(velocity: .fast)
+
+        // Hold at the bottom so a person watching the tour can see the slow tests transition to completion.
+        try? await Task.sleep(nanoseconds: 3_000_000_000)
     }
 
     @MainActor
