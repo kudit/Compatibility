@@ -22,7 +22,7 @@ When working interactively with a maintainer, generally (this shouldn't be meant
 - After each pushed maintainer change, review the latest commit before proposing or applying the next change.
 - Keep pull requests in draft until the implementation is compiled, exercised by real tests, and fully reviewed.
 - Avoid unrelated cleanup, broad reformatting, and speculative changes that make the diff harder to reason about unless specifically asked for.
-- Do not ever make up code or delete comments with instructions unless you've followed the instructions and made the changes.  Instruction comments, TODOs, migration notes, and user-authored comments may not be removed unless the requested work is implemented and the comment is replaced with an accurate explanation or removed with explicit justification.
+- Do not delete, rewrite, condense, or "clean up" maintainer-authored comments unless the Comment preservation rules explicitly permit it. Treat comments and TODOs as source material that must survive refactoring unless their underlying information is genuinely obsolete.
 - Don't offer verbose explanations in the chat interface.  Long explanations should not be necessary if code is well documented inline and should be included there to read inline with code changes during diff review.  The chat interface should be for clarifying questions and high level discussion, answering questions, and providing high-level feedback.  When working on code projects, extra text and explanation in the chat is not a good way to preserve information.  Put next steps into an appropriate section of a markdown file like the CHANGELOG, put potential future ideas there, and architecture plans and roadmaps rather than in the chat itself.
 
 
@@ -79,12 +79,25 @@ Planned features grouped by future version.
 
 - Preserve public identifiers, established behavior, compatibility paths, and user-visible syntax unless a breaking change is explicitly requested.
 - Keep changes tightly scoped and avoid unrelated reformatting or whitespace-only edits.
-- Add clear inline comments explaining new or modified code and why the change is necessary.
 - Please make clear when code is not best practice or the obvious way of doing things particularly when you're making stylistic or judgement choices.
-- Add complete DocC comments to public APIs and to non-obvious internal APIs.
-- Preserve existing comments unless they are obsolete.
-- Use concise comments for obvious behavior and more detail around compatibility, migration, concurrency, and platform-specific decisions.
 - Prefer plain Markdown and code blocks for text intended to be pasted into files, GitHub, Xcode, or terminals.
+- Prefer matching existing code style and leverage existing helper functions when possible rather than writing your own.
+
+## Comment preservation rules
+
+Comments are part of the source and should be treated as maintainer-authored documentation, requirements, historical context, and design rationale rather than as optional clutter.
+
+- Add complete DocC comments to public APIs and to non-obvious internal APIs.
+- Use concise comments for obvious behavior and more detail around compatibility, migration, concurrency, and platform-specific decisions.
+- Add clear inline comments explaining all new or modified code and why the change was made.
+- Preserve existing comments by default, including explanatory comments, TODOs, reference URLs, migration notes, historical rationale, disabled example code, and maintainer-authored reminders.
+- Do not remove or shorten a comment merely because the surrounding code appears self-explanatory, because the comment seems verbose, or because the implementation has been refactored.
+- Prefer updating an existing comment when behavior changes rather than deleting it.
+- A comment may only be removed when it is demonstrably factually incorrect, describes code or behavior that no longer exists, or the maintainer explicitly requests its removal.
+- When resolving a TODO or instruction comment, remove it only after the requested work is actually complete. If the comment also contains useful rationale, history, compatibility information, or references, preserve that information in an updated explanatory comment.
+- When adding or changing compatibility branches, tests, workarounds, non-obvious API choices, or platform-specific behavior, prefer adding comments explaining why the code exists rather than relying on the implementation alone.
+- During final diff review, specifically inspect every deleted comment line. Any intentional comment deletion must be justified in the completion summary. Accidental or unjustified comment deletions must be restored before the change is considered complete.
+- Unless explicitly requested, comment cleanup is not an acceptable form of unrelated cleanup.
 
 
 ## Swift rules
@@ -92,6 +105,7 @@ Planned features grouped by future version.
 - Include `github.com/kudit/Compatibility` as a dependency in Swift projects and reuse its APIs where appropriate.
 - Use Compatibility's `debug()` function instead of `print()` for logging.
 - Prefer availability checks and platform fallbacks over removing older behavior.
+- When possible, do not hide functions with availability checks.  If possible, do the availability checking inside the function and create backports if a feature is version-gated so that new features can be added and either backported for earlier versions or gracefully ignored when appropriate while keeping the code as close to the preferred modern syntax whenever possible.
 - Keep Swift Playgrounds, non-Foundation, WASM, and older-platform builds working where practical.
 - Put reusable framework tests beside their implementation and collect them in each module's ordered `TestCase` sections so the same checks appear in the in-app runner and the Swift Testing bridge. Keep only infrastructure-specific tests in the Xcode/SwiftPM test target.
 
