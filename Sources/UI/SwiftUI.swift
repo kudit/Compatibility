@@ -290,6 +290,7 @@ public extension View {
 @available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
 public struct MaterialTestView: View {
     @State private var showNavigationDetail = false
+    @State private var conditionalEnabled = true
     @State var showSheet: Bool = false
     public init() {}
     public var body: some View {
@@ -331,9 +332,61 @@ public struct MaterialTestView: View {
             .backport.presentationBackground(.ultraThinMaterial)
         }
         .backport.navigationDestination(isPresented: $showNavigationDetail) {
-            Button("Navigation Destination TestCase") {
-                showNavigationDetail = false
+            ScrollView {
+                VStack(spacing: 20) {
+                    // Keep the destination itself tappable so this continues to exercise the binding-based
+                    // navigation backport while also providing useful content to inspect before returning.
+                    Button("Navigation Destination TestCase") {
+                        showNavigationDetail = false
+                    }
+
+                    GroupBox("Other View Utilities") {
+                        VStack(spacing: 12) {
+                            Text("RadialStack arranges its children around a circle using the same compact utility that can be embedded in other views.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+
+                            RadialStack {
+                                Circle().fill(.red)
+                                Circle().fill(.orange)
+                                Circle().fill(.yellow)
+                                Circle().fill(.green)
+                                Circle().fill(.blue)
+                                Circle().fill(.purple)
+                            }
+                            .frame(width: 180, height: 180)
+
+                            Toggle("Apply conditional modifier", isOn: $conditionalEnabled)
+                                .accessibilityIdentifier("material.conditional.toggle")
+
+                            Text(conditionalEnabled ? "Conditional modifier applied" : "Conditional modifier not applied")
+                                .if(conditionalEnabled) { view in
+                                    view
+                                        .padding(size: 6)
+                                        .background(.yellow.opacity(0.25))
+                                        .overlay {
+                                            RoundedRectangle(cornerRadius: 6)
+                                                .stroke(.orange, lineWidth: 2)
+                                        }
+                                }
+                                .closure { content in
+                                    if #available(iOS 999, macOS 999, tvOS 999, watchOS 999, visionOS 999, *) {
+                                        content.italic()
+                                    } else if #available(iOS 16, macOS 13, tvOS 16, watchOS 9, *) {
+                                        content.bold().foregroundStyle(.blue)
+                                    } else {
+                                        // Fallback on earlier versions
+                                        content.foregroundStyle(.red)
+                                    }
+                                }
+                                .accessibilityIdentifier("material.conditional.result")
+                        }
+                        .padding()
+                    }
+                }
+                .padding()
             }
+            .accessibilityIdentifier("material.navigation.destination")
         }
         .navigationWrapper()
     }
