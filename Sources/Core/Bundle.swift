@@ -83,9 +83,12 @@ public extension Bundle {
                 try expect(Bundle.main.version > "0.1", "Expected app bundle version but got: \(Bundle.main.version)")
             }
 
+            // Info.plist modification time is a useful approximation of build time, but compatible-app
+            // runtimes (for example Designed for iPad on macOS) may preserve a copied bundle's timestamp.
+            // Validate that the value is sane rather than assuming every runtime rewrites it today.
             let buildDate = Bundle.main.buildDate
             debug("Bundle Info.plist modification date (buildDate): \(buildDate)", level: .DEBUG)
-            if Build.isDesignedForiPad {
+            if await Build.isDesignedForiPad {
                 // Designed-for-iPad runs can preserve the copied/repackaged app bundle's Info.plist
                 // modification time. There is no meaningful age assertion for that runtime, so expose
                 // the value diagnostically instead of replacing the normal check with an arbitrary floor.
