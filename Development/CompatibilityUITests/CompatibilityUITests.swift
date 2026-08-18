@@ -78,11 +78,8 @@ final class CompatibilityUITests: XCTestCase {
         app.launchArguments += ["-ApplePersistenceIgnoreState", "YES"]
         app.launchEnvironment["TESTING"] = "1"
         app.launch()
-        app.activate()
 
         for (index, screen) in screens.enumerated() {
-            app.activate()
-
             let screenElement = app.descendants(matching: .any)[screen.identifier]
             let rendered = await waitForElement(screenElement, timeout: 10)
             XCTAssertTrue(rendered, "\(screen.name) should render its demo screen.")
@@ -441,8 +438,6 @@ final class CompatibilityUITests: XCTestCase {
     @MainActor
     private func navigate(to screen: DemoScreen, in app: XCUIApplication) async {
 #if os(macOS)
-        app.activate()
-
         // sidebarAdaptable exposes destinations through the macOS sidebar. Later destinations can be
         // outside the visible portion of the sidebar, so scroll the sidebar while searching rather than
         // assuming every tab label already exists in the accessibility hierarchy.
@@ -529,18 +524,29 @@ final class CompatibilityUITests: XCTestCase {
         let scrollable = contentScrollable(in: screenElement)
         let bottom = app.descendants(matching: .any)["allTests.bottom"]
 
-        // XCTest's high-level swipe helper deliberately performs a visible gesture animation and waits for
-        // it to settle. Use a short, high-velocity flick instead, and stop as soon as the explicit bottom
-        // marker is visible rather than blindly queueing more gestures after the list has reached the end.
-        for _ in 0..<3 {
-            if bottom.exists && bottom.isHittable {
-                break
-            }
-            let start = scrollable.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.9))
-            let end = scrollable.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.1))
-            start.press(forDuration: 0.01, thenDragTo: end, withVelocity: .fast, thenHoldForDuration: 0)
+#if os(macOS)
+        // A Mac scroll view responds to wheel/trackpad scrolling, not an iOS-style mouse drag. XCTest's
+        // native pixel-scroll API sends that scrolling directly and can jump the long test list in one call.
+        // Negative deltaY scrolls toward later content in the current AppKit hierarchy. If an OS reverses
+        // that interpretation, the opposite-direction fallback immediately corrects it without repeated swipes.
+        scrollable.scroll(byDeltaX: 0, deltaY: -10_000)
+        try? await Task.sleep(nanoseconds: 50_000_000)
+        if !(bottom.exists && bottom.isHittable) {
+            scrollable.scroll(byDeltaX: 0, deltaY: 20_000)
         }
+#else
+        // Touch platforms keep their native swipe gesture. Stop as soon as the explicit bottom marker is visible.
+        for _ in 0..<3 where !(bottom.exists && bottom.isHittable) {
+            scrollable.swipeUp(velocity: .fast)
+        }
+#endif
 
+        // Give accessibility a brief opportunity to publish the newly visible bottom marker without adding
+        // more scrolling. The intentional three-second observation pause happens only after this succeeds.
+        let deadline = Date().addingTimeInterval(0.5)
+        while !(bottom.exists && bottom.isHittable) && Date() < deadline {
+            try? await Task.sleep(nanoseconds: 20_000_000)
+        }
         XCTAssertTrue(bottom.exists && bottom.isHittable, "All Tests should reach its bottom marker during the fast scroll.")
 
         // Hold only after reaching the end so a person watching can see the intentionally slow two- and
