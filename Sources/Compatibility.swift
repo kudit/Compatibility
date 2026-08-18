@@ -165,7 +165,7 @@ public enum Compatibility: Module {
      iOS 16+
      iPadOS 16.0+
      macOS 13+
-     Mac Catalyst 16.0+
+     Mac Catalyst 16+
      tvOS 16+
      watchOS 9+ (minimum for WidgetKit on watchOS - supported in iOS 14 and macOS 11)
      visionOS 1.0+
@@ -314,6 +314,11 @@ public struct CompatibilityEnvironmentTestView: View {
             Field("Name", "\(Application.main.name) (\(Application.main.appName).app)"),
             Field("App Identifier", Application.main.appIdentifier),
             Field("App Version", "v\(Application.main.debugVersion)"),
+            // Bundle.buildDate is the Info.plist modification date rather than an embedded compiler
+            // timestamp. Showing it here makes runtime packaging differences, such as Designed for iPad,
+            // visible without weakening the normal Bundle test's recent-build assertion.
+            Field("Bundle Info.plist Date", Bundle.main.buildDate.pretty),
+            Field("Bundle Date Number", Bundle.main.buildNumber),
             Field("is first run", Application.main.isFirstRun),
         ]
         let previousVersions = Application.main.previouslyRunVersions
