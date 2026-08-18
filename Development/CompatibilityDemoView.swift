@@ -28,10 +28,6 @@ final class DemoFailureCounter: @unchecked Sendable {
 @available(iOS 15, macOS 12, tvOS 17, watchOS 8, *)
 @MainActor
 struct VisualShowcaseView: View {
-    @State private var symbolName: String?
-    @State private var conditionalEnabled = true
-    @State private var backportSelection = 0
-    @State private var backportScrollDisabled = false
     private let colors: [Color] = [.red, .orange, .yellow, .green, .blue, .purple]
 
     var body: some View {
@@ -221,133 +217,6 @@ struct VisualShowcaseView: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityIdentifier("showcase.adaptive.link")
-
-                GroupBox("Backport APIs") {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Backport.TabView")
-                            .font(.headline)
-                        Text("This first example uses Compatibility's Backport.TabView without a selection binding. On current platforms it displays the native SwiftUI TabView; the backport also supplies a usable fallback on older systems such as watchOS 6.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-
-                        Backport.TabView {
-                            Text("First unbound tab")
-                                .tabItem { Text("First") }
-                            Text("Second unbound tab")
-                                .tabItem { Text("Second") }
-                        }
-                        .frame(height: 72)
-
-                        Divider()
-
-                        Text("Selection-bound Backport.TabView")
-                            .font(.headline)
-                        Text("This version supplies a Binding. The button changes the selected tag programmatically so you can see that the same backported container participates in SwiftUI selection state.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-
-                        Backport.TabView(selection: $backportSelection) {
-                            Text("Bound tab zero")
-                                .tag(0)
-                                .tabItem { Text("Zero") }
-                            Text("Bound tab one")
-                                .tag(1)
-                                .tabItem { Text("One") }
-                        }
-                        .frame(height: 72)
-
-                        HStack {
-                            Text("Bound selection: \(backportSelection)")
-                                .accessibilityIdentifier("showcase.backport.selection.status")
-                            Spacer()
-                            Button("Select \(backportSelection == 0 ? "one" : "zero")") {
-                                backportSelection = backportSelection == 0 ? 1 : 0
-                            }
-                            .accessibilityIdentifier("showcase.backport.selection.toggle")
-                        }
-
-                        Divider()
-
-                        Text("Backported SF Symbol image")
-                            .font(.headline)
-                        Text("Enter an SF Symbol name. Backport.Image uses the native symbol image where available and a text fallback on older macOS versions. The field is also a live ClearableTextField example.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-
-                        ClearableTextField(label: "SF Symbol name", text: $symbolName)
-                            .accessibilityIdentifier("showcase.symbol.field")
-
-                        HStack {
-                            Backport.Image(systemName: symbolName ?? "questionmark")
-                                .font(.largeTitle)
-                                .accessibilityIdentifier("showcase.symbol.preview")
-                            Text("Current symbol: \(symbolName ?? "<empty>")")
-                                .accessibilityIdentifier("showcase.symbol.status")
-                        }
-
-                        Divider()
-
-                        Text("Backported scrollDisabled")
-                            .font(.headline)
-                        Text("The numbered items are simply a horizontal scrolling strip. Toggle scrolling off and on to exercise Compatibility's scrollDisabled backport while confirming the content itself is unchanged.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-
-                        Toggle("Disable numbered-strip scrolling", isOn: $backportScrollDisabled)
-                            .accessibilityIdentifier("showcase.backport.scroll.toggle")
-
-                        ScrollView(.horizontal) {
-                            HStack {
-                                ForEach(0..<12) { index in
-                                    Text("\(index)")
-                                        .frame(size: 32)
-                                        .background(colors[nth: index].opacity(0.25))
-                                }
-                            }
-                        }
-                        .frame(height: 40)
-                        .backport.scrollDisabled(backportScrollDisabled)
-                    }
-                    .padding()
-                }
-                .accessibilityIdentifier("showcase.backport")
-
-                GroupBox("Other View Utilities") {
-                    VStack(spacing: 12) {
-                        RadialStack {
-                            ForEach(0..<6) { index in
-                                Circle().fill(colors[nth: index])
-                            }
-                        }
-                        .frame(width: 180, height: 180)
-
-                        Toggle("Apply conditional modifier", isOn: $conditionalEnabled)
-                            .accessibilityIdentifier("showcase.conditional.toggle")
-
-                        Text(conditionalEnabled ? "Conditional modifier applied" : "Conditional modifier not applied")
-                            .if(conditionalEnabled) { view in
-                                view
-                                    .padding(size: 6)
-                                    .background(.yellow.opacity(0.25))
-                                    .overlay {
-                                        RoundedRectangle(cornerRadius: 6)
-                                            .stroke(.orange, lineWidth: 2)
-                                    }
-                            }
-                            .closure { content in
-                                if #available(iOS 999, macOS 999, tvOS 999, watchOS 999, visionOS 999, *) {
-                                    content.italic()
-                                } else if #available(iOS 16, macOS 13, tvOS 16, watchOS 9, *) {
-                                    content.bold().foregroundStyle(.blue)
-                                } else {
-                                    // Fallback on earlier versions
-                                    content.foregroundStyle(.red)
-                                }
-                            }
-                            .accessibilityIdentifier("showcase.conditional.result")
-                    }
-                    .padding()
-                }
             }
             .padding()
         }
@@ -376,6 +245,115 @@ struct VisualShowcaseView: View {
                 RoundedRectangle(cornerRadius: 6)
                     .stroke(color, lineWidth: 2)
             }
+    }
+}
+
+/// Interactive examples for APIs implemented in `Backport.swift`. Keeping these examples in their own
+/// tab makes the compatibility behavior easier to understand and lets UI tests exercise the controls
+/// without first traversing the much taller visual-layout showcase.
+@available(iOS 15, macOS 12, tvOS 17, watchOS 8, *)
+@MainActor
+struct BackportShowcaseView: View {
+    @State private var symbolName: String?
+    @State private var backportSelection = 0
+    @State private var backportScrollDisabled = false
+    private let colors: [Color] = [.red, .orange, .yellow, .green, .blue, .purple]
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                GroupBox("Backport.TabView") {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("This example uses Compatibility's Backport.TabView without a selection binding. On current platforms it displays the native SwiftUI TabView; the backport also supplies a usable fallback on older systems such as watchOS 6.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+
+                        Backport.TabView {
+                            Text("First unbound tab")
+                                .tabItem { Text("First") }
+                            Text("Second unbound tab")
+                                .tabItem { Text("Second") }
+                        }
+                        .frame(height: 72)
+                    }
+                    .padding()
+                }
+
+                GroupBox("Selection-bound Backport.TabView") {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("This version supplies a Binding. The button changes the selected tag programmatically so you can see that the same backported container participates in SwiftUI selection state.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+
+                        Backport.TabView(selection: $backportSelection) {
+                            Text("Bound tab zero")
+                                .tag(0)
+                                .tabItem { Text("Zero") }
+                            Text("Bound tab one")
+                                .tag(1)
+                                .tabItem { Text("One") }
+                        }
+                        .frame(height: 72)
+
+                        HStack {
+                            Text("Bound selection: \(backportSelection)")
+                                .accessibilityIdentifier("backport.selection.status")
+                            Spacer()
+                            Button("Select \(backportSelection == 0 ? "one" : "zero")") {
+                                backportSelection = backportSelection == 0 ? 1 : 0
+                            }
+                            .accessibilityIdentifier("backport.selection.toggle")
+                        }
+                    }
+                    .padding()
+                }
+
+                GroupBox("Backported SF Symbol image") {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Enter an SF Symbol name. Backport.Image uses the native symbol image where available and a text fallback on older macOS versions. The field is also a live ClearableTextField example.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+
+                        ClearableTextField(label: "SF Symbol name", text: $symbolName)
+                            .accessibilityIdentifier("backport.symbol.field")
+
+                        HStack {
+                            Backport.Image(systemName: symbolName ?? "questionmark")
+                                .font(.largeTitle)
+                                .accessibilityIdentifier("backport.symbol.preview")
+                            Text("Current symbol: \(symbolName ?? "<empty>")")
+                                .accessibilityIdentifier("backport.symbol.status")
+                        }
+                    }
+                    .padding()
+                }
+
+                GroupBox("Backported scrollDisabled") {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("The numbered items are simply a horizontal scrolling strip. Toggle scrolling off and on to exercise Compatibility's scrollDisabled backport while confirming the content itself is unchanged.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+
+                        Toggle("Disable numbered-strip scrolling", isOn: $backportScrollDisabled)
+                            .accessibilityIdentifier("backport.scroll.toggle")
+
+                        ScrollView(.horizontal) {
+                            HStack {
+                                ForEach(0..<12) { index in
+                                    Text("\(index)")
+                                        .frame(size: 32)
+                                        .background(colors[nth: index].opacity(0.25))
+                                }
+                            }
+                        }
+                        .frame(height: 40)
+                        .backport.scrollDisabled(backportScrollDisabled)
+                    }
+                    .padding()
+                }
+            }
+            .padding()
+        }
     }
 }
 
@@ -444,6 +422,11 @@ struct CompatibilityDemoView: View {
             .accessibilityIdentifier("demo.visualShowcase")
             .tabItem {
                 Text("Visual Showcase")
+            }
+        BackportShowcaseView()
+            .accessibilityIdentifier("demo.backport")
+            .tabItem {
+                Text("Backport")
             }
         MaterialTestView()
             .accessibilityIdentifier("demo.material")
