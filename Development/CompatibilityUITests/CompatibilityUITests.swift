@@ -109,7 +109,7 @@ final class CompatibilityUITests: XCTestCase {
         case 2:
             // Scroll only within the All Tests content. On macOS the app also contains a scrollable
             // sidebar, so querying from XCUIApplication would otherwise scroll the navigation sidebar.
-            await scrollThroughAllTests(screenElement)
+            await scrollThroughAllTests(screenElement, in: app)
 
         case 3:
             // Open a real menu item and verify the binding changes. This covers both construction and
@@ -269,14 +269,27 @@ final class CompatibilityUITests: XCTestCase {
         XCTAssertTrue(stripFound, "Backport scrolling example should expose a horizontal ScrollView.")
         guard stripFound else { return }
 
-        // First prove the strip can move while scrolling is enabled. Return to the start before disabling it
-        // so the same gesture provides a visible before/after comparison when watching the UI test.
+        // Accessibility can keep clipped descendants in its hierarchy, so `exists`/`isHittable` is not a
+        // reliable proxy for the scroll offset. Compare an item's actual frame before and after each gesture.
+        let firstItem = app.descendants(matching: .any)["backport.scroll.item.0"]
+        let firstItemFound = await waitForElement(firstItem, timeout: 2)
+        XCTAssertTrue(firstItemFound, "Numbered strip should expose its first item.")
+        guard firstItemFound else { return }
+
+        let initialX = firstItem.frame.minX
         strip.swipeLeft()
-        try? await Task.sleep(nanoseconds: 250_000_000)
-        let endItem = app.descendants(matching: .any)["backport.scroll.item.11"]
-        XCTAssertTrue(endItem.exists && endItem.isHittable, "Enabled numbered strip should scroll to its final item.")
+        try? await Task.sleep(nanoseconds: 200_000_000)
+        let scrolledX = firstItem.frame.minX
+        XCTAssertLessThan(scrolledX, initialX - 5,
+                          "Enabled numbered strip should move its content after a scroll gesture.")
+
+        // Return all the way to the starting edge before disabling scrolling so the test also leaves the
+        // final item off screen again after demonstrating normal scrolling behavior.
         strip.swipeRight()
-        try? await Task.sleep(nanoseconds: 250_000_000)
+        try? await Task.sleep(nanoseconds: 200_000_000)
+        let restoredX = firstItem.frame.minX
+        XCTAssertEqual(restoredX, initialX, accuracy: 5,
+                       "Enabled numbered strip should return to its starting position before disabling scrolling.")
 
         guard let scrollToggle = await reveal(identifier: "backport.scroll.toggle", in: screenElement, app: app) else {
             XCTFail("scrollDisabled Backport toggle should be reachable.")
@@ -284,13 +297,12 @@ final class CompatibilityUITests: XCTestCase {
         }
         scrollToggle.backport.tap()
 
-        let firstItem = app.descendants(matching: .any)["backport.scroll.item.0"]
+        let disabledStartX = firstItem.frame.minX
         strip.swipeLeft()
-        try? await Task.sleep(nanoseconds: 250_000_000)
-        XCTAssertTrue(firstItem.exists && firstItem.isHittable,
-                      "Disabled numbered strip should remain at its starting position after a scroll gesture.")
-        XCTAssertFalse(endItem.exists && endItem.isHittable,
-                       "Disabled numbered strip should not reveal its final item after a scroll gesture.")
+        try? await Task.sleep(nanoseconds: 200_000_000)
+        let disabledEndX = firstItem.frame.minX
+        XCTAssertEqual(disabledEndX, disabledStartX, accuracy: 3,
+                       "Disabled numbered strip should not move after the same scroll gesture.")
 
         // Restore the enabled state for anyone continuing to inspect the demo after the automated tour.
         scrollToggle.backport.tap()
@@ -513,18 +525,26 @@ final class CompatibilityUITests: XCTestCase {
     }
 
     @MainActor
-    private func scrollThroughAllTests(_ screenElement: XCUIElement) async {
+    private func scrollThroughAllTests(_ screenElement: XCUIElement, in app: XCUIApplication) async {
         let scrollable = contentScrollable(in: screenElement)
-        // Start scrolling as soon as the screen is available and fling repeatedly without inter-gesture
-        // sleeps. This should reach the end while the intentionally slow two- and three-second tests run.
-        scrollable.swipeUp(velocity: .fast)
-        scrollable.swipeUp(velocity: .fast)
-        scrollable.swipeUp(velocity: .fast)
-        scrollable.swipeUp(velocity: .fast)
-        scrollable.swipeUp(velocity: .fast)
-        scrollable.swipeUp(velocity: .fast)
+        let bottom = app.descendants(matching: .any)["allTests.bottom"]
 
-        // Hold at the bottom so a person watching the tour can see the slow tests transition to completion.
+        // XCTest's high-level swipe helper deliberately performs a visible gesture animation and waits for
+        // it to settle. Use a short, high-velocity flick instead, and stop as soon as the explicit bottom
+        // marker is visible rather than blindly queueing more gestures after the list has reached the end.
+        for _ in 0..<3 {
+            if bottom.exists && bottom.isHittable {
+                break
+            }
+            let start = scrollable.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.9))
+            let end = scrollable.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.1))
+            start.press(forDuration: 0.01, thenDragTo: end, withVelocity: .fast, thenHoldForDuration: 0)
+        }
+
+        XCTAssertTrue(bottom.exists && bottom.isHittable, "All Tests should reach its bottom marker during the fast scroll.")
+
+        // Hold only after reaching the end so a person watching can see the intentionally slow two- and
+        // three-second tests transition to completion instead of spending that time watching more scrolling.
         try? await Task.sleep(nanoseconds: 3_000_000_000)
     }
 
