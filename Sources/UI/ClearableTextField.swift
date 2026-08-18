@@ -56,6 +56,11 @@ public struct ClearableTextField: View {
                 }
             })
             .focused($isFocused)
+            // Return/Done is also an intentional commit point. This keeps the field quiet while typing
+            // but lets keyboard-driven users explicitly persist a value without first clicking elsewhere.
+            .onSubmit {
+                persistChanges()
+            }
             if fieldText != "" {
                 Button {
                     fieldText = ""
