@@ -9,6 +9,7 @@ Removed misleading WASM/Embedded fallbacks for `sleep`, `background`, and `delay
 Improved the reusable test UI and Xcode/SwiftPM test integration, including parameterized Test Navigator results and unified unit/UI test execution.
 Expanded contributor guidance for short, staged, maintainer-reviewed coding workflows.
 Updated `closure` and `if` view modifiers to take `@ViewBuilder` so that contents don't need to be wrapped in `Group {}`.
+Added and re-worked visual tests into showcase views.
 Increased automated code coverage to XX%.
 
 ## v1.18.2 2026-07-23
