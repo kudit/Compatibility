@@ -120,10 +120,11 @@ final class CompatibilityUITests: XCTestCase {
             }
 
         case 5:
-            // Exercise Binding.convert through the Convert screen's slider.
+            // Exercise Binding.convert through the Convert screen's slider. Move only one nearby step;
+            // a long animated slider travel provides no extra coverage and makes the UI tour slower.
             let slider = app.sliders.firstMatch
             if await waitForElement(slider, timeout: 2) {
-                slider.adjust(toNormalizedSliderPosition: 0.75)
+                slider.adjust(toNormalizedSliderPosition: 0.45)
             }
 
         case 6:
@@ -187,18 +188,42 @@ final class CompatibilityUITests: XCTestCase {
         XCTAssertTrue(selectionChanged, "Selection-bound Backport.TabView should change to tag 1.")
 
 #if os(macOS) || os(iOS)
-        // Start the symbol field empty so typeText() can enter a complete SF Symbol name without platform-specific
-        // Select All keyboard shortcuts. Leaving the field commits ClearableTextField's value to its binding.
         guard await reveal(identifier: "backport.symbol.field", in: screenElement, app: app) != nil else {
             XCTFail("SF Symbol ClearableTextField should be reachable.")
             return
         }
-        let symbolField = app.textFields["SF Symbol name"]
-        let symbolFieldFound = await waitForElement(symbolField, timeout: 2)
-        XCTAssertTrue(symbolFieldFound, "Backport should expose the SF Symbol text field.")
-        guard symbolFieldFound else { return }
-        symbolField.backport.tap()
-        symbolField.typeText("star.fill")
+
+        // ClearableTextField intentionally avoids publishing every keystroke. Commit each example with Return
+        // so this exercises its explicit onSubmit path as well as Backport.Image with several real symbol names.
+        for symbolName in ["star.fill", "heart.fill", "calendar"] {
+            let symbolField = app.textFields["SF Symbol name"]
+            let symbolFieldFound = await waitForElement(symbolField, timeout: 2)
+            XCTAssertTrue(symbolFieldFound, "Backport should expose the SF Symbol text field.")
+            guard symbolFieldFound else { return }
+
+            symbolField.backport.tap()
+            symbolField.typeText(symbolName)
+            symbolField.typeText("\n")
+
+            let symbolStatus = app.staticTexts["Current symbol: \(symbolName)"]
+            let symbolChanged = await waitForElement(symbolStatus, timeout: 2)
+            XCTAssertTrue(symbolChanged, "Committing \(symbolName) should update the Backport.Image example.")
+            guard symbolChanged else { return }
+
+            // Test the real clear control after every value. The clear button intentionally keeps focus in
+            // the text field, so press Return afterward to commit the empty value to the optional binding.
+            let clearButton = app.buttons["Clear SF Symbol name"]
+            let clearFound = await waitForElement(clearButton, timeout: 2)
+            XCTAssertTrue(clearFound, "ClearableTextField should expose its clear button after entering \(symbolName).")
+            guard clearFound else { return }
+            clearButton.backport.tap()
+            symbolField.typeText("\n")
+
+            let clearedStatus = app.staticTexts["Current symbol: <empty>"]
+            let cleared = await waitForElement(clearedStatus, timeout: 2)
+            XCTAssertTrue(cleared, "ClearableTextField should commit an empty value after its clear button is used.")
+            guard cleared else { return }
+        }
 #endif
 
         guard let scrollToggle = await reveal(identifier: "backport.scroll.toggle", in: screenElement, app: app) else {
@@ -206,14 +231,6 @@ final class CompatibilityUITests: XCTestCase {
             return
         }
         scrollToggle.backport.tap()
-
-#if os(macOS) || os(iOS)
-        // Activating the later toggle moves focus away from the text field, which causes ClearableTextField
-        // to persist its edited value before the bound status text is verified.
-        let symbolStatus = app.staticTexts["Current symbol: star.fill"]
-        let symbolChanged = await waitForElement(symbolStatus, timeout: 3)
-        XCTAssertTrue(symbolChanged, "Entering an SF Symbol name should update the Backport.Image example.")
-#endif
 
         // Toggle back to the enabled-scrolling state so both values flow through Backport.scrollDisabled.
         scrollToggle.backport.tap()
@@ -433,10 +450,12 @@ final class CompatibilityUITests: XCTestCase {
     @MainActor
     private func scrollThroughAllTests(_ screenElement: XCUIElement) {
         let scrollable = contentScrollable(in: screenElement)
-        // A couple of passes are enough to instantiate representative off-screen rows for coverage.
+        // Move quickly in one direction so the UI instantiates the complete list while the intentionally
+        // slow two- and three-second reusable tests are still running. Scrolling back adds no coverage.
         scrollable.swipeUp()
         scrollable.swipeUp()
-        scrollable.swipeDown()
+        scrollable.swipeUp()
+        scrollable.swipeUp()
     }
 
     @MainActor
