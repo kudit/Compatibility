@@ -54,6 +54,19 @@ After every prompt-driven change, contributors and coding agents must:
 8. For multi-file edits, patch each repository or external file separately. After every patch, verify the tool result, inspect the exact diff, run syntax checks, and search for the removed symbol or dependency. Never report the overall change as complete when any hunk failed or remains unverified. Always list changed files and show all deltas using a diff editor (if in Codex).
 
 
+## File editing safety
+
+Whole-file replacement is an acceptable and often appropriate way to edit a repository file when the editing tool requires it. File size alone is not a reason to avoid the correct edit.
+
+- Before any whole-file replacement, fetch the complete current file from the exact branch or commit being edited. Never construct a replacement file from a search result, partial snippet, truncated response, stale copy, or remembered version.
+- Apply changes to that complete current content and upload the complete resulting file. A replacement containing only the changed region is a destructive truncation, not a patch.
+- If the complete file cannot safely fit in one tool response or working context, read it in explicit contiguous ranges and verify that those ranges cover the entire file before constructing the replacement. Splitting the read is encouraged; omitting unread ranges is never acceptable.
+- For especially large or complex files, break the work into small logical edits, but refetch the latest complete file before each sequential whole-file replacement so earlier edits and maintainer changes are preserved.
+- Immediately inspect the resulting Git diff after every whole-file replacement. Unexpected large deletions, missing comments, missing declarations, or unrelated formatting changes are evidence of a bad replacement and must be corrected before continuing.
+- Compare deleted lines as carefully as added lines. Whole-file editing must preserve comments, TODOs, disabled reference code, whitespace conventions, and unrelated source exactly unless the requested change intentionally modifies them.
+- When a tool supports true patches, patches may be preferred for small localized changes, but do not avoid a necessary whole-file replacement merely because the file is large. The safety requirement is complete-current-input plus verified-output, not a particular editing mechanism.
+
+
 A full changelog outline may include:
 
 ```markdown
