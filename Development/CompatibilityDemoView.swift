@@ -343,9 +343,11 @@ struct BackportShowcaseView: View {
                                     Text("\(index)")
                                         .frame(size: 32)
                                         .background(colors[nth: index].opacity(0.25))
+                                        .accessibilityIdentifier("backport.scroll.item.\(index)")
                                 }
                             }
                         }
+                        .accessibilityIdentifier("backport.scroll.strip")
                         .frame(height: 40)
                         .backport.scrollDisabled(backportScrollDisabled)
                     }
