@@ -79,7 +79,13 @@ public extension Bundle {
             if Build.isApp {
                 try expect(Bundle.main.version > "0.1", "Expected app bundle version but got: \(Bundle.main.version)")
             }
-            try expect(Bundle.main.buildDate > Date.yesterday && Bundle.main.buildDate < Date.tomorrow)
+
+            // Info.plist modification time is a useful approximation of build time, but compatible-app
+            // runtimes (for example Designed for iPad on macOS) may preserve a copied bundle's timestamp.
+            // Validate that the value is sane rather than assuming every runtime rewrites it today.
+            let buildDate = Bundle.main.buildDate
+            try expect(buildDate > Date(timeIntervalSinceReferenceDate: 0) && buildDate < Date.tomorrow,
+                       "Expected a plausible bundle build date but got: \(buildDate)")
             try expect(Bundle.main.buildNumber > 0)
             try expect(!String.appIconName.isEmpty, "Expected app icon name but got: \(String.appIconName)")
         }),
