@@ -165,7 +165,7 @@ public enum Compatibility: Module {
      iOS 16+
      iPadOS 16.0+
      macOS 13+
-     Mac Catalyst 16+
+     Mac Catalyst 16.0+
      tvOS 16+
      watchOS 9+ (minimum for WidgetKit on watchOS - supported in iOS 14 and macOS 11)
      visionOS 1.0+
