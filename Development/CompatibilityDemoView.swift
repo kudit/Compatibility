@@ -348,7 +348,9 @@ struct BackportShowcaseView: View {
                             }
                         }
                         .accessibilityIdentifier("backport.scroll.strip")
-                        .frame(height: 40)
+                        // Keep the viewport deliberately narrower than the numbered content so enabled
+                        // and disabled scrolling are both visually obvious and mechanically testable.
+                        .frame(width: 220, height: 40, alignment: .leading)
                         .backport.scrollDisabled(backportScrollDisabled)
                     }
                     .padding()
