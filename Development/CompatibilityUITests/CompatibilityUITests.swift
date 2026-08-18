@@ -51,7 +51,7 @@ final class CompatibilityUITests: XCTestCase {
         DemoScreen(name: "Compatibility", identifier: "demo.compatibility"),
         DemoScreen(name: "DataStore", identifier: "demo.datastore"),
         DemoScreen(name: "All Tests", identifier: "demo.allTests"),
-        DemoScreen(name: "Closure", identifier: "demo.closure"),
+        DemoScreen(name: "Radial Layout", identifier: "demo.radialLayout"),
         DemoScreen(name: "Random Bytes", identifier: "demo.randomBytes"),
         DemoScreen(name: "Convert", identifier: "demo.convert"),
         DemoScreen(name: "Visual Showcase", identifier: "demo.visualShowcase"),
@@ -98,12 +98,17 @@ final class CompatibilityUITests: XCTestCase {
     private func exercise(screenAt index: Int, screenElement: XCUIElement, in app: XCUIApplication) async {
         switch index {
         case 0, 1, 4:
+            // These pages are primarily exercised by rendering. Keep the UI tour fast and avoid
+            // synthetic scrolling where there is no behavior we specifically need to validate.
             break
 
         case 2:
+            // Scroll only within the All Tests content. On macOS the app also contains a scrollable
+            // sidebar, so querying from XCUIApplication would otherwise scroll the navigation sidebar.
             scrollThroughAllTests(screenElement)
 
         case 3:
+            // Open the real menu when exposed so Menu callbacks and menu-item construction are covered.
             let symbols = app.buttons["Symbols"]
             if await waitForElement(symbols, timeout: 2), symbols.isHittable {
                 symbols.backport.tap()
@@ -114,6 +119,7 @@ final class CompatibilityUITests: XCTestCase {
             }
 
         case 5:
+            // Exercise Binding.convert through the Convert screen's slider.
             let slider = app.sliders.firstMatch
             if await waitForElement(slider, timeout: 2) {
                 slider.adjust(toNormalizedSliderPosition: 0.75)
@@ -146,6 +152,7 @@ final class CompatibilityUITests: XCTestCase {
             XCTAssertTrue(rendered, "Visual Showcase destination \(showcase.destinationIdentifier) should render.")
             guard rendered else { return }
 
+            // Leave the destination visible long enough for SwiftUI to execute its body/layout work before returning.
             try? await Task.sleep(nanoseconds: 250_000_000)
             let back = navigationBackButton(in: app)
             let canReturn = await waitForElement(back, timeout: 3)
@@ -165,6 +172,7 @@ final class CompatibilityUITests: XCTestCase {
         XCTAssertTrue(toggleReachable, "Conditional modifier toggle should be reachable.")
         guard conditionalToggle.exists else { return }
 
+        // Start on, turn it off to execute the original-view path, then turn it back on to execute the transform path again.
         conditionalToggle.backport.tap()
         try? await Task.sleep(nanoseconds: 150_000_000)
         conditionalToggle.backport.tap()
@@ -172,6 +180,7 @@ final class CompatibilityUITests: XCTestCase {
 
     @MainActor
     private func exerciseMaterial(_ screenElement: XCUIElement, in app: XCUIApplication) async {
+        // Exercise the sheet so material, presentation-detent/background, toolbar, and dismissal paths render.
         let glass = app.buttons["Glass"]
         let glassFound = await waitForElement(glass, timeout: 2)
         XCTAssertTrue(glassFound, "Material should expose the Glass sheet control.")
@@ -185,6 +194,7 @@ final class CompatibilityUITests: XCTestCase {
             }
         }
 
+        // Material's navigation trigger is intentionally a tappable Text rather than a Button.
         let navigation = screenElement.staticTexts["Material"]
         let navigationFound = await waitForElement(navigation, timeout: 2)
         XCTAssertTrue(navigationFound, "Material navigation trigger should be present.")
@@ -199,6 +209,7 @@ final class CompatibilityUITests: XCTestCase {
         XCTAssertTrue(destinationRendered, "Material navigation should show Navigation Destination TestCase.")
         guard destinationRendered else { return }
 
+        // Keep the destination visibly presented briefly so the test proves the navigation actually happened.
         try? await Task.sleep(nanoseconds: 400_000_000)
         destination.backport.tap()
         let materialReturned = await waitForElement(navigation, timeout: 4)
@@ -237,6 +248,10 @@ final class CompatibilityUITests: XCTestCase {
     private func navigate(to screen: DemoScreen, in app: XCUIApplication) async {
 #if os(macOS)
         app.activate()
+
+        // sidebarAdaptable exposes destinations through the macOS sidebar. Later destinations can be
+        // outside the visible portion of the sidebar, so scroll the sidebar while searching rather than
+        // assuming every tab label already exists in the accessibility hierarchy.
         if let tab = await visibleSidebarTab(named: screen.name, in: app) {
             tab.backport.tap()
         } else {
@@ -253,6 +268,8 @@ final class CompatibilityUITests: XCTestCase {
     @MainActor
     private func visibleSidebarTab(named name: String, in app: XCUIApplication) async -> XCUIElement? {
         func visibleMatch() -> XCUIElement? {
+            // SwiftUI/AppKit may expose a sidebar destination as a button, static text, or generic
+            // accessibility element depending on the OS version. Prefer actionable controls first.
             let candidates = [
                 app.buttons[name],
                 app.staticTexts[name],
@@ -265,6 +282,8 @@ final class CompatibilityUITests: XCTestCase {
             return match
         }
 
+        // sidebarAdaptable currently presents its navigation list as an outline on macOS. Fall back
+        // to the first scrollable navigation container if accessibility exposes it differently.
         let outline = app.outlines.firstMatch
         let scrollArea = app.scrollViews.firstMatch
         let sidebar = outline.exists ? outline : scrollArea
@@ -272,6 +291,8 @@ final class CompatibilityUITests: XCTestCase {
             return nil
         }
 
+        // A few small passes are enough to reveal the demo destinations without sending the sidebar
+        // all the way to an extreme and making the test unnecessarily slow.
         for _ in 0..<3 {
             sidebar.swipeUp()
             try? await Task.sleep(nanoseconds: 150_000_000)
@@ -280,6 +301,7 @@ final class CompatibilityUITests: XCTestCase {
             }
         }
 
+        // Restore roughly toward the top so subsequent navigation remains predictable.
         for _ in 0..<3 {
             sidebar.swipeDown()
             try? await Task.sleep(nanoseconds: 100_000_000)
@@ -302,6 +324,8 @@ final class CompatibilityUITests: XCTestCase {
             if Date() >= deadline {
                 return false
             }
+            // Yield the main actor instead of calling XCTest's synchronous waitForExistence(timeout:),
+            // which the performance diagnostics correctly flag as blocking UI responsiveness.
             try? await Task.sleep(nanoseconds: 100_000_000)
         } while true
     }
@@ -309,6 +333,7 @@ final class CompatibilityUITests: XCTestCase {
     @MainActor
     private func scrollThroughAllTests(_ screenElement: XCUIElement) {
         let scrollable = contentScrollable(in: screenElement)
+        // A couple of passes are enough to instantiate representative off-screen rows for coverage.
         scrollable.swipeUp()
         scrollable.swipeUp()
         scrollable.swipeDown()

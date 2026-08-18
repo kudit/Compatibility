@@ -271,13 +271,22 @@ struct VisualShowcaseView: View {
                         Text(conditionalEnabled ? "Conditional modifier applied" : "Conditional modifier not applied")
                             .if(conditionalEnabled) { view in
                                 view
-                                    .bold()
                                     .padding(size: 6)
                                     .background(.yellow.opacity(0.25))
                                     .overlay {
                                         RoundedRectangle(cornerRadius: 6)
                                             .stroke(.orange, lineWidth: 2)
                                     }
+                            }
+                            .closure { content in
+                                if #available(iOS 999, macOS 999, tvOS 999, watchOS 999, visionOS 999, *) {
+                                    content.italic()
+                                } else if #available(iOS 16, macOS 13, tvOS 16, watchOS 9, *) {
+                                    content.bold().foregroundStyle(.blue)
+                                } else {
+                                        // Fallback on earlier versions
+                                    content.foregroundStyle(.red)
+                                }
                             }
                             .accessibilityIdentifier("showcase.conditional.result")
 
@@ -362,10 +371,10 @@ struct CompatibilityDemoView: View {
             .tabItem {
                 Text("All Tests")
             }
-        ClosureTestView()
-            .accessibilityIdentifier("demo.closure")
+        RadialTestView()
+            .accessibilityIdentifier("demo.radialLayout")
             .tabItem {
-                Text("Closure")
+                Text("Radial Layout")
             }
         RandomBytesTestView()
             .accessibilityIdentifier("demo.randomBytes")

@@ -33,8 +33,12 @@ public struct AdaptiveLayout<PContent, LContent>: View where PContent: View, LCo
     public var body: some View {
         switch orientation {
         case .horizontal:
+            // Explicit landscape mode avoids GeometryReader so fixed-orientation uses do
+            // not unexpectedly expand inside compact parent layouts.
             landscape()
         case .vertical:
+            // Explicit portrait mode avoids GeometryReader so fixed-orientation uses do
+            // not unexpectedly expand inside compact parent layouts.
             portrait()
         case .adaptive:
             GeometryReader { proxy in
@@ -63,6 +67,8 @@ public struct AStack: View {
         case adaptive
 
         fileprivate func resolved(for proxy: GeometryProxy) -> Orientation {
+            // `.adaptive` preserves the original width-vs-height behavior while the concrete
+            // cases give callers a stable layout when the surrounding view already knows best.
             if self == .adaptive {
                 return proxy.size.width > proxy.size.height ? .horizontal : .vertical
             }

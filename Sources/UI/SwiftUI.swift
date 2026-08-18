@@ -69,21 +69,12 @@ public extension View {
 }
 
 @available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
-public struct ClosureTestView: View {
+public struct RadialTestView: View {
     @State var symbol = "calendar"
     
     public init() {}
     public var body: some View {
         VStack {
-            Text("TestCase for availability")
-            Text("conditional inclusion")
-                .closure { content in
-                    if #available(iOS 999, macOS 999, tvOS 999, watchOS 999, visionOS 999, *) {
-                        content.padding().background(.red).border(.yellow, width: 4)
-                    } else {
-                        content.padding().background(.blue).border(.green, width: 4)
-                    }
-                }
             Text("Open Source projects used include [Compatibility](https://github.com/kudit/Compatibility) v\(Compatibility.version)")
                 .font(.caption)
             if #available(tvOS 17, *) {
@@ -114,13 +105,13 @@ public struct ClosureTestView: View {
                 // toolbars are not shown in tvOS?
             }
         }
-        .backport.navigationTitle("Compatibility/Menu TestCase")
+        .backport.navigationTitle("RadialLayout/Menu Tests")
         .navigationWrapper()
     }
 }
 @available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
-#Preview("Closure TestCase") {
-    ClosureTestView()
+#Preview("RadialLayout TestCase") {
+    RadialTestView()
 }
 
 
