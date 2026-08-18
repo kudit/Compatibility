@@ -83,6 +83,9 @@ public struct RadialTestView: View {
                 // Fallback on earlier versions
                 // toolbars are not shown in tvOS?
             }
+            Text("Selected symbol: \(symbol)")
+                .font(.caption)
+                .accessibilityIdentifier("radial.symbol.status")
             
             RadialLayout {
                 ForEach(0..<24, id: \.self) { item in
@@ -134,7 +137,7 @@ public extension Binding {
             
         Binding<TInt> (
             get: { TInt(floatBinding.wrappedValue) },
-            set: { floatBinding.wrappedValue = TFloat($0) }
+            set: { intBinding.wrappedValue = TFloat($0) }
         )
     }
 }
@@ -302,6 +305,10 @@ public struct MaterialTestView: View {
                     .onTapGesture {
                         showNavigationDetail = true
                     }
+                    // This is intentionally a tappable Text rather than a Button. Give accessibility
+                    // a stable identity and button semantics so automated and assistive clients can activate it.
+                    .accessibilityIdentifier("material.navigation.trigger")
+                    .accessibilityAddTraits(.isButton)
                 Button {
                     showSheet = true
                 } label: {
