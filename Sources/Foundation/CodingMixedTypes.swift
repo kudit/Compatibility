@@ -196,9 +196,9 @@ public enum MixedTypeField: Equatable, Sendable, Hashable {
 #if compiler(>=5.9)
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension MixedTypeField {
-    /// Shared value, formatting, and `Field` integration tests available to the in-app and Swift Testing runners.
+    /// Existing shared value, formatting, and `Field` integration coverage retained as its own collection.
     @MainActor
-    static let tests = [
+    private static let mixedTypeValueTests: [TestCase] = [
         TestCase("Descriptions, conformances, and Field conveniences") {
             // Compile-time generic constraints ensure these public values remain safe across concurrency boundaries.
             func requireSendable<Value: Sendable>(_ value: Value) { _ = value }
@@ -255,7 +255,12 @@ public extension MixedTypeField {
             try expect(decodedField == direct)
 #endif
         },
+    ]
+
 #if !hasFeature(Embedded)
+    /// Additional dynamic coding coverage kept outside conditional directives embedded in an array literal.
+    @MainActor
+    private static let mixedTypeCodingCoverageTests: [TestCase] = [
         TestCase("Mixed type accessors and coding containers") {
             // Exercise every public accessor's matching and non-matching paths, including exact conversion
             // between integral doubles and Int plus the intentionally lossy-rejected fractional case.
@@ -274,8 +279,7 @@ public extension MixedTypeField {
             try expect(MixedTypeField.array([.int(1)]).arrayValue == [.int(1)])
             try expect(MixedTypeField.int(1).arrayValue == nil)
 
-            // Exercise the dynamic encoding initializer's primitive, collection, dictionary, passthrough,
-            // nil, and unsupported-value branches without relying on Foundation JSON behavior.
+            // Exercise the dynamic encoding initializer's supported primitive and collection branches.
             try expect(MixedTypeField(encoding: nil) == .null)
             try expect(MixedTypeField(encoding: MixedTypeField.string("already")) == .string("already"))
             try expect(MixedTypeField(encoding: true) == .bool(true))
@@ -358,12 +362,14 @@ public extension MixedTypeField {
             let float = try Float(fromMixedTypeField: .double(3.25))
             try expect(float == 3.25)
 
-            // Validate representative decoder errors rather than merely executing them for coverage.
+            // Validate representative decoder errors and propagate anything unexpected.
             do {
                 let _: Int = try .init(fromMixedTypeField: .string("not an int"))
                 try expect(false, "Expected a typeMismatch decoding error")
             } catch DecodingError.typeMismatch {
                 // Expected.
+            } catch {
+                throw error
             }
 
             struct RequiredValue: Decodable {
@@ -374,10 +380,22 @@ public extension MixedTypeField {
                 try expect(false, "Expected a keyNotFound decoding error")
             } catch DecodingError.keyNotFound {
                 // Expected.
+            } catch {
+                throw error
             }
         },
-#endif
     ]
+#endif
+
+    /// Shared tests consumed by both the in-app All Tests UI and the Swift Testing bridge.
+    @MainActor
+    static let tests: [TestCase] = {
+#if hasFeature(Embedded)
+        mixedTypeValueTests
+#else
+        mixedTypeValueTests + mixedTypeCodingCoverageTests
+#endif
+    }()
 }
 #endif
 
