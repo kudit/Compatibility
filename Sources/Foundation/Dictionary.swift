@@ -104,6 +104,15 @@ internal let dictionaryConvertibleTests: [TestCase] = [
         let merged = ["a": 1, "b": 2] + ordered
         try expectEqual(merged, ["a": 1, "b": 20, "c": 3])
         try expectEqual(merged.firstKey(for: 20), "b")
+        try expect(merged.firstKey(for: 999) == nil)
+
+        // Exercise the same generic merge operators with OrderedDictionary on the left-hand side.
+        var orderedMerged: OrderedDictionary = ["a": 1]
+        orderedMerged += ["a": 2, "b": 3]
+        try expectEqual(orderedMerged.dictionaryValue, ["a": 2, "b": 3])
+        let orderedSum = orderedMerged + ["b": 30, "c": 4]
+        try expectEqual(orderedSum.dictionaryValue, ["a": 2, "b": 30, "c": 4])
+        try expectEqual(orderedSum.keys.elements, ["a", "b", "c"])
 
         final class Reference {}
         let first = Reference()
