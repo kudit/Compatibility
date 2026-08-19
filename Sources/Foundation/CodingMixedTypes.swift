@@ -482,21 +482,33 @@ fileprivate final class _FieldEncoder: Encoder {
         
         fileprivate init(encoder: _FieldEncoder) {
             self.encoder = encoder
-            self.dict = MixedTypeDictionary()
+            if case let .dictionary(existing) = encoder.storage {
+                self.dict = existing
+            } else {
+                self.dict = MixedTypeDictionary()
+            }
+        }
+
+        /// KeyedEncodingContainer may copy its value-type backing container between calls. Re-read the
+        /// encoder's accumulated dictionary before each write so earlier keys are never discarded.
+        private mutating func store(_ value: MixedTypeField?, forKey key: K) {
+            if case let .dictionary(existing) = encoder.storage {
+                dict = existing
+            }
+            dict[key.stringValue] = value
+            encoder.storage = .dictionary(dict)
         }
         
         mutating func encodeNil(forKey key: K) throws {
             // represent explicit JSON null as .null inside the optional-value dictionary
-            dict[key.stringValue] = .null
-            encoder.storage = .dictionary(dict)
+            store(.null, forKey: key)
         }
         
         mutating func encode<T>(_ value: T, forKey key: K) throws where T : Encodable {
             // Primitive values are handled by the nested encoder's SingleValueContainer
             let nested = _FieldEncoder()
             try value.encode(to: nested)
-            dict[key.stringValue] = nested.storage
-            encoder.storage = .dictionary(dict)
+            store(nested.storage, forKey: key)
         }
         
         mutating func nestedContainer<NestedKey>(keyedBy keyType: NestedKey.Type, forKey key: K) -> KeyedEncodingContainer<NestedKey> where NestedKey : CodingKey {
