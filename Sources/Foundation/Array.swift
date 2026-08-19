@@ -315,18 +315,18 @@ let collectionTests: [TestCase] = [
             IdentifiedValue(id: 1, name: "one"),
             IdentifiedValue(id: 2, name: "two"),
         ]
-        try expect(values[id: 1]?.name == "one")
-        try expect(values[id: 99] == nil)
+        try expect(values[1]?.name == "one")
+        try expect(values[99] == nil)
 
-        values[id: 2] = IdentifiedValue(id: 2, name: "updated")
-        try expect(values[id: 2]?.name == "updated")
+        values[2] = IdentifiedValue(id: 2, name: "updated")
+        try expect(values[2]?.name == "updated")
 
         // Missing IDs and nil assignments are documented no-ops. Suppress the expected diagnostic output
         // while still executing both guard branches and verifying that neither mutates the collection.
         let unchanged = values
         debugSuppress {
-            values[id: 99] = IdentifiedValue(id: 99, name: "missing")
-            values[id: 1] = nil
+            values[99] = IdentifiedValue(id: 99, name: "missing")
+            values[1] = nil
         }
         try expect(values == unchanged)
     }),
