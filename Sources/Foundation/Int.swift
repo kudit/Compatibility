@@ -51,6 +51,7 @@ public extension Int {
 internal let randomTests: TestClosure = {
     try expect(Int.random(max: -2) == 0)
     try expect(Int.random(max: 0) == 0)
+    try expect(Int.random(max: 1) == 0)
     for i in 1..<5 {
         let num = Int.random(max: i)
         try expect(num >= 0 && num < i)
@@ -119,6 +120,8 @@ public extension Int {
 internal let intStringTests: TestClosure = {
 //    try expect("\(1999)" == "1,999") only seems to happen in SwiftUI.Text("\(1999)")
     try expect(1999.string == "1999")
+    try expect((-42).string == "-42")
+    try expect(0.string == "0")
 }
 
 // MARK: - Pluralization utility
@@ -139,6 +142,9 @@ public extension Int {
 @MainActor
 internal let pluralTests: TestClosure = {
     try expect(0.pluralEnding() == "s")
+    try expect(1.pluralEnding() == "")
+    try expect(2.pluralEnding() == "s")
+    try expect((-1).pluralEnding() == "s")
     try expect(1.pluralEnding("teeth", singularEnding: "tooth") == "tooth")
     try expect(2.pluralEnding("teeth", singularEnding: "tooth") == "teeth")
 }
@@ -195,6 +201,10 @@ internal let byteTests: TestClosure = {
 
     var failedMessages = [String]()
     var allPass = true
+
+    try expect(Int(0).bytes == 0)
+    try expect(Int(1024).bytes == 1024)
+    try expect(UInt16(255).bytes == 255)
     
     #if canImport(Foundation)
     let runTestsClosure: (ByteCountFormatter.CountStyle, [UInt64: String]) throws -> Void = { style, tests in
