@@ -307,26 +307,26 @@ let collectionTests: [TestCase] = [
     }),
     TestCase("Identifiable array subscript", {
         struct IdentifiedValue: Identifiable, Equatable {
-            let id: Int
+            let id: String
             var name: String
         }
 
         var values = [
-            IdentifiedValue(id: 1, name: "one"),
-            IdentifiedValue(id: 2, name: "two"),
+            IdentifiedValue(id: "one", name: "one"),
+            IdentifiedValue(id: "two", name: "two"),
         ]
-        try expect(values[1]?.name == "one")
-        try expect(values[99] == nil)
+        try expect(values["one"]?.name == "one")
+        try expect(values["missing"] == nil)
 
-        values[2] = IdentifiedValue(id: 2, name: "updated")
-        try expect(values[2]?.name == "updated")
+        values["two"] = IdentifiedValue(id: "two", name: "updated")
+        try expect(values["two"]?.name == "updated")
 
         // Missing IDs and nil assignments are documented no-ops. Suppress the expected diagnostic output
         // while still executing both guard branches and verifying that neither mutates the collection.
         let unchanged = values
         debugSuppress {
-            values[99] = IdentifiedValue(id: 99, name: "missing")
-            values[1] = nil
+            values["missing"] = IdentifiedValue(id: "missing", name: "missing")
+            values["one"] = nil
         }
         try expect(values == unchanged)
     }),
