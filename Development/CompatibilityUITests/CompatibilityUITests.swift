@@ -307,9 +307,16 @@ final class CompatibilityUITests: XCTestCase {
 
     @MainActor
     private func exerciseMaterial(_ screenElement: XCUIElement, in app: XCUIApplication) async {
-        // Material is intentionally a tappable Text rather than a Button. Exercise it first so the
-        // navigation behavior and conditional view utilities are verified before ending with the Glass sheet.
-        let navigation = app.descendants(matching: .any)["material.navigation.trigger"]
+        // Material is intentionally a tappable Text rather than a Button. Some SwiftUI/AppKit versions do
+        // not publish that Text's accessibility identifier even though the labeled element is actionable,
+        // so prefer the stable identifier and fall back to the visible Material label within this screen.
+        let identifiedNavigation = screenElement.descendants(matching: .any)["material.navigation.trigger"]
+        let navigation: XCUIElement
+        if await waitForElement(identifiedNavigation, timeout: 1) {
+            navigation = identifiedNavigation
+        } else {
+            navigation = screenElement.staticTexts["Material"]
+        }
         let navigationFound = await waitForElement(navigation, timeout: 3)
         XCTAssertTrue(navigationFound, "Material navigation trigger should be present.")
         guard navigationFound && navigation.isHittable else {
@@ -352,7 +359,7 @@ final class CompatibilityUITests: XCTestCase {
         guard materialReturned else { return }
 
         // Exercise the sheet last so the Material tab finishes on the visually distinct Glass presentation.
-        let glass = app.buttons["Glass"]
+        let glass = materialScreen.buttons["Glass"]
         let glassFound = await waitForElement(glass, timeout: 2)
         XCTAssertTrue(glassFound, "Material should expose the Glass sheet control.")
         if glass.exists && glass.isHittable {
