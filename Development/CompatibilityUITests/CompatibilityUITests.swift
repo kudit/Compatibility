@@ -310,13 +310,8 @@ final class CompatibilityUITests: XCTestCase {
         // Material is intentionally a tappable Text rather than a Button. Some SwiftUI/AppKit versions do
         // not publish that Text's accessibility identifier even though the labeled element is actionable,
         // so prefer the stable identifier and fall back to the visible Material label within this screen.
-        let identifiedNavigation = screenElement.descendants(matching: .any)["material.navigation.trigger"]
-        let navigation: XCUIElement
-        if await waitForElement(identifiedNavigation, timeout: 1) {
-            navigation = identifiedNavigation
-        } else {
-            navigation = screenElement.staticTexts["Material"]
-        }
+        // Query the identifier in the button collection so the Material tab label cannot satisfy this lookup.
+        let navigation = screenElement.buttons["material.navigation.trigger"]
         let navigationFound = await waitForElement(navigation, timeout: 3)
         XCTAssertTrue(navigationFound, "Material navigation trigger should be present.")
         guard navigationFound && navigation.isHittable else {

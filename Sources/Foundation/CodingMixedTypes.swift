@@ -87,9 +87,6 @@ public enum MixedTypeField: Equatable, Sendable, Hashable {
             self = .array(value.map { MixedTypeField(encoding: $0) })
         } else if let string = value as? LosslessStringConvertible { // needed to move down later because bool and numbers are convertible to string
             self = .string(string.description)
-        } else if value as? MixedTypeField == Optional<MixedTypeField>.none {
-            // this is how we check for null nil
-            self = .null
         } else {
             debug("Encoding error creating a MixedTypeField from value (likely not Encodable): \(value)", level: .WARNING)
             return nil
@@ -288,13 +285,7 @@ public extension MixedTypeField {
             try expect(MixedTypeField(encoding: "text") == .string("text"))
             try expect(MixedTypeField(encoding: [1, "two"] as [Any]) == .array([.int(1), .string("two")]))
             try expect(MixedTypeField(encoding: ["answer": 42]) == .dictionary(["answer": .int(42)]))
-            struct UnsupportedValue: Encodable {
-                // Throw from the value's own encoder so this probe verifies the initializer's failure
-                // path instead of treating an empty synthesized keyed payload as unsupported.
-                func encode(to encoder: Encoder) throws {
-                    throw CustomError("Unsupported test value", level: .DEBUG)
-                }
-            }
+            struct UnsupportedValue {}
             var unsupported: MixedTypeField?
             debugSuppress {
                 unsupported = MixedTypeField(encoding: UnsupportedValue())

@@ -300,15 +300,16 @@ public struct MaterialTestView: View {
         ZStack {
             Color.clear
             HStack {
-                Text("Material")
-                    .backgroundMaterial()
-                    .onTapGesture {
+                Button {
                         showNavigationDetail = true
+                    } label: {
+                        Text("Material")
+                            .backgroundMaterial()
                     }
-                    // This is intentionally a tappable Text rather than a Button. Give accessibility
-                    // a stable identity and button semantics so automated and assistive clients can activate it.
+                    // Use a real Button so SwiftUI publishes one unambiguous actionable accessibility element;
+                    // the previous tappable Text could collide with the Material tab label in UI tests.
                     .accessibilityIdentifier("material.navigation.trigger")
-                    .accessibilityAddTraits(.isButton)
+                    .accessibilityLabel("Open Material navigation")
                 Button {
                     showSheet = true
                 } label: {
