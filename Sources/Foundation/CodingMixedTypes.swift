@@ -288,7 +288,13 @@ public extension MixedTypeField {
             try expect(MixedTypeField(encoding: "text") == .string("text"))
             try expect(MixedTypeField(encoding: [1, "two"] as [Any]) == .array([.int(1), .string("two")]))
             try expect(MixedTypeField(encoding: ["answer": 42]) == .dictionary(["answer": .int(42)]))
-            struct UnsupportedValue {}
+            struct UnsupportedValue: Encodable {
+                // Throw from the value's own encoder so this probe verifies the initializer's failure
+                // path instead of treating an empty synthesized keyed payload as unsupported.
+                func encode(to encoder: Encoder) throws {
+                    throw CustomError("Unsupported test value", level: .DEBUG)
+                }
+            }
             var unsupported: MixedTypeField?
             debugSuppress {
                 unsupported = MixedTypeField(encoding: UnsupportedValue())
@@ -316,11 +322,13 @@ public extension MixedTypeField {
                 let containsValue: Bool
                 let containsMissing: Bool
                 let nothingIsNil: Bool
+                let keys: [String]
                 init(from decoder: Decoder) throws {
                     let container = try decoder.container(keyedBy: CodingKeys.self)
                     containsValue = container.contains(.value)
                     containsMissing = container.contains(.missing)
                     nothingIsNil = try container.decodeNil(forKey: .nothing)
+                    keys = container.allKeys.map(\.stringValue).sorted()
                     value = try container.decode(String.self, forKey: .value)
                 }
             }
@@ -332,6 +340,7 @@ public extension MixedTypeField {
             try expect(keyedProbe.containsValue)
             try expect(!keyedProbe.containsMissing)
             try expect(keyedProbe.nothingIsNil)
+            try expect(keyedProbe.keys == ["nothing", "value"])
 
             struct UnkeyedNilPayload: Encodable {
                 func encode(to encoder: Encoder) throws {
@@ -358,9 +367,22 @@ public extension MixedTypeField {
             try expect(unkeyedProbe.firstIsNil)
             try expect(unkeyedProbe.second == 11)
 
+            // Exhaustion must report a value-not-found error rather than silently reusing the final item.
+            do {
+                let _: [Int] = try MixedTypeFieldDecoder().decode([Int].self, from: .array([.int(1), .int(2)]))
+                try expect(false, "Expected an unkeyed end-of-container error")
+            } catch DecodingError.valueNotFound {
+                // Expected.
+            } catch {
+                throw error
+            }
+
             // Float has a dedicated SingleValueDecodingContainer overload that otherwise remained unexecuted.
             let float = try Float(fromMixedTypeField: .double(3.25))
             try expect(float == 3.25)
+            try expect(try Int8(fromMixedTypeField: .int(8)) == 8)
+            try expect(try UInt16(fromMixedTypeField: .int(16)) == 16)
+            try expect(try Int64(fromMixedTypeField: .int(64)) == 64)
 
             // Validate representative decoder errors and propagate anything unexpected.
             do {
@@ -542,12 +564,14 @@ fileprivate final class _FieldEncoder: Encoder {
         }
         
         mutating func encodeNil() throws {
+            if case let .array(existing) = encoder.storage { array = existing }
             array.append(.null)
             count += 1
             encoder.storage = .array(array)
         }
         
         mutating func encode<T>(_ value: T) throws where T : Encodable {
+            if case let .array(existing) = encoder.storage { array = existing }
             let nested = _FieldEncoder()
             try value.encode(to: nested)
             array.append(nested.storage)
@@ -795,6 +819,45 @@ fileprivate final class _FieldDecoder: Decoder {
         func decode(_ type: Int.Type) throws -> Int {
             if case let .int(v) = field { return v }
             throw typeMismatch(type)
+        }
+
+        // Integer protocol initializers ask for their exact concrete type. Explicit overloads keep
+        // those requests on the primitive representation instead of recursing through the generic path.
+        func decode(_ type: Int8.Type) throws -> Int8 {
+            guard let value = Int8(exactly: try decode(Int.self)) else { throw typeMismatch(type) }
+            return value
+        }
+        func decode(_ type: Int16.Type) throws -> Int16 {
+            guard let value = Int16(exactly: try decode(Int.self)) else { throw typeMismatch(type) }
+            return value
+        }
+        func decode(_ type: Int32.Type) throws -> Int32 {
+            guard let value = Int32(exactly: try decode(Int.self)) else { throw typeMismatch(type) }
+            return value
+        }
+        func decode(_ type: Int64.Type) throws -> Int64 {
+            guard let value = Int64(exactly: try decode(Int.self)) else { throw typeMismatch(type) }
+            return value
+        }
+        func decode(_ type: UInt.Type) throws -> UInt {
+            guard let value = UInt(exactly: try decode(Int.self)) else { throw typeMismatch(type) }
+            return value
+        }
+        func decode(_ type: UInt8.Type) throws -> UInt8 {
+            guard let value = UInt8(exactly: try decode(Int.self)) else { throw typeMismatch(type) }
+            return value
+        }
+        func decode(_ type: UInt16.Type) throws -> UInt16 {
+            guard let value = UInt16(exactly: try decode(Int.self)) else { throw typeMismatch(type) }
+            return value
+        }
+        func decode(_ type: UInt32.Type) throws -> UInt32 {
+            guard let value = UInt32(exactly: try decode(Int.self)) else { throw typeMismatch(type) }
+            return value
+        }
+        func decode(_ type: UInt64.Type) throws -> UInt64 {
+            guard let value = UInt64(exactly: try decode(Int.self)) else { throw typeMismatch(type) }
+            return value
         }
 
         func decode<T>(_ type: T.Type) throws -> T where T : Decodable {
