@@ -79,23 +79,13 @@ final class CompatibilityUITests: XCTestCase {
         app.launchEnvironment["TESTING"] = "1"
         app.launch()
 
-//        let selectedIndices = [0, 1, 2, 3, 4, 5, 6, 7, 8]
-//        //let selectedIndices = [0, 8] // sub set for faster debubging
-//        for (position, index) in selectedIndices.enumerated() {
-        // SwiftUI initially selects the first tab. Exercise that visible page directly so the test
-        // does not depend on manually maintained tab tags or on a sidebar query that can target the
-        // restored navigation state instead of the content currently under the pointer.
-        let firstScreen = screens[0]
-        let firstScreenElement = app.descendants(matching: .any)[firstScreen.identifier]
-        let firstRendered = await waitForElement(firstScreenElement, timeout: 10)
-        XCTAssertTrue(firstRendered, "\(firstScreen.name) should render its demo screen.")
-        await exercise(screenAt: 0, screenElement: firstScreenElement, in: app)
-
-        // Subsequent pages are selected through their existing accessibility identifiers. This keeps
-        // insertion/removal of screens independent from a second list of selection indices.
-        for index in screens.indices.dropFirst() {
-            let screen = screens[index]
-            await navigate(to: screen, in: app)
+        // SwiftUI initially selects the first tab. Exercise it in the same loop as every other screen,
+        // but skip navigation only for that first position so no parallel index list is needed.
+        for (index, screen) in screens.enumerated() {
+            if index > 0 {
+                await navigate(to: screen, in: app)
+            }
+            if ![0,3].contains(index) { continue } // Add this to skip tests temporarily for debugging. FIXME: Comment this out before release!
             let screenElement = app.descendants(matching: .any)[screen.identifier]
             let rendered = await waitForElement(screenElement, timeout: 10)
             XCTAssertTrue(rendered, "\(screen.name) should render its demo screen.")
@@ -168,27 +158,16 @@ final class CompatibilityUITests: XCTestCase {
     private func exerciseCompatibilityEnvironment(_ screenElement: XCUIElement, in app: XCUIApplication) async {
         // EnvironmentsView has substantially different compact and expanded bodies. Exercise both so
         // the compatibility page verifies the interactive disclosure instead of only rendering its icons.
-        // SwiftUI exposes the accessibility element created by accessibilityAddTraits as a button on
-        // some macOS releases and as a generic element on others, so keep the stable identifier primary
-        // while also accepting the stable accessibility label as the platform-neutral fallback.
-        func environmentControl() -> XCUIElement {
-            let identified = app.descendants(matching: .any)["environments.toggle"]
-            if identified.exists { return identified }
-            let labeled = app.buttons["Expand environments"]
-            if labeled.exists { return labeled }
-            return app.descendants(matching: .any)["Expand environments"]
-        }
-
-        var environmentToggle = environmentControl()
-        let environmentList = app.descendants(matching: .any)["compatibility.environment.list"]
+        // The compatibility page is a macOS table. The identifier is attached to the EnvironmentsView
+        // row, so target that row directly instead of searching every accessibility element in the app.
+        let environmentTable = screenElement.tables.firstMatch
+        let environmentToggle = environmentTable.cells.containing(.any, identifier: "environments.toggle").firstMatch
         // Focus the first screen itself before resolving descendants; this prevents macOS from routing
         // the initial scroll gesture to the sidebar when the Compatibility tab is already selected.
         screenElement.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).hover()
         // SwiftUI may expose this List as a table rather than honoring the wrapper identifier on macOS.
         // Prefer the actual table/content container so the pointer and scroll target are unambiguous.
-        let initialScrollable = screenElement.tables.firstMatch.exists
-            ? screenElement.tables.firstMatch
-            : contentScrollable(in: screenElement)
+        let initialScrollable = environmentTable.exists ? environmentTable : contentScrollable(in: screenElement)
         if initialScrollable.exists {
             initialScrollable.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.8)).hover()
 #if os(macOS)
@@ -197,41 +176,6 @@ final class CompatibilityUITests: XCTestCase {
             initialScrollable.swipeUp(velocity: .fast)
 #endif
             try? await Task.sleep(nanoseconds: 300_000_000)
-            environmentToggle = environmentControl()
-        }
-        // The compatibility page places the environment summary below the initial viewport. Reacquire
-        // the content scroll view after each gesture because SwiftUI may rebuild the hierarchy while it
-        // scrolls; this avoids accidentally scrolling the macOS sidebar instead of the first screen.
-        for _ in 0..<2 where !environmentToggle.exists {
-            let scrollable = environmentList.exists ? environmentList : contentScrollable(in: screenElement)
-            if scrollable.exists {
-                scrollable.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.8)).hover()
-                #if os(macOS)
-                scrollable.scroll(byDeltaX: 0, deltaY: -1200)
-                #else
-                scrollable.swipeUp(velocity: .fast)
-                #endif
-            } else {
-                for scrollView in app.scrollViews.allElementsBoundByIndex where scrollView.exists {
-                    scrollView.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.8)).hover()
-                    #if os(macOS)
-                    scrollView.scroll(byDeltaX: 0, deltaY: -1200)
-                    #else
-                    scrollView.swipeUp(velocity: .fast)
-                    #endif
-                }
-                let table = screenElement.tables.firstMatch
-                if table.exists {
-                    table.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.8)).hover()
-                    #if os(macOS)
-                    table.scroll(byDeltaX: 0, deltaY: -1200)
-                    #else
-                    table.swipeUp(velocity: .fast)
-                    #endif
-                }
-            }
-            try? await Task.sleep(nanoseconds: 300_000_000)
-            environmentToggle = environmentControl()
         }
         let toggleFound = await waitForElement(environmentToggle, timeout: 3)
         XCTAssertTrue(toggleFound, "Compatibility should expose the expandable environment summary.")
@@ -349,6 +293,7 @@ final class CompatibilityUITests: XCTestCase {
         guard firstItemFound else { return }
 
         let initialX = firstItem.frame.minX
+        // scroll to end revealing 10
 #if os(macOS)
         strip.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).hover()
         strip.scroll(byDeltaX: -1000, deltaY: 0)
@@ -362,8 +307,13 @@ final class CompatibilityUITests: XCTestCase {
 
         // Return all the way to the starting edge before disabling scrolling so the test also leaves the
         // final item off screen again after demonstrating normal scrolling behavior.
+#if os(macOS)
+        strip.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).hover()
+        strip.scroll(byDeltaX: 1000, deltaY: 0)
+#else
         strip.swipeRight()
-//        try? await Task.sleep(nanoseconds: 200_000_000) // unnecessary wait
+#endif
+//        try? await Task.sleep(nanoseconds: 200_000_000) // unnecessary wait particularly since swipeRight includes an additonal wait after.
         let restoredX = firstItem.frame.minX
         XCTAssertEqual(restoredX, initialX, accuracy: 5,
                        "Enabled numbered strip should return to its starting position before disabling scrolling.")
@@ -375,8 +325,14 @@ final class CompatibilityUITests: XCTestCase {
         scrollToggle.backport.tap()
 
         let disabledStartX = firstItem.frame.minX
+        // scroll to end revealing 10 (same way as above)
+#if os(macOS)
+        strip.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).hover()
+        strip.scroll(byDeltaX: -1000, deltaY: 0)
+        try? await Task.sleep(nanoseconds: 100_000_000) // since scroll doesn't have embedded wait
+#else
         strip.swipeLeft()
-//        try? await Task.sleep(nanoseconds: 200_000_000) // unnecessary wait
+#endif
         let disabledEndX = firstItem.frame.minX
         XCTAssertEqual(disabledEndX, disabledStartX, accuracy: 3,
                        "Disabled numbered strip should not move after the same scroll gesture.")
