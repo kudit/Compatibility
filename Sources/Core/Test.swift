@@ -551,6 +551,12 @@ public extension TestCase {
         tests["Bundle Tests"] = Bundle.tests
         tests["File Manager Tests"] = FileManager.tests
         tests["Pasteboard Tests"] = Pasteboard.tests
+        tests["CloudStorageSync Tests"] = CloudStorageSync.tests
+        tests["CloudStorage Tests"] = CloudStorageTests.tests
+        tests["Backport Tests"] = Glass.tests
+        if #available(iOS 14, macOS 12, tvOS 15, watchOS 8, *) {
+            tests["Environment View Tests"] = EnvironmentsView.tests
+        }
         tests["CharacterSet Tests"] = CharacterSet.tests
         tests["URL Tests"] = URL.tests
         tests["Date Tests"] = Date.tests

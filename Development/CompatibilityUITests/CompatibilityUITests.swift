@@ -101,7 +101,7 @@ final class CompatibilityUITests: XCTestCase {
     private func exercise(screenAt index: Int, screenElement: XCUIElement, in app: XCUIApplication) async {
         switch index {
         case 0:
-            await exerciseCompatibilityEnvironment(in: app)
+            await exerciseCompatibilityEnvironment(screenElement, in: app)
 
         case 1, 4:
             // These pages are primarily exercised by rendering. Keep the UI tour fast and avoid
@@ -159,10 +159,19 @@ final class CompatibilityUITests: XCTestCase {
     }
 
     @MainActor
-    private func exerciseCompatibilityEnvironment(in app: XCUIApplication) async {
+    private func exerciseCompatibilityEnvironment(_ screenElement: XCUIElement, in app: XCUIApplication) async {
         // EnvironmentsView has substantially different compact and expanded bodies. Exercise both so
         // the compatibility page verifies the interactive disclosure instead of only rendering its icons.
         let environmentToggle = app.buttons["Expand environments"]
+        if !environmentToggle.exists {
+            // The compatibility page places the environment summary below the initial viewport. Scroll
+            // its own content rather than the app/sidebar so the expansion control becomes discoverable.
+            let scrollable = contentScrollable(in: screenElement)
+            if scrollable.exists {
+                scrollable.swipeUp(velocity: .fast)
+                try? await Task.sleep(nanoseconds: 250_000_000)
+            }
+        }
         let toggleFound = await waitForElement(environmentToggle, timeout: 3)
         XCTAssertTrue(toggleFound, "Compatibility should expose the expandable environment summary.")
         guard toggleFound && environmentToggle.isHittable else { return }

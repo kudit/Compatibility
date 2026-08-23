@@ -990,6 +990,22 @@ public struct Glass : Equatable, Sendable {
 #endif
 }
 
+#if compiler(>=5.9)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+extension Glass {
+    /// Covers the value semantics behind the Glass presentation modifier without rendering SwiftUI.
+    @MainActor
+    internal static let tests: [TestCase] = [
+        TestCase("Glass value configuration") {
+            let regular = Glass.regular
+            try expect(regular == .regular)
+            try expect(regular.interactive() != regular)
+            try expect(regular.interactive(false) != regular.interactive(true))
+        },
+    ]
+}
+#endif
+
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension Backport where Content: View {
     /// Applies a glass effect to this view.

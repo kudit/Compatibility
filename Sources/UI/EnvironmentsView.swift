@@ -111,3 +111,18 @@ public struct EnvironmentsView: View {
     EnvironmentsView(Build.Environment.allCases)
 }
 #endif
+
+#if compiler(>=5.9)
+@available(iOS 14, macOS 12, tvOS 15, watchOS 8, *)
+extension EnvironmentsView {
+    /// Verifies the deterministic environment list used by both compact and expanded rendering.
+    @MainActor
+    internal static let tests: [TestCase] = [
+        TestCase("Environment view inventory") {
+            let environments = Build.Environment.allCases
+            try expect(!environments.isEmpty)
+            try expect(environments.allSatisfy { !$0.label.isEmpty && !$0.symbolName.isEmpty })
+        },
+    ]
+}
+#endif

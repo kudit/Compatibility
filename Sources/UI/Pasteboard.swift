@@ -227,6 +227,13 @@ extension Pasteboard {
             try expect(pasteboard.read() == items, "Expected typed pasteboard items to retain bytes and ordering")
             try expect(pasteboard.readString() == "First", "Expected the first text representation")
         },
+        TestCase("In-memory pasteboard clearing") { @MainActor in
+            let pasteboard = Pasteboard()
+            pasteboard.copy("temporary")
+            pasteboard.copy([])
+            try expect(pasteboard.read().isEmpty, "Clearing an in-memory pasteboard should remove every item")
+            try expect(pasteboard.readString() == nil, "Clearing should remove the text representation")
+        },
     ]
 }
 #endif

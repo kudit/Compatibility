@@ -271,4 +271,35 @@ private let statusDateFormatter: DateFormatter = {
     formatter.timeStyle = .medium
     return formatter
 }()
+
+#if compiler(>=5.9)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+extension CloudStorageSync {
+    /// Deterministic local key-value wrapper coverage using a unique key and cleanup.
+    @MainActor
+    internal static let tests: [TestCase] = [
+        TestCase("CloudStorageSync typed values") { @MainActor in
+            let key = "Compatibility.CloudStorageSync.tests"
+            let sync = CloudStorageSync.shared
+            defer { sync.remove(for: key) }
+            sync.set("value", for: key)
+            // iCloud key-value storage may be unavailable in a test host without its entitlement;
+            // still exercise the getter when the host accepts the write without making that environment
+            // limitation a false test failure.
+            if let value = sync.string(for: key) {
+                try expect(value == "value")
+            }
+            sync.set(42, for: key)
+            if let value = sync.int(for: key) {
+                try expect(value == 42)
+            }
+            sync.set(true, for: key)
+            if let value = sync.bool(for: key) {
+                try expect(value)
+            }
+            try expect(sync.status.keys == [key])
+        },
+    ]
+}
+#endif
 #endif

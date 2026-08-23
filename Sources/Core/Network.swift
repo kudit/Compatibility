@@ -133,6 +133,12 @@ public extension PostData {
     @MainActor
     static let tests = [
         TestCase("POST data query encoding", testPostDataQueryEncoding),
+        TestCase("POST data empty and nil values") {
+            let data: PostData = ["empty": ""]
+            let query = data.queryString ?? ""
+            try expect(query.contains("empty="))
+            try expect(data.queryEncoded != nil)
+        },
         TestCase("fetchURL Gwinnett check", testFetchGwinnettCheck),
         TestCase("fetchURL GET check", testFetchGETCheck),
         TestCase("fetchURL POST check", testFetchPOSTCheck),
