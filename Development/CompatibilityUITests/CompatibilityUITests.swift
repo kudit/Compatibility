@@ -78,18 +78,19 @@ final class CompatibilityUITests: XCTestCase {
         app.launchArguments += ["-ApplePersistenceIgnoreState", "YES"]
         app.launchEnvironment["TESTING"] = "1"
         app.launch()
-
+        
         // Keep the first screen as setup for shared app state, then jump directly to the final two
         // interactive demos. This gives a fast focused path without pretending skipped screens ran.
-        let selectedIndices = [0, 7, 8]
+        let selectedIndices = [0, 1, 2, 3, 4, 5, 6, 7, 8]
+        //let selectedIndices = [0, 8] // sub set for faster debubging
         for (position, index) in selectedIndices.enumerated() {
             let screen = screens[index]
             let screenElement = app.descendants(matching: .any)[screen.identifier]
             let rendered = await waitForElement(screenElement, timeout: 10)
             XCTAssertTrue(rendered, "\(screen.name) should render its demo screen.")
-
+            
             await exercise(screenAt: index, screenElement: screenElement, in: app)
-
+            
             if position < selectedIndices.count - 1 {
                 await navigate(to: screens[selectedIndices[position + 1]], in: app)
             }
@@ -354,10 +355,14 @@ final class CompatibilityUITests: XCTestCase {
         let materialReturned = await waitForElement(materialScreen, timeout: 4)
         XCTAssertTrue(materialReturned, "Material navigation destination should dismiss back to Material.")
         guard materialReturned else { return }
+        // Wait for the destination node to leave the accessibility tree before querying the rebuilt
+        // Material content; the view identity changes when navigation dismisses.
+        let destinationGone = await waitForElementToDisappear(destinationScreen, timeout: 4)
+        XCTAssertTrue(destinationGone, "Material navigation destination should finish dismissing before Glass is tested.")
 
         // Exercise the sheet last so the Material tab finishes on the visually distinct Glass presentation.
-        let glass = materialScreen.buttons["Glass"]
-        let glassFound = await waitForElement(glass, timeout: 2)
+        let glass = app.buttons["Glass"]
+        let glassFound = await waitForElement(glass, timeout: 4)
         XCTAssertTrue(glassFound, "Material should expose the Glass sheet control.")
         if glass.exists && glass.isHittable {
             glass.backport.tap()
@@ -533,6 +538,20 @@ final class CompatibilityUITests: XCTestCase {
             }
             // Yield the main actor instead of calling XCTest's synchronous waitForExistence(timeout:),
             // which the performance diagnostics correctly flag as blocking UI responsiveness.
+            try? await Task.sleep(nanoseconds: 100_000_000)
+        } while true
+    }
+
+    @MainActor
+    private func waitForElementToDisappear(_ element: XCUIElement, timeout: TimeInterval) async -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        repeat {
+            if !element.exists {
+                return true
+            }
+            if Date() >= deadline {
+                return false
+            }
             try? await Task.sleep(nanoseconds: 100_000_000)
         } while true
     }

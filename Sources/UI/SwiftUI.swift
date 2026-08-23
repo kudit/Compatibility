@@ -319,8 +319,13 @@ public struct MaterialTestView: View {
                     Text("Glass")
                         .padding()
                 }
+                .accessibilityIdentifier("material.glass.button")
+                .accessibilityLabel("Glass")
                 .backport.glassEffect(.regular.interactive())
             }
+            // Recreate the Material controls after navigation dismisses so the sheet trigger is not left
+            // in a stale accessibility subtree retained by the navigation backport.
+            .id(showNavigationDetail ? "material-navigation" : "material-root")
         }
         .background(.conicGradient(colors: [.red, .green, .blue], center: .center))
         .sheet(isPresented: $showSheet) {
