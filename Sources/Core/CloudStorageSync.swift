@@ -299,6 +299,27 @@ extension CloudStorageSync {
             }
             try expect(sync.status.keys == [key])
         },
+        TestCase("CloudStorageSync collection and status wrappers") { @MainActor in
+            let key = "Compatibility.CloudStorageSync.collectionTests"
+            let sync = CloudStorageSync.shared
+            defer { sync.remove(for: key) }
+
+            // Exercise every collection-oriented wrapper even when the host iCloud store cannot persist values.
+            sync.set(URL(string: "https://example.com"), for: key)
+            _ = sync.url(for: key)
+            sync.set(Data([1, 2, 3]), for: key)
+            _ = sync.data(for: key)
+            sync.set(["one", 2], for: key)
+            _ = sync.array(for: key)
+            sync.set(["answer": 42], for: key)
+            _ = sync.dictionary(for: key)
+            sync.set(Int64(64), for: key)
+            _ = sync.int64(for: key)
+
+            try expect(sync.status.description.contains("Local change"))
+            try expect(CloudStorageSync.Status(date: Date(), source: .initial, keys: []).description.contains("Initial"))
+            try expect(CloudStorageSync.Status(date: Date(), source: .externalChange(nil), keys: [key]).description.contains("unknown"))
+        },
     ]
 }
 #endif

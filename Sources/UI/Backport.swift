@@ -1001,6 +1001,10 @@ extension Glass {
             try expect(regular == .regular)
             try expect(regular.interactive() != regular)
             try expect(regular.interactive(false) != regular.interactive(true))
+            #if canImport(SwiftUI)
+            try expect(regular.tint(.red) != regular)
+            try expect(regular.tint(nil) == regular)
+            #endif
         },
     ]
 }

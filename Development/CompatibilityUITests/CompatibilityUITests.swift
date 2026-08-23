@@ -78,6 +78,13 @@ final class CompatibilityUITests: XCTestCase {
         app.launchArguments += ["-ApplePersistenceIgnoreState", "YES"]
         app.launchEnvironment["TESTING"] = "1"
         app.launch()
+
+        // Explicitly select the first destination because macOS may restore a prior sidebar selection
+        // even when Apple persistence is disabled; without this, the first screen can be only a stale
+        // accessibility node while the visible page is DataStore.
+        await navigate(to: screens[0], in: app)
+        let firstScreen = app.descendants(matching: .any)[screens[0].identifier]
+        XCTAssertTrue(await waitForElement(firstScreen, timeout: 10), "Compatibility should be the initial demo screen.")
         
         // Keep the first screen as setup for shared app state, then jump directly to the final two
         // interactive demos. This gives a fast focused path without pretending skipped screens ran.
@@ -162,15 +169,41 @@ final class CompatibilityUITests: XCTestCase {
     private func exerciseCompatibilityEnvironment(_ screenElement: XCUIElement, in app: XCUIApplication) async {
         // EnvironmentsView has substantially different compact and expanded bodies. Exercise both so
         // the compatibility page verifies the interactive disclosure instead of only rendering its icons.
-        let environmentToggle = app.buttons["Expand environments"]
-        if !environmentToggle.exists {
-            // The compatibility page places the environment summary below the initial viewport. Scroll
-            // its own content rather than the app/sidebar so the expansion control becomes discoverable.
-            let scrollable = contentScrollable(in: screenElement)
+        var environmentToggle = app.descendants(matching: .any)["environments.toggle"]
+        let environmentList = app.descendants(matching: .any)["compatibility.environment.list"]
+        // The compatibility page places the environment summary below the initial viewport. Reacquire
+        // the content scroll view after each gesture because SwiftUI may rebuild the hierarchy while it
+        // scrolls; this avoids accidentally scrolling the macOS sidebar instead of the first screen.
+        for _ in 0..<4 where !environmentToggle.exists {
+            let scrollable = environmentList.exists ? environmentList : contentScrollable(in: screenElement)
             if scrollable.exists {
+                scrollable.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.8)).hover()
+                #if os(macOS)
+                scrollable.scroll(byDeltaX: 0, deltaY: -1200)
+                #else
                 scrollable.swipeUp(velocity: .fast)
-                try? await Task.sleep(nanoseconds: 250_000_000)
+                #endif
+            } else {
+                for scrollView in app.scrollViews.allElementsBoundByIndex where scrollView.exists {
+                    scrollView.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.8)).hover()
+                    #if os(macOS)
+                    scrollView.scroll(byDeltaX: 0, deltaY: -1200)
+                    #else
+                    scrollView.swipeUp(velocity: .fast)
+                    #endif
+                }
+                let table = screenElement.tables.firstMatch
+                if table.exists {
+                    table.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.8)).hover()
+                    #if os(macOS)
+                    table.scroll(byDeltaX: 0, deltaY: -1200)
+                    #else
+                    table.swipeUp(velocity: .fast)
+                    #endif
+                }
             }
+            try? await Task.sleep(nanoseconds: 300_000_000)
+            environmentToggle = app.descendants(matching: .any)["environments.toggle"]
         }
         let toggleFound = await waitForElement(environmentToggle, timeout: 3)
         XCTAssertTrue(toggleFound, "Compatibility should expose the expandable environment summary.")
@@ -288,7 +321,12 @@ final class CompatibilityUITests: XCTestCase {
         guard firstItemFound else { return }
 
         let initialX = firstItem.frame.minX
+#if os(macOS)
+        strip.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).hover()
+        strip.scroll(byDeltaX: -1000, deltaY: 0)
+#else
         strip.swipeLeft()
+#endif
         try? await Task.sleep(nanoseconds: 200_000_000)
         let scrolledX = firstItem.frame.minX
         XCTAssertLessThan(scrolledX, initialX - 5,

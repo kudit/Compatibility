@@ -139,6 +139,14 @@ public extension PostData {
             try expect(query.contains("empty="))
             try expect(data.queryEncoded != nil)
         },
+        TestCase("Network source-forwarding errors") {
+            do {
+                _ = try await Compatibility.fetchURLData(urlString: "http://[", source: SourceContext(file: #file, function: #function, line: #line, column: #column))
+                try expect(false, "Invalid URLs should throw")
+            } catch NetworkError.urlParsing {
+                // Expected deterministic error path.
+            }
+        },
         TestCase("fetchURL Gwinnett check", testFetchGwinnettCheck),
         TestCase("fetchURL GET check", testFetchGETCheck),
         TestCase("fetchURL POST check", testFetchPOSTCheck),

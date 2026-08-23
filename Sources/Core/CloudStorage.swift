@@ -310,6 +310,7 @@ enum CloudStorageTests {
             try expect(date != nil)
             try expect(date?.stringValue == "2024-01-02 03:04:05")
             try expect(DateString("custom").stringValue == "custom")
+            try expect(DateTimeString("custom").stringValue == "custom")
         },
     ]
 }

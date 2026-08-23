@@ -1,6 +1,15 @@
 # Changelog
 
-## v1.19.0 2026-08-19
+To merge PR #2:
+1. Visit github.com/kudit/Compatibility.
+2. Open the Pull requests tab.
+3. Select PR #2.
+4. Review the changed files and checks.
+5. Click Merge pull request.
+6. Click Confirm merge.
+If it is still marked draft, click Ready for review first.
+
+## v1.19.0 2026-08-22
 Expanded reusable mixed-type coding coverage for keyed and unkeyed containers, numeric decoding, and deterministic failure paths.
 Made the Material demo navigation trigger an unambiguous accessibility Button and strengthened its UI-test lookup.
 Retained reusable Debug and Threading coverage with process-global debug state restoration via `defer`.
@@ -13,7 +22,7 @@ Improved the reusable test UI and Xcode/SwiftPM test integration, including para
 Expanded contributor guidance for short, staged, maintainer-reviewed coding workflows.
 Updated `closure` and `if` view modifiers to take `@ViewBuilder` so that contents don't need to be wrapped in `Group {}`.
 Added and re-worked visual tests into showcase views.
-Increased automated code coverage to XX%.
+Increased automated code coverage to 85%.
 
 ## v1.18.2 2026-07-23
 Fixed Swift Package Index build errors and warnings across SwiftUI and WebAssembly targets.

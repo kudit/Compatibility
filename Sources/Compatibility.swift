@@ -385,6 +385,7 @@ public struct CompatibilityEnvironmentTestView: View {
                 ],
             ])
         }
+        .accessibilityIdentifier("compatibility.environment.list")
         .task {
             // Await potentially slow details without delaying the portable module fields above.
             loadedModuleInfo = await Compatibility.loadDetailedModuleInfo()
