@@ -90,13 +90,12 @@ public struct MenuTest: View {
                     debug("The menu is closed! (via Text")
                 }
             
-            ForEach(["suit.diamond", "star", "suit.spade.fill","suit.heart","suit.club","star.fill"], id: \.self) { symbol in
-                Button {
-                    // Perform an action here.
-                    print(String(describing: symbol))
-                    self.symbol = symbol
-                } label: {
+            // Picker supplies the platform-native checkmark and keeps the selected symbol in sync
+            // for both the inline menu and the toolbar menu that reuse this view.
+            Picker("Symbol", selection: $symbol) {
+                ForEach(["suit.diamond", "star", "suit.spade.fill", "suit.heart", "suit.club", "star.fill"], id: \.self) { symbol in
                     Label(symbol, systemImage: symbol)
+                        .tag(symbol)
                 }
             }
         }
@@ -109,6 +108,9 @@ public struct MenuTest: View {
         .simultaneousGesture(TapGesture().onEnded {
             debug("Menu Simultaneous tap gesture")
         })
+        // Give UI tests a stable handle for the page menu regardless of whether the platform exposes
+        // SwiftUI's Menu as a button or as a menu accessibility element.
+        .accessibilityIdentifier("radial.symbols.menu")
     }
 }
 

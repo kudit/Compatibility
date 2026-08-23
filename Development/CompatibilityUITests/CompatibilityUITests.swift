@@ -112,18 +112,32 @@ final class CompatibilityUITests: XCTestCase {
         case 3:
             // Open a real menu item and verify the binding changes. This covers both construction and
             // the action path rather than merely opening the menu and tapping an ambiguous label.
-            let symbols = app.buttons["Symbols"]
-            if await waitForElement(symbols, timeout: 2), symbols.isHittable {
-                symbols.backport.tap()
-                let starFill = app.buttons["star.fill"]
-                let starFillFound = await waitForElement(starFill, timeout: 2)
-                XCTAssertTrue(starFillFound, "Radial Layout Symbols menu should expose star.fill.")
-                if starFillFound && starFill.isHittable {
-                    starFill.backport.tap()
-                    let selected = app.staticTexts["Selected symbol: star.fill"]
-                    let selectedRendered = await waitForElement(selected, timeout: 2)
-                    XCTAssertTrue(selectedRendered, "Selecting a radial menu symbol should update its binding.")
-                }
+            let symbolMenus = app.descendants(matching: .any).matching(identifier: "radial.symbols.menu")
+            let inlineMenu = symbolMenus.element(boundBy: 0)
+            let inlineFound = await waitForElement(inlineMenu, timeout: 0.5)
+            XCTAssertTrue(inlineFound, "Radial Layout should expose its inline Symbols menu.")
+            if inlineFound {
+                inlineMenu.backport.tap()
+                let spade = app.descendants(matching: .any)["suit.spade.fill"]
+                let spadeFound = await waitForElement(spade, timeout: 0.5)
+                XCTAssertTrue(spadeFound, "Inline Symbols menu should expose suit.spade.fill.")
+                if spadeFound { spade.backport.tap() }
+                let selectedSpade = app.staticTexts["Selected symbol: suit.spade.fill"]
+                let selectedSpadeFound = await waitForElement(selectedSpade, timeout: 0.5)
+                XCTAssertTrue(selectedSpadeFound, "Inline menu selection should update the symbol.")
+            }
+            let toolbarMenu = symbolMenus.element(boundBy: 1)
+            let toolbarFound = await waitForElement(toolbarMenu, timeout: 0.5)
+            XCTAssertTrue(toolbarFound, "Radial Layout should expose its toolbar Symbols menu.")
+            if toolbarFound {
+                toolbarMenu.backport.tap()
+                let starFill = app.descendants(matching: .any)["star.fill"]
+                let starFillFound = await waitForElement(starFill, timeout: 0.5)
+                XCTAssertTrue(starFillFound, "Toolbar Symbols menu should expose star.fill.")
+                if starFillFound { starFill.backport.tap() }
+                let selectedStar = app.staticTexts["Selected symbol: star.fill"]
+                let selectedStarFound = await waitForElement(selectedStar, timeout: 0.5)
+                XCTAssertTrue(selectedStarFound, "Toolbar menu selection should update the symbol.")
             }
 
         case 5:
@@ -161,7 +175,7 @@ final class CompatibilityUITests: XCTestCase {
         // The compatibility page is a macOS table. The identifier is attached to the EnvironmentsView
         // row, so target that row directly instead of searching every accessibility element in the app.
         let environmentTable = screenElement.tables.firstMatch
-        let environmentToggle = environmentTable.cells.containing(.any, identifier: "environments.toggle").firstMatch
+        let environmentRow = app.descendants(matching: .any)["environments.toggle"]
         // Focus the first screen itself before resolving descendants; this prevents macOS from routing
         // the initial scroll gesture to the sidebar when the Compatibility tab is already selected.
         screenElement.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).hover()
@@ -177,18 +191,19 @@ final class CompatibilityUITests: XCTestCase {
 #endif
             try? await Task.sleep(nanoseconds: 300_000_000)
         }
-        let toggleFound = await waitForElement(environmentToggle, timeout: 3)
+        let toggleFound = await waitForElement(environmentRow, timeout: 0.5)
         XCTAssertTrue(toggleFound, "Compatibility should expose the expandable environment summary.")
-        guard toggleFound && environmentToggle.isHittable else { return }
+        guard toggleFound else { return }
 
-        environmentToggle.backport.tap()
+        // Tap the row itself because EnvironmentsView installs its gesture on the full row.
+        environmentRow.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).click()
         let debugEnvironment = app.descendants(matching: .any)["environment.debug"]
         let expanded = await waitForElement(debugEnvironment, timeout: 2)
         XCTAssertTrue(expanded, "Expanding environments should render the labeled environment rows.")
         guard expanded else { return }
 
         // Collapse again so both sides of the state transition execute and the page ends in its compact form.
-        environmentToggle.backport.tap()
+        environmentRow.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).click()
     }
 
     @MainActor
