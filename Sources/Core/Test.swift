@@ -554,6 +554,7 @@ public extension TestCase {
         tests["CloudStorageSync Tests"] = CloudStorageSync.tests
         tests["CloudStorage Tests"] = CloudStorageTests.tests
         tests["Backport Tests"] = Glass.tests
+        tests["Backport Button Style Tests"] = BackportButtonStyle.tests
         if #available(iOS 14, macOS 12, tvOS 15, watchOS 8, *) {
             tests["Environment View Tests"] = EnvironmentsView.tests
         }

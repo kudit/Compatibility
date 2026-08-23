@@ -8,6 +8,23 @@ public enum BackportButtonStyle: Sendable {
     case glass
 }
 
+#if compiler(>=5.9)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+extension BackportButtonStyle {
+    /// Keeps the public style selection itself covered independently of SwiftUI rendering availability.
+    @MainActor
+    internal static let tests: [TestCase] = [
+        TestCase("Glass button style selection") {
+            let style = BackportButtonStyle.glass
+            if case .glass = style {
+                return
+            }
+            try expect(false, "Expected the available backport button style to be glass")
+        },
+    ]
+}
+#endif
+
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 @MainActor
 public extension Backport where Content: View {

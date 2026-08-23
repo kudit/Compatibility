@@ -1,5 +1,10 @@
 # Changelog
 
+TODO:
+Fix EnvironmentView exercising.
+Check code coverage.
+Improve coverage on low-coverage files (< 70%).
+
 To merge PR #2:
 1. Visit github.com/kudit/Compatibility.
 2. Open the Pull requests tab.

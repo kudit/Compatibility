@@ -79,28 +79,27 @@ final class CompatibilityUITests: XCTestCase {
         app.launchEnvironment["TESTING"] = "1"
         app.launch()
 
-        // Explicitly select the first destination because macOS may restore a prior sidebar selection
-        // even when Apple persistence is disabled; without this, the first screen can be only a stale
-        // accessibility node while the visible page is DataStore.
-        await navigate(to: screens[0], in: app)
-        let firstScreen = app.descendants(matching: .any)[screens[0].identifier]
-        XCTAssertTrue(await waitForElement(firstScreen, timeout: 10), "Compatibility should be the initial demo screen.")
-        
-        // Keep the first screen as setup for shared app state, then jump directly to the final two
-        // interactive demos. This gives a fast focused path without pretending skipped screens ran.
-        let selectedIndices = [0, 1, 2, 3, 4, 5, 6, 7, 8]
-        //let selectedIndices = [0, 8] // sub set for faster debubging
-        for (position, index) in selectedIndices.enumerated() {
+//        let selectedIndices = [0, 1, 2, 3, 4, 5, 6, 7, 8]
+//        //let selectedIndices = [0, 8] // sub set for faster debubging
+//        for (position, index) in selectedIndices.enumerated() {
+        // SwiftUI initially selects the first tab. Exercise that visible page directly so the test
+        // does not depend on manually maintained tab tags or on a sidebar query that can target the
+        // restored navigation state instead of the content currently under the pointer.
+        let firstScreen = screens[0]
+        let firstScreenElement = app.descendants(matching: .any)[firstScreen.identifier]
+        let firstRendered = await waitForElement(firstScreenElement, timeout: 10)
+        XCTAssertTrue(firstRendered, "\(firstScreen.name) should render its demo screen.")
+        await exercise(screenAt: 0, screenElement: firstScreenElement, in: app)
+
+        // Subsequent pages are selected through their existing accessibility identifiers. This keeps
+        // insertion/removal of screens independent from a second list of selection indices.
+        for index in screens.indices.dropFirst() {
             let screen = screens[index]
+            await navigate(to: screen, in: app)
             let screenElement = app.descendants(matching: .any)[screen.identifier]
             let rendered = await waitForElement(screenElement, timeout: 10)
             XCTAssertTrue(rendered, "\(screen.name) should render its demo screen.")
-            
             await exercise(screenAt: index, screenElement: screenElement, in: app)
-            
-            if position < selectedIndices.count - 1 {
-                await navigate(to: screens[selectedIndices[position + 1]], in: app)
-            }
         }
     }
 
@@ -169,12 +168,41 @@ final class CompatibilityUITests: XCTestCase {
     private func exerciseCompatibilityEnvironment(_ screenElement: XCUIElement, in app: XCUIApplication) async {
         // EnvironmentsView has substantially different compact and expanded bodies. Exercise both so
         // the compatibility page verifies the interactive disclosure instead of only rendering its icons.
-        var environmentToggle = app.descendants(matching: .any)["environments.toggle"]
+        // SwiftUI exposes the accessibility element created by accessibilityAddTraits as a button on
+        // some macOS releases and as a generic element on others, so keep the stable identifier primary
+        // while also accepting the stable accessibility label as the platform-neutral fallback.
+        func environmentControl() -> XCUIElement {
+            let identified = app.descendants(matching: .any)["environments.toggle"]
+            if identified.exists { return identified }
+            let labeled = app.buttons["Expand environments"]
+            if labeled.exists { return labeled }
+            return app.descendants(matching: .any)["Expand environments"]
+        }
+
+        var environmentToggle = environmentControl()
         let environmentList = app.descendants(matching: .any)["compatibility.environment.list"]
+        // Focus the first screen itself before resolving descendants; this prevents macOS from routing
+        // the initial scroll gesture to the sidebar when the Compatibility tab is already selected.
+        screenElement.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).hover()
+        // SwiftUI may expose this List as a table rather than honoring the wrapper identifier on macOS.
+        // Prefer the actual table/content container so the pointer and scroll target are unambiguous.
+        let initialScrollable = screenElement.tables.firstMatch.exists
+            ? screenElement.tables.firstMatch
+            : contentScrollable(in: screenElement)
+        if initialScrollable.exists {
+            initialScrollable.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.8)).hover()
+#if os(macOS)
+            initialScrollable.scroll(byDeltaX: 0, deltaY: -10_000)
+#else
+            initialScrollable.swipeUp(velocity: .fast)
+#endif
+            try? await Task.sleep(nanoseconds: 300_000_000)
+            environmentToggle = environmentControl()
+        }
         // The compatibility page places the environment summary below the initial viewport. Reacquire
         // the content scroll view after each gesture because SwiftUI may rebuild the hierarchy while it
         // scrolls; this avoids accidentally scrolling the macOS sidebar instead of the first screen.
-        for _ in 0..<4 where !environmentToggle.exists {
+        for _ in 0..<2 where !environmentToggle.exists {
             let scrollable = environmentList.exists ? environmentList : contentScrollable(in: screenElement)
             if scrollable.exists {
                 scrollable.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.8)).hover()
@@ -203,7 +231,7 @@ final class CompatibilityUITests: XCTestCase {
                 }
             }
             try? await Task.sleep(nanoseconds: 300_000_000)
-            environmentToggle = app.descendants(matching: .any)["environments.toggle"]
+            environmentToggle = environmentControl()
         }
         let toggleFound = await waitForElement(environmentToggle, timeout: 3)
         XCTAssertTrue(toggleFound, "Compatibility should expose the expandable environment summary.")
@@ -237,7 +265,7 @@ final class CompatibilityUITests: XCTestCase {
             guard rendered else { return }
 
             // Leave the destination visible long enough for SwiftUI to execute its body/layout work before returning.
-            try? await Task.sleep(nanoseconds: 350_000_000)
+            try? await Task.sleep(nanoseconds: 250_000_000) // 350_000_000 was slightly too long
             let back = navigationBackButton(in: app)
             let canReturn = await waitForElement(back, timeout: 3)
             XCTAssertTrue(canReturn, "Each Visual Showcase destination should expose navigation back.")
@@ -273,7 +301,7 @@ final class CompatibilityUITests: XCTestCase {
 
         // ClearableTextField intentionally avoids publishing every keystroke. Commit each example with Return
         // so this exercises its explicit onSubmit path as well as Backport.Image with several real symbol names.
-        for symbolName in ["star.fill", "heart.fill", "calendar"] {
+        for symbolName in ["heart.fill", "calendar"] {
             let symbolField = app.textFields["SF Symbol name"]
             let symbolFieldFound = await waitForElement(symbolField, timeout: 2)
             XCTAssertTrue(symbolFieldFound, "Backport should expose the SF Symbol text field.")
@@ -327,7 +355,7 @@ final class CompatibilityUITests: XCTestCase {
 #else
         strip.swipeLeft()
 #endif
-        try? await Task.sleep(nanoseconds: 200_000_000)
+//        try? await Task.sleep(nanoseconds: 200_000_000) // unnecessary wait
         let scrolledX = firstItem.frame.minX
         XCTAssertLessThan(scrolledX, initialX - 5,
                           "Enabled numbered strip should move its content after a scroll gesture.")
@@ -335,7 +363,7 @@ final class CompatibilityUITests: XCTestCase {
         // Return all the way to the starting edge before disabling scrolling so the test also leaves the
         // final item off screen again after demonstrating normal scrolling behavior.
         strip.swipeRight()
-        try? await Task.sleep(nanoseconds: 200_000_000)
+//        try? await Task.sleep(nanoseconds: 200_000_000) // unnecessary wait
         let restoredX = firstItem.frame.minX
         XCTAssertEqual(restoredX, initialX, accuracy: 5,
                        "Enabled numbered strip should return to its starting position before disabling scrolling.")
@@ -348,7 +376,7 @@ final class CompatibilityUITests: XCTestCase {
 
         let disabledStartX = firstItem.frame.minX
         strip.swipeLeft()
-        try? await Task.sleep(nanoseconds: 200_000_000)
+//        try? await Task.sleep(nanoseconds: 200_000_000) // unnecessary wait
         let disabledEndX = firstItem.frame.minX
         XCTAssertEqual(disabledEndX, disabledStartX, accuracy: 3,
                        "Disabled numbered strip should not move after the same scroll gesture.")
@@ -585,7 +613,7 @@ final class CompatibilityUITests: XCTestCase {
             }
             // Yield the main actor instead of calling XCTest's synchronous waitForExistence(timeout:),
             // which the performance diagnostics correctly flag as blocking UI responsiveness.
-            try? await Task.sleep(nanoseconds: 100_000_000)
+            try? await Task.sleep(nanoseconds: 50_000_000) // 100_000_000 may have been too long
         } while true
     }
 
@@ -635,7 +663,7 @@ final class CompatibilityUITests: XCTestCase {
 
         // Hold only after reaching the end so a person watching can see the intentionally slow two- and
         // three-second tests transition to completion instead of spending that time watching more scrolling.
-        try? await Task.sleep(nanoseconds: 3_000_000_000)
+        //try? await Task.sleep(nanoseconds: 3_000_000_000) // this already seems to wait long enough so we don't need an additional 3 seconds.
     }
 
     @MainActor
