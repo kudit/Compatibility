@@ -309,6 +309,16 @@ private let backgroundTests: [TestCase] = [
         }
         try expect(executed, "Compatibility.background did not execute its closure")
     },
+    TestCase("background return and throwing wrappers") {
+        // Exercise both detached return overloads with deterministic values so overload selection is covered.
+        let optionalValue: Int? = await Compatibility.background { () async -> Int? in 17 }
+        try expect(optionalValue == 17, "Optional-returning background wrapper returned the wrong value")
+
+        let throwingValue = try await Compatibility.background { () throws -> String in
+            "background result"
+        }
+        try expect(throwingValue == "background result", "Throwing background wrapper returned the wrong value")
+    },
 ]
 #endif
 

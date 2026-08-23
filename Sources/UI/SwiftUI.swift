@@ -303,13 +303,16 @@ public struct MaterialTestView: View {
                 Button {
                         showNavigationDetail = true
                     } label: {
-                        Text("Material")
+                        Text("Material Navigation")
                             .backgroundMaterial()
+                            // Keep the identifier on the rendered label as well as the Button because
+                            // older SwiftUI accessibility bridges sometimes expose only the label node.
+                            .accessibilityIdentifier("material.navigation.trigger")
                     }
                     // Use a real Button so SwiftUI publishes one unambiguous actionable accessibility element;
                     // the previous tappable Text could collide with the Material tab label in UI tests.
                     .accessibilityIdentifier("material.navigation.trigger")
-                    .accessibilityLabel("Open Material navigation")
+                    .accessibilityLabel("Material Navigation")
                 Button {
                     showSheet = true
                 } label: {

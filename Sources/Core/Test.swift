@@ -75,6 +75,7 @@ extension TestFailure: LocalizedError {
 ///
 /// The source location defaults mirror Swift Testing's diagnostics while remaining callable from
 /// live applications, previews, older systems, and test runners that do not provide Swift Testing.
+/// Captures call site by default
 public func expect(_ condition: Bool, _ debugString: String? = nil, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) throws {
     try expect(
         condition,

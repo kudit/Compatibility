@@ -57,6 +57,7 @@ public struct EnvironmentsView: View {
             toggleExpanded()
         }
         .accessibilityAddTraits(.isButton)
+        .accessibilityLabel("Expand environments")
         // Stable identifiers let the UI tour exercise both the compact and expanded branches
         // without depending on whichever environment labels happen to be active on this runtime.
         .accessibilityIdentifier("environments.toggle")

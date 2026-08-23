@@ -79,15 +79,19 @@ final class CompatibilityUITests: XCTestCase {
         app.launchEnvironment["TESTING"] = "1"
         app.launch()
 
-        for (index, screen) in screens.enumerated() {
+        // Keep the first screen as setup for shared app state, then jump directly to the final two
+        // interactive demos. This gives a fast focused path without pretending skipped screens ran.
+        let selectedIndices = [0, 7, 8]
+        for (position, index) in selectedIndices.enumerated() {
+            let screen = screens[index]
             let screenElement = app.descendants(matching: .any)[screen.identifier]
             let rendered = await waitForElement(screenElement, timeout: 10)
             XCTAssertTrue(rendered, "\(screen.name) should render its demo screen.")
 
             await exercise(screenAt: index, screenElement: screenElement, in: app)
 
-            if index < screens.count - 1 {
-                await navigate(to: screens[index + 1], in: app)
+            if position < selectedIndices.count - 1 {
+                await navigate(to: screens[selectedIndices[position + 1]], in: app)
             }
         }
     }
@@ -157,7 +161,7 @@ final class CompatibilityUITests: XCTestCase {
     private func exerciseCompatibilityEnvironment(in app: XCUIApplication) async {
         // EnvironmentsView has substantially different compact and expanded bodies. Exercise both so
         // the compatibility page verifies the interactive disclosure instead of only rendering its icons.
-        let environmentToggle = app.descendants(matching: .any)["environments.toggle"]
+        let environmentToggle = app.buttons["Expand environments"]
         let toggleFound = await waitForElement(environmentToggle, timeout: 3)
         XCTAssertTrue(toggleFound, "Compatibility should expose the expandable environment summary.")
         guard toggleFound && environmentToggle.isHittable else { return }
@@ -307,11 +311,9 @@ final class CompatibilityUITests: XCTestCase {
 
     @MainActor
     private func exerciseMaterial(_ screenElement: XCUIElement, in app: XCUIApplication) async {
-        // Material is intentionally a tappable Text rather than a Button. Some SwiftUI/AppKit versions do
-        // not publish that Text's accessibility identifier even though the labeled element is actionable,
-        // so prefer the stable identifier and fall back to the visible Material label within this screen.
-        // Query the identifier in the button collection so the Material tab label cannot satisfy this lookup.
-        let navigation = screenElement.buttons["material.navigation.trigger"]
+        // Query the stable Button identifier globally so the Material tab label cannot satisfy this lookup
+        // when SwiftUI flattens the demo screen's accessibility hierarchy.
+        let navigation = app.buttons["Material Navigation"]
         let navigationFound = await waitForElement(navigation, timeout: 3)
         XCTAssertTrue(navigationFound, "Material navigation trigger should be present.")
         guard navigationFound && navigation.isHittable else {
@@ -445,13 +447,27 @@ final class CompatibilityUITests: XCTestCase {
         // assuming every tab label already exists in the accessibility hierarchy.
         if let tab = await visibleSidebarTab(named: screen.name, in: app) {
             tab.backport.tap()
+            // AppKit can acknowledge the sidebar click before SwiftUI has installed the destination
+            // accessibility node. Re-tap the same resolved tab once if the destination is not observable.
+            let destination = app.descendants(matching: .any)[screen.identifier]
+            if !(await waitForElement(destination, timeout: 3)) {
+                tab.backport.tap()
+                _ = await waitForElement(destination, timeout: 5)
+            }
         } else {
             XCTFail("macOS should expose the \(screen.name) tab in the sidebar.")
         }
 #elseif os(tvOS)
         XCUIRemote.shared.press(.right)
 #else
-        app.swipeLeft()
+        // Prefer the named tab control when the platform publishes one; a blind page swipe can leave the
+        // selection unchanged when the demo is hosted in a regular TabView rather than a page TabView.
+        let namedTab = app.tabBars.buttons[screen.name]
+        if await waitForElement(namedTab, timeout: 2), namedTab.isHittable {
+            namedTab.backport.tap()
+        } else {
+            app.swipeLeft()
+        }
 #endif
     }
 

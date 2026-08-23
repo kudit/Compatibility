@@ -360,7 +360,15 @@ public extension MixedTypeField {
 
             // Exhaustion must report a value-not-found error rather than silently reusing the final item.
             do {
-                let _: [Int] = try MixedTypeFieldDecoder().decode([Int].self, from: .array([.int(1), .int(2)]))
+                struct OverreadingArray: Decodable {
+                    init(from decoder: Decoder) throws {
+                        var container = try decoder.unkeyedContainer()
+                        _ = try container.decode(Int.self)
+                        _ = try container.decode(Int.self)
+                        _ = try container.decode(Int.self)
+                    }
+                }
+                let _: OverreadingArray = try MixedTypeFieldDecoder().decode(OverreadingArray.self, from: .array([.int(1), .int(2)]))
                 try expect(false, "Expected an unkeyed end-of-container error")
             } catch DecodingError.valueNotFound {
                 // Expected.

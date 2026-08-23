@@ -1,13 +1,9 @@
 # Changelog
 
-## v1.19.1 2026-08-19
+## v1.19.0 2026-08-19
 Expanded reusable mixed-type coding coverage for keyed and unkeyed containers, numeric decoding, and deterministic failure paths.
 Made the Material demo navigation trigger an unambiguous accessibility Button and strengthened its UI-test lookup.
 Retained reusable Debug and Threading coverage with process-global debug state restoration via `defer`.
-
-PROMPT: Continue PR #2 work on github.com/kudit/Compatibility. Follow CONTRIBUTING.md. Work directly in the checkout. Make changes, run relevant tests, commit, and push. Report only after commits exist.
-
-## v1.19.0 2026-08-15
 Added `Compatibility Testing Library` and `ModuleTestEntry` so reusable module `TestCase`s run as named parameterized Swift Testing cases in SwiftPM and Xcode.
 Unified reusable test execution through one lifecycle with parallel/serialized modes, source-aware failures, and reliable cleanup of mutable debug settings.
 Consolidated debug formatting and source-context handling, and removed unnecessary main-actor isolation from debug logging.

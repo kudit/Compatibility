@@ -528,6 +528,44 @@ Normal output: \(defaultOutput)
         }
     }
 
+    /// Exercises the public formatter context and legacy formatter bridge without leaking global
+    /// logger or level changes into neighboring reusable tests.
+    @MainActor
+    private static let testPublicDebugWrappers: TestClosure = {
+        let previousSettings = Compatibility.settings
+        defer {
+            // Restore every mutable setting even when an expectation throws halfway through this test.
+            Compatibility.settings = previousSettings
+        }
+
+        var logged = [String]()
+        Compatibility.settings.debugLevelCurrent = .DEBUG
+        Compatibility.settings.debugLevelsToIncludeContext = []
+        Compatibility.settings.debugLevelsToIncludeTimestamp = []
+        Compatibility.settings.debugLog = { logged.append($0) }
+        Compatibility.settings.debugFormatter = { context in
+            "\(context.level.symbol):\(context.message):\(context.source.line)"
+        }
+
+        let formatted = debug("wrapper message", level: .NOTICE, file: "DebugTests.swift", function: "wrapper", line: 42, column: 1)
+        try expect(formatted == ">:wrapper message:42", "Unexpected structured debug output: \(formatted)")
+        try expect(logged == [formatted], "debug() should invoke the configured logger exactly once")
+
+        // The deprecated positional formatter is covered by its compatibility declaration; keep this
+        // reusable test warning-free by exercising the current structured formatter API directly.
+        let directContext = DebugFormatContext(
+            message: "context message",
+            level: .WARNING,
+            isMainThread: true,
+            emojiSupported: false,
+            includeContext: false,
+            includeTimestamp: false,
+            source: SourceContext(file: "DebugTests.swift", function: "context", line: 7, column: 1)
+        )
+        let directFormatted = Compatibility.settings.debugFormatter(directContext)
+        try expect(directFormatted == "\(DebugLevel.WARNING.symbol):context message:7", "Structured formatter context should remain directly callable")
+    }
+
     @MainActor
     static let tests = [
         // Both tests mutate process-global debug state (`Compatibility.settings` or the
@@ -535,6 +573,7 @@ Normal output: \(defaultOutput)
         // each other or any parallel reusable test while those temporary changes are active.
         TestCase("debug configuration tests", executionMode: .serialized, testDebugConfig),
         TestCase("debug tests", executionMode: .serialized, testDebug),
+        TestCase("public debug wrappers", executionMode: .serialized, testPublicDebugWrappers),
     ]
 }
 #endif

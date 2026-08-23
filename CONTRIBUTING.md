@@ -19,6 +19,7 @@ When working interactively with a maintainer, generally (this shouldn't be meant
 - Explain design choices briefly and answer questions before continuing implementation.
 - Preserve and review the maintainer's local edits before adding further changes.
 - Let the maintainer build, edit, commit, and push between stages when practical.
+- Coding-agent changes remain local for maintainer review: do not commit or push unless the maintainer explicitly requests that exact action. A prompt may be recorded in a local-only changelog note, but prompt text must never be committed or pushed to the server.
 - After each pushed maintainer change, review the latest commit before proposing or applying the next change.
 - Keep pull requests in draft until the implementation is compiled, exercised by real tests, and fully reviewed.
 - Avoid unrelated cleanup, broad reformatting, and speculative changes that make the diff harder to reason about unless specifically asked for.
@@ -34,7 +35,7 @@ When working interactively with a maintainer, generally (this shouldn't be meant
 - If an uncommitted manual version entry already differs from Git, use it and synchronize every version surface rather than choosing another version.
 - Treat a heading such as `## vX.Y.Z TODO` as an intentional version stub: synchronize all version surfaces and replace `TODO` with the current date.
 - If work is being applied to the active unpushed version and its date is not current, update that heading to the current date.
-- Append every prompt-driven request to the current entry as `PROMPT: [PROMPT TEXT]`, after the concise change summary and a blank line.
+- Keep complete prompt text in local working notes only; never append `PROMPT: [PROMPT TEXT]` to a tracked changelog or push it to the server. Tracked changelog entries contain concise summaries only.
 - If a project has no changelog, offer to create one using this repository's `CHANGELOG.md` format.
 - Modules should have separate `README.md` and `CHANGELOG.md` files. Final apps may keep a Changelog section in their README.
 - When you notice existing/manual uncommitted edits, please automatically generate and add changelog comments for the manual changes.
@@ -49,7 +50,7 @@ After every prompt-driven change, contributors and coding agents must:
 3. If an uncommitted active entry is already ahead of Git, keep that version and synchronize every version surface to it.
 4. Check `Package.swift`, the public `Compatibility.version` value, every Xcode `MARKETING_VERSION`, README/version displays, manifests, and every other hard-coded version surface.
 5. Refresh the active unpushed changelog date when work continues on a later date.
-6. Append the complete prompt as `PROMPT: [PROMPT TEXT]`.
+6. Keep the complete prompt local-only; do not add it to tracked files or push it.
 7. Review both the normal diff and an ignore-whitespace diff, remove unrelated or whitespace-only changes, run `git diff --check`, and run the repository's real build and tests.
 8. For multi-file edits, patch each repository or external file separately. After every patch, verify the tool result, inspect the exact diff, run syntax checks, and search for the removed symbol or dependency. Never report the overall change as complete when any hunk failed or remains unverified. Always list changed files and show all deltas using a diff editor (if in Codex).
 
