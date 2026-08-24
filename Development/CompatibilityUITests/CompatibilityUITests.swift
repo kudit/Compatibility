@@ -85,7 +85,7 @@ final class CompatibilityUITests: XCTestCase {
             if index > 0 {
                 await navigate(to: screen, in: app)
             }
-            if ![0,3].contains(index) { continue } // Add this to skip tests temporarily for debugging. FIXME: Comment this out before release!
+            if ![0,3,7,8].contains(index) { continue } // Add this to skip tests temporarily for debugging. FIXME: Comment this out before release!
             let screenElement = app.descendants(matching: .any)[screen.identifier]
             let rendered = await waitForElement(screenElement, timeout: 10)
             XCTAssertTrue(rendered, "\(screen.name) should render its demo screen.")
@@ -112,8 +112,7 @@ final class CompatibilityUITests: XCTestCase {
         case 3:
             // Open a real menu item and verify the binding changes. This covers both construction and
             // the action path rather than merely opening the menu and tapping an ambiguous label.
-            let symbolMenus = app.descendants(matching: .any).matching(identifier: "radial.symbols.menu")
-            let inlineMenu = symbolMenus.element(boundBy: 0)
+            let inlineMenu = app.descendants(matching: .any)["radial.inline.symbols.menu"]
             let inlineFound = await waitForElement(inlineMenu, timeout: 0.5)
             XCTAssertTrue(inlineFound, "Radial Layout should expose its inline Symbols menu.")
             if inlineFound {
@@ -126,7 +125,7 @@ final class CompatibilityUITests: XCTestCase {
                 let selectedSpadeFound = await waitForElement(selectedSpade, timeout: 0.5)
                 XCTAssertTrue(selectedSpadeFound, "Inline menu selection should update the symbol.")
             }
-            let toolbarMenu = symbolMenus.element(boundBy: 1)
+            let toolbarMenu = app.descendants(matching: .any)["radial.toolbar.symbols.menu"]
             let toolbarFound = await waitForElement(toolbarMenu, timeout: 0.5)
             XCTAssertTrue(toolbarFound, "Radial Layout should expose its toolbar Symbols menu.")
             if toolbarFound {
@@ -469,7 +468,14 @@ final class CompatibilityUITests: XCTestCase {
             guard scrollable.exists else {
                 return nil
             }
+#if os(macOS)
+            // AppKit scrolling is a wheel operation; repeated swipeUp calls can keep moving the pointer
+            // while never changing the content offset, which made Backport appear to hang in a loop.
+            scrollable.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.8)).hover()
+            scrollable.scroll(byDeltaX: 0, deltaY: -1200)
+#else
             scrollable.swipeUp()
+#endif
             try? await Task.sleep(nanoseconds: 140_000_000)
         }
 

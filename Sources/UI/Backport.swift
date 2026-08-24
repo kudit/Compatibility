@@ -1510,26 +1510,12 @@ public extension Backport where Content == Any {
     }
 
     /// Backport for SF Symbol images on platforms that don't support `Image(systemName:)`.
-    static func Image(systemName: String) -> AnyView {
+    static func Image(systemName: String) -> Image {
+        let fallback = String.emojiForSymbol(name: systemName) ?? String.unicodeForSymbol(name: systemName) ?? "questionmark.circle"
         if #available(macOS 11, *) {
-            return AnyView(SwiftUI.Image(systemName: systemName))
+            return SwiftUI.Image(systemName: systemName)
         } else {
-            return AnyView(Text(symbolFallback(for: systemName)))
-        }
-    }
-
-    private static func symbolFallback(for systemName: String) -> String {
-        switch systemName {
-        case "calendar":
-            return "📅"
-        case "applelogo":
-            return "Apple"
-        case "multiply.circle.fill":
-            return "×"
-        default:
-            return systemName
-                .replacingOccurrences(of: ".fill", with: "")
-                .replacingOccurrences(of: ".", with: " ")
+            return SwiftUI.Image(fallback)
         }
     }
 }

@@ -37,7 +37,7 @@ struct VisualShowcaseView: View {
                     TriangleShowcaseView()
                         .accessibilityIdentifier("showcase.triangles.destination")
                 } label: {
-                    GroupBox("Triangles") {
+                    GroupBox("1. Triangles") {
                         HStack {
                             ForEach(Edge.allCases, id: \.self) { edge in
                                 Triangle(flatEdge: edge)
@@ -55,7 +55,7 @@ struct VisualShowcaseView: View {
                     PlacardShowcaseView()
                         .accessibilityIdentifier("showcase.placards.destination")
                 } label: {
-                    GroupBox("Placards") {
+                    GroupBox("2. Placards") {
                         HStack(spacing: 12) {
                             ForEach(0..<4) { index in
                                 Placard()
@@ -74,7 +74,7 @@ struct VisualShowcaseView: View {
                     FillAndStrokeTest()
                         .accessibilityIdentifier("showcase.fillStroke.destination")
                 } label: {
-                    GroupBox("Fill & Stroke") {
+                    GroupBox("3. Fill & Stroke") {
                         HStack {
                             Circle()
                                 .fill(.green, strokeBorder: .blue, lineWidth: 8)
@@ -92,7 +92,7 @@ struct VisualShowcaseView: View {
                     EmbossedShowcaseView()
                         .accessibilityIdentifier("showcase.embossed.destination")
                 } label: {
-                    GroupBox("Embossed") {
+                    GroupBox("4. Embossed") {
                         HStack(spacing: 24) {
                             Text("Raised")
                                 .padding()
@@ -113,7 +113,7 @@ struct VisualShowcaseView: View {
                     OverlappingStackShowcaseView()
                         .accessibilityIdentifier("showcase.overlapping.destination")
                 } label: {
-                    GroupBox("Overlapping Stacks") {
+                    GroupBox("5. Overlapping Stacks") {
                         VStack(spacing: 16) {
                             OverlappingHStack {
                                 ForEach(0..<8) { index in
@@ -162,7 +162,7 @@ struct VisualShowcaseView: View {
                     AdaptiveLayoutsShowcaseView()
                         .accessibilityIdentifier("showcase.adaptive.destination")
                 } label: {
-                    GroupBox("Adaptive Layouts") {
+                    GroupBox("6. Adaptive Layouts") {
                         VStack(spacing: 12) {
                             AdaptiveLayout(orientation: .horizontal) {
                                 layoutSample("Portrait branch", color: .blue)
@@ -254,7 +254,7 @@ struct VisualShowcaseView: View {
 @available(iOS 15, macOS 12, tvOS 17, watchOS 8, *)
 @MainActor
 struct BackportShowcaseView: View {
-    @State private var symbolName: String?
+    @State private var symbolName: String? = "cloud.rainbow.crop"
     @State private var backportSelection = 0
     @State private var backportScrollDisabled = false
     private let colors: [Color] = [.red, .orange, .yellow, .green, .blue, .purple]
@@ -319,7 +319,9 @@ struct BackportShowcaseView: View {
 
                         HStack {
                             Backport.Image(systemName: symbolName ?? "questionmark")
+                                .renderingMode(.original)
                                 .font(.largeTitle)
+                                .foregroundStyle(.blue)
                                 .accessibilityIdentifier("backport.symbol.preview")
                             Text("Current symbol: \(symbolName ?? "<empty>")")
                                 .accessibilityIdentifier("backport.symbol.status")

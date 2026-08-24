@@ -390,6 +390,17 @@ body {
 #endif
 
 public extension String {
+    /// Returns a small, deterministic emoji approximation for common SF Symbol names.
+    /// The map is intentionally local so symbol fallback behavior is stable on legacy platforms.
+    static func emojiForSymbol(name: String) -> String? {
+        ["calendar": "📅", "applelogo": "", "heart.fill": "❤️", "star.fill": "⭐", "checkmark": "✓", "xmark": "✖️"][name]
+    }
+
+    /// Returns a Unicode approximation when no emoji approximation is available.
+    static func unicodeForSymbol(name: String) -> String? {
+        ["multiply.circle.fill": "×", "questionmark": "?", "plus": "+", "minus": "−", "chevron.left": "‹", "chevron.right": "›"][name]
+    }
+
     static let INVALID_ENCODING = "INVALID_ENCODING"
     
 @MainActor
@@ -1447,6 +1458,10 @@ public extension String {
             try expectEqual("h\"i".addSlashes(), "h\\\"i")
             try expectEqual("Hello, world!".replacingOccurrences(of: "world", with: "Swift"), "Hello, Swift!")
             try expectEqual(UInt64("C", radix: 16), 12)
+            try expectEqual(String.emojiForSymbol(name: "calendar"), "📅")
+            try expectEqual(String.emojiForSymbol(name: "multiply.circle.fill"), nil)
+            try expectEqual(String.unicodeForSymbol(name: "multiply.circle.fill"), "×")
+            try expectEqual(String.unicodeForSymbol(name: "unknown.symbol"), nil)
             // MARK: - Character.isEmoji
             let smiley: Character = "😀"
             try expect(smiley.isEmoji, "Emoji character should be recognized")

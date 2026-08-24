@@ -79,6 +79,7 @@ public struct RadialTestView: View {
                 .font(.caption)
             if #available(tvOS 17, *) {
                 MenuTest(symbol: $symbol)
+                    .accessibilityIdentifier("radial.inline.symbols.menu")
             } else {
                 // Fallback on earlier versions
                 // toolbars are not shown in tvOS?
@@ -103,6 +104,7 @@ public struct RadialTestView: View {
             if #available(tvOS 17, *) {
                 MenuTest(symbol: $symbol)
                     .padding()
+                    .accessibilityIdentifier("radial.toolbar.symbols.menu")
             } else {
                 // Fallback on earlier versions
                 // toolbars are not shown in tvOS?
@@ -331,10 +333,11 @@ public struct MaterialTestView: View {
         .sheet(isPresented: $showSheet) {
             ZStack {
                 //                    Color.blue
-                AStack {
-                    Color.yellow
-                    Color.green
-                }.padding()
+//                AStack {
+//                    Color.yellow
+//                    Color.green
+//                }.padding()
+                AdaptiveLayoutsShowcaseView()
             }
             .toolbar {
                 ToolbarItem(placement: .bottomBackport) {
