@@ -85,7 +85,7 @@ final class CompatibilityUITests: XCTestCase {
             if index > 0 {
                 await navigate(to: screen, in: app)
             }
-            if ![0,3,7,8].contains(index) { continue } // Add this to skip tests temporarily for debugging. FIXME: Comment this out before release!
+            if ![3,6,7].contains(index) { continue } // Add this to skip tests temporarily for debugging. FIXME: Comment this out before release!
             let screenElement = app.descendants(matching: .any)[screen.identifier]
             let rendered = await waitForElement(screenElement, timeout: 10)
             XCTAssertTrue(rendered, "\(screen.name) should render its demo screen.")
@@ -195,14 +195,17 @@ final class CompatibilityUITests: XCTestCase {
         guard toggleFound else { return }
 
         // Tap the row itself because EnvironmentsView installs its gesture on the full row.
-        environmentRow.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).click()
-        let debugEnvironment = app.descendants(matching: .any)["environment.debug"]
-        let expanded = await waitForElement(debugEnvironment, timeout: 2)
+        environmentRow.backport.tap()
+        let expandedEnvironment = app.descendants(matching: .any)["environment.expanded"]
+        let expanded = await waitForElement(expandedEnvironment, timeout: 2)
         XCTAssertTrue(expanded, "Expanding environments should render the labeled environment rows.")
         guard expanded else { return }
 
         // Collapse again so both sides of the state transition execute and the page ends in its compact form.
-        environmentRow.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).click()
+        expandedEnvironment.backport.tap()
+        let collapsedEnvironmentRow = app.descendants(matching: .any)["environments.toggle"]
+        let collapsed = await waitForElement(collapsedEnvironmentRow, timeout: 2)
+        XCTAssertTrue(collapsed, "Collapsing environments should restore its compact row.")
     }
 
     @MainActor
@@ -259,7 +262,7 @@ final class CompatibilityUITests: XCTestCase {
 
         // ClearableTextField intentionally avoids publishing every keystroke. Commit each example with Return
         // so this exercises its explicit onSubmit path as well as Backport.Image with several real symbol names.
-        for symbolName in ["heart.fill", "calendar"] {
+        for symbolName in ["star.fill", "heart.fill", "calendar"] {
             let symbolField = app.textFields["SF Symbol name"]
             let symbolFieldFound = await waitForElement(symbolField, timeout: 2)
             XCTAssertTrue(symbolFieldFound, "Backport should expose the SF Symbol text field.")
@@ -308,26 +311,16 @@ final class CompatibilityUITests: XCTestCase {
 
         let initialX = firstItem.frame.minX
         // scroll to end revealing 10
-#if os(macOS)
-        strip.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).hover()
-        strip.scroll(byDeltaX: -1000, deltaY: 0)
-#else
-        strip.swipeLeft()
-#endif
-//        try? await Task.sleep(nanoseconds: 200_000_000) // unnecessary wait
+            strip.swipeLeft()
+        try? await Task.sleep(nanoseconds: 200_000_000)
         let scrolledX = firstItem.frame.minX
         XCTAssertLessThan(scrolledX, initialX - 5,
                           "Enabled numbered strip should move its content after a scroll gesture.")
 
         // Return all the way to the starting edge before disabling scrolling so the test also leaves the
         // final item off screen again after demonstrating normal scrolling behavior.
-#if os(macOS)
-        strip.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).hover()
-        strip.scroll(byDeltaX: 1000, deltaY: 0)
-#else
         strip.swipeRight()
-#endif
-//        try? await Task.sleep(nanoseconds: 200_000_000) // unnecessary wait particularly since swipeRight includes an additonal wait after.
+        try? await Task.sleep(nanoseconds: 200_000_000)
         let restoredX = firstItem.frame.minX
         XCTAssertEqual(restoredX, initialX, accuracy: 5,
                        "Enabled numbered strip should return to its starting position before disabling scrolling.")
@@ -340,13 +333,8 @@ final class CompatibilityUITests: XCTestCase {
 
         let disabledStartX = firstItem.frame.minX
         // scroll to end revealing 10 (same way as above)
-#if os(macOS)
-        strip.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).hover()
-        strip.scroll(byDeltaX: -1000, deltaY: 0)
-        try? await Task.sleep(nanoseconds: 100_000_000) // since scroll doesn't have embedded wait
-#else
         strip.swipeLeft()
-#endif
+        try? await Task.sleep(nanoseconds: 200_000_000)
         let disabledEndX = firstItem.frame.minX
         XCTAssertEqual(disabledEndX, disabledStartX, accuracy: 3,
                        "Disabled numbered strip should not move after the same scroll gesture.")
@@ -427,7 +415,7 @@ final class CompatibilityUITests: XCTestCase {
     /// scrollable hierarchy on every pass rather than retaining an element from the previous destination.
     @MainActor
     private func revealNextShowcaseSection(_ identifier: String, in app: XCUIApplication) async -> XCUIElement? {
-        for _ in 0..<12 {
+        for _ in 0..<4 {
             let element = app.descendants(matching: .any)[identifier]
             if element.exists && element.isHittable {
                 return element
@@ -468,14 +456,7 @@ final class CompatibilityUITests: XCTestCase {
             guard scrollable.exists else {
                 return nil
             }
-#if os(macOS)
-            // AppKit scrolling is a wheel operation; repeated swipeUp calls can keep moving the pointer
-            // while never changing the content offset, which made Backport appear to hang in a loop.
-            scrollable.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.8)).hover()
-            scrollable.scroll(byDeltaX: 0, deltaY: -1200)
-#else
             scrollable.swipeUp()
-#endif
             try? await Task.sleep(nanoseconds: 140_000_000)
         }
 

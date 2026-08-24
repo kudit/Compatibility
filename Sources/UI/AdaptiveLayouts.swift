@@ -142,20 +142,29 @@ public struct AdaptiveLayoutsShowcaseView: View {
     public var body: some View {
         AStack { orientation in
             ZStack {
-                if orientation == .horizontal {
-                    Color.yellow
-                } else {
-                    Color.yellow.opacity(0.5)
+                Group {
+                    if orientation == .horizontal {
+                        Color.yellow
+                            .overlay { Text("1h") }
+                    } else {
+                        Color.yellow.opacity(0.5)
+                            .overlay { Text("1v") }
+                    }
                 }
                 HStack {
                     AStack {
                         Color.red
+                            .overlay { Text("2.1") }
                         Color.blue
+                            .overlay { Text("2.2") }
                     }
                     AStack {
                         Color.red
+                            .overlay { Text("3.1") }
                         Color.yellow
+                            .overlay { Text("3.2") }
                         Color.green
+                            .overlay { Text("3.3") }
                     }
                 }.padding()
             }

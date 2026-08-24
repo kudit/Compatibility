@@ -1,7 +1,8 @@
 # Changelog
 
 TODO:
-Fix EnvironmentView exercising.
+Remove numbers in overview and Add numbers to adaptive detail view for clarity when moving.
+Fix the Backport code to actually test the text field and scrolling again (it was working, simply revert)
 Check code coverage.
 Improve coverage on low-coverage files (< 70%).
 

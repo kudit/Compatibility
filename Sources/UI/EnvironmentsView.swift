@@ -37,6 +37,7 @@ public struct EnvironmentsView: View {
                             environmentItem(environment: environment, enabled: enabled)
                         }
                     }
+                    .accessibilityIdentifier("environment.debug")
                     .frame(maxWidth: .infinity, alignment: .leading)
                 } else {
                     HStack(spacing: 6) {
@@ -57,7 +58,9 @@ public struct EnvironmentsView: View {
         .accessibilityLabel("Expand environments")
         // Stable identifiers let the UI tour exercise both the compact and expanded branches
         // without depending on whichever environment labels happen to be active on this runtime.
-        .accessibilityIdentifier("environments.toggle")
+        // Change the identifier with the state so the UI test can wait for the expanded body to finish
+        // rendering before it taps the same full-row button to collapse the view.
+        .accessibilityIdentifier(isExpanded ? "environment.expanded" : "environments.toggle")
     }
 
     private func environmentIcon(environment: Build.Environment, enabled: Bool) -> some View {

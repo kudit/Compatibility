@@ -1510,12 +1510,21 @@ public extension Backport where Content == Any {
     }
 
     /// Backport for SF Symbol images on platforms that don't support `Image(systemName:)`.
-    static func Image(systemName: String) -> Image {
+    static func Image(systemName: String) -> SwiftUI.Image {
+        return SwiftUI.Image(backportSystemName: systemName)
+    }
+}
+
+/// Compatibility initializer for callers that need a real SwiftUI Image on platforms where
+/// `Image(systemName:)` was not available. The legacy symbol map only supplies the image name.
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+public extension SwiftUI.Image {
+    init(backportSystemName systemName: String) {
         let fallback = String.emojiForSymbol(name: systemName) ?? String.unicodeForSymbol(name: systemName) ?? "questionmark.circle"
         if #available(macOS 11, *) {
-            return SwiftUI.Image(systemName: systemName)
+            self.init(systemName: systemName)
         } else {
-            return SwiftUI.Image(fallback)
+            self.init(fallback)
         }
     }
 }

@@ -79,6 +79,12 @@ class MenuButton: UIButton {
 @available(iOS 14, macOS 12, tvOS 17, watchOS 7, *)
 public struct MenuTest: View {
     @Binding var symbol: String
+    private let accessibilityIdentifier: String
+
+    public init(symbol: Binding<String>, accessibilityIdentifier: String = "radial.symbols.menu") {
+        self._symbol = symbol
+        self.accessibilityIdentifier = accessibilityIdentifier
+    }
     
     public var body: some View {
         Menu("Symbols") {
@@ -108,9 +114,7 @@ public struct MenuTest: View {
         .simultaneousGesture(TapGesture().onEnded {
             debug("Menu Simultaneous tap gesture")
         })
-        // Give UI tests a stable handle for the page menu regardless of whether the platform exposes
-        // SwiftUI's Menu as a button or as a menu accessibility element.
-        .accessibilityIdentifier("radial.symbols.menu")
+        .accessibilityIdentifier(accessibilityIdentifier)
     }
 }
 

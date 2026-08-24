@@ -78,8 +78,7 @@ public struct RadialTestView: View {
             Text("Open Source projects used include [Compatibility](https://github.com/kudit/Compatibility) v\(Compatibility.version)")
                 .font(.caption)
             if #available(tvOS 17, *) {
-                MenuTest(symbol: $symbol)
-                    .accessibilityIdentifier("radial.inline.symbols.menu")
+                MenuTest(symbol: $symbol, accessibilityIdentifier: "radial.inline.symbols.menu")
             } else {
                 // Fallback on earlier versions
                 // toolbars are not shown in tvOS?
@@ -102,7 +101,7 @@ public struct RadialTestView: View {
         }
         .toolbar {
             if #available(tvOS 17, *) {
-                MenuTest(symbol: $symbol)
+                MenuTest(symbol: $symbol, accessibilityIdentifier: "radial.toolbar.symbols.menu")
                     .padding()
                     .accessibilityIdentifier("radial.toolbar.symbols.menu")
             } else {
