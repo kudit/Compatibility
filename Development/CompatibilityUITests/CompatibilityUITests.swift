@@ -85,7 +85,7 @@ final class CompatibilityUITests: XCTestCase {
             if index > 0 {
                 await navigate(to: screen, in: app)
             }
-            if ![3,6,7].contains(index) { continue } // Add this to skip tests temporarily for debugging. FIXME: Comment this out before release!
+            if ![7].contains(index) { continue } // Add this to skip tests temporarily for debugging. FIXME: Comment this out before release!
             let screenElement = app.descendants(matching: .any)[screen.identifier]
             let rendered = await waitForElement(screenElement, timeout: 10)
             XCTAssertTrue(rendered, "\(screen.name) should render its demo screen.")
