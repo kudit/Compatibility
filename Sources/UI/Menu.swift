@@ -87,7 +87,7 @@ public struct MenuTest: View {
     }
     
     public var body: some View {
-        Menu("Symbols") {
+        Menu {
             Text("TestCase menu with symbols")
                 .onAppear {
                     debug("The menu is open! (via Text) - appears when menu first loads (view loads for toolbar, menu is first opened when in content")
@@ -104,6 +104,11 @@ public struct MenuTest: View {
                         .tag(symbol)
                 }
             }
+        } label: {
+            // An explicit label is required because macOS does not consistently propagate an
+            // accessibility identifier through Menu's title-only initializer.
+            Text("Symbols")
+                .accessibilityIdentifier(accessibilityIdentifier)
         }
         .onAppear {
             debug("The Menu appeared")
