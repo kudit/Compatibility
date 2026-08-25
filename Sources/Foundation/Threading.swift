@@ -343,9 +343,14 @@ public extension Compatibility {
                 closure()
             }
         } else {
+#if canImport(Dispatch)
             DispatchQueue.main.async { @MainActor in
                 closure()
             }
+#else
+            // Targets without Dispatch cannot schedule a legacy queue hop; run the closure directly.
+            closure()
+#endif
         }
     }
 }
@@ -411,7 +416,11 @@ public extension Compatibility {
                 closure()
             }
         } else {
+#if canImport(Dispatch)
             DispatchQueue.global().asyncAfter(deadline: DispatchTime.now() + seconds, execute: closure)
+#else
+            closure()
+#endif
         }
     }
 }

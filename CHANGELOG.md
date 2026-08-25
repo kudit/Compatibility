@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.19.2 2026-08-25
+Added `.backport.tabViewStyle(.sidebarAdaptable)` support and implemented platform fallbacks with `@ViewBuilder` branches, without `AnyView` erasure.
+Updated the Compatibility demo to use the backport style API directly.
+Addressed additional function availability support for tvOS and watchOS.
+Added foreground-style and Label backports for older SwiftUI targets, extended the change-observer fallback to iOS 13/tvOS 13, and guarded glass, CloudStorageSync, EnvironmentsView, and Dispatch-dependent paths for unsupported platforms.
+Added descriptive SF Symbol icons to the Compatibility demo's tab items.
+Added native iOS 18 tab customization with a pre-iOS 18 UIKit `UITabBarController` customization fallback.
+Moved tab customization into reusable `.enableCustomization()` view modifier support for any `TabView`.
+Removed `AStack`'s `AnyView` storage, added a `Backport.GroupBox` fallback for older SwiftUI targets, and lowered adaptive showcase availability to tvOS 13/watchOS 6.
+
 ## v1.19.1 2026-08-25
 Updated `RadialTestView` to list every registered module with its current version, including modules registered through consuming packages.
 Retained the `ClosureTestView` compatibility typealias for modules that use the earlier name.

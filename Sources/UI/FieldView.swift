@@ -61,7 +61,7 @@ public struct TestCheck: View {
         self.state = state
     }
     public var body: some View {
-        Label(label, systemImage: state ? "checkmark.circle.fill" : "x.square.fill").backport.foregroundStyle(state ? .green : .gray)
+        Backport.Label(label, systemImage: state ? "checkmark.circle.fill" : "x.square.fill").backport.foregroundStyle(state ? .green : .gray)
     }
 }
 
@@ -70,8 +70,8 @@ public struct TestCheck: View {
     List {
         TestCheck("True", true)
         TestCheck("False", false)
-        Label("True", systemImage: "checkmark.circle.fill").backport.foregroundStyle(.green)
-        Label("False", systemImage: "x.square.fill").backport.foregroundStyle(.gray)
+        Backport.Label("True", systemImage: "checkmark.circle.fill").backport.foregroundStyle(.green)
+        Backport.Label("False", systemImage: "x.square.fill").backport.foregroundStyle(.gray)
     }
 }
 

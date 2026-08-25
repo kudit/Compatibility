@@ -25,7 +25,7 @@ final class DemoFailureCounter: @unchecked Sendable {
 
 /// Collects representative visual Compatibility APIs in one scrollable screen so the demo and UI
 /// coverage tour exercise the real layouts/modifiers without maintaining a separate tab for each one.
-@available(iOS 15, macOS 12, tvOS 17, watchOS 8, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 @MainActor
 struct VisualShowcaseView: View {
     private let colors: [Color] = [.red, .orange, .yellow, .green, .blue, .purple]
@@ -35,9 +35,9 @@ struct VisualShowcaseView: View {
             VStack(spacing: 24) {
                 NavigationLink {
                     TriangleShowcaseView()
-                        .accessibilityIdentifier("showcase.triangles.destination")
+                        .backport.accessibilityIdentifier("showcase.triangles.destination")
                 } label: {
-                    GroupBox("Triangles") {
+                    Backport.GroupBox("Triangles") {
                         HStack {
                             ForEach(Edge.allCases, id: \.self) { edge in
                                 Triangle(flatEdge: edge)
@@ -49,17 +49,17 @@ struct VisualShowcaseView: View {
                     }
                 }
                 .buttonStyle(.plain)
-                .accessibilityIdentifier("showcase.triangles.link")
+                .backport.accessibilityIdentifier("showcase.triangles.link")
 
                 NavigationLink {
                     PlacardShowcaseView()
-                        .accessibilityIdentifier("showcase.placards.destination")
+                        .backport.accessibilityIdentifier("showcase.placards.destination")
                 } label: {
-                    GroupBox("Placards") {
+                    Backport.GroupBox("Placards") {
                         HStack(spacing: 12) {
                             ForEach(0..<4) { index in
                                 Placard()
-                                    .fill(colors[nth: index], strokeBorder: .primary, lineWidth: 2)
+                                    .fill(colors[nth: index], strokeBorder: Color.black, lineWidth: 2)
                                     .aspectRatio(1.4, contentMode: .fit)
                             }
                         }
@@ -68,52 +68,52 @@ struct VisualShowcaseView: View {
                     }
                 }
                 .buttonStyle(.plain)
-                .accessibilityIdentifier("showcase.placards.link")
+                .backport.accessibilityIdentifier("showcase.placards.link")
 
                 NavigationLink {
                     FillAndStrokeTest()
-                        .accessibilityIdentifier("showcase.fillStroke.destination")
+                        .backport.accessibilityIdentifier("showcase.fillStroke.destination")
                 } label: {
-                    GroupBox("Fill & Stroke") {
+                    Backport.GroupBox("Fill & Stroke") {
                         HStack {
                             Circle()
                                 .fill(.green, strokeBorder: .blue, lineWidth: 8)
                             RoundedRectangle(cornerRadius: 18)
-                                .fill(.tertiary, strokeBorder: .tint, lineWidth: 5)
+                                .fill(Color.gray, strokeBorder: Color.blue, lineWidth: 5)
                         }
                         .frame(height: 100)
                         .padding()
                     }
                 }
                 .buttonStyle(.plain)
-                .accessibilityIdentifier("showcase.fillStroke.link")
+                .backport.accessibilityIdentifier("showcase.fillStroke.link")
 
                 NavigationLink {
                     EmbossedShowcaseView()
-                        .accessibilityIdentifier("showcase.embossed.destination")
+                        .backport.accessibilityIdentifier("showcase.embossed.destination")
                 } label: {
-                    GroupBox("Embossed") {
+                    Backport.GroupBox("Embossed") {
                         HStack(spacing: 24) {
                             Text("Raised")
                                 .padding()
-                                .background(.gray.opacity(0.25))
+                                .backport.background(.gray.opacity(0.25))
                                 .embossed()
                             Text("Sharp")
                                 .padding()
-                                .background(.gray.opacity(0.25))
+                                .backport.background(.gray.opacity(0.25))
                                 .embossed(offset: 2, blur: 0)
                         }
                         .padding()
                     }
                 }
                 .buttonStyle(.plain)
-                .accessibilityIdentifier("showcase.embossed.link")
+                .backport.accessibilityIdentifier("showcase.embossed.link")
 
                 NavigationLink {
                     OverlappingStackShowcaseView()
-                        .accessibilityIdentifier("showcase.overlapping.destination")
+                        .backport.accessibilityIdentifier("showcase.overlapping.destination")
                 } label: {
-                    GroupBox("Overlapping Stacks") {
+                    Backport.GroupBox("Overlapping Stacks") {
                         VStack(spacing: 16) {
                             OverlappingHStack {
                                 ForEach(0..<8) { index in
@@ -148,7 +148,7 @@ struct VisualShowcaseView: View {
                             }
                             .frame(height: 1)
                             OverlappingHStack {
-                                Circle().fill(.secondary).frame(size: 30)
+                                Circle().fill(Color.gray).frame(size: 30)
                             }
                             .frame(height: 32)
                         }
@@ -156,13 +156,13 @@ struct VisualShowcaseView: View {
                     }
                 }
                 .buttonStyle(.plain)
-                .accessibilityIdentifier("showcase.overlapping.link")
+                .backport.accessibilityIdentifier("showcase.overlapping.link")
 
                 NavigationLink {
                     AdaptiveLayoutsShowcaseView()
-                        .accessibilityIdentifier("showcase.adaptive.destination")
+                        .backport.accessibilityIdentifier("showcase.adaptive.destination")
                 } label: {
-                    GroupBox("Adaptive Layouts") {
+                    Backport.GroupBox("Adaptive Layouts") {
                         VStack(spacing: 12) {
                             AdaptiveLayout(orientation: .horizontal) {
                                 layoutSample("Portrait branch", color: .blue)
@@ -201,13 +201,13 @@ struct VisualShowcaseView: View {
                             .frame(height: 50)
 
                             AStack(alignment: .center, orientation: .adaptive) {
-                                layoutSample("Adaptive", color: .cyan)
-                                layoutSample("Center", color: .mint)
+                                layoutSample("Adaptive", color: .green)
+                                layoutSample("Center", color: .blue)
                             }
                             .frame(height: 60)
 
                             AStack(alignment: .bottomOrTrailing, orientation: .vertical) {
-                                layoutSample("Vertical", color: .indigo)
+                                layoutSample("Vertical", color: .purple)
                                 layoutSample("Bottom/Trailing", color: .pink)
                             }
                             .frame(height: 90)
@@ -216,7 +216,7 @@ struct VisualShowcaseView: View {
                     }
                 }
                 .buttonStyle(.plain)
-                .accessibilityIdentifier("showcase.adaptive.link")
+                .backport.accessibilityIdentifier("showcase.adaptive.link")
             }
             .padding()
         }
@@ -241,7 +241,7 @@ struct VisualShowcaseView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .padding(4)
             .background(color.opacity(0.18))
-            .overlay {
+            .backport.overlay {
                 RoundedRectangle(cornerRadius: 6)
                     .stroke(color, lineWidth: 2)
             }
@@ -262,11 +262,11 @@ struct BackportShowcaseView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                GroupBox("Backport.TabView") {
+                Backport.GroupBox("Backport.TabView") {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("This example uses Compatibility's Backport.TabView without a selection binding. On current platforms it displays the native SwiftUI TabView; the backport also supplies a usable fallback on older systems such as watchOS 6.")
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.gray)
 
                         Backport.TabView {
                             Text("First unbound tab")
@@ -279,11 +279,11 @@ struct BackportShowcaseView: View {
                     .padding()
                 }
 
-                GroupBox("Selection-bound Backport.TabView") {
+                Backport.GroupBox("Selection-bound Backport.TabView") {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("This version supplies a Binding. The button changes the selected tag programmatically so you can see that the same backported container participates in SwiftUI selection state.")
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.gray)
 
                         Backport.TabView(selection: $backportSelection) {
                             Text("Bound tab zero")
@@ -297,47 +297,47 @@ struct BackportShowcaseView: View {
 
                         HStack {
                             Text("Bound selection: \(backportSelection)")
-                                .accessibilityIdentifier("backport.selection.status")
+                                .backport.accessibilityIdentifier("backport.selection.status")
                             Spacer()
                             Button("Select \(backportSelection == 0 ? "one" : "zero")") {
                                 backportSelection = backportSelection == 0 ? 1 : 0
                             }
-                            .accessibilityIdentifier("backport.selection.toggle")
+                            .backport.accessibilityIdentifier("backport.selection.toggle")
                         }
                     }
                     .padding()
                 }
 
-                GroupBox("Backported SF Symbol image") {
+                Backport.GroupBox("Backported SF Symbol image") {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Enter an SF Symbol name. Backport.Image uses the native symbol image where available and a text fallback on older macOS versions. The field is also a live ClearableTextField example.")
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.gray)
 
                         ClearableTextField(label: "SF Symbol name", text: $symbolName)
-                            .accessibilityIdentifier("backport.symbol.field")
+                            .backport.accessibilityIdentifier("backport.symbol.field")
 
                         HStack {
                             SwiftUI.Image(backportSystemName: symbolName ?? "questionmark")
                                 .renderingMode(.original)
                                 .font(.largeTitle)
                                 .foregroundStyle(.blue)
-                                .accessibilityIdentifier("backport.symbol.preview")
+                                .backport.accessibilityIdentifier("backport.symbol.preview")
                             Text("Current symbol: \(symbolName ?? "<empty>")")
-                                .accessibilityIdentifier("backport.symbol.status")
+                                .backport.accessibilityIdentifier("backport.symbol.status")
                         }
                     }
                     .padding()
                 }
 
-                GroupBox("Backported scrollDisabled") {
+                Backport.GroupBox("Backported scrollDisabled") {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("The numbered items are simply a horizontal scrolling strip. Toggle scrolling off and on to exercise Compatibility's scrollDisabled backport while confirming the content itself is unchanged.")
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.gray)
 
                         Toggle("Disable numbered-strip scrolling", isOn: $backportScrollDisabled)
-                            .accessibilityIdentifier("backport.scroll.toggle")
+                            .backport.accessibilityIdentifier("backport.scroll.toggle")
 
                         ScrollView(.horizontal) {
                             HStack {
@@ -345,11 +345,11 @@ struct BackportShowcaseView: View {
                                     Text("\(index)")
                                         .frame(size: 32)
                                         .background(colors[nth: index].opacity(0.25))
-                                        .accessibilityIdentifier("backport.scroll.item.\(index)")
+                                        .backport.accessibilityIdentifier("backport.scroll.item.\(index)")
                                 }
                             }
                         }
-                        .accessibilityIdentifier("backport.scroll.strip")
+                        .backport.accessibilityIdentifier("backport.scroll.strip")
                         // Keep the viewport deliberately narrower than the numbered content so enabled
                         // and disabled scrolling are both visually obvious and mechanically testable.
                         .frame(width: 220, height: 40, alignment: .leading)
@@ -393,50 +393,59 @@ struct CompatibilityDemoView: View {
     private var demoTabs: some View {
         if #available(watchOS 9, *) {
             CompatibilityEnvironmentTestView()
-                .accessibilityIdentifier("demo.compatibility")
+                .backport.accessibilityIdentifier("demo.compatibility")
                 .tabItem {
+                    Backport.Image(systemName: "gearshape")
                     Text("Compatibility")
                 }
             DataStoreTestView()
-                .accessibilityIdentifier("demo.datastore")
+                .backport.accessibilityIdentifier("demo.datastore")
                 .tabItem {
+                    Backport.Image(systemName: "externaldrive")
                     Text("DataStore")
                 }
         }
         // Application tracking has already registered the complete ordered module graph consumed here.
         AllTestsListView(additionalTests: Self.additionalTests)
-            .accessibilityIdentifier("demo.allTests")
+            .backport.accessibilityIdentifier("demo.allTests")
             .tabItem {
+                Backport.Image(systemName: "checkmark.circle")
                 Text("All Tests")
             }
         RadialTestView()
-            .accessibilityIdentifier("demo.radialLayout")
+            .backport.accessibilityIdentifier("demo.radialLayout")
             .tabItem {
+                Backport.Image(systemName: "circle.grid.3x3")
                 Text("Radial Layout")
             }
         RandomBytesTestView()
-            .accessibilityIdentifier("demo.randomBytes")
+            .backport.accessibilityIdentifier("demo.randomBytes")
             .tabItem {
+                Backport.Image(systemName: "sparkles")
                 Text("Random Bytes")
             }
         ConvertTestView()
-            .accessibilityIdentifier("demo.convert")
+            .backport.accessibilityIdentifier("demo.convert")
             .tabItem {
+                Backport.Image(systemName: "arrow.left.arrow.right")
                 Text("Convert")
             }
         VisualShowcaseView()
-            .accessibilityIdentifier("demo.visualShowcase")
+            .backport.accessibilityIdentifier("demo.visualShowcase")
             .tabItem {
+                Backport.Image(systemName: "rectangle.3.group")
                 Text("Visual Showcase")
             }
         BackportShowcaseView()
-            .accessibilityIdentifier("demo.backport")
+            .backport.accessibilityIdentifier("demo.backport")
             .tabItem {
+                Backport.Image(systemName: "wrench.and.screwdriver")
                 Text("Backport")
             }
         MaterialTestView()
-            .accessibilityIdentifier("demo.material")
+            .backport.accessibilityIdentifier("demo.material")
             .tabItem {
+                Backport.Image(systemName: "wand.and.stars")
                 Text("Material")
             }
     }
@@ -444,21 +453,9 @@ struct CompatibilityDemoView: View {
     var body: some View {
         TabView {
             demoTabs
-        }.closure { view in
-#if os(macOS)
-            // Use SwiftUI's native macOS tab presentation. Page style collapses many pages behind a
-            // Navigation Tab Bar menu, which is less useful for this desktop test/demo application.
-            if #available(macOS 15.0, *) {
-//                view.tabViewStyle(.tabBarOnly)
-                view.tabViewStyle(.sidebarAdaptable)
-            } else {
-                // Fallback on earlier versions
-                view.tabViewStyle(.automatic)
-            }
-#else
-            view.backport.tabViewStyle(.page)
-#endif
         }
+        .enableCustomization()
+        .backport.tabViewStyle(.sidebarAdaptable)
     }
 }
 

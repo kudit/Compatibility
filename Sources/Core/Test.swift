@@ -524,13 +524,17 @@ public extension TestCase {
         tests["Bundle Tests"] = Bundle.tests
         tests["File Manager Tests"] = FileManager.tests
         tests["Pasteboard Tests"] = Pasteboard.tests
+#if canImport(Combine)
         tests["CloudStorageSync Tests"] = CloudStorageSync.tests
+#endif
         tests["CloudStorage Tests"] = CloudStorageTests.tests
         tests["Backport Tests"] = Glass.tests
         tests["Backport Button Style Tests"] = BackportButtonStyle.tests
+#if canImport(SwiftUI)
         if #available(iOS 14, macOS 12, tvOS 15, watchOS 8, *) {
             tests["Environment View Tests"] = EnvironmentsView.tests
         }
+#endif
         tests["CharacterSet Tests"] = CharacterSet.tests
         tests["URL Tests"] = URL.tests
         tests["Date Tests"] = Date.tests

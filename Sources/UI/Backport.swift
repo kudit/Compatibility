@@ -2,6 +2,9 @@
 
 #if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation)
 import SwiftUI
+#if canImport(Combine)
+import Combine
+#endif
 
 @MainActor // for swift6 compliance and since this is SwiftUI, should be @MainActor anyways.
 public struct Backport<Content> {
@@ -10,6 +13,11 @@ public struct Backport<Content> {
     public init(_ content: Content) {
         self.content = content
     }
+}
+
+/// Image scale values available on the package's minimum SwiftUI deployment targets.
+public enum BackportImageScale: Sendable {
+    case small, medium, large
 }
 
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
@@ -64,6 +72,18 @@ extension Backport where Content == Any {
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 @MainActor
 public extension Backport where Content: View {
+    /// Applies an accessibility identifier on platforms that expose the native modifier.
+    /// tvOS introduced this modifier after the package's tvOS 13 baseline, so older tvOS simply
+    /// keeps the original content while other platforms use SwiftUI's native implementation.
+    @ViewBuilder
+    func accessibilityIdentifier(_ identifier: String) -> some View {
+        if #available(iOS 14, macOS 11, tvOS 14, watchOS 7, *) {
+            content.accessibilityIdentifier(identifier)
+        } else {
+            content
+        }
+    }
+
     // MARK: - .onChange
     
     /// Adds a modifier for this view that fires an action when a specific
@@ -105,7 +125,7 @@ public extension Backport where Content: View {
     ///   - action: A closure to run when the value changes.
     ///
     /// - Returns: A view that fires an action when the specified value changes.
-    @available(iOS 14, macOS 11, tvOS 14, watchOS 7, *)
+    @ViewBuilder
     func onChange<V>(
         of value: V,
         initial: Bool = false,
@@ -159,12 +179,14 @@ public extension Backport where Content: View {
     ///   /- newValue: The new value that failed the comparison check.
     ///
     /// - Returns: A view that fires an action when the specified value changes.
-    @available(iOS 14, macOS 11, tvOS 14, watchOS 7, *)
     @ViewBuilder
     func onChange<V>(
         of value: V,
         initial: Bool = false,
-        _ action: @escaping (_ oldValue: V, _ newValue: V) -> Void
+        _ action: @escaping (
+            _ oldValue: V,
+            _ newValue: V
+        ) -> Void
     ) -> some View where V : Equatable {
         if #available(iOS 17, macOS 14, tvOS 17, watchOS 10, *) {
 #if compiler(>=5.9)
@@ -182,7 +204,7 @@ public extension Backport where Content: View {
                 }
             }
 #endif
-        } else {
+        } else if #available(iOS 14, macOS 11, tvOS 14, watchOS 7, *) {
             content.onChange(of: value) { newState in
                 action(value, newState) // in the closure, `value` will be the old value.
             }
@@ -191,15 +213,18 @@ public extension Backport where Content: View {
                     action(value, value)
                 }
             }
+        } else {
+            /// Observes changes on iOS 13 and tvOS 13 using Combine's `Just` publisher.
+            #if canImport(Combine)
+            content.onReceive(Just(value).removeDuplicates()) { newValue in
+                action(value, newValue)
+            }
+            #else
+            // should never happen in practice since Combine should be available wherever we have SwiftUI.
+            content
+            #endif
         }
     }
-    /*
-     try this for iOS 13??
-     .onReceive(Just(value)) {
-       }
-
-     */
-    
     
     // MARK: - Background/foreground/overlay and styling
     @ViewBuilder
@@ -226,6 +251,37 @@ public extension Backport where Content: View {
             } else {
                 content // don't apply style if watchOS 6 or 7 or older tvOS
             }
+        }
+    }
+
+    /// Compatibility's semantic background style for SDKs without SwiftUI.BackgroundStyle.
+    enum BackportBackgroundStyle: Sendable {
+        case background
+    }
+
+    /// Applies the Compatibility background style through the same foreground-style fallback.
+    @ViewBuilder
+    func foregroundStyle(_ style: BackportBackgroundStyle) -> some View {
+        switch style {
+        case .background:
+            if #available(iOS 16, macOS 13, tvOS 16, watchOS 9, *) {
+                content.foregroundStyle(.background)
+            } else {
+                content.foregroundColor(.black)
+            }
+        }
+    }
+
+    /// Applies image scaling without requiring SwiftUI's macOS 11-only `Image.Scale` type.
+    @ViewBuilder
+    func imageScale(_ scale: BackportImageScale) -> some View {
+        switch scale {
+        case .small:
+            content.scaleEffect(0.75)
+        case .medium:
+            content
+        case .large:
+            content.scaleEffect(1.25)
         }
     }
     
@@ -1499,6 +1555,59 @@ private struct BackportSelectionTabViewContent<SelectionValue: Hashable, Content
 
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension Backport where Content == Any {
+    /// Backports Label to systems where SwiftUI's Label is unavailable.
+    @ViewBuilder static func Label(_ title: String, systemImage: String) -> some View {
+        if #available(iOS 14, macOS 11, tvOS 14, watchOS 7, *) {
+            SwiftUI.Label(title, systemImage: systemImage)
+        } else {
+            HStack {
+                Text(systemImage)
+                Text(title)
+            }
+        }
+    }
+
+    /// Provides a GroupBox-shaped container on systems where SwiftUI's GroupBox is unavailable.
+    ///
+    /// The native control is used when available; the older fallback keeps the same semantic
+    /// grouping with a rounded border and caption rather than erasing the view hierarchy.
+    @ViewBuilder static func GroupBox<Label: View, C: View>(
+        @ViewBuilder content: () -> C,
+        @ViewBuilder label: () -> Label
+    ) -> some View {
+        #if os(tvOS) || os(watchOS)
+            LegacyGroupBox(content: content, label: label)
+        #else
+        if #available(iOS 14, macOS 11, *) {
+            SwiftUI.GroupBox(content: content, label: label)
+        } else {
+            LegacyGroupBox(content: content, label: label)
+        }
+        #endif
+    }
+
+    @ViewBuilder static func LegacyGroupBox<Label: View, C: View>(
+        @ViewBuilder content: () -> C,
+        @ViewBuilder label: () -> Label
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            label().font(.headline)
+            content()
+        }
+        .padding()
+        .backport.overlay {
+            RoundedRectangle(cornerRadius: 8).stroke(Color.secondary)
+        }
+    }
+
+    /// Provides the common text-labelled GroupBox spelling on older SwiftUI targets.
+    @ViewBuilder static func GroupBox<C: View>(
+        _ title: LocalizedStringKey,
+        @ViewBuilder content: () -> C
+    ) -> some View {
+        GroupBox(content: content) { Text(title) }
+    }
+
     /// Usage: `Backport.TabView { MyView() }`
     @ViewBuilder static func TabView<C: View>(@ViewBuilder content: () -> C) -> some View {
         BackportTabViewContent(content: content)
@@ -1582,7 +1691,14 @@ public enum BackportTabViewStyle: Sendable {
 //            }
 //        }
 //    }
-    case automatic, page//, verticalPage
+    /// Uses the native sidebar-adaptable presentation where the SDK supports it.
+    /// Older desktop systems fall back to `.automatic`; touch-oriented systems fall back to `.page`.
+    case sidebarAdaptable
+    /// Uses the platform's default tab presentation.
+    case automatic
+
+    /// Uses a page-oriented tab presentation where the platform provides it.
+    case page//, verticalPage
     // compound cases (problematic for switch below
 //    case pageIndex(BackportIndexDisplayMode), verticalPageTransition(BackportTransitionStyle)
   // 2024 cases
@@ -1596,15 +1712,43 @@ public extension Backport where Content: View {
     /// - Parameter style: The style to apply to this tab view.
     @ViewBuilder
     func tabViewStyle(_ style: BackportTabViewStyle) -> some View {
-#if os(macOS) || os(tvOS) // no longer supported in tvOS 17.2+?
-        content
+        switch style {
+        case .automatic:
+            // Preserve the existing automatic behavior exactly.
+            content
+        case .page:
+            // Preserve the existing page behavior exactly.
+#if os(macOS)
+            content
 #else
-        if #available(iOS 14, macOS 10.15, tvOS 14, watchOS 7, *) {
-            switch style {
-            case .automatic:
-                content
-            case .page:
+            if #available(iOS 14, macOS 11, tvOS 14, watchOS 7, *) {
                 content.tabViewStyle(.page)
+            } else {
+                content
+            }
+#endif
+        case .sidebarAdaptable:
+#if os(macOS)
+            if #available(macOS 15, *) {
+                content.tabViewStyle(.sidebarAdaptable)
+            } else {
+                content
+            }
+#elseif os(watchOS)
+            if #available(watchOS 7, *) {
+                content.tabViewStyle(.page)
+            } else {
+                content
+            }
+#else
+            if #available(iOS 18, tvOS 18, visionOS 2, *) {
+                content.tabViewStyle(.sidebarAdaptable)
+            } else if #available(iOS 14, macOS 11, tvOS 14, watchOS 7, *) {
+                content.tabViewStyle(.page)
+            } else {
+                content
+            }
+#endif
 //                case .pageIndex(let backportIndexDisplayMode):
 //                    content//.tabViewStyle(.page(backportIndexDisplayMode.converted))
 //                case .verticalPage: // only supported on watchOS
@@ -1633,13 +1777,9 @@ public extension Backport where Content: View {
         //            return .sidebarAdaptable
         //        case .tabBarOnly:
         //            return .tabBarOnly
-            }
-        } else {
-            // Fallback on earlier versions
-            content
         }
-#endif
     }
+
 }
 
 // https://stackoverflow.com/questions/78472655/swiftui-tabview-safe-area
@@ -1850,22 +1990,36 @@ public extension Backport where Content: View {
     func buttonStyle(_ style: BackportButtonStyle) -> some View {
         switch style {
         case .glass:
+#if os(visionOS)
+            // visionOS cannot compile SwiftUI's glass button style, so use the material fallback.
+            glassButtonFallback
+#else
             if #available(iOS 26, macOS 26, tvOS 26, watchOS 26, *) {
                 content
                     .buttonStyle(.glass)
                     .buttonBorderShape(.circle)
-            } else if #available(iOS 15, macOS 12, tvOS 15, watchOS 8, *) {
-                content
-                    .buttonStyle(.plain)
-                    .background(.regularMaterial, in: Circle())
-                    .contentShape(Circle())
             } else {
-                content
-                    .buttonStyle(.plain)
-                    .background(Circle().fill(Color.secondary.opacity(0.15)))
-                    .contentShape(Circle())
+                glassButtonFallback
             }
+#endif
         }
+    }
+
+    /// Shares the material and pre-material fallback so platform branches cannot drift.
+    @ViewBuilder
+    private var glassButtonFallback: some View {
+        content
+            .buttonStyle(.plain)
+            .closure { view in
+                if #available(iOS 15, macOS 12, tvOS 15, watchOS 10, *) {
+                    view
+                        .background(.regularMaterial, in: Circle())
+                } else {
+                    view
+                        .background(Circle().fill(Color.secondary.opacity(0.15)))
+                }
+            }
+            .contentShape(Circle())
     }
 }
 #endif

@@ -100,7 +100,7 @@ public struct MenuTest: View {
             // for both the inline menu and the toolbar menu that reuse this view.
             Picker("Symbol", selection: $symbol) {
                 ForEach(["suit.diamond", "star", "suit.spade.fill", "suit.heart", "suit.club", "star.fill"], id: \.self) { symbol in
-                    Label(symbol, systemImage: symbol)
+                    Backport.Label(symbol, systemImage: symbol)
                         .tag(symbol)
                 }
             }

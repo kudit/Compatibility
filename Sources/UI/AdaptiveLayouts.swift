@@ -20,11 +20,11 @@ import SwiftUI
 /// ```
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public struct AdaptiveLayout<PContent, LContent>: View where PContent: View, LContent: View {
-    let orientation: AStack.Orientation
+    let orientation: AdaptiveOrientation
     let portrait: () -> PContent
     let landscape: () -> LContent
 
-    public init(orientation: AStack.Orientation = .adaptive, @ViewBuilder portrait: @escaping () -> PContent, @ViewBuilder landscape: @escaping () -> LContent) {
+    public init(orientation: AdaptiveOrientation = .adaptive, @ViewBuilder portrait: @escaping () -> PContent, @ViewBuilder landscape: @escaping () -> LContent) {
         self.orientation = orientation
         self.portrait = portrait
         self.landscape = landscape
@@ -54,43 +54,53 @@ public struct AdaptiveLayout<PContent, LContent>: View where PContent: View, LCo
 
 /// Adaptable Stack (uses HStack if the available space is wider than it is tall and VStack otherwise).
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
-public struct AStack: View {
+public struct AStack<Content: View>: View {
     let alignment: Alignment
     let spacing: CGFloat?
     let orientation: Orientation
     /// Content will be provided horizontal = true or false depending on the chosen alignment
-    let content: (Orientation) -> AnyView
+    /// Stores the builder's concrete view type so the stack does not need `AnyView` type erasure.
+    let content: (Orientation) -> Content
     
-    public enum Orientation: CaseIterable, Sendable {
-        case horizontal
-        case vertical
-        case adaptive
+    public typealias Orientation = AdaptiveOrientation
 
-        fileprivate func resolved(for proxy: GeometryProxy) -> Orientation {
-            // `.adaptive` preserves the original width-vs-height behavior while the concrete
-            // cases give callers a stable layout when the surrounding view already knows best.
-            if self == .adaptive {
-                return proxy.size.width > proxy.size.height ? .horizontal : .vertical
+    public enum Alignment {
+        case topOrLeading, center, bottomOrTrailing
+
+        var vertical: VerticalAlignment {
+            switch self {
+            case .topOrLeading: return .top
+            case .center: return .center
+            case .bottomOrTrailing: return .bottom
             }
-            return self
+        }
+
+        var horizontal: HorizontalAlignment {
+            switch self {
+            case .topOrLeading: return .leading
+            case .center: return .center
+            case .bottomOrTrailing: return .trailing
+            }
         }
     }
-    
-    public init<Content: View>(alignment: Alignment = .center,
+
+    public init(alignment: Alignment = .center,
          spacing: CGFloat? = nil,
          orientation: Orientation = .adaptive,
          @ViewBuilder content: @escaping (Orientation) -> Content) {
         self.alignment = alignment
         self.spacing = spacing
         self.orientation = orientation
-        self.content = { orientation in AnyView(content(orientation)) }
+        // Retain the concrete builder result; `AdaptiveLayout` reconciles the two orientation branches.
+        self.content = content
     }
+
     // if we don't care about the orientation, we can call this without the parameter
-    public init<Content: View>(alignment: Alignment = .center,
+    public init(alignment: Alignment = .center,
          spacing: CGFloat? = nil,
-                orientation: Orientation = .adaptive,
-                @ViewBuilder content: @escaping () -> Content) {
-        self.init(alignment: alignment, spacing: spacing, orientation: orientation, content: { _ in content() } )
+         orientation: Orientation = .adaptive,
+         @ViewBuilder content: @escaping () -> Content) {
+        self.init(alignment: alignment, spacing: spacing, orientation: orientation, content: { _ in content() })
     }
 
     public var body: some View {
@@ -106,36 +116,27 @@ public struct AStack: View {
             }
         }
     }
-    
-    public enum Alignment {
-        case topOrLeading, center, bottomOrTrailing
-        
-        var vertical: VerticalAlignment {
-            switch self {
-            case .topOrLeading:
-                return .top
-            case .center:
-                return .center
-            case .bottomOrTrailing:
-                return .bottom
+}
+
+/// The orientation values shared by `AdaptiveLayout` and `AStack`.
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+public enum AdaptiveOrientation: CaseIterable, Sendable {
+    case horizontal
+    case vertical
+    case adaptive
+
+    fileprivate func resolved(for proxy: GeometryProxy) -> AdaptiveOrientation {
+            // `.adaptive` preserves the original width-vs-height behavior while the concrete
+            // cases give callers a stable layout when the surrounding view already knows best.
+            if self == .adaptive {
+                return proxy.size.width > proxy.size.height ? .horizontal : .vertical
             }
+            return self
         }
-        
-        var horizontal: HorizontalAlignment {
-            switch self {
-            case .topOrLeading:
-                return .leading
-            case .center:
-                return .center
-            case .bottomOrTrailing:
-                return .trailing
-            }
-        }
-    }
 }
 
 /// Shows the adaptive stack and layout behaviors used by the preview and demo application.
-@available(iOS 15, macOS 12, tvOS 17, watchOS 8, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public struct AdaptiveLayoutsShowcaseView: View {
     public init() {}
 
@@ -145,26 +146,26 @@ public struct AdaptiveLayoutsShowcaseView: View {
                 Group {
                     if orientation == .horizontal {
                         Color.yellow
-                            .overlay { Text("1h") }
+                            .backport.overlay { Text("1h") }
                     } else {
                         Color.yellow.opacity(0.5)
-                            .overlay { Text("1v") }
+                            .backport.overlay { Text("1v") }
                     }
                 }
                 HStack {
                     AStack {
                         Color.red
-                            .overlay { Text("2.1") }
+                            .backport.overlay { Text("2.1") }
                         Color.blue
-                            .overlay { Text("2.2") }
+                            .backport.overlay { Text("2.2") }
                     }
                     AStack {
                         Color.red
-                            .overlay { Text("3.1") }
+                            .backport.overlay { Text("3.1") }
                         Color.yellow
-                            .overlay { Text("3.2") }
+                            .backport.overlay { Text("3.2") }
                         Color.green
-                            .overlay { Text("3.3") }
+                            .backport.overlay { Text("3.3") }
                     }
                 }.padding()
             }
@@ -179,7 +180,7 @@ public struct AdaptiveLayoutsShowcaseView: View {
     }
 }
 
-@available(iOS 15, macOS 12, tvOS 17, watchOS 8, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 #Preview("Adpative Layouts") {
     AdaptiveLayoutsShowcaseView()
 }
