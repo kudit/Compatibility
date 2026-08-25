@@ -1,5 +1,24 @@
 # Changelog
 
+## v1.19.0 2026-08-24
+Expanded reusable mixed-type coding coverage for keyed and unkeyed containers, numeric decoding, and deterministic failure paths.
+Made the Material demo navigation trigger an unambiguous accessibility Button and strengthened its UI-test lookup.
+Retained reusable Debug and Threading coverage with process-global debug state restoration via `defer`.
+Added `Compatibility Testing Library` and `ModuleTestEntry` so reusable module `TestCase`s run as named parameterized Swift Testing cases in SwiftPM and Xcode.
+Unified reusable test execution through one lifecycle with parallel/serialized modes, source-aware failures, and reliable cleanup of mutable debug settings.
+Consolidated debug formatting and source-context handling, and removed unnecessary main-actor isolation from debug logging.
+Corrected `main` so it can be called from any thread while only its closure is main-actor isolated; full-runtime WebAssembly now uses real Swift concurrency for main-actor scheduling.
+Removed misleading WASM/Embedded fallbacks for `sleep`, `background`, and `delay`; these APIs are now unavailable there rather than silently providing incorrect semantics. `main` remains available on full-runtime WASM but is unavailable in Embedded Swift.
+Improved the reusable test UI and Xcode/SwiftPM test integration, including parameterized Test Navigator results and unified unit/UI test execution.
+Expanded contributor guidance for short, staged, maintainer-reviewed coding workflows.
+Updated `closure` and `if` view modifiers to take `@ViewBuilder` so that contents don't need to be wrapped in `Group {}`.
+Fixed several functions that were unnecessarily gated to macOS 12 but supported on macOS 10.15.
+Changed `buildDate` to return an optional rather than forcing today's date when `buildDate` cannot be determined. 
+Added and re-worked visual tests into showcase views.
+Moved `SourceContext` out of tests and into `Debug.swift` since it is now used in multiple non-test code.
+Created typealias of `String` to `SFSymbol` to make call sites and APIs clearer without changing contracts.
+Increased automated code coverage to 86%.
+
 ## v1.18.2 2026-07-23
 Fixed Swift Package Index build errors and warnings across SwiftUI and WebAssembly targets.
 Replaced conditional SwiftUI `Group` wrappers with direct `@ViewBuilder` results and concrete text-selection types.

@@ -164,26 +164,34 @@ public class Application: ObservableObject { // The private initializer preserve
     ///   - line: Source line that initiated tracking.
     ///   - column: Source column that initiated tracking.
     public static func track(including modules: [Module.Type] = [], file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) {
+        track(
+            including: modules,
+            source: SourceContext(file: file, function: function, line: line, column: column)
+        )
+    }
+
+    /// Source-forwarding form for callers that have already captured their own call site.
+    public static func track(including modules: [Module.Type] = [], source: SourceContext) {
         // Compatibility supplies Application itself, so it belongs in every tracked application's module report.
         Compatibility.include()
         Build.register(modules)
         // Prevent late mutation once asynchronous support reporting can begin reading the global registry.
         Build.finishModuleRegistration()
         // Calling Application.main is what initializes the application and does the tracking.  This really should only be called once.  TODO: Should we check to make sure this isn't called twice??  Application.main singleton should only be inited once.
-        debug("Application Tracking: \(Application.main.appName)", level: .NOTICE, file: file, function: function, line: line, column: column) // Initialize persisted version state synchronously before detached reporting begins.
+        Compatibility.debug("Application Tracking: \(Application.main.appName)", level: .NOTICE, source: source) // Initialize persisted version state synchronously before detached reporting begins.
         // Defer the complete report so modules may calculate or fetch metadata without blocking application launch.
 #if arch(wasm32)
         // Full-runtime WebAssembly supports unstructured tasks, but the detached
         // convenience wrappers require host scheduling facilities.
         Task { @MainActor in
             let description = await Application.main.loadDetailedDescription()
-            debug("Application Detailed Tracking:\n\(description)", level: .NOTICE, file: file, function: function, line: line, column: column)
+            Compatibility.debug("Application Detailed Tracking:\n\(description)", level: .NOTICE, source: source)
         }
 #else
         Task.background {
             let description = await Application.main.loadDetailedDescription()
             Task.main {
-                debug("Application Detailed Tracking:\n\(description)", level: .NOTICE, file: file, function: function, line: line, column: column)
+                Compatibility.debug("Application Detailed Tracking:\n\(description)", level: .NOTICE, source: source)
             }
         }
 #endif

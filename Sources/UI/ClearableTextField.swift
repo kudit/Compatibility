@@ -12,7 +12,7 @@ import Combine
 // https://fatbobman.com/en/posts/textfield-event-focus-keyboard/
 
 // TODO: Allow selection when tapping? https://stackoverflow.com/questions/67502138/select-all-text-in-textfield-upon-click-swiftui
-@available(iOS 15, macOS 12, tvOS 15, watchOS 9, *)
+@available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
 public struct ClearableTextField: View {
     @State var label: String
     @Binding var text: String?
@@ -56,6 +56,11 @@ public struct ClearableTextField: View {
                 }
             })
             .focused($isFocused)
+            // Return/Done is also an intentional commit point. This keeps the field quiet while typing
+            // but lets keyboard-driven users explicitly persist a value without first clicking elsewhere.
+            .onSubmit {
+                persistChanges()
+            }
             if fieldText != "" {
                 Button {
                     fieldText = ""
@@ -74,6 +79,9 @@ public struct ClearableTextField: View {
                     .padding(.leading, 10)
                     #endif
                 }
+                // Give UI tests and VoiceOver a stable semantic name rather than exposing the
+                // implementation detail of whichever symbol/text fallback draws the clear control.
+                .accessibilityLabel("Clear \(label)")
                 .buttonStyle(.plain)                        // ensures the clear button isn't automatically invoked when tapping on row.
             }
         }

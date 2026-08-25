@@ -28,9 +28,52 @@
 /// Primarily for Enums which can be represented by an SF Symbol.
 public protocol SymbolRepresentable {
     /// An SF Symbol name string.
-    var symbolName: String { get }
+    var symbolName: SFSymbol { get }
 }
 
-public extension String {
+public typealias SFSymbol = String
+public extension SFSymbol {
+    /// attempts to provide a fallback for a missing SF Symbol
+    var fallbackForSymbol: String? {
+        // Could include other fallback logic here
+        let fallback = self
+            .replacingOccurrences(of: ".fill", with: "")
+            .replacingOccurrences(of: ".", with: " ")
+        if fallback == self {
+            return nil
+        }
+        return fallback
+    }
+    
+    /// Returns a small, deterministic emoji approximation for common SF Symbol names.
+    /// The map is intentionally local so symbol fallback behavior is stable on legacy platforms.
+    var emojiForSymbol: String? {
+        [
+            "calendar": "📅",
+            "applelogo": "",
+            "heart.fill": "❤️",
+            "star.fill": "⭐",
+            "checkmark": "✓",
+            "xmark": "✖️",
+            "play.fill": "▶️",
+            // TODO: Expand this
+        ][self]
+    }
+
+    /// Returns a Unicode approximation when no emoji approximation is available.
+    var unicodeForSymbol: String? {
+        [
+            "multiply.circle.fill": "×",
+            "questionmark": "?",
+            "plus": "+",
+            "minus": "−",
+            "chevron.left": "‹",
+            "chevron.right": "›",
+            "questionmark.square.fill": "⍰",
+            "play.fill": "▸",
+            // TODO: Expand this
+        ][self]
+    }
+
     static let defaultUnknownSymbol = "questionmark.square.fill"
 }

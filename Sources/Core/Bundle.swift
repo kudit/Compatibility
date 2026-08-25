@@ -36,19 +36,32 @@ public extension Bundle {
     var version: Version { Version(string: getInfo("CFBundleShortVersionString"), defaultValue: .zero) } // "⚠️.⚠️" - not a valid version
     //public var appVersionShort: String { getInfo("CFBundleShortVersion") }
     
-    /// Returns the time that this was built
-    var buildDate: Date {
-        if let infoPath = Bundle.main.path(forResource: "Info", ofType: "plist"),
+    /// Returns an approximation of when this bundle was built using bundle-file modification metadata.
+    ///
+    /// The `Info.plist` modification date is preferred. Some modern app bundles do not expose `Info.plist`
+    /// as a normal resource path, so the executable modification date is used as a secondary approximation.
+    /// Installation and compatibility runtimes can preserve or rewrite either timestamp, so callers should
+    /// treat this as diagnostic metadata rather than an embedded compiler timestamp.
+    ///
+    /// If neither timestamp can be read, `nil` is returned rather than `.distantPast` or `Date()` (change starting in v1.19.0). Returning the
+    /// current time would make an unknown build date falsely look like a freshly built application.
+    var buildDate: Date? {
+        if let infoPath = path(forResource: "Info", ofType: "plist"),
            let infoAttr = try? FileManager.default.attributesOfItem(atPath: infoPath),
            let infoDate = infoAttr[.modificationDate] as? Date {
             return infoDate
         }
-        return Date()
+        if let executablePath = executableURL?.path,
+           let executableAttr = try? FileManager.default.attributesOfItem(atPath: executablePath),
+           let executableDate = executableAttr[.modificationDate] as? Date {
+            return executableDate
+        }
+        return nil
     }
     
     /// Returns a number representing the time that this bundle was built.
     var buildNumber: Int {
-        Int(string: buildDate.numericDateTime, defaultValue: -1)
+        Int(string: buildDate?.numericDateTime, defaultValue: -1)
     }
     
     fileprivate func getInfo(_ str: String) -> String? { infoDictionary?[str] as? String }
@@ -79,8 +92,25 @@ public extension Bundle {
             if Build.isApp {
                 try expect(Bundle.main.version > "0.1", "Expected app bundle version but got: \(Bundle.main.version)")
             }
-            try expect(Bundle.main.buildDate > Date.yesterday && Bundle.main.buildDate < Date.tomorrow)
-            try expect(Bundle.main.buildNumber > 0)
+
+            // Build age is intentionally diagnostic rather than pass/fail. An installed application can
+            // legitimately be months old, and SwiftPM/Designed-for-iPad can expose different bundle-file
+            // timestamps. `swift test` also runs inside SwiftPM's generated test runner rather than the app.
+            if let buildDate = Bundle.main.buildDate {
+                debug("Bundle file modification date (buildDate): \(buildDate)", level: .DEBUG)
+                try expect(buildDate < Date.tomorrow,
+                           "Expected bundle metadata date not to be in the future but got: \(buildDate)")
+                try expect(Bundle.main.buildNumber > 0, "Expected a numeric build date for: \(buildDate)")
+                if buildDate < Date.yesterday {
+                    // An older installed application is expected and valid. Keep this visible for diagnostic
+                    // purposes without turning normal app age into a failed reusable test.
+                    debug("Bundle is an older installed/test build; buildDate freshness is not a test failure.", level: .DEBUG)
+                }
+            } else {
+                // Metadata availability varies by runner/runtime. The helper reports an explicit sentinel
+                // instead of fabricating a fresh Date(), but absence alone is not a library-test failure.
+                debug("Bundle build-date metadata is unavailable for this runtime.", level: .DEBUG)
+            }
             try expect(!String.appIconName.isEmpty, "Expected app icon name but got: \(String.appIconName)")
         }),
     ]

@@ -204,7 +204,7 @@ public extension Compatibility {
 }
 
 #if compiler(>=5.9)
-@available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 extension Pasteboard {
     /// Deterministic pasteboard tests shared by the in-app runner and Swift Testing.
     @MainActor
@@ -226,6 +226,20 @@ extension Pasteboard {
             pasteboard.copy(items)
             try expect(pasteboard.read() == items, "Expected typed pasteboard items to retain bytes and ordering")
             try expect(pasteboard.readString() == "First", "Expected the first text representation")
+        },
+        TestCase("In-memory pasteboard clearing") { @MainActor in
+            let pasteboard = Pasteboard()
+            pasteboard.copy("temporary")
+            pasteboard.copy([])
+            try expect(pasteboard.read().isEmpty, "Clearing an in-memory pasteboard should remove every item")
+            try expect(pasteboard.readString() == nil, "Clearing should remove the text representation")
+        },
+        TestCase("In-memory pasteboard replacement") { @MainActor in
+            let pasteboard = Pasteboard()
+            pasteboard.copy([PasteboardItem(string: "first"), PasteboardItem(string: "second")])
+            pasteboard.copy("replacement")
+            try expect(pasteboard.read().count == 1)
+            try expect(pasteboard.readString() == "replacement")
         },
     ]
 }

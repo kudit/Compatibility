@@ -87,9 +87,10 @@ public enum MixedTypeField: Equatable, Sendable, Hashable {
             self = .array(value.map { MixedTypeField(encoding: $0) })
         } else if let string = value as? LosslessStringConvertible { // needed to move down later because bool and numbers are convertible to string
             self = .string(string.description)
-        } else if value as? MixedTypeField == Optional<MixedTypeField>.none {
-            // this is how we check for null nil
-            self = .null
+// NOTE: non-existent fields should not be encoded as .null, they should simply be nil (which happens when skipping this).  Setting a value to .null doesn't actually work.
+//        } else if value as? MixedTypeField == Optional<MixedTypeField>.none {
+//            // this is how we check for null nil
+//            self = .null
         } else {
             debug("Encoding error creating a MixedTypeField from value (likely not Encodable): \(value)", level: .WARNING)
             return nil
@@ -194,11 +195,11 @@ public enum MixedTypeField: Equatable, Sendable, Hashable {
 }
 
 #if compiler(>=5.9)
-@available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension MixedTypeField {
-    /// Shared value, formatting, and `Field` integration tests available to the in-app and Swift Testing runners.
+    /// Existing shared value, formatting, and `Field` integration coverage retained as its own collection.
     @MainActor
-    static let tests = [
+    private static let mixedTypeValueTests: [TestCase] = [
         TestCase("Descriptions, conformances, and Field conveniences") {
             // Compile-time generic constraints ensure these public values remain safe across concurrency boundaries.
             func requireSendable<Value: Sendable>(_ value: Value) { _ = value }
@@ -256,6 +257,170 @@ public extension MixedTypeField {
 #endif
         },
     ]
+
+#if !hasFeature(Embedded)
+    /// Additional dynamic coding coverage kept outside conditional directives embedded in an array literal.
+    @MainActor
+    private static let mixedTypeCodingCoverageTests: [TestCase] = [
+        TestCase("Mixed type accessors and coding containers") {
+            // Exercise every public accessor's matching and non-matching paths, including exact conversion
+            // between integral doubles and Int plus the intentionally lossy-rejected fractional case.
+            try expect(MixedTypeField.string("value").stringValue == "value")
+            try expect(MixedTypeField.int(1).stringValue == nil)
+            try expect(MixedTypeField.bool(true).boolValue == true)
+            try expect(MixedTypeField.string("true").boolValue == nil)
+            try expect(MixedTypeField.int(7).intValue == 7)
+            try expect(MixedTypeField.double(7).intValue == 7)
+            try expect(MixedTypeField.double(7.5).intValue == nil)
+            try expect(MixedTypeField.double(2.5).doubleValue == 2.5)
+            try expect(MixedTypeField.int(2).doubleValue == 2)
+            try expect(MixedTypeField.string("2").doubleValue == nil)
+            try expect(MixedTypeField.dictionary(["a": .int(1)]).dictionaryValue?["a"] == .int(1))
+            try expect(MixedTypeField.int(1).dictionaryValue == nil)
+            try expect(MixedTypeField.array([.int(1)]).arrayValue == [.int(1)])
+            try expect(MixedTypeField.int(1).arrayValue == nil)
+
+            // Exercise the dynamic encoding initializer's supported primitive and collection branches.
+            try expect(MixedTypeField(encoding: nil) == .null)
+            try expect(MixedTypeField(encoding: MixedTypeField.string("already")) == .string("already"))
+            try expect(MixedTypeField(encoding: true) == .bool(true))
+            try expect(MixedTypeField(encoding: Int8(8)) == .int(8))
+            try expect(MixedTypeField(encoding: Float(1.5)) == .double(1.5))
+            try expect(MixedTypeField(encoding: "text") == .string("text"))
+            try expect(MixedTypeField(encoding: [1, "two"] as [Any]) == .array([.int(1), .string("two")]))
+            try expect(MixedTypeField(encoding: ["answer": 42]) == .dictionary(["answer": .int(42)]))
+            struct UnsupportedValue {}
+            var unsupported: MixedTypeField?
+            debugSuppress {
+                unsupported = MixedTypeField(encoding: UnsupportedValue())
+            }
+            try expect(unsupported == nil)
+
+            // Custom probes deliberately call container APIs that synthesized Codable commonly bypasses,
+            // so their behavior remains covered by the same reusable tests on SwiftPM and in the demo app.
+            struct KeyedNilPayload: Encodable {
+                enum CodingKeys: String, CodingKey { case value, nothing }
+                func encode(to encoder: Encoder) throws {
+                    var container = encoder.container(keyedBy: CodingKeys.self)
+                    try container.encode("value", forKey: .value)
+                    try container.encodeNil(forKey: .nothing)
+                }
+            }
+            let keyedEncoded = try KeyedNilPayload().asMixedTypeField()
+            let keyedDictionary = keyedEncoded.dictionaryValue
+            try expect((keyedDictionary?["value"] ?? nil) == .string("value"))
+            try expect((keyedDictionary?["nothing"] ?? nil) == .null)
+
+            struct KeyedProbe: Decodable {
+                enum CodingKeys: String, CodingKey { case value, nothing, missing }
+                let value: String
+                let containsValue: Bool
+                let containsMissing: Bool
+                let nothingIsNil: Bool
+                let keys: [String]
+                init(from decoder: Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    containsValue = container.contains(.value)
+                    containsMissing = container.contains(.missing)
+                    nothingIsNil = try container.decodeNil(forKey: .nothing)
+                    keys = container.allKeys.map(\.stringValue).sorted()
+                    value = try container.decode(String.self, forKey: .value)
+                }
+            }
+            let keyedProbe = try KeyedProbe(fromMixedTypeField: .dictionary([
+                "value": .string("decoded"),
+                "nothing": .null,
+            ]))
+            try expect(keyedProbe.value == "decoded")
+            try expect(keyedProbe.containsValue)
+            try expect(!keyedProbe.containsMissing)
+            try expect(keyedProbe.nothingIsNil)
+            try expect(keyedProbe.keys == ["nothing", "value"])
+
+            struct UnkeyedNilPayload: Encodable {
+                func encode(to encoder: Encoder) throws {
+                    var container = encoder.unkeyedContainer()
+                    try container.encodeNil()
+                    try container.encode(9)
+                }
+            }
+            try expect(try UnkeyedNilPayload().asMixedTypeField() == .array([.null, .int(9)]))
+
+            struct UnkeyedProbe: Decodable {
+                let count: Int?
+                let firstIsNil: Bool
+                let second: Int
+                init(from decoder: Decoder) throws {
+                    var container = try decoder.unkeyedContainer()
+                    count = container.count
+                    firstIsNil = try container.decodeNil()
+                    second = try container.decode(Int.self)
+                }
+            }
+            let unkeyedProbe = try UnkeyedProbe(fromMixedTypeField: .array([.null, .int(11)]))
+            try expect(unkeyedProbe.count == 2)
+            try expect(unkeyedProbe.firstIsNil)
+            try expect(unkeyedProbe.second == 11)
+
+            // Exhaustion must report a value-not-found error rather than silently reusing the final item.
+            do {
+                struct OverreadingArray: Decodable {
+                    init(from decoder: Decoder) throws {
+                        var container = try decoder.unkeyedContainer()
+                        _ = try container.decode(Int.self)
+                        _ = try container.decode(Int.self)
+                        _ = try container.decode(Int.self)
+                    }
+                }
+                let _: OverreadingArray = try MixedTypeFieldDecoder().decode(OverreadingArray.self, from: .array([.int(1), .int(2)]))
+                try expect(false, "Expected an unkeyed end-of-container error")
+            } catch DecodingError.valueNotFound {
+                // Expected.
+            } catch {
+                throw error
+            }
+
+            // Float has a dedicated SingleValueDecodingContainer overload that otherwise remained unexecuted.
+            let float = try Float(fromMixedTypeField: .double(3.25))
+            try expect(float == 3.25)
+            try expect(try Int8(fromMixedTypeField: .int(8)) == 8)
+            try expect(try UInt16(fromMixedTypeField: .int(16)) == 16)
+            try expect(try Int64(fromMixedTypeField: .int(64)) == 64)
+
+            // Validate representative decoder errors and propagate anything unexpected.
+            do {
+                let _: Int = try .init(fromMixedTypeField: .string("not an int"))
+                try expect(false, "Expected a typeMismatch decoding error")
+            } catch DecodingError.typeMismatch {
+                // Expected.
+            } catch {
+                throw error
+            }
+
+            struct RequiredValue: Decodable {
+                let required: String
+            }
+            do {
+                let _: RequiredValue = try .init(fromMixedTypeField: .dictionary([:]))
+                try expect(false, "Expected a keyNotFound decoding error")
+            } catch DecodingError.keyNotFound {
+                // Expected.
+            } catch {
+                throw error
+            }
+        },
+    ]
+#endif
+
+    /// Shared tests consumed by both the in-app All Tests UI and the Swift Testing bridge.
+    @MainActor
+    static let tests: [TestCase] = {
+#if hasFeature(Embedded)
+        mixedTypeValueTests
+#else
+        mixedTypeValueTests + mixedTypeCodingCoverageTests
+#endif
+    }()
 }
 #endif
 
@@ -342,21 +507,33 @@ fileprivate final class _FieldEncoder: Encoder {
         
         fileprivate init(encoder: _FieldEncoder) {
             self.encoder = encoder
-            self.dict = MixedTypeDictionary()
+            if case let .dictionary(existing) = encoder.storage {
+                self.dict = existing
+            } else {
+                self.dict = MixedTypeDictionary()
+            }
+        }
+
+        /// KeyedEncodingContainer may copy its value-type backing container between calls. Re-read the
+        /// encoder's accumulated dictionary before each write so earlier keys are never discarded.
+        private mutating func store(_ value: MixedTypeField?, forKey key: K) {
+            if case let .dictionary(existing) = encoder.storage {
+                dict = existing
+            }
+            dict[key.stringValue] = value
+            encoder.storage = .dictionary(dict)
         }
         
         mutating func encodeNil(forKey key: K) throws {
             // represent explicit JSON null as .null inside the optional-value dictionary
-            dict[key.stringValue] = .null
-            encoder.storage = .dictionary(dict)
+            store(.null, forKey: key)
         }
         
         mutating func encode<T>(_ value: T, forKey key: K) throws where T : Encodable {
             // Primitive values are handled by the nested encoder's SingleValueContainer
             let nested = _FieldEncoder()
             try value.encode(to: nested)
-            dict[key.stringValue] = nested.storage
-            encoder.storage = .dictionary(dict)
+            store(nested.storage, forKey: key)
         }
         
         mutating func nestedContainer<NestedKey>(keyedBy keyType: NestedKey.Type, forKey key: K) -> KeyedEncodingContainer<NestedKey> where NestedKey : CodingKey {
@@ -390,12 +567,14 @@ fileprivate final class _FieldEncoder: Encoder {
         }
         
         mutating func encodeNil() throws {
+            if case let .array(existing) = encoder.storage { array = existing }
             array.append(.null)
             count += 1
             encoder.storage = .array(array)
         }
         
         mutating func encode<T>(_ value: T) throws where T : Encodable {
+            if case let .array(existing) = encoder.storage { array = existing }
             let nested = _FieldEncoder()
             try value.encode(to: nested)
             array.append(nested.storage)
@@ -643,6 +822,45 @@ fileprivate final class _FieldDecoder: Decoder {
         func decode(_ type: Int.Type) throws -> Int {
             if case let .int(v) = field { return v }
             throw typeMismatch(type)
+        }
+
+        // Integer protocol initializers ask for their exact concrete type. Explicit overloads keep
+        // those requests on the primitive representation instead of recursing through the generic path.
+        func decode(_ type: Int8.Type) throws -> Int8 {
+            guard let value = Int8(exactly: try decode(Int.self)) else { throw typeMismatch(type) }
+            return value
+        }
+        func decode(_ type: Int16.Type) throws -> Int16 {
+            guard let value = Int16(exactly: try decode(Int.self)) else { throw typeMismatch(type) }
+            return value
+        }
+        func decode(_ type: Int32.Type) throws -> Int32 {
+            guard let value = Int32(exactly: try decode(Int.self)) else { throw typeMismatch(type) }
+            return value
+        }
+        func decode(_ type: Int64.Type) throws -> Int64 {
+            guard let value = Int64(exactly: try decode(Int.self)) else { throw typeMismatch(type) }
+            return value
+        }
+        func decode(_ type: UInt.Type) throws -> UInt {
+            guard let value = UInt(exactly: try decode(Int.self)) else { throw typeMismatch(type) }
+            return value
+        }
+        func decode(_ type: UInt8.Type) throws -> UInt8 {
+            guard let value = UInt8(exactly: try decode(Int.self)) else { throw typeMismatch(type) }
+            return value
+        }
+        func decode(_ type: UInt16.Type) throws -> UInt16 {
+            guard let value = UInt16(exactly: try decode(Int.self)) else { throw typeMismatch(type) }
+            return value
+        }
+        func decode(_ type: UInt32.Type) throws -> UInt32 {
+            guard let value = UInt32(exactly: try decode(Int.self)) else { throw typeMismatch(type) }
+            return value
+        }
+        func decode(_ type: UInt64.Type) throws -> UInt64 {
+            guard let value = UInt64(exactly: try decode(Int.self)) else { throw typeMismatch(type) }
+            return value
         }
 
         func decode<T>(_ type: T.Type) throws -> T where T : Decodable {

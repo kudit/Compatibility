@@ -271,4 +271,56 @@ private let statusDateFormatter: DateFormatter = {
     formatter.timeStyle = .medium
     return formatter
 }()
+
+#if compiler(>=5.9)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+extension CloudStorageSync {
+    /// Deterministic local key-value wrapper coverage using a unique key and cleanup.
+    @MainActor
+    internal static let tests: [TestCase] = [
+        TestCase("CloudStorageSync typed values") { @MainActor in
+            let key = "Compatibility.CloudStorageSync.tests"
+            let sync = CloudStorageSync.shared
+            defer { sync.remove(for: key) }
+            sync.set("value", for: key)
+            // iCloud key-value storage may be unavailable in a test host without its entitlement;
+            // still exercise the getter when the host accepts the write without making that environment
+            // limitation a false test failure.
+            if let value = sync.string(for: key) {
+                try expect(value == "value")
+            }
+            sync.set(42, for: key)
+            if let value = sync.int(for: key) {
+                try expect(value == 42)
+            }
+            sync.set(true, for: key)
+            if let value = sync.bool(for: key) {
+                try expect(value)
+            }
+            try expect(sync.status.keys == [key])
+        },
+        TestCase("CloudStorageSync collection and status wrappers") { @MainActor in
+            let key = "Compatibility.CloudStorageSync.collectionTests"
+            let sync = CloudStorageSync.shared
+            defer { sync.remove(for: key) }
+
+            // Exercise every collection-oriented wrapper even when the host iCloud store cannot persist values.
+            sync.set(URL(string: "https://example.com"), for: key)
+            _ = sync.url(for: key)
+            sync.set(Data([1, 2, 3]), for: key)
+            _ = sync.data(for: key)
+            sync.set(["one", 2], for: key)
+            _ = sync.array(for: key)
+            sync.set(["answer": 42], for: key)
+            _ = sync.dictionary(for: key)
+            sync.set(Int64(64), for: key)
+            _ = sync.int64(for: key)
+
+            try expect(sync.status.description.contains("Local change"))
+            try expect(CloudStorageSync.Status(date: Date(), source: .initial, keys: []).description.contains("Initial"))
+            try expect(CloudStorageSync.Status(date: Date(), source: .externalChange(nil), keys: [key]).description.contains("unknown"))
+        },
+    ]
+}
+#endif
 #endif

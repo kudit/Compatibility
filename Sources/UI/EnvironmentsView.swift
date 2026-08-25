@@ -28,35 +28,39 @@ public struct EnvironmentsView: View {
     }
 
     public var body: some View {
-        Group {
-            if isExpanded {
-                VStack(alignment: .leading, spacing: 8) {
-                    ForEach(Build.Environment.allCases, id: \.self) { environment in
-                        let enabled = environmentSet.contains(environment)
-                        environmentItem(environment: environment, enabled: enabled)
+        Button(action: toggleExpanded) {
+            Group {
+                if isExpanded {
+                    VStack(alignment: .leading, spacing: 8) {
+                        ForEach(Build.Environment.allCases, id: \.self) { environment in
+                            let enabled = environmentSet.contains(environment)
+                            environmentItem(environment: environment, enabled: enabled)
+                        }
                     }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-            } else {
-                HStack(spacing: 6) {
-                    ForEach(Build.Environment.allCases, id: \.self) { environment in
-                        let enabled = environmentSet.contains(environment)
-                        environmentIcon(environment: environment, enabled: enabled)
+                    .accessibilityIdentifier("environment.debug")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    HStack(spacing: 6) {
+                        ForEach(Build.Environment.allCases, id: \.self) { environment in
+                            let enabled = environmentSet.contains(environment)
+                            environmentIcon(environment: environment, enabled: enabled)
+                        }
                     }
+                    .frame(maxWidth: .infinity, alignment: .center)
                 }
-                // The compact state fills the list row for tapping but keeps the icon
-                // group centered instead of spreading the symbols across the whole row.
-                .frame(maxWidth: .infinity, alignment: .center)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            // Make the complete row rectangle the button's hit target, including empty space beside
+            // the symbols and labels in both compact and expanded states.
+            .contentShape(Rectangle())
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .contentShape(Rectangle())
-        .backport.onTapGesture {
-            // Tapping anywhere in the view toggles the same inline content instead of
-            // navigating away, which keeps this useful in dense Device Info layouts.
-            toggleExpanded()
-        }
-        .accessibilityAddTraits(.isButton)
+        .buttonStyle(.plain)
+        .accessibilityLabel("Expand environments")
+        // Stable identifiers let the UI tour exercise both the compact and expanded branches
+        // without depending on whichever environment labels happen to be active on this runtime.
+        // Change the identifier with the state so the UI test can wait for the expanded body to finish
+        // rendering before it taps the same full-row button to collapse the view.
+        .accessibilityIdentifier(isExpanded ? "environment.expanded" : "environments.toggle")
     }
 
     private func environmentIcon(environment: Build.Environment, enabled: Bool) -> some View {
@@ -94,6 +98,7 @@ public struct EnvironmentsView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel((enabled ? "Is" : "Not") + " " + environment.label)
+        .accessibilityIdentifier("environment.\(environment.caseName)")
     }
 }
 
@@ -104,5 +109,20 @@ public struct EnvironmentsView: View {
 @available(iOS 14, macOS 12, tvOS 15, watchOS 8, *)
 #Preview("Environments ALL") {
     EnvironmentsView(Build.Environment.allCases)
+}
+#endif
+
+#if compiler(>=5.9)
+@available(iOS 14, macOS 12, tvOS 15, watchOS 8, *)
+extension EnvironmentsView {
+    /// Verifies the deterministic environment list used by both compact and expanded rendering.
+    @MainActor
+    internal static let tests: [TestCase] = [
+        TestCase("Environment view inventory") {
+            let environments = Build.Environment.allCases
+            try expect(!environments.isEmpty)
+            try expect(environments.allSatisfy { !$0.label.isEmpty && !$0.symbolName.isEmpty })
+        },
+    ]
 }
 #endif

@@ -17,9 +17,15 @@ public struct TestRow: View {
                 Text(test.progress.symbol)
                 Text(test.title)
                 Spacer()
-                Button("▶️") {
+                Button {
                     test.run()
+                } label: {
+                    Image(backportSystemName: "play.fill")
+                        .font(.system(size: 12, weight: .semibold))
+                        .frame(width: 28, height: 28)
                 }
+                .backport.buttonStyle(.glass)
+                .accessibility(label: Text("Run test"))
             }
             if let errorMessage = test.errorMessage {
                 Text(errorMessage)
@@ -165,6 +171,11 @@ public struct AllTestsListView: View {
     public var body: some View {
         List {
             ModuleTestSectionsView(modules: model.modules, additionalTests: model.additionalTests)
+            // A stable bottom marker lets UI automation stop as soon as the end is actually visible instead
+            // of issuing a fixed number of expensive swipe gestures after the list is already at the bottom.
+            Color.clear
+                .frame(height: 1)
+                .accessibilityIdentifier("allTests.bottom")
         }
         .backport.scrollContentBackground(.hidden)
         .background(.linearGradient(colors: [.red, .yellow, .green, .blue], startPoint: .topLeading, endPoint: .bottomTrailing))

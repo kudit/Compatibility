@@ -21,6 +21,20 @@
                ReferencedContainer = "container:Compatibility.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "B50707012C60A00100000001"
+               BuildableName = "CompatibilityUITests.xctest"
+               BlueprintName = "CompatibilityUITests"
+               ReferencedContainer = "container:Compatibility.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
@@ -30,7 +44,7 @@
       shouldUseLaunchSchemeArgsEnv = "YES">
       <TestPlans>
          <TestPlanReference
-            reference = "container:CompatibilityTests/CompatibilityTest.xctestplan"
+            reference = "container:CompatibilityTest.xctestplan"
             default = "YES">
          </TestPlanReference>
       </TestPlans>

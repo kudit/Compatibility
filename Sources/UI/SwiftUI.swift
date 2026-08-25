@@ -27,11 +27,14 @@ public extension View {
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension View {
     /// Applies the given transform if the given condition evaluates to `true`.
+    ///
+    /// The transform is a `ViewBuilder`, so it can use normal SwiftUI branching without requiring
+    /// `Group` or `AnyView` solely to reconcile different view types.
     /// - Parameters:
     ///   - condition: The condition to evaluate.
     ///   - transform: The transform to apply to the source `View`.
     /// - Returns: Either the original `View` or the modified `View` if the condition is `true`.
-    @ViewBuilder func `if`<Content: View>(_ condition: Bool, transform: (Self) -> Content) -> some View {
+    @ViewBuilder func `if`<Content: View>(_ condition: Bool, @ViewBuilder transform: (Self) -> Content) -> some View {
         if condition {
             transform(self)
         } else {
@@ -53,39 +56,36 @@ public extension View {
 
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension View {
-    /// Applies the given transform.  If using a branching call, both views must be the identical type or use `AnyView(erasing: VIEWCODE)` or a `Group { }` wrapper..
+    /// Applies the given transform to this view.
+    ///
+    /// The transform is a `ViewBuilder`, so it can use conditional compilation, availability checks,
+    /// and normal SwiftUI branching without requiring `Group` or `AnyView` solely for type erasure.
     /// - Parameters:
     ///   - transform: The transform to apply to the source `View`.
     /// - Returns: The modified `View`.
-    @ViewBuilder func closure<Content: View>(transform: (Self) -> Content) -> some View {
+    @ViewBuilder func closure<Content: View>(@ViewBuilder transform: (Self) -> Content) -> some View {
         transform(self)
     }
 }
 
 @available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
-public struct ClosureTestView: View {
+public struct RadialTestView: View {
     @State var symbol = "calendar"
     
     public init() {}
     public var body: some View {
         VStack {
-            Text("TestCase for availability")
-            Text("conditional inclusion")
-                .closure { content in
-                    if #available(iOS 999, macOS 999, tvOS 999, watchOS 999, visionOS 999, *) {
-                        AnyView(erasing: content.padding().background(.red).border(.yellow, width: 4))
-                    } else {
-                        AnyView(erasing: content.padding().background(.blue).border(.green, width: 4))
-                    }
-                }
             Text("Open Source projects used include [Compatibility](https://github.com/kudit/Compatibility) v\(Compatibility.version)")
                 .font(.caption)
             if #available(tvOS 17, *) {
-                MenuTest(symbol: $symbol)
+                MenuTest(symbol: $symbol, accessibilityIdentifier: "radial.inline.symbols.menu")
             } else {
                 // Fallback on earlier versions
                 // toolbars are not shown in tvOS?
             }
+            Text("Selected symbol: \(symbol)")
+                .font(.caption)
+                .accessibilityIdentifier("radial.symbol.status")
             
             RadialLayout {
                 ForEach(0..<24, id: \.self) { item in
@@ -101,20 +101,21 @@ public struct ClosureTestView: View {
         }
         .toolbar {
             if #available(tvOS 17, *) {
-                MenuTest(symbol: $symbol)
+                MenuTest(symbol: $symbol, accessibilityIdentifier: "radial.toolbar.symbols.menu")
                     .padding()
+                    .accessibilityIdentifier("radial.toolbar.symbols.menu")
             } else {
                 // Fallback on earlier versions
                 // toolbars are not shown in tvOS?
             }
         }
-        .backport.navigationTitle("Compatibility/Menu TestCase")
+        .backport.navigationTitle("RadialLayout/Menu Tests")
         .navigationWrapper()
     }
 }
 @available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
-#Preview("Closure TestCase") {
-    ClosureTestView()
+#Preview("RadialLayout TestCase") {
+    RadialTestView()
 }
 
 
@@ -292,42 +293,120 @@ public extension View {
 
 @available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
 public struct MaterialTestView: View {
+    @State private var showNavigationDetail = false
+    @State private var conditionalEnabled = true
     @State var showSheet: Bool = false
     public init() {}
     public var body: some View {
         ZStack {
             Color.clear
             HStack {
-                Text("Material")
-                    .backgroundMaterial()
+                Button {
+                        showNavigationDetail = true
+                    } label: {
+                        Text("Material Navigation")
+                            .backgroundMaterial()
+                            // Keep the identifier on the rendered label as well as the Button because
+                            // older SwiftUI accessibility bridges sometimes expose only the label node.
+                            .accessibilityIdentifier("material.navigation.trigger")
+                    }
+                    // Use a real Button so SwiftUI publishes one unambiguous actionable accessibility element;
+                    // the previous tappable Text could collide with the Material tab label in UI tests.
+                    .accessibilityIdentifier("material.navigation.trigger")
+                    .accessibilityLabel("Material Navigation")
                 Button {
                     showSheet = true
                 } label: {
                     Text("Glass")
                         .padding()
                 }
+                .accessibilityIdentifier("material.glass.button")
+                .accessibilityLabel("Glass")
                 .backport.glassEffect(.regular.interactive())
             }
-        }.background(.conicGradient(colors: [.red, .green, .blue], center: .center))
-            .sheet(isPresented: $showSheet) {
-                ZStack {
-//                    Color.blue
-                    AStack {
-                        Color.yellow
-                        Color.green
-                    }.padding()
-                }
-                .toolbar {
-                    ToolbarItem(placement: .bottomBackport) {
-                        Button("Close") {
-                            showSheet = false
-                        }
+            // Recreate the Material controls after navigation dismisses so the sheet trigger is not left
+            // in a stale accessibility subtree retained by the navigation backport.
+            .id(showNavigationDetail ? "material-navigation" : "material-root")
+        }
+        .background(.conicGradient(colors: [.red, .green, .blue], center: .center))
+        .sheet(isPresented: $showSheet) {
+            ZStack {
+                //                    Color.blue
+//                AStack {
+//                    Color.yellow
+//                    Color.green
+//                }.padding()
+                AdaptiveLayoutsShowcaseView()
+            }
+            .toolbar {
+                ToolbarItem(placement: .bottomBackport) {
+                    Button("Close") {
+                        showSheet = false
                     }
                 }
-                .navigationWrapper()
-                .backport.presentationDetents([.fraction(1/3), .medium, .large])
-                .backport.presentationBackground(.ultraThinMaterial)
             }
+            .navigationWrapper()
+            .backport.presentationDetents([.fraction(1/3), .medium, .large])
+            .backport.presentationBackground(.ultraThinMaterial)
+        }
+        .backport.navigationDestination(isPresented: $showNavigationDetail) {
+            ScrollView {
+                VStack(spacing: 20) {
+                    // Keep the destination itself tappable so this continues to exercise the binding-based
+                    // navigation backport while also providing useful content to inspect before returning.
+                    Button("Navigation Destination TestCase") {
+                        showNavigationDetail = false
+                    }
+
+                    GroupBox("Other View Utilities") {
+                        VStack(spacing: 12) {
+                            Text("RadialStack arranges its children around a circle using the same compact utility that can be embedded in other views.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+
+                            RadialStack {
+                                Circle().fill(.red)
+                                Circle().fill(.orange)
+                                Circle().fill(.yellow)
+                                Circle().fill(.green)
+                                Circle().fill(.blue)
+                                Circle().fill(.purple)
+                            }
+                            .frame(width: 180, height: 180)
+
+                            Toggle("Apply conditional modifier", isOn: $conditionalEnabled)
+                                .accessibilityIdentifier("material.conditional.toggle")
+
+                            Text(conditionalEnabled ? "Conditional modifier applied" : "Conditional modifier not applied")
+                                .if(conditionalEnabled) { view in
+                                    view
+                                        .padding(size: 6)
+                                        .background(.yellow.opacity(0.25))
+                                        .overlay {
+                                            RoundedRectangle(cornerRadius: 6)
+                                                .stroke(.orange, lineWidth: 2)
+                                        }
+                                }
+                                .closure { content in
+                                    if #available(iOS 999, macOS 999, tvOS 999, watchOS 999, visionOS 999, *) {
+                                        content.italic()
+                                    } else if #available(iOS 16, macOS 13, tvOS 16, watchOS 9, *) {
+                                        content.bold().foregroundStyle(.blue)
+                                    } else {
+                                        // Fallback on earlier versions
+                                        content.foregroundStyle(.red)
+                                    }
+                                }
+                                .accessibilityIdentifier("material.conditional.result")
+                        }
+                        .padding()
+                    }
+                }
+                .padding()
+            }
+            .accessibilityIdentifier("material.navigation.destination")
+        }
+        .navigationWrapper()
     }
 }
 

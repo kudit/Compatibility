@@ -35,7 +35,7 @@ extension Backport where Content == Any {
     }
 }
 
-@available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 extension Backport where Content == Any {
     @ViewBuilder public static func LabeledContent(_ titleKey: String, value: some StringProtocol) -> some View {
         if titleKey.count > 35 {
@@ -990,6 +990,26 @@ public struct Glass : Equatable, Sendable {
 #endif
 }
 
+#if compiler(>=5.9)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+extension Glass {
+    /// Covers the value semantics behind the Glass presentation modifier without rendering SwiftUI.
+    @MainActor
+    internal static let tests: [TestCase] = [
+        TestCase("Glass value configuration") {
+            let regular = Glass.regular
+            try expect(regular == .regular)
+            try expect(regular.interactive() != regular)
+            try expect(regular.interactive(false) != regular.interactive(true))
+            #if canImport(SwiftUI)
+            try expect(regular.tint(.red) != regular)
+            try expect(regular.tint(nil) == regular)
+            #endif
+        },
+    ]
+}
+#endif
+
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension Backport where Content: View {
     /// Applies a glass effect to this view.
@@ -1490,26 +1510,22 @@ public extension Backport where Content == Any {
     }
 
     /// Backport for SF Symbol images on platforms that don't support `Image(systemName:)`.
-    static func Image(systemName: String) -> AnyView {
-        if #available(macOS 11, *) {
-            return AnyView(SwiftUI.Image(systemName: systemName))
-        } else {
-            return AnyView(Text(symbolFallback(for: systemName)))
-        }
+    static func Image(systemName: SFSymbol) -> SwiftUI.Image {
+        return SwiftUI.Image(backportSystemName: systemName)
     }
+}
 
-    private static func symbolFallback(for systemName: String) -> String {
-        switch systemName {
-        case "calendar":
-            return "📅"
-        case "applelogo":
-            return "Apple"
-        case "multiply.circle.fill":
-            return "×"
-        default:
-            return systemName
-                .replacingOccurrences(of: ".fill", with: "")
-                .replacingOccurrences(of: ".", with: " ")
+/// Compatibility initializer for callers that need a real SwiftUI Image on platforms where
+/// `Image(systemName:)` was not available. The legacy symbol map only supplies the image name.
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+public extension SwiftUI.Image {
+    init(backportSystemName systemName: SFSymbol) {
+        // TODO: check lookups so we can use fallbackForSymbol
+        let fallback = systemName.fallbackForSymbol ?? systemName.emojiForSymbol ?? systemName.unicodeForSymbol ?? "questionmark.circle"
+        if #available(macOS 11, *) {
+            self.init(systemName: systemName)
+        } else {
+            self.init(fallback)
         }
     }
 }
@@ -1800,4 +1816,56 @@ public extension Backport where Content: View {
     
 }
 
+/// Button styles whose newest system appearance can be used through Compatibility's backport surface.
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+public enum BackportButtonStyle: Sendable {
+    /// Uses the system Liquid Glass button style when available and a material-backed circular fallback otherwise.
+    case glass
+}
+
+#if compiler(>=5.9) // Is this if necessary?
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+extension BackportButtonStyle {
+    /// Keeps the public style selection itself covered independently of SwiftUI rendering availability.
+    @MainActor
+    internal static let tests: [TestCase] = [
+        TestCase("Glass button style selection") {
+            let style = BackportButtonStyle.glass
+            if case .glass = style {
+                return
+            }
+            try expect(false, "Expected the available backport button style to be glass")
+        },
+    ]
+}
+#endif
+
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+@MainActor
+public extension Backport where Content: View {
+    /// Applies a Compatibility-managed button style whose appearance degrades gracefully on older systems.
+    ///
+    /// Use `.backport.buttonStyle(.glass)` instead of repeating availability checks at each call site.
+    @ViewBuilder
+    func buttonStyle(_ style: BackportButtonStyle) -> some View {
+        switch style {
+        case .glass:
+            if #available(iOS 26, macOS 26, tvOS 26, watchOS 26, *) {
+                content
+                    .buttonStyle(.glass)
+                    .buttonBorderShape(.circle)
+            } else if #available(iOS 15, macOS 12, tvOS 15, watchOS 8, *) {
+                content
+                    .buttonStyle(.plain)
+                    .background(.regularMaterial, in: Circle())
+                    .contentShape(Circle())
+            } else {
+                content
+                    .buttonStyle(.plain)
+                    .background(Circle().fill(Color.secondary.opacity(0.15)))
+                    .contentShape(Circle())
+            }
+        }
+    }
+}
 #endif

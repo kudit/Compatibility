@@ -43,7 +43,6 @@ public struct AdaptiveLayout<PContent, LContent>: View where PContent: View, LCo
         case .adaptive:
             GeometryReader { proxy in
                 if orientation.resolved(for: proxy) == .horizontal {
-                    // landscape
                     landscape()
                 } else {
                     portrait()
@@ -135,35 +134,54 @@ public struct AStack: View {
     }
 }
 
+/// Shows the adaptive stack and layout behaviors used by the preview and demo application.
 @available(iOS 15, macOS 12, tvOS 17, watchOS 8, *)
-#Preview("Adpative Layouts") {
-    AStack { orientation in
-        ZStack {
-            if orientation == .horizontal {
-                Color.yellow
-            } else {
-                Color.yellow.opacity(0.5)
+public struct AdaptiveLayoutsShowcaseView: View {
+    public init() {}
+
+    public var body: some View {
+        AStack { orientation in
+            ZStack {
+                Group {
+                    if orientation == .horizontal {
+                        Color.yellow
+                            .overlay { Text("1h") }
+                    } else {
+                        Color.yellow.opacity(0.5)
+                            .overlay { Text("1v") }
+                    }
+                }
+                HStack {
+                    AStack {
+                        Color.red
+                            .overlay { Text("2.1") }
+                        Color.blue
+                            .overlay { Text("2.2") }
+                    }
+                    AStack {
+                        Color.red
+                            .overlay { Text("3.1") }
+                        Color.yellow
+                            .overlay { Text("3.2") }
+                        Color.green
+                            .overlay { Text("3.3") }
+                    }
+                }.padding()
             }
-            HStack {
-                AStack {
-                    Color.red
-                    Color.blue
-                }
-                AStack {
-                    Color.red
-                    Color.yellow
-                    Color.green
-                }
-            }.padding()
-        }
-        ZStack {
-            Color.orange
-            VStack {
-                LinearGradient(colors: .rainbow, startPoint: .leading, endPoint: .trailing)
-                LinearGradient(colors: [.blue, .white, .red], startPoint: .leading, endPoint: .trailing)
-            }.padding()
+            ZStack {
+                Color.orange
+                VStack {
+                    LinearGradient(colors: .rainbow, startPoint: .leading, endPoint: .trailing)
+                    LinearGradient(colors: [.blue, .white, .red], startPoint: .leading, endPoint: .trailing)
+                }.padding()
+            }
         }
     }
+}
+
+@available(iOS 15, macOS 12, tvOS 17, watchOS 8, *)
+#Preview("Adpative Layouts") {
+    AdaptiveLayoutsShowcaseView()
 }
 
 #endif

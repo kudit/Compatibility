@@ -20,9 +20,9 @@ public extension Compatibility {
     ///
     /// - Note: This is only available in macOS and **not** macCatalyst or any other platform.
     @discardableResult // Add to suppress warnings when you don't want/need the result
-    static func safeShell(_ command: String, shell: String = "/bin/zsh", logCommand: Bool = true) throws -> String {
+    static func safeShell(_ command: String, shell: String = "/bin/zsh", logCommand: Bool = true, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) throws -> String {
         if logCommand {
-            debug("Attempting to run shell command:\n\(command)", level: .NOTICE)
+            Compatibility.debug("Attempting to run shell command:\n\(command)", level: .NOTICE, source: SourceContext(file: file, function: function, line: line, column: column))
         }
         
         let task = Process()
@@ -38,7 +38,7 @@ public extension Compatibility {
         
         let data = pipe.fileHandleForReading.readDataToEndOfFile()
         guard let output = String(data: data, encoding: .utf8) else {
-            throw CustomError("Failed to parse shell output as UTF-8", level: .ERROR) // this should never happen
+            throw CustomError("Failed to parse shell output as UTF-8", level: .ERROR, file: file, function: function, line: line, column: column) // this should never happen
         }
         
         return output

@@ -83,45 +83,10 @@ private func timeTolerance(start: TimeInterval, end: TimeInterval, expected: Tim
 
 // MARK: - Sleep
 
-#if arch(wasm32)
-public extension Compatibility {
-    /// WebAssembly compatibility spelling for sleep.
-    ///
-    /// A generic WebAssembly host does not guarantee a suspending timer, so this returns immediately
-    /// while preserving cross-platform source compatibility for code that does not require a delay.
-    static func sleep(
-        seconds: Double,
-        file: String = #file,
-        function: String = #function,
-        line: Int = #line,
-        column: Int = #column
-    ) {
-        // This gate describes the missing timer primitive, not missing Swift concurrency support:
-        // browser hosts must schedule a JavaScript timer while WASI hosts use host-specific clocks.
-        Compatibility.debug(
-            "Sleep is unavailable on this WebAssembly runtime; no delay occurred. Prefer an asynchronous host timer for browser or WASI code.",
-            isMainThread: true,
-            level: .WARNING,
-            file: file,
-            function: function,
-            line: line,
-            column: column
-        )
-    }
-}
-
-/// Legacy WebAssembly sleep spelling retained as an immediate compatibility fallback.
-@available(*, deprecated, renamed: "Compatibility.sleep(seconds:)", message: "Use Compatibility.sleep(seconds:) instead.")
-public func sleep(
-    seconds: Double,
-    file: String = #file,
-    function: String = #function,
-    line: Int = #line,
-    column: Int = #column
-) {
-    Compatibility.sleep(seconds: seconds, file: file, function: function, line: line, column: column)
-}
-#else
+// A sleep helper must actually suspend for the requested duration. Generic WASM hosts and Embedded
+// Swift do not provide the timer guarantees required by this API, so do not expose a no-op spelling
+// that silently returns immediately and masks timing assumptions in portable code.
+#if !arch(wasm32) && !hasFeature(Embedded)
 public extension Compatibility {
     /// Suspends the current asynchronous task for a number of seconds.
     ///
@@ -135,14 +100,23 @@ public extension Compatibility {
         line: Int = #line,
         column: Int = #column
     ) async {
+        await sleep(
+            seconds: seconds,
+            source: SourceContext(file: file, function: function, line: line, column: column)
+        )
+    }
+
+    /// Source-forwarding form for helpers that already captured the original call site.
+    @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+    static func sleep(seconds: Double, source: SourceContext) async {
         let duration = UInt64(seconds * 1_000_000_000)
         do {
             try await Task.sleep(nanoseconds: duration)
-            //            // Fallback on earlier versions
-            //            sleep(UInt32(seconds)) // give fetch from server time to finish
+            // Potential fallback for earlier versions/backport?  Likely unnecessary/unusable due to async but may be useful for a synchronous fallback?:
+            // sleep(UInt32(seconds)) // give fetch from server time to finish
         } catch {
             // do nothing but make debug log if we can.
-            debug("Sleep function was interrupted", level: .DEBUG, file: file, function: function, line: line, column: column)
+            Compatibility.debug("Sleep function was interrupted", level: .DEBUG, source: source)
         }
     }
 }
@@ -157,7 +131,10 @@ public func sleep(
     line: Int = #line,
     column: Int = #column
 ) async {
-    await Compatibility.sleep(seconds: seconds, file: file, function: function, line: line, column: column)
+    await Compatibility.sleep(
+        seconds: seconds,
+        source: SourceContext(file: file, function: function, line: line, column: column)
+    )
 }
 
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
@@ -170,7 +147,10 @@ public extension Task where Success == Never, Failure == Never {
         line: Int = #line,
         column: Int = #column
     ) async {
-        await Compatibility.sleep(seconds: seconds, file: file, function: function, line: line, column: column)
+        await Compatibility.sleep(
+            seconds: seconds,
+            source: SourceContext(file: file, function: function, line: line, column: column)
+        )
     }
 }
 
@@ -214,11 +194,12 @@ private let sleepTests: [TestCase] = [
 
 // MARK: - Background Tasks
 
+// A background helper must actually move work away from the caller. Do not provide a WASM/Embedded
+// syntax-only fallback that executes synchronously: that masks threading assumptions and can turn
+// otherwise-correct code into blocking work. These APIs are therefore unavailable on WASM/Embedded.
+#if !arch(wasm32) && !hasFeature(Embedded)
 public extension Compatibility {
     /// Runs potentially long synchronous work away from the main queue when threads are available.
-    ///
-    /// WebAssembly currently has no universally available Dispatch fallback, so its synchronous
-    /// implementation executes immediately even though actor and task language features exist.
     static func background(
         _ closure: @Sendable @escaping () -> Void,
         file: String = #file,
@@ -226,22 +207,17 @@ public extension Compatibility {
         line: Int = #line,
         column: Int = #column
     ) {
-#if arch(wasm32)
-        closure()
-#else
         DispatchQueue.global().async {
-//            debug("Running background block", level: .DEBUG, file: file, function: function, line: line, column: column)
+//          Compatibility.debug("Running background block", level: .DEBUG, source: SourceContext(file: file, function: function, line: line, column: column))
             closure()
         }
-#endif
     }
 
-#if !arch(wasm32)
     /// Starts nonthrowing asynchronous work in a detached background task.
     @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
-    static func background(_ closure: @Sendable @escaping () async -> Void) {
+    static func background(_ closure: @Sendable @escaping () async -> Void) { // TODO: Should this capture SourceContext for debugging?
         Task.detached(priority: .background) {
-//            debug("Running asynchronous background block", level: .DEBUG)
+//            Compatibility.debug("Running asynchronous background block", level: .DEBUG, source: SourceContext(file: file, function: function, line: line, column: column))
             await closure()
         }
     }
@@ -251,11 +227,8 @@ public extension Compatibility {
     static func background<ReturnType: Sendable>(
         _ closure: @Sendable @escaping () async throws -> ReturnType
     ) async throws -> ReturnType {
-#if canImport(Foundation)
+        // A full Swift runtime can still provide detached tasks without Foundation.
         return try await Task.detached(priority: .background, operation: closure).value
-#else
-        return try await closure()
-#endif
     }
 
     /// Runs nonthrowing asynchronous work that returns an optional value.
@@ -265,20 +238,18 @@ public extension Compatibility {
     ) async -> ReturnType? {
         await Task.detached(priority: .background, operation: closure).value
     }
-#endif
 }
 
 /// Runs synchronous work away from the main queue using the concise, deployment-compatible spelling.
 ///
 /// Use ``Compatibility/background(_:file:function:line:column:)`` when another API, such as
 /// SwiftUI's `View.background`, makes the unqualified name ambiguous. Callers that already require
-/// iOS 13, macOS 10.15, tvOS 13, or watchOS 6 can instead use `Task.background`.
+/// iOS 13, macOS 10.15, tvOS 13, or watchOS 6 should instead use `Task.background`.
 public func background(_ closure: @Sendable @escaping () -> Void) {
     // Keep this concise API independent of Swift concurrency so callers can deploy before iOS 13.
     Compatibility.background(closure)
 }
 
-#if !arch(wasm32)
 /// Legacy unqualified asynchronous background helper retained for source compatibility.
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 @available(*, deprecated, renamed: "Task.background", message: "Use Compatibility.background or Task.background instead.")
@@ -338,43 +309,27 @@ private let backgroundTests: [TestCase] = [
         }
         try expect(executed, "Compatibility.background did not execute its closure")
     },
+    TestCase("background return and throwing wrappers") {
+        // Exercise both detached return overloads with deterministic values so overload selection is covered.
+        let optionalValue: Int? = await Compatibility.background { () async -> Int? in 17 }
+        try expect(optionalValue == 17, "Optional-returning background wrapper returned the wrong value")
+
+        let throwingValue = try await Compatibility.background { () throws -> String in
+            "background result"
+        }
+        try expect(throwingValue == "background result", "Throwing background wrapper returned the wrong value")
+    },
 ]
 #endif
 
 // MARK: - Main
 
-#if arch(wasm32)
+// Embedded Swift cannot provide the scheduling semantics promised here, so omit the API there.
+// Full-runtime WebAssembly has Swift concurrency and follows the same modern availability branch;
+// only the legacy Dispatch fallback is conditionally compiled where Dispatch is actually available.
+#if !hasFeature(Embedded)
 public extension Compatibility {
-    /// Executes main-actor work immediately because this WebAssembly compatibility path is single threaded.
-    @MainActor
-    static func main(
-        _ closure: @Sendable @MainActor @escaping () -> Void,
-        file: String = #file,
-        function: String = #function,
-        line: Int = #line,
-        column: Int = #column
-    ) {
-        closure()
-    }
-}
-
-/// Runs work on the main actor using the concise spelling on WebAssembly.
-///
-/// Use ``Compatibility/main(_:file:function:line:column:)`` when an unqualified `main` name is ambiguous.
-@MainActor
-public func main(
-    _ closure: @Sendable @MainActor @escaping () -> Void,
-    file: String = #file,
-    function: String = #function,
-    line: Int = #line,
-    column: Int = #column
-) {
-    // Forward through the shared implementation so the concise and qualified spellings remain equivalent.
-    Compatibility.main(closure, file: file, function: function, line: line, column: column)
-}
-#else
-public extension Compatibility {
-    /// Schedules work on the main actor using concurrency or the older dispatch fallback.
+    /// Schedules work on the main actor using Swift concurrency or the older dispatch fallback.
     static func main(
         _ closure: @Sendable @MainActor @escaping () -> Void,
         file: String = #file,
@@ -384,7 +339,7 @@ public extension Compatibility {
     ) {
         if #available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *) {
             Task { @MainActor in
-//                debug("Running main-thread block", level: .DEBUG, file: file, function: function, line: line, column: column)
+                //                debug("Running main-thread block", level: .DEBUG, file: file, function: function, line: line, column: column)
                 closure()
             }
         } else {
@@ -406,7 +361,6 @@ public func main(
     line: Int = #line,
     column: Int = #column
 ) {
-    // Keep this concise API available before Swift concurrency by forwarding to the dispatch-capable implementation.
     Compatibility.main(closure, file: file, function: function, line: line, column: column)
 }
 
@@ -445,13 +399,12 @@ private let mainTests: [TestCase] = [
 
 // MARK: - Delay
 
+// A delay helper must actually postpone execution. Generic WASM hosts and Embedded Swift do not
+// provide the timing guarantees required here, so omit the API instead of executing immediately.
+#if !arch(wasm32) && !hasFeature(Embedded)
 public extension Compatibility {
     /// Runs a closure after a delay, using dispatch when Swift concurrency is unavailable.
     static func delay(_ seconds: Double, closure: @Sendable @escaping () -> Void) {
-#if arch(wasm32)
-        // WebAssembly has no blocking or asynchronous delay fallback in this compatibility layer.
-        closure()
-#else
         if #available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *) {
             Task {
                 await Task.sleep(seconds: seconds)
@@ -460,7 +413,6 @@ public extension Compatibility {
         } else {
             DispatchQueue.global().asyncAfter(deadline: DispatchTime.now() + seconds, execute: closure)
         }
-#endif
     }
 }
 
@@ -470,7 +422,6 @@ public func delay(_ seconds: Double, closure: @Sendable @escaping () -> Void) {
     Compatibility.delay(seconds, closure: closure)
 }
 
-#if !arch(wasm32)
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension Task where Success == Never, Failure == Never {
     /// Preferred concise spelling for Compatibility's delayed closure helper.
@@ -497,16 +448,15 @@ private let delayTests: [TestCase] = [
 #endif
 
 // MARK: - Tests and Previews
-
 #if compiler(>=5.9)
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension Compatibility {
     /// Reusable threading checks grouped without adding another public namespace.
     @MainActor
     static let threadingTests: [TestCase] = {
-#if arch(wasm32)
-        // Generic WebAssembly hosts do not provide the timing guarantees these
-        // delay and dispatch tests assert, so retain the catalog as an empty API.
+#if arch(wasm32) || hasFeature(Embedded)
+        // WASM/Embedded omit sleep, background, and delay rather than providing semantic no-op fallbacks.
+        // WebAssembly still exposes real MainActor scheduling, but its host-independent test catalog remains empty.
         return []
 #else
         return sleepTests + backgroundTests + mainTests + delayTests

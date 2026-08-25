@@ -1,6 +1,76 @@
+//
+//  Debug.swift
+//
+// Here since all releated to Debug code to simplify conditional code gates.
 
+#if hasFeature(Embedded)
+public typealias DebugMessage = String
+#else
+public typealias DebugMessage = Any
+#endif
 
-// Here since all releated to Debug code.
+/// A portable snapshot of the source location that initiated an operation.
+///
+/// Passing one value is useful when an asynchronous helper needs to retain and forward a caller's
+/// location. Existing APIs continue exposing individual source arguments for source compatibility,
+/// while new APIs can accept `SourceContext` when carrying the complete location is clearer.
+public struct SourceContext: Sendable, CustomStringConvertible {
+    public let file: String
+    public let function: String
+    public let line: Int
+    public let column: Int
+
+    /// Captures the call site when its individual defaults are used directly by a caller.
+    public init(
+        file: String = #file,
+        function: String = #function,
+        line: Int = #line,
+        column: Int = #column
+    ) {
+        self.file = file
+        self.function = function
+        self.line = line
+        self.column = column
+    }
+
+    public var description: String {
+        "\(file.lastPathComponent):\(line):\(column) in \(function)"
+    }
+}
+
+/// Named values supplied to a custom debug formatter.
+public struct DebugFormatContext: Sendable {
+    public let message: String
+    public let level: DebugLevel
+    public let isMainThread: Bool
+    public let emojiSupported: Bool
+    public let includeContext: Bool
+    public let includeTimestamp: Bool
+    public let source: SourceContext
+
+    public init(
+        message: String,
+        level: DebugLevel,
+        isMainThread: Bool,
+        emojiSupported: Bool,
+        includeContext: Bool,
+        includeTimestamp: Bool,
+        source: SourceContext
+    ) {
+        self.message = message
+        self.level = level
+        self.isMainThread = isMainThread
+        self.emojiSupported = emojiSupported
+        self.includeContext = includeContext
+        self.includeTimestamp = includeTimestamp
+        self.source = source
+    }
+}
+
+/// Structured debug formatter. New formatting options can be added to `DebugFormatContext`
+/// without expanding a positional closure signature.
+public typealias DebugFormatter = (DebugFormatContext) -> String
+
 public struct CompatibilityConfiguration: PropertyIterable {
     /// Override to change the which debug levels are output.  This level and higher (more important) will be output.
     public var debugLevelCurrent: DebugLevel = Build.isDebug ? .DEBUG : .WARNING
@@ -14,7 +84,7 @@ public struct CompatibilityConfiguration: PropertyIterable {
     /// Set this to a set of levels where we should include the context info.  Defaults to `.important` so that `NOTICE` and `DEBUG` messages are less noisy and easier to see.  Set this to `.none` to make `debug()` act exactly like `print()` at all levels.
     public var debugLevelsToIncludeContext = DebugLevels.important
     
-    /// Set whether timestamps should be included in debug messages.  If you need to customize the format of timestamps, use the `debugFormat()` override.
+    /// Set whether timestamps should be included in debug messages.  If you need to customize the format of timestamps, use the `debugFormatter` override.
     @available(*, deprecated, renamed: "debugLevelsToIncludeTimestamp", message: "Set `debugLevelsToIncludeTimestamp` instead.")
     public var debugIncludeTimestamp: Bool {
         get {
@@ -25,30 +95,70 @@ public struct CompatibilityConfiguration: PropertyIterable {
         }
     }
     public var debugLevelsToIncludeTimestamp = DebugLevels.none
-    
-    /// Generates string with context.  Set level to `.OFF` to just return the context without the message portion.
-    public var debugFormat = { (message: String, level: DebugLevel, isMainThread: Bool, emojiSupported: Bool, includeContext: Bool, includeTimestamp: Bool, file: String, function: String, line: Int, column: Int) -> String in
-        let message = "\(emojiSupported ? level.emoji : level.symbol) \(message)"
+
+    /// Preferred structured formatter used by all normal debug output.
+    public var debugFormatter: DebugFormatter = { context in
+        let message = "\(context.emojiSupported ? context.level.emoji : context.level.symbol) \(context.message)"
         var timestamp = ""
-        if includeTimestamp {
+        if context.includeTimestamp {
             #if canImport(Foundation)
             timestamp = "\(Date.nowBackport.mysqlDateTime): "
             #else
             timestamp = "UNABLE TO GET TIMESTAMP WITHOUT Foundation.Date: "
             #endif
         }
-        if includeContext {
-            let threadInfo = isMainThread ? "" : "^"
+        if context.includeContext {
+            let threadInfo = context.isMainThread ? "" : "^"
             #if canImport(Foundation)
-            let simplerFile = URL(fileURLWithPath: file).lastPathComponent
-            let simplerFunction = function.replacingOccurrences(of: "__preview__", with: "_p_")
+            let simplerFile = URL(fileURLWithPath: context.source.file).lastPathComponent
+            let simplerFunction = context.source.function.replacingOccurrences(of: "__preview__", with: "_p_")
             #else
-            let simplerFile = "\(file)".components(separatedBy: "/").last ?? "UNABLE TO GET LAST PATH COMPONENT WITHOUT Foundation.URL"
-            let simplerFunction = function
+            let simplerFile = "\(context.source.file)".components(separatedBy: "/").last ?? "UNABLE TO GET LAST PATH COMPONENT WITHOUT Foundation.URL"
+            let simplerFunction = context.source.function
             #endif
-            return "\(timestamp)\(simplerFile)(\(line)) : \(simplerFunction)\(threadInfo)\(level == .OFF ? "" : "\n\(message)")"
+            return "\(timestamp)\(simplerFile)(\(context.source.line)) : \(simplerFunction)\(threadInfo)\(context.level == .OFF ? "" : "\n\(message)")"
         } else {
             return "\(timestamp)\(message)"
+        }
+    }
+
+    /// Legacy positional formatter retained for source compatibility.
+    ///
+    /// New code should use `debugFormatter`, whose labeled context can grow without changing
+    /// the closure's function type or forcing every formatter assignment to update.
+    @available(*, deprecated, message: "Use debugFormatter with DebugFormatContext instead.")
+    public var debugFormat: (String, DebugLevel, Bool, Bool, Bool, Bool, String, String, Int, Int) -> String {
+        get {
+            let formatter = debugFormatter
+            return { message, level, isMainThread, emojiSupported, includeContext, includeTimestamp, file, function, line, column in
+                formatter(
+                    DebugFormatContext(
+                        message: message,
+                        level: level,
+                        isMainThread: isMainThread,
+                        emojiSupported: emojiSupported,
+                        includeContext: includeContext,
+                        includeTimestamp: includeTimestamp,
+                        source: SourceContext(file: file, function: function, line: line, column: column)
+                    )
+                )
+            }
+        }
+        set {
+            debugFormatter = { context in
+                newValue(
+                    context.message,
+                    context.level,
+                    context.isMainThread,
+                    context.emojiSupported,
+                    context.includeContext,
+                    context.includeTimestamp,
+                    context.source.file,
+                    context.source.function,
+                    context.source.line,
+                    context.source.column
+                )
+            }
         }
     }
     
@@ -114,11 +224,11 @@ public struct CustomError: Error, Sendable {
     }
     @discardableResult
     func debug() -> String {
-#if !hasFeature(Embedded)
-        return Compatibility.debug(description, level: level ?? DebugLevel.defaultLevel, file: file, function: function, line: line, column: column)
-#else
-        return Compatibility.debug(description, isMainThread: true, level: level ?? DebugLevel.defaultLevel, file: file, function: function, line: line, column: column)
-#endif
+        Compatibility.debug(
+            description,
+            level: level ?? DebugLevel.defaultLevel,
+            source: SourceContext(file: file, function: function, line: line, column: column)
+        )
     }
 }
 extension CustomError: CustomStringConvertible {
@@ -238,74 +348,84 @@ public enum DebugLevel: Comparable, CustomStringConvertible, CaseIterable, Senda
     }
 }
 
-/// Generates context string
-#if !DEBUG
-@available(*, deprecated, message: "Use Compatibility.settings.debugFormat with the desired formatting options instead.")
+/// Generates context string (here only for possible legacy compatibility usage.  Will be removed in version 2.
+@available(*, deprecated, message: "Use Compatibility.settings.debugFormatter with DebugFormatContext instead.")
 public func debugContext(isMainThread: Bool, file: String, function: String, line: Int, column: Int) -> String {
-    Compatibility.settings.debugFormat(
-        "",
-        .OFF,
-        isMainThread,
-        Compatibility.settings.debugEmojiSupported,
-        true,
-        Compatibility.settings.debugIncludeTimestamp,
-        file, function, line, column)
+    Compatibility.settings.debugFormatter(
+        DebugFormatContext(
+            message: "",
+            level: .OFF,
+            isMainThread: isMainThread,
+            emojiSupported: Compatibility.settings.debugEmojiSupported,
+            includeContext: true,
+            includeTimestamp: Compatibility.settings.debugLevelsToIncludeTimestamp.contains(.OFF),
+            source: SourceContext(file: file, function: function, line: line, column: column)
+        )
+    )
 }
-#endif
 
 // MARK: - Debug
 public extension Compatibility {
     /**
-     Ku: Debug helper for printing info to screen including file and line info of call site.  Also can provide a log level for use in loggers or for globally turning on/off logging. (Modify DebugLevel.currentLevel to set level to output.  When launching app, probably can set this to DebugLevel.OFF
-     
+     Canonical debug implementation for APIs that have already captured their caller's source context.
+
+     Normal application code should generally use the unqualified ``debug(_:level:file:function:line:column:)``
+     convenience below. Helper APIs that intentionally preserve their own caller's source location can capture
+     a ``SourceContext`` once and forward it here.
+
+     Debug helper for printing info to screen including file and line info of call site.  Also can provide a log level for use in loggers or for globally turning on/off logging. (Modify DebugLevel.currentLevel to set level to output to console.  When launching app, probably can set this to DebugLevel.OFF to prevent polluting the console in release builds.
+
      - Parameter message: The message to report.
      - Parameter level: The logging level to use.
-     - Parameter file: For bubbling down the #file name from a call site.
-     - Parameter function: For bubbling down the #function name from a call site.
-     - Parameter line: For bubbling down the #line number from a call site.
-     - Parameter column: For bubbling down the #column number from a call site. (Not used currently but here for completeness).
+     - Parameter source: For bubbling down the context from a call site.
      */
-#if !hasFeature(Embedded)
     @discardableResult
-    static func debug(_ message: Any, level: DebugLevel = .defaultLevel, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) -> String {
-#if canImport(Foundation)
-        let isMainThread = Thread.isMainThread // capture before we switch to main thread for printing
-#else
-        let isMainThread = true
-#endif
-        let message = String(describing: message) // convert to sendable item to avoid any thread issues.
-        
-        return debug(message, isMainThread: isMainThread, level: level, file: file, function: function, line: line, column: column)
-    }
-#endif
-    /// Put most of the business logic here for compatibility with WASM.  isMainThread: is required to differentiate but can be removed in global definition
-    @discardableResult
-    static func debug(_ message: String, isMainThread: Bool, level: DebugLevel = .defaultLevel, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) -> String {
+    static func debug(_ message: DebugMessage, level: DebugLevel = .defaultLevel, source: SourceContext) -> String {
         guard DebugLevel.isAtLeast(level) else { // check current debug level from settings
             return "" // don't actually print
         }
-        let debugMessage = Compatibility.settings.debugFormat(
-            message,
-            level,
-            isMainThread,
-            Compatibility.settings.debugEmojiSupported,
-            Compatibility.settings.debugLevelsToIncludeContext.contains(level),
-            Compatibility.settings.debugLevelsToIncludeTimestamp.contains(level),
-            file, function, line, column)
-        
-        // log message
+
+#if hasFeature(Embedded) || !canImport(Foundation)
+        // Embedded/Foundation-less runtimes do not expose Foundation.Thread identity. Their supported
+        // execution model is treated as main-thread work rather than accepting a manually supplied override.
+        let isMainThread = true
+#else
+        let isMainThread = Thread.isMainThread // capture before any logger/formatter implementation can switch threads
+#endif
+
+#if hasFeature(Embedded)
+        // Embedded Swift already narrows `DebugMessage` to `String`, so no dynamic conversion is needed.
+        let messageString = message
+#else
+        // Full Swift runtimes allow `DebugMessage == Any`; stringify exactly once before formatting/logging.
+        let messageString = String(describing: message)
+#endif
+
+        let debugMessage = Compatibility.settings.debugFormatter(
+            DebugFormatContext(
+                message: messageString,
+                level: level,
+                isMainThread: isMainThread,
+                emojiSupported: Compatibility.settings.debugEmojiSupported,
+                includeContext: Compatibility.settings.debugLevelsToIncludeContext.contains(level),
+                includeTimestamp: Compatibility.settings.debugLevelsToIncludeTimestamp.contains(level),
+                source: source
+            )
+            // possible future hook to log message
+        )
+
         Compatibility.settings.debugLog(debugMessage)
-        
+
         // do this AFTER Printing so we can see what the message is in the console
         checkBreakpoint(level: level)
-        
+
         return debugMessage
     }
 }
 //DebugLevel.currentLevel = .ERROR
 /**
- Ku: Debug helper for printing info to screen including file and line info of call site.  Also can provide a log level for use in loggers or for globally turning on/off logging. (Modify DebugLevel.currentLevel to set level to output.  When launching app, probably can set this to DebugLevel.OFF
- 
+ Debug helper for printing info to screen including file and line info of call site.  Also can provide a log level for use in loggers or for globally turning on/off logging. (Modify DebugLevel.currentLevel to set level to output to console.  When launching app, probably can set this to DebugLevel.OFF to prevent polluting the console in release builds.
+
  - Parameter message: The message to report.
  - Parameter level: The logging level to use.
  - Parameter file: For bubbling down the #file name from a call site.
@@ -313,18 +433,14 @@ public extension Compatibility {
  - Parameter line: For bubbling down the #line number from a call site.
  - Parameter column: For bubbling down the #column number from a call site. (Not used currently but here for completeness).
  */
-#if !hasFeature(Embedded)
 @discardableResult
-public func debug(_ message: Any, level: DebugLevel = .defaultLevel, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) -> String {
-    return Compatibility.debug(message, level: level, file: file, function: function, line: line, column: column)
+public func debug(_ message: DebugMessage, level: DebugLevel = .defaultLevel, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) -> String {
+    Compatibility.debug(
+        message,
+        level: level,
+        source: SourceContext(file: file, function: function, line: line, column: column)
+    )
 }
-#else
-@discardableResult
-public func debug(_ message: String, level: DebugLevel = .defaultLevel, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) -> String {
-    // go directly to alternate version since dynamic casting is unavailable in WASM
-    return Compatibility.debug(message, isMainThread: true, level: level, file: file, function: function, line: line, column: column)
-}
-#endif
 
 // MARK: Debug(error)
 // This is to provide debugging at calltime when creating errors.
@@ -339,13 +455,18 @@ public extension Error {
      - Parameter column: For bubbling down the #column number from a call site. (Not used currently but here for completeness).
      */
     func debug(level: DebugLevel = .defaultLevel, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) -> Self {
-#if !hasFeature(Embedded)
-        Compatibility.debug(self.localizedDescription, level: level, file: file, function: function, line: line, column: column)
-#else
-        Compatibility.debug(self.localizedDescription, isMainThread: true, level: level, file: file, function: function, line: line, column: column)
-#endif
+        debug(
+            level: level,
+            source: SourceContext(file: file, function: function, line: line, column: column)
+        )
+    }
+
+    /// Package-internal source-forwarding form used after a helper has already captured its caller.
+    internal func debug(level: DebugLevel = .defaultLevel, source: SourceContext) -> Self {
+        Compatibility.debug(self.localizedDescription, level: level, source: source)
         return self
     }
+
     #if !canImport(Foundation)
     var localizedDescription: String {
         "There was an error but without Foundation, we're using the default `localizedDescription`."
@@ -353,16 +474,34 @@ public extension Error {
     #endif
 }
 
+public extension TestFailure {
+    /// Logs this failure at its original source location and returns it for throwing.
+    @discardableResult
+    func debug(level: DebugLevel = .ERROR) -> Self {
+        Compatibility.debug(message, level: level, source: source)
+        return self
+    }
+}
+
 
 // Testing and main-actor isolation are supported on current full-runtime WASM builds.
 #if compiler(>=5.9)
-@available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension DebugLevel {
     @MainActor
     internal static let testDebugConfig: TestClosure = {
-        // NOTE: This might happen concurrently with other tests so could cause issues with output...
-        // preserve original settings
+        // These tests temporarily replace process-global debug settings. Capture the complete
+        // configuration before making any changes so the surrounding application or test suite
+        // observes exactly the same settings after this test finishes.
         let previousSettings = Compatibility.settings
+
+        // `defer` runs whether the test succeeds or throws. This is important because an
+        // expectation failure exits the closure immediately; a normal assignment at the bottom
+        // would be skipped and could leave later tests using this temporary logger or formatter.
+        defer {
+            Compatibility.settings = previousSettings
+        }
+
         DebugLevel.defaultLevel = .WARNING // testing override default level
         DebugLevel.currentLevel = .NOTICE // testing override current level
 
@@ -374,20 +513,19 @@ public extension DebugLevel {
         try expect(Compatibility.settings.debugLevelDefault == .WARNING, "expected default debug level to be .WARNING but found \(Compatibility.settings.debugLevelDefault)")
 
         Compatibility.settings.debugEmojiSupported = false // testing symbols
-//        Compatibility.settings.debugIncludeTimestamp = true // test deprecated code
+        //        Compatibility.settings.debugIncludeTimestamp = true // test deprecated code
         Compatibility.settings.debugLevelsToIncludeTimestamp = .all // test timestamps
-        let defaultFormat = Compatibility.settings.debugFormat
-        Compatibility.settings.debugFormat = { (message: String, level: DebugLevel, isMainThread: Bool, emojiSupported: Bool, includeContext: Bool, includeTimestamp: Bool, file: String, function: String, line: Int, column: Int) -> String in
-
-            let defaultOutput = defaultFormat(message, level, isMainThread, emojiSupported, includeContext, includeTimestamp, file, function, line, column)
+        let defaultFormatter = Compatibility.settings.debugFormatter
+        Compatibility.settings.debugFormatter = { context in
+            let defaultOutput = defaultFormatter(context)
             return """
-Message: \(message)
-Level: \(level)
-isMainThread: \(isMainThread)
-emojiSupported: \(emojiSupported)
-includeContext: \(includeContext)
-includeTimestamp: \(includeTimestamp)
-file: \(file)
+Message: \(context.message)
+Level: \(context.level)
+isMainThread: \(context.isMainThread)
+emojiSupported: \(context.emojiSupported)
+includeContext: \(context.includeContext)
+includeTimestamp: \(context.includeTimestamp)
+file: \(context.source.file)
 Normal output: \(defaultOutput)
 """
         }
@@ -404,10 +542,10 @@ Normal output: \(defaultOutput)
 
         let blankText = debug("TestCase return output", level: .DEBUG) // less than the current level so should be silent
         try expect(blankText == "", "expected empty string but found \(blankText)")
-        
-        // reset settings for other tests
-        Compatibility.settings = previousSettings
         // output messages that happened concurrently
+
+        // `previousSettings` is restored automatically by the `defer` above.
+        // Output captured while the temporary logger was active remains intentionally suppressed.
 //        Compatibility.settings.debugLog(concurrentOutput)
 //        debug("TEST OUTPUT", level: .ERROR)
     }
@@ -436,10 +574,52 @@ Normal output: \(defaultOutput)
         }
     }
 
+    /// Exercises the public formatter context and legacy formatter bridge without leaking global
+    /// logger or level changes into neighboring reusable tests.
+    @MainActor
+    private static let testPublicDebugWrappers: TestClosure = {
+        let previousSettings = Compatibility.settings
+        defer {
+            // Restore every mutable setting even when an expectation throws halfway through this test.
+            Compatibility.settings = previousSettings
+        }
+
+        var logged = [String]()
+        Compatibility.settings.debugLevelCurrent = .DEBUG
+        Compatibility.settings.debugLevelsToIncludeContext = []
+        Compatibility.settings.debugLevelsToIncludeTimestamp = []
+        Compatibility.settings.debugLog = { logged.append($0) }
+        Compatibility.settings.debugFormatter = { context in
+            "\(context.level.symbol):\(context.message):\(context.source.line)"
+        }
+
+        let formatted = debug("wrapper message", level: .NOTICE, file: "DebugTests.swift", function: "wrapper", line: 42, column: 1)
+        try expect(formatted == ">:wrapper message:42", "Unexpected structured debug output: \(formatted)")
+        try expect(logged == [formatted], "debug() should invoke the configured logger exactly once")
+
+        // The deprecated positional formatter is covered by its compatibility declaration; keep this
+        // reusable test warning-free by exercising the current structured formatter API directly.
+        let directContext = DebugFormatContext(
+            message: "context message",
+            level: .WARNING,
+            isMainThread: true,
+            emojiSupported: false,
+            includeContext: false,
+            includeTimestamp: false,
+            source: SourceContext(file: "DebugTests.swift", function: "context", line: 7, column: 1)
+        )
+        let directFormatted = Compatibility.settings.debugFormatter(directContext)
+        try expect(directFormatted == "\(DebugLevel.WARNING.symbol):context message:7", "Structured formatter context should remain directly callable")
+    }
+
     @MainActor
     static let tests = [
-        TestCase("debug configuration tests", testDebugConfig),
-        TestCase("debug tests", testDebug),
+        // Both tests mutate process-global debug state (`Compatibility.settings` or the
+        // logger used by `debugSuppress`). Serialized mode prevents them from overlapping
+        // each other or any parallel reusable test while those temporary changes are active.
+        TestCase("debug configuration tests", executionMode: .serialized, testDebugConfig),
+        TestCase("debug tests", executionMode: .serialized, testDebug),
+        TestCase("public debug wrappers", executionMode: .serialized, testPublicDebugWrappers),
     ]
 }
 #endif

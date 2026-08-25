@@ -446,25 +446,8 @@ struct CompatibilityTests {
         }
     }
 
-    /// Runs every public module section through the same TestCase values used by the live UI.
-    @Test(
-        "Compatibility Module Tests",
-        arguments: await MainActor.run { Compatibility.tests.keys.elements }
-    )
-    @MainActor
-    @available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
-    func moduleTests(section: String) async throws {
-        // Compatibility.tests is the authoritative package-wide test collection.
-        let tests = Compatibility.tests[section] ?? []
-        try await withThrowingTaskGroup(of: Void.self) { group in
-            for test in tests {
-                // Each case is independently isolated by TestCase, so long-running rows can overlap.
-                group.addTask {
-                    try await test.execute()
-                }
-            }
-            try await group.waitForAll()
-        }
-    }
+    // Reusable module tests now live in ModuleTestEntryTests.swift. That adapter creates one
+    // Swift Testing argument per TestCase, so keeping the former section-based bridge here would
+    // execute the same Compatibility tests twice and hide individual test names beneath a section.
 }
 #endif

@@ -1,30 +1,37 @@
 // TODO: Once Swift Testing is available, can re-write all this code into test classes that conform to Swift Testing so that we can also run code in Previews and Test Applications?  Use macros to duplicate #expect( functionality syntax?  Or can we use somehow in UI still?
 public typealias TestClosure = @Sendable () async throws -> Void
 
-/// A portable snapshot of the source location that initiated an operation.
-///
-/// Passing one value is useful when an asynchronous helper needs to retain and forward a caller's
-/// location. Existing APIs continue exposing individual source arguments for source compatibility,
-/// while new APIs can accept `SourceContext` when carrying the complete location is clearer.
-public struct SourceContext: Sendable {
-    public let file: String
-    public let function: String
-    public let line: Int
-    public let column: Int
+/// An expectation failure that retains the original source location.
+public struct TestFailure: Error, Sendable, CustomStringConvertible {
+    public let message: String
+    public let source: SourceContext
 
-    /// Captures the call site by default.
-    public init(
-        file: String = #file,
-        function: String = #function,
-        line: Int = #line,
-        column: Int = #column
-    ) {
-        self.file = file
-        self.function = function
-        self.line = line
-        self.column = column
+    /// Caller-capturing convenience that preserves the source of a naked `TestFailure("...")` call.
+    public init(_ message: String, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) {
+        self.init(
+            message,
+            source: SourceContext(file: file, function: function, line: line, column: column)
+        )
+    }
+
+    /// Source-forwarding form for callers that have already captured their own call site.
+    public init(_ message: String, source: SourceContext) {
+        self.message = message
+        self.source = source
+    }
+
+    public var description: String {
+        "\(message) [\(source)]"
     }
 }
+
+#if canImport(Foundation)
+extension TestFailure: LocalizedError {
+    public var errorDescription: String? {
+        description
+    }
+}
+#endif
 
 // This could be anything, not necessary a struct or class, so if we need this, have a list of tests rather than a Testable object
 //// don't make this public to avoid compiling test stuff into framework, however, do make public so apps can add in their own tests.
@@ -39,28 +46,21 @@ public struct SourceContext: Sendable {
 ///
 /// The source location defaults mirror Swift Testing's diagnostics while remaining callable from
 /// live applications, previews, older systems, and test runners that do not provide Swift Testing.
+/// Captures call site by default
 public func expect(_ condition: Bool, _ debugString: String? = nil, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) throws {
-    guard condition else {
-        // set breakpoint on this line if we want to debug/inspect errors (note that this slows enough to mess with time stamp checks so disable once we know everything is working).
-        if let debugString {
-            throw CustomError(debugString)
-        } else {
-#if canImport(Foundation)
-            let isMainThread = Thread.isMainThread
-#else
-            let isMainThread = true
-#endif
-            let context = Compatibility.settings.debugFormat(
-                "",
-                DebugLevel.OFF,
-                isMainThread,
-                Compatibility.settings.debugEmojiSupported,
-                true,
-                true,
-                file, function, line, column)
+    try expect(
+        condition,
+        debugString,
+        source: SourceContext(file: file, function: function, line: line, column: column)
+    )
+}
 
-            throw CustomError(context)
-        }
+/// Source-forwarding form for reusable expectation helpers.
+public func expect(_ condition: Bool, _ debugString: String? = nil, source: SourceContext) throws {
+    guard condition else {
+        let message = debugString ?? "Expectation failed"
+        Compatibility.debug(message, level: .ERROR, source: source)
+        throw TestFailure(message, source: source)
     }
 }
 
@@ -71,16 +71,44 @@ public func expect(_ condition: Bool, _ debugString: String? = nil, file: String
 ///   - expected: The value the test requires.
 ///   - message: Optional context appended to the generated actual-versus-expected diagnostic.
 public func expectEqual<Value: Equatable>(_ actual: Value, _ expected: Value, _ message: String? = nil, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) throws {
+    try expectEqual(
+        actual,
+        expected,
+        message,
+        source: SourceContext(file: file, function: function, line: line, column: column)
+    )
+}
+
+/// Source-forwarding form for APIs that already captured the original comparison call site.
+public func expectEqual<Value: Equatable>(_ actual: Value, _ expected: Value, _ message: String? = nil, source: SourceContext) throws {
     // Build the comparison text here so UI runs receive the same useful values that Swift Testing displays.
     let context = message.map { " \($0)" } ?? ""
-    try expect(actual == expected, "Expected \(String(reflecting: expected)), but received \(String(reflecting: actual)).\(context)", file: file, function: function, line: line, column: column)
+    try expect(
+        actual == expected,
+        "Expected \(String(reflecting: expected)), but received \(String(reflecting: actual)).\(context)",
+        source: source
+    )
 }
 
 /// Requires two equatable values to differ and reports the shared value when they do not.
 public func expectNotEqual<Value: Equatable>(_ actual: Value, _ unexpected: Value, _ message: String? = nil, file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) throws {
+    try expectNotEqual(
+        actual,
+        unexpected,
+        message,
+        source: SourceContext(file: file, function: function, line: line, column: column)
+    )
+}
+
+/// Source-forwarding form for APIs that already captured the original comparison call site.
+public func expectNotEqual<Value: Equatable>(_ actual: Value, _ unexpected: Value, _ message: String? = nil, source: SourceContext) throws {
     // Include the unexpected value so a failure remains actionable outside a debugger.
     let context = message.map { " \($0)" } ?? ""
-    try expect(actual != unexpected, "Expected a value other than \(String(reflecting: unexpected)), but received it.\(context)", file: file, function: function, line: line, column: column)
+    try expect(
+        actual != unexpected,
+        "Expected a value other than \(String(reflecting: unexpected)), but received it.\(context)",
+        source: source
+    )
 }
 
 // NOTE: Really wish there was a way of writing a possibly async function or doing this using a generic so we don't have to duplicate code.
@@ -120,6 +148,128 @@ public func debugSuppress(_ block: () async throws -> Void) async rethrows {
 
 // Testing is only supported with Swift 5.9+
 #if compiler(>=5.9)
+
+/// Controls whether a reusable test may overlap other reusable tests.
+public enum TestExecutionMode: Sendable, Equatable {
+    case parallel
+    case serialized
+}
+
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+private actor TestExecutionGate {
+    static let shared = TestExecutionGate()
+
+    private var activeParallelCount = 0
+    private var serializedRunning = false
+    private var parallelWaiters: [CheckedContinuation<Void, Never>] = []
+    private var serializedWaiters: [CheckedContinuation<Void, Never>] = []
+
+    func acquire(_ mode: TestExecutionMode) async {
+        switch mode {
+        case .parallel:
+            if !serializedRunning && serializedWaiters.isEmpty {
+                activeParallelCount += 1
+                return
+            }
+            await withCheckedContinuation { continuation in
+                parallelWaiters.append(continuation)
+            }
+
+        case .serialized:
+            if !serializedRunning && activeParallelCount == 0 {
+                serializedRunning = true
+                return
+            }
+            await withCheckedContinuation { continuation in
+                serializedWaiters.append(continuation)
+            }
+        }
+    }
+
+    func release(_ mode: TestExecutionMode) {
+        switch mode {
+        case .parallel:
+            activeParallelCount -= 1
+            if activeParallelCount == 0 {
+                resumeWaitingTests()
+            }
+
+        case .serialized:
+            serializedRunning = false
+            resumeWaitingTests()
+        }
+    }
+
+    private func resumeWaitingTests() {
+        if !serializedWaiters.isEmpty {
+            serializedRunning = true
+            serializedWaiters.removeFirst().resume()
+            return
+        }
+
+        let waiters = parallelWaiters
+        parallelWaiters.removeAll()
+        activeParallelCount += waiters.count
+        for waiter in waiters {
+            waiter.resume()
+        }
+    }
+}
+
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+private struct TestExecution: Sendable {
+    let title: String
+    let source: SourceContext
+    let setUp: TestClosure?
+    let test: TestClosure
+    let tearDown: TestClosure?
+    let mode: TestExecutionMode
+
+    func perform() async throws {
+        await TestExecutionGate.shared.acquire(mode)
+        do {
+            try await performLifecycle()
+            await TestExecutionGate.shared.release(mode)
+        } catch {
+            await TestExecutionGate.shared.release(mode)
+            throw error
+        }
+    }
+
+    private func performLifecycle() async throws {
+        var primaryError: (any Error)?
+
+        do {
+            try await setUp?()
+            try await test()
+        } catch {
+            primaryError = normalized(error)
+        }
+
+        do {
+            try await tearDown?()
+        } catch {
+            let teardownError = normalized(error)
+            if let primaryError {
+                debug("\(title) teardown also failed: \(teardownError)", level: .ERROR)
+                throw primaryError
+            }
+            throw teardownError
+        }
+
+        if let primaryError {
+            throw primaryError
+        }
+    }
+
+    private func normalized(_ error: any Error) -> any Error {
+        if error is TestFailure {
+            return error
+        }
+        return TestFailure("\(title) failed: \(error)", source: source)
+    }
+}
+
 // Test Handlers
 @MainActor
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
@@ -162,6 +312,8 @@ public final class TestCase: ObservableObject, @unchecked Sendable {
         }
     }
     public let title: String
+    public let source: SourceContext
+    public let executionMode: TestExecutionMode
     public let setUp: TestClosure?
     public var test: TestClosure
     public let tearDown: TestClosure?
@@ -175,26 +327,85 @@ public final class TestCase: ObservableObject, @unchecked Sendable {
         set { test = newValue }
     }
     @Published public var progress: TestProgress = .notStarted
-    
-    /// Creates a reusable test with optional lifecycle closures.
-    ///
+
+    /// Creates a reusable test with optional lifecycle closures while capturing its declaration site.
+    public convenience init(
+        _ title: String,
+        executionMode: TestExecutionMode = .parallel,
+        setUp: TestClosure? = nil,
+        test: @escaping TestClosure,
+        tearDown: TestClosure? = nil,
+        file: String = #file,
+        function: String = #function,
+        line: Int = #line,
+        column: Int = #column
+    ) {
+        self.init(
+            title,
+            executionMode: executionMode,
+            setUp: setUp,
+            test: test,
+            tearDown: tearDown,
+            source: SourceContext(file: file, function: function, line: line, column: column)
+        )
+    }
+
+    /// Source-forwarding form for callers that already captured the declaration site.
     /// Teardown is attempted even when setup or the test throws, matching the cleanup expectation
     /// familiar from XCTest without claiming `XCTestCase` API or inheritance compatibility.
     public init(
         _ title: String,
+        executionMode: TestExecutionMode = .parallel,
         setUp: TestClosure? = nil,
         test: @escaping TestClosure,
-        tearDown: TestClosure? = nil
+        tearDown: TestClosure? = nil,
+        source: SourceContext
     ) {
         self.title = title
+        self.source = source
+        self.executionMode = executionMode
         self.setUp = setUp
         self.test = test
         self.tearDown = tearDown
     }
 
     /// Creates a reusable test without separate setup or teardown work.
-    public convenience init(_ title: String, _ test: @escaping TestClosure) {
-        self.init(title, test: test)
+    public convenience init(
+        _ title: String,
+        executionMode: TestExecutionMode = .parallel,
+        file: String = #file,
+        function: String = #function,
+        line: Int = #line,
+        column: Int = #column,
+        _ test: @escaping TestClosure
+    ) {
+        self.init(
+            title,
+            executionMode: executionMode,
+            test: test,
+            source: SourceContext(file: file, function: function, line: line, column: column)
+        )
+    }
+
+    /// Source-forwarding trailing-closure form.
+    public convenience init(
+        _ title: String,
+        executionMode: TestExecutionMode = .parallel,
+        source: SourceContext,
+        _ test: @escaping TestClosure
+    ) {
+        self.init(title, executionMode: executionMode, test: test, source: source)
+    }
+
+    private var execution: TestExecution {
+        TestExecution(
+            title: title,
+            source: source,
+            setUp: setUp,
+            test: test,
+            tearDown: tearDown,
+            mode: executionMode
+        )
     }
 
     /// Executes the test closure directly for an external test framework.
@@ -202,60 +413,35 @@ public final class TestCase: ObservableObject, @unchecked Sendable {
     /// Swift Testing and XCTest adapters should prefer this awaited path because thrown expectation
     /// failures retain the external runner's native test context without polling observable UI state.
     public func execute() async throws {
-        do {
-            try await setUp?()
-            try await test()
-        } catch {
-            // Cleanup should still run after a failure; preserve the original failure when cleanup succeeds.
-            do {
-                try await tearDown?()
-            } catch {
-                debug("Test teardown also failed: \(error)", level: .ERROR)
-            }
-            throw error
-        }
-        try await tearDown?()
+        try await execution.perform()
     }
-    
+
     @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
     public func run() {
         if case .running = progress {
             return
         }
-        let setUp = self.setUp
-        let test = self.test
-        let tearDown = self.tearDown
+
+        let execution = execution
         let weakSelf = WeakReference(self)
         progress = .running
-        // Run on the detached executor, then publish the result back on the main actor. WebAssembly's
-        // cooperative executor preserves the same actor semantics even when its host is single threaded.
-        Task.detached(priority: .userInitiated) { [setUp, test, tearDown, weakSelf] in
+
+        Task.detached(priority: .userInitiated) {
             do {
-                do {
-                    try await setUp?()
-                    try await test()
-                } catch {
-                    // Mirror execute() cleanup while keeping this detached UI path independent of self.
-                    do {
-                        try await tearDown?()
-                    } catch {
-                        debug("Test teardown also failed: \(error)", level: .ERROR)
-                    }
-                    throw error
-                }
-                try await tearDown?()
+                try await execution.perform()
                 await MainActor.run {
                     weakSelf.value?.progress = .pass
                 }
             } catch {
+                let message = String(describing: error)
+                debug(message, level: .ERROR)
                 await MainActor.run {
-                    debug(error.localizedDescription, level: .ERROR)
-                    weakSelf.value?.progress = .fail("\(error.localizedDescription)")
+                    weakSelf.value?.progress = .fail(message)
                 }
             }
         }
     }
-    
+
     public func isFinished() -> Bool {
         switch progress {
         case .pass, .fail:
@@ -277,7 +463,7 @@ public final class TestCase: ObservableObject, @unchecked Sendable {
     public var errorMessage: String? {
         progress.errorMessage
     }
-    
+
     public var description: String {
         var errorString = ""
         if let errorMessage = progress.errorMessage {
@@ -300,7 +486,7 @@ public extension TestCase {
     }
 }
 
-@available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension TestCase {
     /// Every reusable Compatibility test, grouped in deterministic display and execution order.
     ///
@@ -316,6 +502,7 @@ public extension TestCase {
                     try expectNotEqual(Compatibility.version, Version("0.0.0"))
                 },
             ],
+            "Introspection Tests": introspectionTests,
             "String Tests": String.tests,
             "Dictionary Tests": dictionaryTests,
             "Mixed Type Field Tests": MixedTypeField.tests,
@@ -337,6 +524,13 @@ public extension TestCase {
         tests["Bundle Tests"] = Bundle.tests
         tests["File Manager Tests"] = FileManager.tests
         tests["Pasteboard Tests"] = Pasteboard.tests
+        tests["CloudStorageSync Tests"] = CloudStorageSync.tests
+        tests["CloudStorage Tests"] = CloudStorageTests.tests
+        tests["Backport Tests"] = Glass.tests
+        tests["Backport Button Style Tests"] = BackportButtonStyle.tests
+        if #available(iOS 14, macOS 12, tvOS 15, watchOS 8, *) {
+            tests["Environment View Tests"] = EnvironmentsView.tests
+        }
         tests["CharacterSet Tests"] = CharacterSet.tests
         tests["URL Tests"] = URL.tests
         tests["Date Tests"] = Date.tests
@@ -350,7 +544,7 @@ public extension TestCase {
     }()
 }
 
-@available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension Compatibility {
     /// Compatibility's global test catalog.
     @MainActor

@@ -298,4 +298,21 @@ extension CloudStorage where Value: DefaultDateCloudStorage {
             syncSet: { newValue in sync.set(newValue.stringValue, for: key) })
     }
 }
+
+#if compiler(>=5.9)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+enum CloudStorageTests {
+    /// Covers the public date-string conversion contract without requiring a SwiftUI host view.
+    @MainActor
+    internal static let tests: [TestCase] = [
+        TestCase("CloudStorage date representations") {
+            let date = Date(parse: "2024-01-02 03:04:05")
+            try expect(date != nil)
+            try expect(date?.stringValue == "2024-01-02 03:04:05")
+            try expect(DateString("custom").stringValue == "custom")
+            try expect(DateTimeString("custom").stringValue == "custom")
+        },
+    ]
+}
+#endif
 #endif

@@ -2,12 +2,29 @@
 
 Compatibility prioritizes portability, backwards compatibility, clear public documentation, and reviewable changes. Contributors and coding agents should follow these repository-specific rules.
 
+## Specific prompt reference (AIs should ignore this section and skip to the Interactive Coding Preferences section)
 PROMPT prefix for Xcode or another context without memory for projects using Compatibility:
 Follow the included Compatibility `CONTRIBUTING.md` (or github.com/kudit/Compatibility/CONTRIBUTING.md), preserve existing edits, then complete this request:
 [REQUEST]
 
 PROMPT for updating Module packages:
 Review this Swift package for adoption of the Module APIs introduced in github.com/kudit/Compatibility v1.16.0 or later. Inspect the package’s existing architecture and preserve its public behavior and platform compatibility. Add or update its Compatibility dependency if necessary. Apply an appropriate Module conformance, including its version, direct Compatibility dependency, module dependencies, immediately available moduleInfo, ordered TestCase sections, and opt-in open-source repository metadata when applicable. Register the package from its highest-level module or document how an application should register it through Application.track(including:). Add complete inline DocC comments to the relevant public APIs so generated documentation can discover them. Do not create a .docc catalog, separate documentation articles, or another documentation folder. Preserve existing comments unless they are missing, unclear, or inaccurate. Put reusable tests in the module's TestCase collections so they run both in the in-app test UI and through the Swift Testing bridge; retain target-specific tests only where infrastructure requires them. Follow this package’s existing CONTRIBUTING.md, changelog, versioning, formatting, availability, and compatibility conventions. Avoid unrelated reformatting and whitespace-only changes. Before changing version numbers, compare the current changelog version with the latest committed Git version. If the active working-tree changelog is already ahead of Git, do not choose another version; synchronize that active version across every package manifest, Xcode project, public source constant, test fixture or suite heading, README or documentation display, and other hard-coded version surface. Please check that all deprecations (that can) have appropriate renamed clauses for easy fixits.
+
+
+## Interactive Coding Preferences
+When working interactively with a maintainer, generally (this shouldn't be meant to override thread instructions but are here as a default):
+- If there is ever any conflict between instructions in a prompt, pause and clarify before continuing.
+- Work in small, reviewable stages rather than delivering a large implementation all at once (unless specifically requested).
+- Present one immediate decision or action at a time and pause for maintainer feedback unless instructed to do a batch.
+- Explain design choices briefly and answer questions before continuing implementation.
+- Preserve and review the maintainer's local edits before adding further changes.
+- Let the maintainer build, edit, commit, and push between stages when practical.
+- Coding-agent changes remain local for maintainer review: do not commit or push unless the maintainer explicitly requests that exact action. A prompt may be recorded in a local-only changelog note, but prompt text must never be committed or pushed to the server.
+- After each pushed maintainer change, review the latest commit before proposing or applying the next change.
+- Keep pull requests in draft until the implementation is compiled, exercised by real tests, and fully reviewed.
+- Avoid unrelated cleanup, broad reformatting, and speculative changes that make the diff harder to reason about unless specifically asked for.
+- Do not delete, rewrite, condense, or "clean up" maintainer-authored comments unless the Comment preservation rules explicitly permit it. Treat comments and TODOs as source material that must survive refactoring unless their underlying information is genuinely obsolete.
+- Don't offer verbose explanations in the chat interface.  Long explanations should not be necessary if code is well documented inline and should be included there to read inline with code changes during diff review.  The chat interface should be for clarifying questions and high level discussion, answering questions, and providing high-level feedback.  When working on code projects, extra text and explanation in the chat is not a good way to preserve information.  Put next steps into an appropriate section of a markdown file like the CHANGELOG, put potential future ideas there, and architecture plans and roadmaps rather than in the chat itself.
 
 
 ## Version and changelog rules
@@ -18,10 +35,11 @@ Review this Swift package for adoption of the Module APIs introduced in github.c
 - If an uncommitted manual version entry already differs from Git, use it and synchronize every version surface rather than choosing another version.
 - Treat a heading such as `## vX.Y.Z TODO` as an intentional version stub: synchronize all version surfaces and replace `TODO` with the current date.
 - If work is being applied to the active unpushed version and its date is not current, update that heading to the current date.
-- Append every prompt-driven request to the current entry as `PROMPT: [PROMPT TEXT]`, after the concise change summary and a blank line.
+- Keep complete prompt text in local working notes only; never append `PROMPT: [PROMPT TEXT]` to a tracked changelog or push it to the server. Tracked changelog entries contain concise summaries only.
 - If a project has no changelog, offer to create one using this repository's `CHANGELOG.md` format.
 - Modules should have separate `README.md` and `CHANGELOG.md` files. Final apps may keep a Changelog section in their README.
 - When you notice existing/manual uncommitted edits, please automatically generate and add changelog comments for the manual changes.
+
 
 ## Post-prompt checklist
 
@@ -32,8 +50,23 @@ After every prompt-driven change, contributors and coding agents must:
 3. If an uncommitted active entry is already ahead of Git, keep that version and synchronize every version surface to it.
 4. Check `Package.swift`, the public `Compatibility.version` value, every Xcode `MARKETING_VERSION`, README/version displays, manifests, and every other hard-coded version surface.
 5. Refresh the active unpushed changelog date when work continues on a later date.
-6. Append the complete prompt as `PROMPT: [PROMPT TEXT]`.
+6. Keep the complete prompt local-only; do not add it to tracked files or push it.
 7. Review both the normal diff and an ignore-whitespace diff, remove unrelated or whitespace-only changes, run `git diff --check`, and run the repository's real build and tests.
+8. For multi-file edits, patch each repository or external file separately. After every patch, verify the tool result, inspect the exact diff, run syntax checks, and search for the removed symbol or dependency. Never report the overall change as complete when any hunk failed or remains unverified. Always list changed files and show all deltas using a diff editor (if in Codex).
+
+
+## File editing safety
+
+Whole-file replacement is an acceptable and often appropriate way to edit a repository file when the editing tool requires it. File size alone is not a reason to avoid the correct edit.
+
+- Before any whole-file replacement, fetch the complete current file from the exact branch or commit being edited. Never construct a replacement file from a search result, partial snippet, truncated response, stale copy, or remembered version.
+- Apply changes to that complete current content and upload the complete resulting file. A replacement containing only the changed region is a destructive truncation, not a patch.
+- If the complete file cannot safely fit in one tool response or working context, read it in explicit contiguous ranges and verify that those ranges cover the entire file before constructing the replacement. Splitting the read is encouraged; omitting unread ranges is never acceptable.
+- For especially large or complex files, break the work into small logical edits, but refetch the latest complete file before each sequential whole-file replacement so earlier edits and maintainer changes are preserved.
+- Immediately inspect the resulting Git diff after every whole-file replacement. Unexpected large deletions, missing comments, missing declarations, or unrelated formatting changes are evidence of a bad replacement and must be corrected before continuing.
+- Compare deleted lines as carefully as added lines. Whole-file editing must preserve comments, TODOs, disabled reference code, whitespace conventions, and unrelated source exactly unless the requested change intentionally modifies them.
+- When a tool supports true patches, patches may be preferred for small localized changes, but do not avoid a necessary whole-file replacement merely because the file is large. The safety requirement is complete-current-input plus verified-output, not a particular editing mechanism.
+
 
 A full changelog outline may include:
 
@@ -55,21 +88,38 @@ Planned features grouped by future version.
 - [ ] Longer-term ideas, experiments, and possible improvements.
 ```
 
+
 ## Code style
 
 - Preserve public identifiers, established behavior, compatibility paths, and user-visible syntax unless a breaking change is explicitly requested.
 - Keep changes tightly scoped and avoid unrelated reformatting or whitespace-only edits.
-- Add clear inline comments explaining new or modified code and why compatibility-specific behavior is necessary.
-- Add complete DocC comments to public APIs and to non-obvious internal APIs.
-- Preserve existing comments unless they are obsolete.
-- Use concise comments for obvious behavior and more detail around compatibility, migration, concurrency, and platform-specific decisions.
+- Please make clear when code is not best practice or the obvious way of doing things particularly when you're making stylistic or judgement choices.
 - Prefer plain Markdown and code blocks for text intended to be pasted into files, GitHub, Xcode, or terminals.
+- Prefer matching existing code style and leverage existing helper functions when possible rather than writing your own.
+
+## Comment preservation rules
+
+Comments are part of the source and should be treated as maintainer-authored documentation, requirements, historical context, and design rationale rather than as optional clutter.
+
+- Add complete DocC comments to public APIs and to non-obvious internal APIs.
+- Use concise comments for obvious behavior and more detail around compatibility, migration, concurrency, and platform-specific decisions.
+- Add clear inline comments explaining all new or modified code and why the change was made.
+- Preserve existing comments by default, including explanatory comments, TODOs, reference URLs, migration notes, historical rationale, disabled example code, and maintainer-authored reminders.
+- Do not remove or shorten a comment merely because the surrounding code appears self-explanatory, because the comment seems verbose, or because the implementation has been refactored.
+- Prefer updating an existing comment when behavior changes rather than deleting it.
+- A comment may only be removed when it is demonstrably factually incorrect, describes code or behavior that no longer exists, or the maintainer explicitly requests its removal.
+- When resolving a TODO or instruction comment, remove it only after the requested work is actually complete. If the comment also contains useful rationale, history, compatibility information, or references, preserve that information in an updated explanatory comment.
+- When adding or changing compatibility branches, tests, workarounds, non-obvious API choices, or platform-specific behavior, prefer adding comments explaining why the code exists rather than relying on the implementation alone.
+- During final diff review, specifically inspect every deleted comment line. Any intentional comment deletion must be justified in the completion summary. Accidental or unjustified comment deletions must be restored before the change is considered complete.
+- Unless explicitly requested, comment cleanup is not an acceptable form of unrelated cleanup.
+
 
 ## Swift rules
 
 - Include `github.com/kudit/Compatibility` as a dependency in Swift projects and reuse its APIs where appropriate.
 - Use Compatibility's `debug()` function instead of `print()` for logging.
 - Prefer availability checks and platform fallbacks over removing older behavior.
+- When possible, do not hide functions with availability checks.  If possible, do the availability checking inside the function and create backports if a feature is version-gated so that new features can be added and either backported for earlier versions or gracefully ignored when appropriate while keeping the code as close to the preferred modern syntax whenever possible.
 - Keep Swift Playgrounds, non-Foundation, WASM, and older-platform builds working where practical.
 - Put reusable framework tests beside their implementation and collect them in each module's ordered `TestCase` sections so the same checks appear in the in-app runner and the Swift Testing bridge. Keep only infrastructure-specific tests in the Xcode/SwiftPM test target.
 
@@ -85,6 +135,7 @@ Planned features grouped by future version.
 - Because Embedded Swift remains experimental, verify each concurrency runtime operation separately. If a specific operation such as task detachment or suspension is unsupported, provide a focused fallback while retaining valid actor annotations and isolation requirements.
 - Swift does not expose a general-purpose `hasFeature(Concurrency)` condition that proves a target has a scheduler, threads, Dispatch, or suspending timers. Use `canImport(Dispatch)` for Dispatch-backed implementations, availability checks for deployed Apple concurrency runtimes, `hasFeature(Embedded)` only for known Embedded restrictions, and narrowly documented platform checks for host facilities such as WebAssembly timers.
 - Do not gate `Equatable`, `Encodable`, or `Decodable` merely because a build targets Linux, Android, WASM, or WASI. Those protocols are part of full Swift runtimes. Before changing a conformance gate, also check whether the concrete type is locally owned, is a typealias to a Foundation type, already conforms on that Foundation implementation, or requires Swift 6's `@retroactive` ownership annotation.
+
 
 ## Design goals
 

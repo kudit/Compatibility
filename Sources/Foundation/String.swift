@@ -534,14 +534,14 @@ public extension String {
 #endif
         return URL(string: self)
     }
-    
+#endif
+
     /// Get last "path" component of a string (basically everything from the last `/` to the end)
     var lastPathComponent: String {
-        let parts = self.components(separatedBy: "/")
-        let last = parts.last ?? self
+        // enables support on all platforms and handles Windows-style \ paths unlike the previous Foundation-only implementation.
+        let last = self.split(whereSeparator: { $0 == "/" || $0 == "\\" }).last.map(String.init) ?? self
         return last
     }
-#endif
     
     /// `true` if the byte length of the `String` is larger than 100k (the exact threashold may change)
     var isLarge: Bool {
@@ -1447,6 +1447,11 @@ public extension String {
             try expectEqual("h\"i".addSlashes(), "h\\\"i")
             try expectEqual("Hello, world!".replacingOccurrences(of: "world", with: "Swift"), "Hello, Swift!")
             try expectEqual(UInt64("C", radix: 16), 12)
+            try expectEqual("star.fill".fallbackForSymbol, "star")
+            try expectEqual( "calendar".emojiForSymbol, "📅")
+            try expectEqual("multiply.circle.fill".emojiForSymbol, nil)
+            try expectEqual("multiply.circle.fill".unicodeForSymbol, "×")
+            try expectEqual("unknown.symbol".unicodeForSymbol, nil)
             // MARK: - Character.isEmoji
             let smiley: Character = "😀"
             try expect(smiley.isEmoji, "Emoji character should be recognized")

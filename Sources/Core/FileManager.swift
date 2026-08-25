@@ -42,7 +42,7 @@ public extension FileManager {
 }
 
 #if compiler(>=5.9)
-@available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 extension FileManager {
     /// Shared file-manager tests used by both the in-app runner and Swift Testing.
     @MainActor

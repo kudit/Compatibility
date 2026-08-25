@@ -107,6 +107,16 @@ private struct CodingRoundTripTestModel: Codable, Equatable {
     let tags: [String]
 }
 
+private enum ExpectedCodingTestError: Error {
+    case expected
+}
+
+private struct ThrowingCodingTestModel: Encodable {
+    func encode(to encoder: Encoder) throws {
+        throw ExpectedCodingTestError.expected
+    }
+}
+
 @Sendable
 private func testCodingRoundTrips() throws {
     let model = CodingRoundTripTestModel(name: "Compatibility", count: 3, enabled: true, tags: ["json", "dictionary", "mixed"])
@@ -130,10 +140,45 @@ private func testCodingRoundTrips() throws {
     try expect(decodedFromMixedField == model, "MixedTypeField round trip should preserve the codable model")
 }
 
+@Sendable
+private func testDictionaryCodingStrategies() throws {
+    let encoder = DictionaryEncoder()
+    encoder.dateEncodingStrategy = .secondsSince1970
+    encoder.dataEncodingStrategy = .base64
+    encoder.nonConformingFloatEncodingStrategy = .convertToString(
+        positiveInfinity: "INF",
+        negativeInfinity: "-INF",
+        nan: "NaN"
+    )
+    encoder.keyEncodingStrategy = .convertToSnakeCase
+    _ = encoder.dateEncodingStrategy
+    _ = encoder.dataEncodingStrategy
+    _ = encoder.nonConformingFloatEncodingStrategy
+    _ = encoder.keyEncodingStrategy
+
+    let decoder = DictionaryDecoder()
+    decoder.dateDecodingStrategy = .secondsSince1970
+    decoder.dataDecodingStrategy = .base64
+    decoder.nonConformingFloatDecodingStrategy = .convertFromString(
+        positiveInfinity: "INF",
+        negativeInfinity: "-INF",
+        nan: "NaN"
+    )
+    decoder.keyDecodingStrategy = .convertFromSnakeCase
+    _ = decoder.dateDecodingStrategy
+    _ = decoder.dataDecodingStrategy
+    _ = decoder.nonConformingFloatDecodingStrategy
+    _ = decoder.keyDecodingStrategy
+
+    // Exercise the convenience API's documented nil-on-encoding-failure behavior.
+    try expect(ThrowingCodingTestModel().asDictionary() == nil)
+}
+
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 @MainActor
 internal let codingTests: [TestCase] = [
     TestCase("Coding round trips", testCodingRoundTrips),
+    TestCase("Dictionary coding strategies", testDictionaryCodingStrategies),
 ]
 #endif
 

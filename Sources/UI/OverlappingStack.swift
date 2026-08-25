@@ -219,59 +219,70 @@ private struct OverlappingStack: Layout {
     }
 }
 
-@available(iOS 13, macOS 12, tvOS 13, watchOS 6, *)
-#Preview("OverlappingHStack") {
-    VStack {
-        Text("All of these should be the same height.")
-        OverlappingHStack {
-            ForEach(0..<3) { index in
-                Circle().fill([Color].rainbow[nth: index])
-            }
-        }
-        .frame(height: 60)
-        OverlappingHStack {
-            ForEach(0..<6) { index in
-                Circle().fill([Color].rainbow[nth: index])
-            }
-        }
-        .frame(height: 60)
-        OverlappingHStack(alignment: .bottom) {
-            ForEach(0..<6) { index in
-                Circle().fill([Color].rainbow[nth: index])
-            }
-            Capsule().fill(.foreground)
-                .frame(width: 150, height: 10)
-        }
-        .frame(height: 60)
-        OverlappingHStack {
-            ForEach(0..<20) { index in
-                Circle().fill([Color].rainbow[nth: index])
-            }
-        }
-        .frame(height: 60)
-        HStack {
-            OverlappingVStack {
+/// Shows overlapping horizontal and vertical stacks at several child counts and alignments.
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+public struct OverlappingStackShowcaseView: View {
+    public init() {}
+
+    public var body: some View {
+        VStack {
+            Text("All of these should be the same height.")
+            OverlappingHStack {
                 ForEach(0..<3) { index in
                     Circle().fill([Color].rainbow[nth: index])
                 }
             }
-            OverlappingVStack {
+            .frame(height: 60)
+            OverlappingHStack {
                 ForEach(0..<6) { index in
                     Circle().fill([Color].rainbow[nth: index])
                 }
             }
-            OverlappingVStack {
-                ForEach(0..<12) { index in
+            .frame(height: 60)
+            OverlappingHStack(alignment: .bottom) {
+                ForEach(0..<6) { index in
                     Circle().fill([Color].rainbow[nth: index])
                 }
+                Capsule().fill(.foreground)
+                    .frame(width: 150, height: 10)
             }
-            OverlappingVStack {
+            .frame(height: 60)
+            OverlappingHStack {
                 ForEach(0..<20) { index in
                     Circle().fill([Color].rainbow[nth: index])
                 }
             }
+            .frame(height: 60)
+            HStack {
+                OverlappingVStack {
+                    ForEach(0..<3) { index in
+                        Circle().fill([Color].rainbow[nth: index])
+                    }
+                }
+                OverlappingVStack {
+                    ForEach(0..<6) { index in
+                        Circle().fill([Color].rainbow[nth: index])
+                    }
+                }
+                OverlappingVStack {
+                    ForEach(0..<12) { index in
+                        Circle().fill([Color].rainbow[nth: index])
+                    }
+                }
+                OverlappingVStack {
+                    ForEach(0..<20) { index in
+                        Circle().fill([Color].rainbow[nth: index])
+                    }
+                }
+            }
+            .frame(height: 200)
         }
-        .frame(height: 200)
+        .padding()
     }
+}
+
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+#Preview("OverlappingHStack") {
+    OverlappingStackShowcaseView()
 }
 #endif

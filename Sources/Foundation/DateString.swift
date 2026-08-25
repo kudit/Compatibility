@@ -180,7 +180,7 @@ public extension Date {
         try expect(Date(parse: "Jan 2, 2023")?.mysqlDate == "2023-01-02")
         try expect(Date(parse: "not a date") == nil)
     }
-    @available(macOS 12, *)
+    @available(macOS 10.15, *)
     @MainActor
     internal static let testFormatted: TestClosure = {
         let date = Date(from: "2023-01-02 17:12:00", format: .mysqlDateTimeFormat)

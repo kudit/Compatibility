@@ -264,7 +264,10 @@ let collectionTests: [TestCase] = [
         let testSequence = [5, 4, 2, 1, 3]
         try expect(testSequence.repeated(0) == [])
         try expect(testSequence.chunked(into: 2) == [[5, 4], [2, 1], [3]])
+        try expect(testSequence.chunked(into: 0).isEmpty, "A zero chunk size should safely return no chunks")
+        try expect([Int]().chunked(into: 2).isEmpty, "An empty array should safely return no chunks")
         try expect(testSequence.sorted(by: \.self, isAscending: true) == [1, 2, 3, 4, 5])
+        try expect(testSequence.sorted(by: \.self, isAscending: false) == [5, 4, 3, 2, 1])
         try expect(testSequence.average() == 3)
         try expect(testSequence.sum() == 15)
         // Match the standard starts(with:) edge cases so callers can safely use the complementary suffix API.
@@ -273,6 +276,59 @@ let collectionTests: [TestCase] = [
         try expect(testSequence.ends(with: [Int]()))
         try expect(!testSequence.ends(with: [3, 1]))
         try expect(!testSequence.ends(with: [0, 5, 4, 2, 1, 3]))
+    }),
+    TestCase("Raw representable sequence", {
+        enum RawToken: String {
+            case one
+            case two
+        }
+        struct RawTokens: RawRepresentableSequence {
+            var values: [RawToken]
+
+            init<S>(_ s: S) where S: Sequence, RawToken == S.Element {
+                values = Array(s)
+            }
+
+            init(arrayLiteral elements: RawToken...) {
+                values = elements
+            }
+
+            func makeIterator() -> Array<RawToken>.Iterator {
+                values.makeIterator()
+            }
+        }
+
+        // Unknown raw values are intentionally ignored because the protocol extension uses compactMap.
+        let decoded = RawTokens(rawValue: ["one", "unknown", "two"])
+        try expect(Array(decoded) == [.one, .two])
+        try expect(decoded.rawValue == ["one", "two"])
+        let literal: RawTokens = [.two, .one]
+        try expect(literal.rawValue == ["two", "one"])
+    }),
+    TestCase("Identifiable array subscript", {
+        struct IdentifiedValue: Identifiable, Equatable {
+            let id: String
+            var name: String
+        }
+
+        var values = [
+            IdentifiedValue(id: "one", name: "one"),
+            IdentifiedValue(id: "two", name: "two"),
+        ]
+        try expect(values["one"]?.name == "one")
+        try expect(values["missing"] == nil)
+
+        values["two"] = IdentifiedValue(id: "two", name: "updated")
+        try expect(values["two"]?.name == "updated")
+
+        // Missing IDs and nil assignments are documented no-ops. Suppress the expected diagnostic output
+        // while still executing both guard branches and verifying that neither mutates the collection.
+        let unchanged = values
+        debugSuppress {
+            values["missing"] = IdentifiedValue(id: "missing", name: "missing")
+            values["one"] = nil
+        }
+        try expect(values == unchanged)
     }),
     TestCase("modification", [String].modificationTests),
     TestCase("safety", [Int].safeTests),
