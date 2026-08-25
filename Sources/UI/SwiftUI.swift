@@ -69,14 +69,30 @@ public extension View {
 }
 
 @available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
+public typealias ClosureTestView = RadialTestView
+
+@available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
 public struct RadialTestView: View {
     @State var symbol = "calendar"
     
     public init() {}
     public var body: some View {
+        let registeredModules = Build.allModules
+            .map { "[\($0.moduleName)](\($0.openSourceRepository ?? "https://github.com/kudit/")) v\($0.version)" }
+            .joined(separator: ", ")
         VStack {
-            Text("Open Source projects used include [Compatibility](https://github.com/kudit/Compatibility) v\(Compatibility.version)")
-                .font(.caption)
+            let moduleMarkdown = "Included modules: \(registeredModules)"
+            if let attributedModuleText = try? AttributedString(markdown: moduleMarkdown) {
+                // Rendering Markdown as an AttributedString preserves link attributes so each module
+                // repository is clickable instead of displaying the Markdown syntax literally.
+                Text(attributedModuleText)
+                    .font(.caption)
+            } else {
+                // Keep the diagnostic visible if a platform's Markdown parser cannot decode a URL.
+                Text(moduleMarkdown)
+                    .font(.caption)
+            }
+            Spacer()
             if #available(tvOS 17, *) {
                 MenuTest(symbol: $symbol, accessibilityIdentifier: "radial.inline.symbols.menu")
             } else {

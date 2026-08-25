@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.19.1 2026-08-25
+Updated `RadialTestView` to list every registered module with its current version, including modules registered through consuming packages.
+Retained the `ClosureTestView` compatibility typealias for modules that use the earlier name.
+
 ## v1.19.0 2026-08-24
 Expanded reusable mixed-type coding coverage for keyed and unkeyed containers, numeric decoding, and deterministic failure paths.
 Made the Material demo navigation trigger an unambiguous accessibility Button and strengthened its UI-test lookup.
