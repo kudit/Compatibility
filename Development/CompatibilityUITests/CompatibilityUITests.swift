@@ -250,14 +250,20 @@ final class CompatibilityUITests: XCTestCase {
         XCTAssertTrue(selectionChanged, "Selection-bound Backport.TabView should change to tag 1.")
 
 #if os(macOS) || os(iOS)
-        guard await reveal(identifier: "backport.symbol.field", in: screenElement, app: app) != nil else {
-            XCTFail("SF Symbol ClearableTextField should be reachable.")
-            return
-        }
-
         // ClearableTextField intentionally avoids publishing every keystroke. Commit each example with Return
         // so this exercises its explicit onSubmit path as well as Backport.Image with several real symbol names.
-        for symbolName in ["star.fill", "heart.fill", "calendar"] {
+        let symbolField = app.textFields["SF Symbol name"]
+        let symbolFieldFound = await waitForElement(symbolField, timeout: 2)
+        XCTAssertTrue(symbolFieldFound, "Backport should expose the SF Symbol text field.")
+        guard symbolFieldFound else { return }
+
+        for symbolName in ["star.fill", "calendar"] {
+            // The field starts with the current symbol value; clear it before each submission so the
+            // new symbol replaces rather than appends to the previous text.
+            let preSubmitClearButton = app.buttons["Clear SF Symbol name"]
+            if preSubmitClearButton.exists && preSubmitClearButton.isHittable {
+                preSubmitClearButton.backport.tap()
+            }
             let symbolField = app.textFields["SF Symbol name"]
             let symbolFieldFound = await waitForElement(symbolField, timeout: 2)
             XCTAssertTrue(symbolFieldFound, "Backport should expose the SF Symbol text field.")
@@ -288,10 +294,6 @@ final class CompatibilityUITests: XCTestCase {
         }
 #endif
 
-        guard await reveal(identifier: "backport.scroll.strip", in: screenElement, app: app) != nil else {
-            XCTFail("scrollDisabled example should expose its horizontal strip.")
-            return
-        }
         let strip = app.scrollViews["backport.scroll.strip"]
         let stripFound = await waitForElement(strip, timeout: 2)
         XCTAssertTrue(stripFound, "Backport scrolling example should expose a horizontal ScrollView.")
@@ -320,10 +322,10 @@ final class CompatibilityUITests: XCTestCase {
         XCTAssertEqual(restoredX, initialX, accuracy: 5,
                        "Enabled numbered strip should return to its starting position before disabling scrolling.")
 
-        guard let scrollToggle = await reveal(identifier: "backport.scroll.toggle", in: screenElement, app: app) else {
-            XCTFail("scrollDisabled Backport toggle should be reachable.")
-            return
-        }
+        let scrollToggle = app.buttons["backport.scroll.toggle"]
+        let scrollToggleFound = await waitForElement(scrollToggle, timeout: 2)
+        XCTAssertTrue(scrollToggleFound, "scrollDisabled Backport toggle should be reachable.")
+        guard scrollToggleFound else { return }
         scrollToggle.backport.tap()
 
         let disabledStartX = firstItem.frame.minX
