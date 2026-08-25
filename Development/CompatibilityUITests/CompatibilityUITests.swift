@@ -85,7 +85,7 @@ final class CompatibilityUITests: XCTestCase {
             if index > 0 {
                 await navigate(to: screen, in: app)
             }
-            if ![7].contains(index) { continue } // Add this to skip tests temporarily for debugging. FIXME: Comment this out before release!
+//            if ![7].contains(index) { continue } // Add this to skip tests temporarily for debugging. FIXME: Comment this out before release!
             let screenElement = app.descendants(matching: .any)[screen.identifier]
             let rendered = await waitForElement(screenElement, timeout: 10)
             XCTAssertTrue(rendered, "\(screen.name) should render its demo screen.")
@@ -307,37 +307,57 @@ final class CompatibilityUITests: XCTestCase {
         guard firstItemFound else { return }
 
         let initialX = firstItem.frame.minX
-        // scroll to end revealing 10
-            strip.swipeLeft()
-        try? await Task.sleep(nanoseconds: 200_000_000)
+        // Scroll the horizontal strip itself; on macOS the native delta avoids the slow vertical reveal
+        // gestures that previously made this section appear to hang.
+#if os(macOS)
+        strip.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).hover()
+        strip.scroll(byDeltaX: -1000, deltaY: 0)
+#else
+        strip.swipeLeft()
+#endif
+        try? await Task.sleep(nanoseconds: 100_000_000)
         let scrolledX = firstItem.frame.minX
         XCTAssertLessThan(scrolledX, initialX - 5,
                           "Enabled numbered strip should move its content after a scroll gesture.")
 
         // Return all the way to the starting edge before disabling scrolling so the test also leaves the
         // final item off screen again after demonstrating normal scrolling behavior.
+#if os(macOS)
+        strip.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).hover()
+        strip.scroll(byDeltaX: 1000, deltaY: 0)
+#else
         strip.swipeRight()
+#endif
         try? await Task.sleep(nanoseconds: 200_000_000)
         let restoredX = firstItem.frame.minX
         XCTAssertEqual(restoredX, initialX, accuracy: 5,
                        "Enabled numbered strip should return to its starting position before disabling scrolling.")
 
-        let scrollToggle = app.buttons["backport.scroll.toggle"]
+        // SwiftUI Toggle is exposed as a checkbox/switch on desktop platforms, not a button. Resolve
+        // the stable identifier without constraining the accessibility role.
+        let scrollToggle = app.descendants(matching: .any)["backport.scroll.toggle"]
         let scrollToggleFound = await waitForElement(scrollToggle, timeout: 2)
         XCTAssertTrue(scrollToggleFound, "scrollDisabled Backport toggle should be reachable.")
         guard scrollToggleFound else { return }
-        scrollToggle.backport.tap()
+        // Direct XCTest tapping can first bring an offscreen Toggle into view; the lightweight backport
+        // tap wrapper intentionally does not add that automatic scrolling behavior.
+        scrollToggle.tap()
+        try? await Task.sleep(nanoseconds: 150_000_000)
 
         let disabledStartX = firstItem.frame.minX
-        // scroll to end revealing 10 (same way as above)
+#if os(macOS)
+        strip.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).hover()
+        strip.scroll(byDeltaX: -1000, deltaY: 0)
+#else
         strip.swipeLeft()
+#endif
         try? await Task.sleep(nanoseconds: 200_000_000)
         let disabledEndX = firstItem.frame.minX
         XCTAssertEqual(disabledEndX, disabledStartX, accuracy: 3,
                        "Disabled numbered strip should not move after the same scroll gesture.")
 
         // Restore the enabled state for anyone continuing to inspect the demo after the automated tour.
-        scrollToggle.backport.tap()
+        scrollToggle.tap()
     }
 
     @MainActor

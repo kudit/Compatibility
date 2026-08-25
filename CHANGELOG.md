@@ -1,10 +1,5 @@
 # Changelog
 
-TODO:
-Fix the Backport code to actually test the text field and scrolling again (it was working, simply revert)
-Check code coverage.
-Improve coverage on low-coverage files (< 70%).
-
 To merge PR #2:
 1. Visit github.com/kudit/Compatibility.
 2. Open the Pull requests tab.
@@ -27,7 +22,7 @@ Improved the reusable test UI and Xcode/SwiftPM test integration, including para
 Expanded contributor guidance for short, staged, maintainer-reviewed coding workflows.
 Updated `closure` and `if` view modifiers to take `@ViewBuilder` so that contents don't need to be wrapped in `Group {}`.
 Added and re-worked visual tests into showcase views.
-Increased automated code coverage to 85%.
+Increased automated code coverage to 86%.
 
 ## v1.18.2 2026-07-23
 Fixed Swift Package Index build errors and warnings across SwiftUI and WebAssembly targets.
