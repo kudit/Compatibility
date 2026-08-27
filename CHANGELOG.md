@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.19.3 2026-08-25
+Prepared platform-build fixes for Swift Package Index: guarded SwiftUI-only test registrations, excluded unavailable visionOS glass APIs, and isolated Dispatch-dependent scheduling from WASM targets.
+Hardened URL parsing so malformed request strings fail before URLSession can misreport them as entitlement errors.
+Learned that legacy tab bar reordering is too difficult to re-implement in SwiftUI.  Removed the `.enableCustomization()` modifier that never worked correctly.
+
 ## v1.19.2 2026-08-25
 Added `.backport.tabViewStyle(.sidebarAdaptable)` support and implemented platform fallbacks with `@ViewBuilder` branches, without `AnyView` erasure.
 Updated the Compatibility demo to use the backport style API directly.

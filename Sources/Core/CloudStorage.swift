@@ -33,7 +33,6 @@ private let sync = CloudStorageSync.shared
     }
 
 //    @MainActor // prevent publishing on background thread
-    #if canImport(Combine)
     public static subscript<OuterSelf: ObservableObject>(
         _enclosingInstance instance: OuterSelf,
         wrapped wrappedKeyPath: ReferenceWritableKeyPath<OuterSelf, Value>,
@@ -47,7 +46,6 @@ private let sync = CloudStorageSync.shared
             instance[keyPath: storageKeyPath].wrappedValue = newValue
         }
     }
-    #endif
 }
 
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
@@ -299,7 +297,6 @@ extension CloudStorage where Value: DefaultDateCloudStorage {
     }
 }
 
-#if compiler(>=5.9)
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 enum CloudStorageTests {
     /// Covers the public date-string conversion contract without requiring a SwiftUI host view.
@@ -314,5 +311,4 @@ enum CloudStorageTests {
         },
     ]
 }
-#endif
 #endif

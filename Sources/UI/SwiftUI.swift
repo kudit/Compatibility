@@ -16,24 +16,6 @@ public extension EdgeInsets {
 
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension View {
-    /// Enables tab customization where the platform provides it.
-    ///
-    /// On iOS 18 and later this uses SwiftUI's native `TabViewCustomization`. On earlier iOS
-    /// releases it configures the underlying UIKit tab bar controller so the classic editable
-    /// More tab remains available. Platforms without tab customization receive the original view.
-    @ViewBuilder
-    func enableCustomization() -> some View {
-#if os(iOS)
-        if #available(iOS 18, *) {
-            self.modifier(NativeTabCustomizationModifier())
-        } else {
-            self.background(LegacyTabCustomizationBridge())
-        }
-#else
-        self
-#endif
-    }
-
     func padding(size: Double) -> some View {
         padding(EdgeInsets(top: size, leading: size, bottom: size, trailing: size))
     }
@@ -471,55 +453,5 @@ public extension View {
         }
     }
 }
-
-#if os(iOS)
-/// Owns SwiftUI's native customization state on iOS 18 and later.
-@available(iOS 18, *)
-private struct NativeTabCustomizationModifier: ViewModifier {
-    @State private var customization = TabViewCustomization()
-
-    func body(content: Content) -> some View {
-        content.tabViewCustomization($customization)
-    }
-}
-
-/// Restores UIKit's classic editable More-tab behavior on iOS versions before SwiftUI exposed
-/// `TabViewCustomization`. The bridge is intentionally empty and only uses its parent hierarchy.
-private struct LegacyTabCustomizationBridge: UIViewControllerRepresentable {
-    func makeUIViewController(context: Context) -> UIViewController {
-        UIViewController()
-    }
-
-    func updateUIViewController(_ controller: UIViewController, context: Context) {
-        // SwiftUI attaches the bridge after creating the tab controller, so defer one run-loop turn
-        // before walking upward to configure the UIKit controller.
-        DispatchQueue.main.async {
-            guard let root = controller.view.window?.rootViewController else { return }
-
-            func findTabBarController(in candidate: UIViewController) -> UITabBarController? {
-                if let tabBarController = candidate as? UITabBarController {
-                    return tabBarController
-                }
-                for child in candidate.children {
-                    if let match = findTabBarController(in: child) {
-                        return match
-                    }
-                }
-                if let presented = candidate.presentedViewController,
-                   let match = findTabBarController(in: presented) {
-                    return match
-                }
-                return nil
-            }
-
-            if let tabBarController = findTabBarController(in: root) {
-                // UIKit supplies the classic Edit button in More when there are customizable
-                // view controllers; assigning this list is the missing step for SwiftUI's bridge.
-                tabBarController.customizableViewControllers = tabBarController.viewControllers
-            }
-        }
-    }
-}
-#endif
 
 #endif

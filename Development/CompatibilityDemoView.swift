@@ -389,72 +389,66 @@ struct CompatibilityDemoView: View {
          ]
     ]
 
-    @ViewBuilder
-    private var demoTabs: some View {
-        if #available(watchOS 9, *) {
-            CompatibilityEnvironmentTestView()
-                .backport.accessibilityIdentifier("demo.compatibility")
-                .tabItem {
-                    Backport.Image(systemName: "gearshape")
-                    Text("Compatibility")
-                }
-            DataStoreTestView()
-                .backport.accessibilityIdentifier("demo.datastore")
-                .tabItem {
-                    Backport.Image(systemName: "externaldrive")
-                    Text("DataStore")
-                }
-        }
-        // Application tracking has already registered the complete ordered module graph consumed here.
-        AllTestsListView(additionalTests: Self.additionalTests)
-            .backport.accessibilityIdentifier("demo.allTests")
-            .tabItem {
-                Backport.Image(systemName: "checkmark.circle")
-                Text("All Tests")
-            }
-        RadialTestView()
-            .backport.accessibilityIdentifier("demo.radialLayout")
-            .tabItem {
-                Backport.Image(systemName: "circle.grid.3x3")
-                Text("Radial Layout")
-            }
-        RandomBytesTestView()
-            .backport.accessibilityIdentifier("demo.randomBytes")
-            .tabItem {
-                Backport.Image(systemName: "sparkles")
-                Text("Random Bytes")
-            }
-        ConvertTestView()
-            .backport.accessibilityIdentifier("demo.convert")
-            .tabItem {
-                Backport.Image(systemName: "arrow.left.arrow.right")
-                Text("Convert")
-            }
-        VisualShowcaseView()
-            .backport.accessibilityIdentifier("demo.visualShowcase")
-            .tabItem {
-                Backport.Image(systemName: "rectangle.3.group")
-                Text("Visual Showcase")
-            }
-        BackportShowcaseView()
-            .backport.accessibilityIdentifier("demo.backport")
-            .tabItem {
-                Backport.Image(systemName: "wrench.and.screwdriver")
-                Text("Backport")
-            }
-        MaterialTestView()
-            .backport.accessibilityIdentifier("demo.material")
-            .tabItem {
-                Backport.Image(systemName: "wand.and.stars")
-                Text("Material")
-            }
-    }
-
     var body: some View {
         TabView {
-            demoTabs
+            if #available(watchOS 9, *) {
+                CompatibilityEnvironmentTestView()
+                    .backport.accessibilityIdentifier("demo.compatibility")
+                    .tabItem {
+                        Backport.Image(systemName: "gearshape")
+                        Text("Compatibility")
+                    }
+                DataStoreTestView()
+                    .backport.accessibilityIdentifier("demo.datastore")
+                    .tabItem {
+                        Backport.Image(systemName: "externaldrive")
+                        Text("DataStore")
+                    }
+            }
+            // Application tracking has already registered the complete ordered module graph consumed here.
+            AllTestsListView(additionalTests: Self.additionalTests)
+                .backport.accessibilityIdentifier("demo.allTests")
+                .tabItem {
+                    Backport.Image(systemName: "checkmark.circle")
+                    Text("All Tests")
+                }
+            RadialTestView()
+                .backport.accessibilityIdentifier("demo.radialLayout")
+                .tabItem {
+                    Backport.Image(systemName: "circle.grid.3x3")
+                    Text("Radial Layout")
+                }
+            RandomBytesTestView()
+                .backport.accessibilityIdentifier("demo.randomBytes")
+                .tabItem {
+                    Backport.Image(systemName: "sparkles")
+                    Text("Random Bytes")
+                }
+            ConvertTestView()
+                .backport.accessibilityIdentifier("demo.convert")
+                .tabItem {
+                    Backport.Image(systemName: "arrow.left.arrow.right")
+                    Text("Convert")
+                }
+            VisualShowcaseView()
+                .backport.accessibilityIdentifier("demo.visualShowcase")
+                .tabItem {
+                    Backport.Image(systemName: "rectangle.3.group")
+                    Text("Visual Showcase")
+                }
+            BackportShowcaseView()
+                .backport.accessibilityIdentifier("demo.backport")
+                .tabItem {
+                    Backport.Image(systemName: "wrench.and.screwdriver")
+                    Text("Backport")
+                }
+            MaterialTestView()
+                .backport.accessibilityIdentifier("demo.material")
+                .tabItem {
+                    Backport.Image(systemName: "wand.and.stars")
+                    Text("Material")
+                }
         }
-        .enableCustomization()
         .backport.tabViewStyle(.sidebarAdaptable)
     }
 }

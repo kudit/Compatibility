@@ -84,6 +84,21 @@ public extension Backport where Content: View {
         }
     }
 
+    /// Adds a label to the view that describes its contents.
+    ///
+    /// Use this method to provide an accessibility label for a view that doesn't display text, like an icon.
+    /// For example, you could use this method to label a button that plays music with the text "Play".
+    /// Don't include text in the label that repeats information that users already have. For example,
+    /// don't use the label "Play button" because a button already has a trait that identifies it as a button.
+    @ViewBuilder
+    func accessibilityLabel<S>(_ label: S) -> some View where S : StringProtocol {
+        if #available(iOS 14, macOS 11, tvOS 14, watchOS 7, *) {
+            content.accessibilityLabel(label)
+        } else {
+            content
+        }
+    }
+
     // MARK: - .onChange
     
     /// Adds a modifier for this view that fires an action when a specific
@@ -1527,7 +1542,6 @@ private struct BackportSelectionTabViewContent<SelectionValue: Hashable, Content
         self.content = content()
     }
 
-    @ViewBuilder
     public var body: some View {
 #if os(watchOS)
         if #available(watchOS 7, *) {
@@ -1543,7 +1557,7 @@ private struct BackportSelectionTabViewContent<SelectionValue: Hashable, Content
         }
 #endif
     }
-
+    
     private var fallback: some View {
         ScrollView {
             VStack {
@@ -1609,11 +1623,13 @@ public extension Backport where Content == Any {
     }
 
     /// Usage: `Backport.TabView { MyView() }`
+    /// Provides a selection-bound tab container on watchOS 6, where native TabView is unavailable.
     @ViewBuilder static func TabView<C: View>(@ViewBuilder content: () -> C) -> some View {
         BackportTabViewContent(content: content)
     }
 
     /// Usage: `Backport.TabView(selection: $selection) { MyView().tag(selection) }`
+    /// Provides a selection-bound tab container on watchOS 6, where native TabView is unavailable.
     @ViewBuilder static func TabView<SelectionValue: Hashable, C: View>(selection: Binding<SelectionValue>?, @ViewBuilder content: () -> C) -> some View {
         BackportSelectionTabViewContent(selection: selection, content: content)
     }
@@ -1722,29 +1738,21 @@ public extension Backport where Content: View {
             content
 #else
             if #available(iOS 14, macOS 11, tvOS 14, watchOS 7, *) {
-                content.tabViewStyle(.page)
+                content.tabViewStyle(.automatic)
             } else {
                 content
             }
 #endif
         case .sidebarAdaptable:
-#if os(macOS)
-            if #available(macOS 15, *) {
-                content.tabViewStyle(.sidebarAdaptable)
-            } else {
-                content
-            }
-#elseif os(watchOS)
+#if os(watchOS)
             if #available(watchOS 7, *) {
                 content.tabViewStyle(.page)
             } else {
                 content
             }
 #else
-            if #available(iOS 18, tvOS 18, visionOS 2, *) {
+            if #available(iOS 18, macOS 15, tvOS 18, visionOS 2, *) {
                 content.tabViewStyle(.sidebarAdaptable)
-            } else if #available(iOS 14, macOS 11, tvOS 14, watchOS 7, *) {
-                content.tabViewStyle(.page)
             } else {
                 content
             }
@@ -1963,7 +1971,6 @@ public enum BackportButtonStyle: Sendable {
     case glass
 }
 
-#if compiler(>=5.9) // Is this if necessary?
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 extension BackportButtonStyle {
     /// Keeps the public style selection itself covered independently of SwiftUI rendering availability.
@@ -1978,7 +1985,6 @@ extension BackportButtonStyle {
         },
     ]
 }
-#endif
 
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 @MainActor
@@ -1990,17 +1996,18 @@ public extension Backport where Content: View {
     func buttonStyle(_ style: BackportButtonStyle) -> some View {
         switch style {
         case .glass:
-#if os(visionOS)
-            // visionOS cannot compile SwiftUI's glass button style, so use the material fallback.
-            glassButtonFallback
-#else
+#if (os(iOS) || os(tvOS) || os(watchOS)) && compiler(>=6.2)
             if #available(iOS 26, macOS 26, tvOS 26, watchOS 26, *) {
                 content
+                    // The contextual style can only be parsed on SDKs that define the glass style.
                     .buttonStyle(.glass)
                     .buttonBorderShape(.circle)
             } else {
                 glassButtonFallback
             }
+#else
+            // visionOS cannot compile SwiftUI's glass button style, so use the material fallback.
+            glassButtonFallback
 #endif
         }
     }

@@ -8,7 +8,7 @@
 #if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation)
 import SwiftUI
 
-@available(iOS 14, macOS 12, tvOS 15, watchOS 8, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 @MainActor
 public struct EnvironmentsView: View {
     public var environmentSet: [Build.Environment]
@@ -37,7 +37,7 @@ public struct EnvironmentsView: View {
                             environmentItem(environment: environment, enabled: enabled)
                         }
                     }
-                    .accessibilityIdentifier("environment.debug")
+                    .backport.accessibilityIdentifier("environment.debug")
                     .frame(maxWidth: .infinity, alignment: .leading)
                 } else {
                     HStack(spacing: 6) {
@@ -55,16 +55,16 @@ public struct EnvironmentsView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Expand environments")
+        .backport.accessibilityLabel("Expand environments")
         // Stable identifiers let the UI tour exercise both the compact and expanded branches
         // without depending on whichever environment labels happen to be active on this runtime.
         // Change the identifier with the state so the UI test can wait for the expanded body to finish
         // rendering before it taps the same full-row button to collapse the view.
-        .accessibilityIdentifier(isExpanded ? "environment.expanded" : "environments.toggle")
+        .backport.accessibilityIdentifier(isExpanded ? "environment.expanded" : "environments.toggle")
     }
 
     private func environmentIcon(environment: Build.Environment, enabled: Bool) -> some View {
-        Image(systemName: environment.symbolName)
+        Backport.Image(systemName: environment.symbolName)
             .font(isExpanded ? .body : .caption)
             // Fixed width keeps wide symbols, such as the Mac Catalyst icon, from pushing
             // labels farther right than narrower status icons in the expanded list.
@@ -97,23 +97,21 @@ public struct EnvironmentsView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel((enabled ? "Is" : "Not") + " " + environment.label)
-        .accessibilityIdentifier("environment.\(environment.caseName)")
+        .backport.accessibilityLabel((enabled ? "Is" : "Not") + " " + environment.label)
+        .backport.accessibilityIdentifier("environment.\(environment.caseName)")
     }
 }
 
-@available(iOS 14, macOS 12, tvOS 15, watchOS 8, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 #Preview("Environments") {
     EnvironmentsView(Build.environments())
 }
-@available(iOS 14, macOS 12, tvOS 15, watchOS 8, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 #Preview("Environments ALL") {
     EnvironmentsView(Build.Environment.allCases)
 }
-#endif
 
-#if compiler(>=5.9)
-@available(iOS 14, macOS 12, tvOS 15, watchOS 8, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 extension EnvironmentsView {
     /// Verifies the deterministic environment list used by both compact and expanded rendering.
     @MainActor

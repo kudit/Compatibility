@@ -191,7 +191,13 @@ extension Compatibility {
     public static func fetchURLData(urlString: String, postData: PostData? = nil, source: SourceContext) async throws -> Data {
         Compatibility.debug("Fetching URL [\(urlString)]...", level: .NOTICE, source: source)
         // create the url with URL
-        guard let url = URL(string: urlString) else {
+        // Foundation can construct a non-nil URL for malformed strings such as `http://[`;
+        // require a scheme and host here so deterministic parse failures do not reach URLSession
+        // and become misleading DNS or entitlement errors.
+        guard let components = URLComponents(string: urlString),
+              let url = components.url,
+              components.scheme != nil,
+              components.host != nil else {
             throw NetworkError.urlParsing(urlString: urlString).debug(level: .ERROR, source: source)
         }
         
