@@ -2007,6 +2007,10 @@ public extension Backport where Content: View {
             }
 #else
             // visionOS cannot compile SwiftUI's glass button style, so use the material fallback.
+            // The native Glass button style is SDK-defined rather than merely OS-available.
+            // Referencing `.glass` here would therefore fail SPI builds using an older SDK even
+            // when the deployment target is guarded. Keep this stable fallback in the shared
+            // source; callers still receive the Compatibility glass treatment on every target.
             glassButtonFallback
 #endif
         }

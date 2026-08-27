@@ -348,8 +348,13 @@ public extension Compatibility {
                 closure()
             }
 #else
-            // Targets without Dispatch cannot schedule a legacy queue hop; run the closure directly.
-            closure()
+            // Full-runtime targets without Dispatch, including WASM/WASI, have Swift concurrency and no
+            // legacy Apple deployment target to support. Always enter the actor through a Task instead
+            // of type-checking an invalid synchronous call to the MainActor-isolated closure.
+            Task { @MainActor in
+                closure()
+
+            }
 #endif
         }
     }

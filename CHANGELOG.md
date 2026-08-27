@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.19.4 2026-08-27
+Fixed WASM threading issue.
+
 ## v1.19.3 2026-08-25
 Prepared platform-build fixes for Swift Package Index: guarded SwiftUI-only test registrations, excluded unavailable visionOS glass APIs, and isolated Dispatch-dependent scheduling from WASM targets.
 Hardened URL parsing so malformed request strings fail before URLSession can misreport them as entitlement errors.
