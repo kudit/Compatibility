@@ -337,21 +337,25 @@ public extension Compatibility {
         line: Int = #line,
         column: Int = #column
     ) {
+#if canImport(Dispatch)
         if #available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *) {
             Task { @MainActor in
                 //                debug("Running main-thread block", level: .DEBUG, file: file, function: function, line: line, column: column)
                 closure()
             }
         } else {
-#if canImport(Dispatch)
             DispatchQueue.main.async { @MainActor in
                 closure()
             }
-#else
-            // Targets without Dispatch cannot schedule a legacy queue hop; run the closure directly.
-            closure()
-#endif
         }
+#else
+        // Full-runtime targets without Dispatch, including WASM/WASI, have Swift concurrency and no
+        // legacy Apple deployment target to support. Always enter the actor through a Task instead
+        // of type-checking an invalid synchronous call to the MainActor-isolated closure.
+        Task { @MainActor in
+            closure()
+        }
+#endif
     }
 }
 
