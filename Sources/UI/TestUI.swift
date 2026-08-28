@@ -33,6 +33,13 @@ public struct TestRow: View {
                     .backport.textSelection(.enabled)
             }
         }
+        // Make the complete row an activation target so rerunning a test does not require
+        // precision tapping the small play control. The explicit play button remains available
+        // for discoverability and accessibility, while this gesture covers the surrounding row.
+        .contentShape(Rectangle())
+        .onTapGesture {
+            test.run()
+        }
     }
 }
 
@@ -49,18 +56,35 @@ struct TestsRowsView: View {
 @available(iOS 15, macOS 12, tvOS 17, watchOS 8, *)
 @MainActor
 final class AllTestsListModel: ObservableObject {
-    let modules: [Module.Type]
+    /// An explicit module list is stable; otherwise the registry is intentionally resolved lazily on appearance.
+    private let explicitModules: [Module.Type]?
+    // Publish the refreshed registry so a StateObject-backed list redraws after startup registration
+    // completes; without this, the model contains module tests but the view remains on its initial
+    // injected-tests-only snapshot.
+    @Published private(set) var modules: [Module.Type]
     let additionalTests: OrderedDictionary<String, [TestCase]>
     private var didStartTests = false
 
     init(modules: [Module.Type]? = nil, additionalTests: OrderedDictionary<String, [TestCase]> = [:]) {
-        // Registration already handles recursive discovery, stable-identifier deduplication, and dependency order.
-        // Reverse that shared result so the UI presents specific modules before their foundational dependencies.
-        self.modules = modules ?? Array(Build.allModules.reversed())
+        // Do not snapshot Build.allModules here: SwiftUI may construct StateObject-backed views before the
+        // hosting application's App initializer has registered its top-level modules. The registry is read
+        // by refreshRegisteredModules() immediately before the view starts displaying and running tests.
+        self.explicitModules = modules
+        self.modules = modules ?? []
         self.additionalTests = additionalTests
     }
 
+    /// Refreshes the implicit registry just before presentation so consuming apps have completed startup registration.
+    func refreshRegisteredModules() {
+        // Dependencies are registered first; reverse that order so specific modules appear
+        // before Compatibility. This refresh is deliberately independent of injected tests:
+        // AllTestsListView must show both catalogs, including when either one is empty.
+        modules = explicitModules ?? [] + Array(Build.allModules.reversed())
+    }
+
     func startAllTestsOnce() {
+        // Refresh before the one-time execution guard because the app registry may finish after model creation.
+        refreshRegisteredModules()
         guard !didStartTests else { return }
         didStartTests = true
         // Starting is synchronous and cheap; each TestCase immediately moves its actual work off the main actor.

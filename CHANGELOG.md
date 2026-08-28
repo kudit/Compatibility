@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.19.5 2026-08-27
+Made `AllTestsListModel` lazily resolve the registered module list when tests start, ensuring app-registered modules appear while preserving specific-module-first ordering.
+
 ## v1.19.4 2026-08-27
 Fixed WASM threading issue.
 
