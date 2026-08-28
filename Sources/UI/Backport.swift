@@ -1619,6 +1619,20 @@ public extension Backport where Content == Any {
         _ title: LocalizedStringKey,
         @ViewBuilder content: () -> C
     ) -> some View {
+        // Resolve the localized key to its textual representation before delegating so both
+        // overloads share the same rendering and legacy fallback behavior.
+        GroupBox(String(describing: title), content: content)
+    }
+
+    /// Provides a text-labelled GroupBox for any string-like title, including `String`,
+    /// `Substring`, and custom `StringProtocol` values.
+    ///
+    /// This overload deliberately accepts `StringProtocol` rather than only `String` so callers
+    /// can pass slices and other string-backed labels without converting them at every call site.
+    @ViewBuilder static func GroupBox<S: StringProtocol, C: View>(
+        _ title: S,
+        @ViewBuilder content: () -> C
+    ) -> some View {
         GroupBox(content: content) { Text(title) }
     }
 

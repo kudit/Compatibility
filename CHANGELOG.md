@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.19.7 2026-08-28
+Expanded `Backport.GroupBox` title overloads to accept any `StringProtocol`, while routing localized keys through the same string-based implementation.
+
 ## v1.19.6 2026-08-27
 Fixed tvOS bug introduced by agent in the last patch.
 
