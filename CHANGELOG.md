@@ -1,7 +1,11 @@
 # Changelog
 
+## v1.19.6 2026-08-27
+Fixed tvOS bug introduced by agent in the last patch.
+
 ## v1.19.5 2026-08-27
 Made `AllTestsListModel` lazily resolve the registered module list when tests start, ensuring app-registered modules appear while preserving specific-module-first ordering.
+Made every reusable test row rerunnable by tapping anywhere on the row, while retaining the dedicated play button.
 
 ## v1.19.4 2026-08-27
 Fixed WASM threading issue.

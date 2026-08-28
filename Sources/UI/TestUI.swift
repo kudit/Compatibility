@@ -37,7 +37,7 @@ public struct TestRow: View {
         // precision tapping the small play control. The explicit play button remains available
         // for discoverability and accessibility, while this gesture covers the surrounding row.
         .contentShape(Rectangle())
-        .onTapGesture {
+        .backport.onTapGesture {
             test.run()
         }
     }
