@@ -51,6 +51,16 @@ extension ModuleTestEntry: CustomTestArgumentEncodable {
 
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension ModuleTestEntry {
+    /// Flattens every module currently registered with `Build` into test arguments.
+    ///
+    /// Root packages should call their module's `include()` or `Application.track(...)` first.
+    /// This keeps submodule test suites automatic while leaving app-specific injected tests to
+    /// the app's own test suite.
+    @MainActor
+    static func entries() -> [ModuleTestEntry] {
+        entries(including: Build.allModules)
+    }
+
     /// Flattens an explicitly supplied module test catalog into individually named test arguments.
     ///
     /// The caller supplies the concrete module's `tests` value so Swift does not fall back to a
@@ -81,9 +91,24 @@ public extension ModuleTestEntry {
     /// older conformer whose test catalog has a stricter availability annotation.
     @MainActor
     static func entries(including modules: Module.Type...) -> [ModuleTestEntry] {
+        entries(including: modules)
+    }
+
+    /// Flattens an existing module collection into individually named test arguments.
+    ///
+    /// This overload is intended for packages that discover their dependency graph at runtime,
+    /// such as a package that first calls `Module.include()` and then reads `Build.allModules`.
+    @MainActor
+    static func entries(including modules: [Module.Type]) -> [ModuleTestEntry] {
         modules.flatMap { module in
             entries(for: module, tests: module.tests)
         }
+    }
+
+    /// Flattens one module's reusable test catalog without requiring callers to repeat its tests property.
+    @MainActor
+    static func entries(for module: Module.Type) -> [ModuleTestEntry] {
+        entries(for: module, tests: module.tests)
     }
 }
 #endif

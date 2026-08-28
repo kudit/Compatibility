@@ -32,6 +32,7 @@ When working interactively with a maintainer, generally (this shouldn't be meant
 - Keep changelog entries in `## vX.X.X YYYY-MM-DD` format, with short line-separated notes under the current version.
 - Before editing the active changelog entry, compare its version with the latest committed Git version.
 - If those versions match, create a patch-version entry by default and update `Package.swift`, `Compatibility.version`, and the Xcode `MARKETING_VERSION` settings. Use a minor or major bump only when the user requests it or has already created that version entry.
+- Do not bump or create a version entry for uncommitted work when the active changelog version already matches the latest committed Git version; leave the working tree on that committed version until the maintainer commits or explicitly requests a release/version update.
 - If an uncommitted manual version entry already differs from Git, use it and synchronize every version surface rather than choosing another version.
 - Treat a heading such as `## vX.Y.Z TODO` as an intentional version stub: synchronize all version surfaces and replace `TODO` with the current date.
 - If work is being applied to the active unpushed version and its date is not current, update that heading to the current date.

@@ -8,7 +8,7 @@
 
 public enum Compatibility: Module {
     /// The version of the Compatibility Library since cannot get directly from Package.swift.
-public static let version: Version = "1.19.7"
+public static let version: Version = "1.19.8"
 
     /// Public source repository for Compatibility so support reports can direct developers to its source and issue history.
     ///

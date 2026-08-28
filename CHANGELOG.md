@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.19.8 2026-08-28
+Added an array-based `ModuleTestEntry.entries(including:)` overload so packages with dynamically discovered module graphs can reuse Compatibility's test adapter without maintaining duplicate entry types.
+Added automatic `ModuleTestEntry.entries()` discovery for registered module graphs so submodule test targets can share the Compatibility testing adapter without repeating module lists.
+
 ## v1.19.7 2026-08-28
 Expanded `Backport.GroupBox` title overloads to accept any `StringProtocol`, while routing localized keys through the same string-based implementation.
 
