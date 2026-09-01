@@ -35,6 +35,9 @@ public class Application: ObservableObject { // The private initializer preserve
 
     public static let main = Application()
 
+    /// Prevents repeated tracking calls from scheduling duplicate reports during one process lifetime.
+    private static var hasTracked = false
+
     // MARK: - Compiler information (moved to Build - included here to prevent breaking compatibility).
     /// will be true if we're in a debug configuration and false if we're building for release
     @available(*, deprecated, renamed: "Build.isDebug")
@@ -170,14 +173,30 @@ public class Application: ObservableObject { // The private initializer preserve
         )
     }
 
+    /// Registers one or more top-level modules using the shortest call-site form.
+    /// Compatibility and every module dependency are discovered automatically.
+    public static func track(_ modules: Module.Type..., file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) {
+        track(including: modules, file: file, function: function, line: line, column: column)
+    }
+
+    /// Array-form overload for applications that assemble their top-level modules dynamically.
+    public static func track(_ modules: [Module.Type], file: String = #file, function: String = #function, line: Int = #line, column: Int = #column) {
+        track(including: modules, file: file, function: function, line: line, column: column)
+    }
+
     /// Source-forwarding form for callers that have already captured their own call site.
     public static func track(including modules: [Module.Type] = [], source: SourceContext) {
+        guard !hasTracked else {
+            Compatibility.debug("Application.track() was called more than once; ignoring the repeated call.", level: .WARNING, source: source)
+            return
+        }
+        hasTracked = true
         // Compatibility supplies Application itself, so it belongs in every tracked application's module report.
         Compatibility.include()
         Build.register(modules)
         // Prevent late mutation once asynchronous support reporting can begin reading the global registry.
         Build.finishModuleRegistration()
-        // Calling Application.main is what initializes the application and does the tracking.  This really should only be called once.  TODO: Should we check to make sure this isn't called twice??  Application.main singleton should only be inited once.
+        // Application.main is a once-initialized singleton; the guard above also prevents duplicate tracking side effects.
         Compatibility.debug("Application Tracking: \(Application.main.appName)", level: .NOTICE, source: source) // Initialize persisted version state synchronously before detached reporting begins.
         // Defer the complete report so modules may calculate or fetch metadata without blocking application launch.
 #if arch(wasm32)
@@ -320,6 +339,8 @@ public class Application: ObservableObject { // The private initializer preserve
     /// For debugging, reset all the previously run version information including the cloud versions.  This shouldn't be run on production devices or you risk data loss.
     public func resetVersionsRun() {
         debug("Resetting Versions Run!", level: .WARNING)
+        // Test fixtures use this existing reset hook to permit one fresh tracking call per isolated test.
+        Self.hasTracked = false
         UserDefaults.standard.removeObject(forKey: .legacyLastRunVersionKey)
         UserDefaults.standard.removeObject(forKey: .localAppVersionsRunKey)
         UserDefaults.standard.removeObject(forKey: .localAppVersionsRunOnDeviceKey)

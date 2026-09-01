@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.19.9 2026-08-31
+Added the main-actor-isolated `Module.testEntries()` convenience, recursively flattening each module's reusable tests and dependencies in dependency-first order without mutating registration state.
+
 ## v1.19.8 2026-08-28
 Added an array-based `ModuleTestEntry.entries(including:)` overload so packages with dynamically discovered module graphs can reuse Compatibility's test adapter without maintaining duplicate entry types.
 Added automatic `ModuleTestEntry.entries()` discovery for registered module graphs so submodule test targets can share the Compatibility testing adapter without repeating module lists.

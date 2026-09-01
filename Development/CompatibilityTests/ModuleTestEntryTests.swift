@@ -15,12 +15,7 @@ struct ModuleTestEntryTests {
     /// Presents every reusable Compatibility `TestCase` as its own named Swift Testing argument.
     @Test(
         "Compatibility Module Test",
-        arguments: await MainActor.run {
-            ModuleTestEntry.entries(
-                for: Compatibility.self,
-                tests: Compatibility.tests
-            )
-        }
+        arguments: await Compatibility.testEntries()
     )
     @MainActor
     @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)

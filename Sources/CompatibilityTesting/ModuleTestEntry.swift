@@ -111,4 +111,29 @@ public extension ModuleTestEntry {
         entries(for: module, tests: module.tests)
     }
 }
+
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+public extension Module {
+    /// Flattens reusable tests for this module, or for explicitly supplied top-level modules,
+    /// together with all declared dependencies.
+    ///
+    /// The returned order is dependency-first, so foundational modules run before the higher-level
+    /// modules that depend on them. Duplicate modules are emitted only once by stable identifier.
+    /// Registration is deliberately not performed here: test discovery should be a pure operation,
+    /// while applications use ``include()`` or ``Application.track(including:)`` for registration.
+    @MainActor
+    static func testEntries(including topLevelModules: [Module.Type]? = nil) async -> [ModuleTestEntry] {
+        var modules = [Module.Type]()
+        var visited = Set<String>()
+
+        func append(_ module: Module.Type) {
+            guard visited.insert(module.moduleIdentifier).inserted else { return }
+            for dependency in module.dependencies { append(dependency) }
+            modules.append(module)
+        }
+
+        for module in topLevelModules ?? [Self.self] { append(module) }
+        return ModuleTestEntry.entries(including: modules)
+    }
+}
 #endif

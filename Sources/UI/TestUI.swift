@@ -76,6 +76,11 @@ final class AllTestsListModel: ObservableObject {
 
     /// Refreshes the implicit registry just before presentation so consuming apps have completed startup registration.
     func refreshRegisteredModules() {
+        if explicitModules == nil && Build.allModules.isEmpty {
+            // Keep the standalone Compatibility test screen useful when a host app has not
+            // called Application.track yet; injected tests must not replace module tests.
+            Compatibility.include()
+        }
         // Dependencies are registered first; reverse that order so specific modules appear
         // before Compatibility. This refresh is deliberately independent of injected tests:
         // AllTestsListView must show both catalogs, including when either one is empty.
