@@ -84,27 +84,13 @@ public final class Pasteboard {
         self.usesSystemPasteboard = usesSystemPasteboard
     }
 
-    /// Replaces the pasteboard contents with typed items.
-    ///
-    /// - Parameter items: Items to write in their existing order.
-    public func copy(_ items: [PasteboardItem]) {
-        copyToPasteboard(items)
-    }
-
-    /// Replaces the pasteboard contents with one plain-text item.
-    ///
-    /// - Parameter string: UTF-8 text to copy.
-    public func copy(_ string: String) {
-        copy([PasteboardItem(string: string)])
-    }
-
     /// Replaces the pasteboard contents with typed items on every supported platform.
     ///
     /// Unsupported system-pasteboard platforms retain the values in process-local memory so reads through
     /// this instance remain consistent without pretending to communicate with other applications.
     ///
     /// - Parameter items: Items to write in their existing order.
-    public func copyToPasteboard(_ items: [PasteboardItem]) {
+    public func copy(_ items: [PasteboardItem]) {
         guard usesSystemPasteboard else {
             storedItems = items
             return
@@ -134,29 +120,23 @@ public final class Pasteboard {
 #endif
     }
 
+    /// Replaces the pasteboard contents with one plain-text item.
+    ///
+    /// - Parameter string: UTF-8 text to copy.
+    public func copy(_ string: String) {
+        copy([PasteboardItem(string: string)])
+    }
+
+    @available(*, deprecated, renamed: "Pasteboard.system.copy(_:)", message: "Use Pasteboard.system.copy(_:) instead.")
+    @MainActor
+    public func copyToPasteboard(_ items: [PasteboardItem]) {
+        copy(items)
+    }
+
     /// Reads every typed item currently stored on this pasteboard.
     ///
     /// - Returns: Items in pasteboard order with their available raw representations.
     public func read() -> [PasteboardItem] {
-        return readFromPasteboard()
-    }
-
-    /// Reads the first available plain-text value.
-    ///
-    /// - Returns: The first readable UTF-8 string, or `nil` when no text is available.
-    public func readString() -> String? {
-        for item in readFromPasteboard() {
-            if let string = item.string {
-                return string
-            }
-        }
-        return nil
-    }
-
-    /// Reads every typed item through a common API on all supported platforms.
-    ///
-    /// - Returns: System pasteboard items, or process-local items where no system API exists.
-    public func readFromPasteboard() -> [PasteboardItem] {
         guard usesSystemPasteboard else {
             return storedItems
         }
@@ -188,6 +168,26 @@ public final class Pasteboard {
 #else
         return storedItems
 #endif
+    }
+
+    /// Reads the first available plain-text value.
+    ///
+    /// - Returns: The first readable UTF-8 string, or `nil` when no text is available.
+    public func readString() -> String? {
+        for item in read() {
+            if let string = item.string {
+                return string
+            }
+        }
+        return nil
+    }
+
+    /// Reads every typed item through a common API on all supported platforms.
+    ///
+    /// - Returns: System pasteboard items, or process-local items where no system API exists.
+    @available(*, deprecated, renamed: "Pasteboard.system.read()", message: "Use Pasteboard.system.read() instead.")
+    public func readFromPasteboard() -> [PasteboardItem] {
+        return read()
     }
 }
 

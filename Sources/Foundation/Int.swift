@@ -60,14 +60,28 @@ internal let randomTests: TestClosure = {
 
 // MARK: - Ordinal display
 public extension Int {
+    /// A localized ordinal where Foundation supports it, or an English ordinal on older systems.
+    ///
+    /// The English fallback preserves negative signs and supports the complete `Int` range.
     var ordinal: String {
         #if canImport(Foundation)
-        let ordinalFormatter = NumberFormatter()
-        ordinalFormatter.numberStyle = .ordinal
-        return ordinalFormatter.string(from: NSNumber(value: self)) ?? "\(self)th"
-        #else
+        // NumberFormatter.Style.ordinal was formerly accessed unconditionally, preventing
+        // iOS 8/macOS 10.10 builds. Keep native localization wherever the formatter supports it.
+        if #available(iOS 9, macOS 10.11, tvOS 9, watchOS 2, *) {
+            let ordinalFormatter = NumberFormatter()
+            ordinalFormatter.numberStyle = .ordinal
+            return ordinalFormatter.string(from: NSNumber(value: self)) ?? englishOrdinal
+        }
+        #endif
+        return englishOrdinal
+    }
+
+    /// The former non-Foundation suffix implementation, shared with legacy Apple targets.
+    /// Kept separate so its edge cases can be tested without requiring an old OS at test time.
+    fileprivate var englishOrdinal: String {
         var suffix = "th"
-        switch self % 10 {
+        // The former `self % 10` produced negative remainders; magnitude also avoids abs(Int.min) overflow.
+        switch magnitude % 10 {
         case 1:
             suffix = "st"
         case 2:
@@ -76,11 +90,10 @@ public extension Int {
             suffix = "rd"
         default: ()
         }
-        if 10 < (self % 100) && (self % 100) < 20 {
+        if (11...13).contains(magnitude % 100) {
             suffix = "th"
         }
         return String(self) + suffix
-        #endif
     }
     internal static let ordinalTestMap = [
         0: "th",
@@ -106,7 +119,15 @@ internal let ordinalTests: TestClosure = {
     for (num, suffix) in Int.ordinalTestMap {
         let expected = "\(num)\(suffix)"
         try expect(expected == num.ordinal, "\(num.ordinal) does not equal \(expected)")
+        // Exercise the legacy branch directly even when this host uses NumberFormatter.
+        try expectEqual(num.englishOrdinal, expected)
     }
+    for (value, expected) in [(-1, "-1st"), (-2, "-2nd"), (-3, "-3rd"), (-11, "-11th"), (-12, "-12th"), (-13, "-13th"), (-21, "-21st"), (111, "111th"), (112, "112th"), (113, "113th")] {
+        try expectEqual(value.englishOrdinal, expected)
+    }
+    // Both 32-bit and 64-bit Int minima end in 8, so this also proves no absolute-value overflow occurs.
+    try expectEqual(Int.min.englishOrdinal, "\(Int.min)th")
+    try expectEqual(Int.max.englishOrdinal, "\(Int.max)th")
 }
 
 // MARK: - String output support

@@ -22,19 +22,33 @@ The primary goals are to be easily maintainable by multiple individuals, employ 
 
 
 ## Requirements
-- iOS 11+ (15.2+ minimum required for Swift Playgrounds support)
-- macOS 10.10+ for Foundation and command-line-compatible APIs (SwiftPM cannot declare earlier macOS); SwiftUI APIs require macOS 10.15+, and the development app/tests currently target macOS 11+ or 12+ where noted.
+- Swift tools 5.8+; newer APIs retain their own OS availability requirements.
+- iOS 8+ for synchronous APIs (iOS 13+ for SwiftUI and Swift concurrency; 15.2+ minimum required for Swift Playgrounds support)
+- macOS 10.10+ for synchronous Foundation and command-line APIs; SwiftUI and Swift concurrency require macOS 10.15+, and development app/tests have their own higher deployment targets.
 - macCatalyst 13.0+ (first version available)
 - tvOS 11.0+ (UI only supported on tvOS 15+, 17+ required for most SwiftUI features)
 - watchOS 4.0+ (UI only supported on watchOS 8+)
 - visionOS 1.0+
 - Theoretically should work with Linux, Windows, and Vapor, but haven't fully tested.  If you would like to help, please let us know.
 
+Older systems use English ordinals and Emoji 3.0 classification where the native APIs are unavailable. `BackportOutputFormatting` provides recursive sorted keys, pretty printing, and unescaped slashes on older systems and without Foundation; `asJSON` uses native formatting when available. For older Intel Macs, build an `x86_64` executable with the desired deployment target and bundle the required Swift runtime libraries; the target Mac does not need the compiler used to build it.
+
+
+Run `Development/LegacyTests/run.sh` on a development Mac to build and execute the synchronous JSON regression checks targeting Intel macOS 10.10. The same checks run in the module test catalog. To verify deployment, run the resulting executable on the older Mac with its required Swift runtime libraries. Set `COMPATIBILITY_LEGACY_OUTPUT` to choose where to keep the executable.
 
 ## Known Issues
 *See CHANGELOG.md for known issues and roadmap*
 Note that the DataStore tests only work if entitlements and privacyinfo are included (therefore, they will not be functional in Previews and Swift Playgrounds).
 
+### Designed for iPad detection
+
+`Build.isDesignedForiPad`, `Build.Environment.test`, and `Build.environments()` are synchronous process queries that can be called without `@MainActor`. Module registration and UI APIs retain their own actor requirements.
+
+Mac compatibility mode is detected with `ProcessInfo.isiOSAppOnMac`. Compatible iPhone/iPad apps on visionOS are detected with [`ProcessInfo.isiOSAppOnVision`](https://developer.apple.com/documentation/foundation/processinfo/isiosapponvision), available starting in 26.1. The visionOS query uses availability-guarded Objective-C key-value coding so an older SDK can still compile the code without knowing that property.
+
+**On visionOS before 26.1, a compatible app returns `false`: this means “not detected,” not “definitely running on an iPad.”** `UIDevice.userInterfaceIdiom == .pad` is not a workaround because both environments can report an iPad idiom. Likewise, `#if os(visionOS)` identifies a native visionOS build, not the host of an iOS compatibility binary.
+
+Prefer checking the specific capability needed by the feature. For a controlled deployment where the host is known independently, keep that classification in the caller: for example, append `.designedForiPad` to a locally constructed environment array before passing it to `EnvironmentsView`, avoiding duplicates. This is a manual presentation override, not automatic detection, and does not change `Build`'s process flags. There is no reliable automatic pre-26.1 fallback implemented here.
 
 ## Installation
 Install by adding this as a package dependency to your code.  This can be done in Xcode or Swift Playgrounds!

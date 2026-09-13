@@ -2,13 +2,30 @@
 
 Compatibility prioritizes portability, backwards compatibility, clear public documentation, and reviewable changes. Contributors and coding agents should follow these repository-specific rules.
 
-## Specific prompt reference (AIs should ignore this section and skip to the Interactive Coding Preferences section)
+## Optional prompt templates
+
+The templates in this section apply only when explicitly requested or when the current task is creating or modernizing a package according to these templates. Otherwise, skip this section and follow the general and interactive coding rules below.
+
 PROMPT prefix for Xcode or another context without memory for projects using Compatibility:
-Follow the included Compatibility `CONTRIBUTING.md` (or github.com/kudit/Compatibility/CONTRIBUTING.md), preserve existing edits, then complete this request:
+```
+Follow the rules in github.com/kudit/Compatibility/CONTRIBUTING.md, preserve existing edits, then complete this request:
 [REQUEST]
+```
 
 PROMPT for updating Module packages:
-Review this Swift package for adoption of the Module APIs introduced in github.com/kudit/Compatibility v1.16.0 or later. Inspect the package’s existing architecture and preserve its public behavior and platform compatibility. Add or update its Compatibility dependency if necessary. Apply an appropriate Module conformance, including its version, direct Compatibility dependency, module dependencies, immediately available moduleInfo, ordered TestCase sections, and opt-in open-source repository metadata when applicable. Register the package from its highest-level module or document how an application should register it through Application.track(including:). Add complete inline DocC comments to the relevant public APIs so generated documentation can discover them. Do not create a .docc catalog, separate documentation articles, or another documentation folder. Preserve existing comments unless they are missing, unclear, or inaccurate. Put reusable tests in the module's TestCase collections so they run both in the in-app test UI and through the Swift Testing bridge; retain target-specific tests only where infrastructure requires them. Follow this package’s existing CONTRIBUTING.md, changelog, versioning, formatting, availability, and compatibility conventions. Avoid unrelated reformatting and whitespace-only changes. Before changing version numbers, compare the current changelog version with the latest committed Git version. If the active working-tree changelog is already ahead of Git, do not choose another version; synchronize that active version across every package manifest, Xcode project, public source constant, test fixture or suite heading, README or documentation display, and other hard-coded version surface. Please check that all deprecations (that can) have appropriate renamed clauses for easy fixits.
+```
+Review this Swift package for adoption of the Module APIs introduced in github.com/kudit/Compatibility v1.16.0 or later. Inspect the package’s existing architecture and preserve its public behavior and platform compatibility. Add or update its Compatibility dependency if necessary. Apply an appropriate Module conformance, including its version, direct Compatibility dependency, module dependencies, immediately available moduleInfo, ordered TestCase sections, and opt-in open-source repository metadata when applicable. Register the package from its highest-level module or document how an application should register it through Application.track(including:). Add complete inline DocC comments to the relevant public APIs so generated documentation can discover them. Do not create a .docc catalog, separate documentation articles, or another documentation folder. Put reusable tests in the module's TestCase collections so they run both in the in-app test UI and through the Swift Testing bridge; retain target-specific tests only where infrastructure requires them. Follow this package’s existing CONTRIBUTING.md, changelog, versioning, formatting, availability, and compatibility conventions.
+```
+
+PROMPT For new apps:
+```
+Use github.com/kudit/Compatibility as a dependency. Adopt the coding, documentation, testing, and changelog rules in that project's CONTRIBUTING.md. Generate a README.md following the Compatibility App Store Styleguide in that same file. Reconstruct the implementation history represented in this conversation into changelog entries using the guidelines.  Swift apps should prefer Compatibility APIs where relevant, including debug() instead of print(), Application.track(), Backports, and Compatibility JSON/string/date helpers.
+```
+
+PROMPT for updating projects:
+```
+Use github.com/kudit/Compatibility where appropriate. Adopt the coding, documentation, testing, and changelog rules in Compatibility/CONTRIBUTING.md. Preserve existing behavior and edits, inspect the project before changing architecture, and complete the requested implementation with real tests.
+```
 
 
 ## Interactive Coding Preferences
@@ -18,7 +35,8 @@ When working interactively with a maintainer, generally (this shouldn't be meant
 - Present one immediate decision or action at a time and pause for maintainer feedback unless instructed to do a batch.
 - Explain design choices briefly and answer questions before continuing implementation.
 - Preserve and review the maintainer's local edits before adding further changes.
-- Let the maintainer build, edit, commit, and push between stages when practical.
+- When working in a shared local filesystem, let the maintainer build, edit, commit, and push between stages when practical. Do not commit or push coding-agent changes when you have access to the local filesystem.  When working purely via github access, then adding commits is okay as long as you include the proper CHANGELOG updates and version bumps.  Commit summaries should be the new version number and the description should be complete and clear and concise.
+- For API changes, command-line interfaces, compatibility behavior, file formats, migrations, handling, or other boundary decisions, explain the recommendation and ask for maintainer confirmation before implementation unless the maintainer has already specified the desired behavior.  This is not necessary for non-impactful or obvious decisions to avoid overloading with unnecessary questions, however, style choices or various equivalent implementation decisions should be left to the maintainer.
 - Coding-agent changes remain local for maintainer review: do not commit or push unless the maintainer explicitly requests that exact action. A prompt may be recorded in a local-only changelog note, but prompt text must never be committed or pushed to the server.
 - After each pushed maintainer change, review the latest commit before proposing or applying the next change.
 - Keep pull requests in draft until the implementation is compiled, exercised by real tests, and fully reviewed.
@@ -28,19 +46,26 @@ When working interactively with a maintainer, generally (this shouldn't be meant
 
 
 ## Version and changelog rules
-
-- Keep changelog entries in `## vX.X.X YYYY-MM-DD` format, with short line-separated notes under the current version.
-- Before editing the active changelog entry, compare its version with the latest committed Git version.
-- If those versions match, create a patch-version entry by default and update `Package.swift`, `Compatibility.version`, and the Xcode `MARKETING_VERSION` settings. Use a minor or major bump only when the user requests it or has already created that version entry.
+- Keep changelog entries in `## vX.X.X YYYY-MM-DD` format, with short line-separated notes under the current version without any bullets like `- ` prepending the lines.
+- Keep entries in strict reverse chronological order: newest version first. If two entries share a date, the higher version must appear first.
+- Before editing the active changelog entry, compare its version with the latest committed Git version. If those versions match, create a bumped patch-version entry to edit and update version surfaces.
+- Before changing a version, inspect the latest committed Git version and the active working-tree changelog. Never rewrite or reuse a committed historical entry. If the active working-tree version is ahead of Git, create a new version only when the maintainer requests it or when the active version has already been committed.
 - Do not bump or create a version entry for uncommitted work when the active changelog version already matches the latest committed Git version; leave the working tree on that committed version until the maintainer commits or explicitly requests a release/version update.
-- If an uncommitted manual version entry already differs from Git, use it and synchronize every version surface rather than choosing another version.
+- If an uncommitted manual version entry already differs from Git, use it and synchronize every version surface rather than choosing another version.  Swift code should update Xcode `MARKETING_VERSION`, `Package.swift`, and the Module`.version` (if it's a module).  Check the package manifest, Xcode project, public source constant, test fixture or suite heading, README or documentation display, and other hard-coded version surfaces.
+- Manual-change notes belong under the existing active version unless the version rules above require a new version entry.
 - Treat a heading such as `## vX.Y.Z TODO` as an intentional version stub: synchronize all version surfaces and replace `TODO` with the current date.
-- If work is being applied to the active unpushed version and its date is not current, update that heading to the current date.
-- Keep complete prompt text in local working notes only; never append `PROMPT: [PROMPT TEXT]` to a tracked changelog or push it to the server. Tracked changelog entries contain concise summaries only.
-- If a project has no changelog, offer to create one using this repository's `CHANGELOG.md` format.
+- If continuing work under an active uncommitted version entry on a later date, update only that active entry’s date; never change dates on historical entries.
+- Changelog entries should contain concise summaries of changes.  They should be complete enough to communicate the changes but concise enough to be easily understandable at a high level and not get into too much detail unless it's particularly relevant like a changed API boundary.
+- If a project has no `CHANGELOG.md` file (or `README.md` with a `# Changelog` section), offer to create one using this repository's format pulling from any available comments/history/prompts to generate an appropriate changelog with best guess estimates.  Do not invent dates unless there is evidence to support it.  You could however simplify dates to just a year, or just a year and a month if that information is present or put UNAVAILABLE if you need a date placeholder.  You can invent versions only when creating an initial `CHANGELOG.md` proposal and unless other information is available, you can start at v0.0.1 for the initial creation entry, v0.0.2 for the second entry, and so on. Each entry should include a succinct summary of decisions, instructions, and changes. 
 - Modules should have separate `README.md` and `CHANGELOG.md` files. Final apps may keep a Changelog section in their README.
-- When you notice existing/manual uncommitted edits, please automatically generate and add changelog comments for the manual changes.
-
+- When existing maintainer-authored uncommitted changes are present, preserve them and add concise note(s) to the current working changelog describing the changes that are visibly present. Do not invent implementation details, rationale, authorship, dates, or version history, and never modify committed historical entries.
+- When modernizing an existing changelog, preserve historical content exactly and add new entries separately. Do not treat modernization itself as permission to rewrite, merge, or reinterpret existing entries.
+- If there are pieces that aren't implemented in this pass and require future action, a short concise continuation prompt should be added to a beginning #TODO section just before the changelog (if it's things that need to happen before we commit this version) or added to the ## Known Issues, ## Roadmap, or ## Proposals section if there are longer term proposals or ideas or outstanding issues that will be addressed in a future version.
+### Changelog preservation:
+When converting or modernizing a changelog, preserve every existing entry’s
+date, version, comments, wording, capitalization, punctuation,
+and ordering exactly. Do not summarize, rewrite, merge, delete, or reclassify
+historical entries. Only change the surrounding format as required, and keep the original text byte-for-byte wherever possible. Add new entries separately.
 
 ## Post-prompt checklist
 
@@ -54,7 +79,7 @@ After every prompt-driven change, contributors and coding agents must:
 6. Keep the complete prompt local-only; do not add it to tracked files or push it.
 7. Review both the normal diff and an ignore-whitespace diff, remove unrelated or whitespace-only changes, run `git diff --check`, and run the repository's real build and tests.
 8. For multi-file edits, patch each repository or external file separately. After every patch, verify the tool result, inspect the exact diff, run syntax checks, and search for the removed symbol or dependency. Never report the overall change as complete when any hunk failed or remains unverified. Always list changed files and show all deltas using a diff editor (if in Codex).
-
+9. Treat local source changes, local tests, uploaded files, activated server configuration, DNS resolution, certificate coverage, cache behavior, and live responses as separate verification layers. Report which layers were actually verified; local tests alone do not establish deployment or production success.
 
 ## File editing safety
 
@@ -67,6 +92,9 @@ Whole-file replacement is an acceptable and often appropriate way to edit a repo
 - Immediately inspect the resulting Git diff after every whole-file replacement. Unexpected large deletions, missing comments, missing declarations, or unrelated formatting changes are evidence of a bad replacement and must be corrected before continuing.
 - Compare deleted lines as carefully as added lines. Whole-file editing must preserve comments, TODOs, disabled reference code, whitespace conventions, and unrelated source exactly unless the requested change intentionally modifies them.
 - When a tool supports true patches, patches may be preferred for small localized changes, but do not avoid a necessary whole-file replacement merely because the file is large. The safety requirement is complete-current-input plus verified-output, not a particular editing mechanism.
+- Instead of deleting configuration, mappings, comments, code, commented/unused reference code, or reference data, preserve the original information by commenting out the old code out rather than deleting so that the changes can be easily tracked inline without needing to reference a file diff or history to see what was changed.  An additional comment at the end of the commented code line should be added describing the version that the code was commented out (disabled) and briefly why.
+- Do not permanently delete configuration, mappings, comments, code, or reference data without explicit approval. For small code or configuration changes, prefer commenting out the old line with a dated explanation. For larger or non-commentable material, preserve it in an appropriate archive, inventory, or reference file by default.
+- Never redact or remove keys or passwords in code or comments unless specifically instructed to.  You can warn about security concerns, but there are times when the author may choose to have sensitive information included in a private repository.  If there is a flag that can be added to indicate the author understands and accepts those risks, that should be available to prevent continual security warnings for acceptable uses. This rule applies only where the maintainer has intentionally accepted the repository’s access controls. Never copy credentials into public releases, shared bug reports, generated output, public pull requests, public comments, logs, or deployment artifacts.
 
 
 A full changelog outline may include:
@@ -76,8 +104,6 @@ A full changelog outline may include:
 
 ## vX.X.X YYYY-MM-DD
 Description
-
-PROMPT: Prompt text
 
 ## Known Issues
 - [ ] Near-term actionable work, bugs, and release blockers.
@@ -97,6 +123,8 @@ Planned features grouped by future version.
 - Please make clear when code is not best practice or the obvious way of doing things particularly when you're making stylistic or judgement choices.
 - Prefer plain Markdown and code blocks for text intended to be pasted into files, GitHub, Xcode, or terminals.
 - Prefer matching existing code style and leverage existing helper functions when possible rather than writing your own.
+- Please check that all deprecations (that can) have appropriate renamed clauses for easy fixits.
+
 
 ## Comment preservation rules
 
@@ -105,7 +133,7 @@ Comments are part of the source and should be treated as maintainer-authored doc
 - Add complete DocC comments to public APIs and to non-obvious internal APIs.
 - Use concise comments for obvious behavior and more detail around compatibility, migration, concurrency, and platform-specific decisions.
 - Add clear inline comments explaining all new or modified code and why the change was made.
-- Preserve existing comments by default, including explanatory comments, TODOs, reference URLs, migration notes, historical rationale, disabled example code, and maintainer-authored reminders.
+- Preserve existing comments by default, including explanatory comments, TODOs, reference URLs, migration notes, historical rationale, disabled example code, and maintainer-authored reminders.  If a comment is missing, unclear, or inaccurate, please flag and confirm with the maintainer.
 - Do not remove or shorten a comment merely because the surrounding code appears self-explanatory, because the comment seems verbose, or because the implementation has been refactored.
 - Prefer updating an existing comment when behavior changes rather than deleting it.
 - A comment may only be removed when it is demonstrably factually incorrect, describes code or behavior that no longer exists, or the maintainer explicitly requests its removal.
@@ -150,13 +178,7 @@ Comments are part of the source and should be treated as maintainer-authored doc
 # App Store Styleguide
 Included for reference and utility and as a best practices model.  Feel free to substitute your own style guide or suggest improvements.
 
-PROMPT For new apps:
-```
-Use github.com/kudit/Compatibility as a dependency. Adopt the coding, documentation, testing, and changelog rules in that project's CONTRIBUTING.md. Generate a README.md following the Compatibility App Store Styleguide in that same file. Reconstruct the implementation history represented in this conversation into changelog entries, creating one version per prompt: v0.0.1 for the first prompt, v0.0.2 for the second prompt, and so on. Each entry should include the prompt text plus a succinct summary of decisions, instructions, and changes. Swift apps should prefer Compatibility APIs where relevant, including debug() instead of print(), Application.track(), and Compatibility JSON/string/date helpers.
-```
-
-
-README.md Outline:
+## README.md Outline (Apps that are not modules may have simply a `README.md` file with a `# Changelog` section and not a separate `CHANGELOG.md` file):
 ```
 # App Name
 
@@ -170,8 +192,6 @@ v0.0.1 2026-07-06
 User-facing note
 **App Store Updates above**
 Internal developer note
-
-PROMPT: Included here but changes should be described in such a way that this line can be safely removed before committing.
 
 # App Store Copy
 
@@ -206,4 +226,13 @@ Write the full App Store description. Keep the heading’s character limit visib
 # Legacy Information
 [Include any legacy information we don't want to delete but may not be relevant anymore.]
 [Only public libraries need public-safe cleanup. Private app READMEs may keep PAT references, App Review notes, DTS history, upload warnings, pricing experiments, and other working context when useful.]
+
+## Known Issues
+- [ ] Near-term actionable work, bugs, and release blockers.
+
+## Roadmap
+Planned features grouped by future version.
+
+## Proposals
+- [ ] Longer-term ideas, experiments, and possible improvements.
 ```

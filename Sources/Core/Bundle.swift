@@ -7,6 +7,23 @@
 //
 
 #if canImport(Foundation)
+#if compiler(>=5.9)
+/// Verifies that process classification remains callable from synchronous, nonisolated code.
+///
+/// Keeping this helper outside the main-actor test catalog makes accidental reintroduction of
+/// actor isolation a compile-time failure, even when the test runner itself uses the main actor.
+nonisolated private func testSynchronousBuildEnvironments() throws {
+    let designedForiPad = Build.isDesignedForiPad
+    let environments = Build.environments()
+    try expectEqual(Build.Environment.designedForiPad.test, designedForiPad)
+    try expectEqual(environments.contains(.designedForiPad), designedForiPad)
+#if os(macOS) || targetEnvironment(macCatalyst) || os(tvOS) || os(watchOS)
+    // Native desktop, Catalyst, TV, and Watch targets must never be classified as compatible iPad apps.
+    try expect(!designedForiPad, "A native target must not report Designed for iPad mode")
+#endif
+}
+#endif
+
 // get current version:
 // Bundle.main.version
 public extension Bundle {
@@ -70,11 +87,16 @@ public extension Bundle {
     @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
     @MainActor
     static var tests: [TestCase] = [
+        TestCase("Synchronous build environments", {
+            // Share the isolation regression between the in-app catalog and Swift Testing bridge.
+            try testSynchronousBuildEnvironments()
+        }),
         TestCase("Bundle Tests", {
             // Report every active runtime classification before checking bundle metadata.
             // SF Symbols are named vector assets rather than Unicode characters, so use each
             // environment's portable emoji when configured and retain a text-only fallback.
-            let environmentLabels = await Build.environments().map { environment in
+            // Environment checks are synchronous process queries, so no actor hop or await is needed.
+            let environmentLabels = Build.environments().map { environment in
                 Compatibility.settings.debugEmojiSupported ? "\(environment.emoji) \(environment.label)" : environment.label
             }.joined(separator: "\n  ")
             debug("Active Build environments:\n  \(environmentLabels)", level: .DEBUG)

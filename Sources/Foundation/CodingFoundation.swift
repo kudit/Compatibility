@@ -122,9 +122,15 @@ private func testCodingRoundTrips() throws {
     let model = CodingRoundTripTestModel(name: "Compatibility", count: 3, enabled: true, tags: ["json", "dictionary", "mixed"])
 
     // Exercise the Foundation JSON helpers so regressions in the public Codable convenience API are caught by the in-framework test UI.
-    let json = model.asJSON(outputFormatting: [.sortedKeys])
+    // The former .sortedKeys requirement was unrelated to round-trip correctness and
+    // made this helper unavailable on legacy Foundation. Exercise the public fallback instead.
+    let json = model.prettyJSON
     let decodedFromJSON = try CodingRoundTripTestModel(fromJSON: json)
     try expect(decodedFromJSON == model, "JSON round trip should preserve the codable model")
+    // Explicitly exercise the unsorted pretty-printing path even on modern test hosts.
+    let legacyJSON = model.asJSON(outputFormatting: [.prettyPrinted])
+    try expect(legacyJSON.contains("\n"), "Legacy JSON output should retain pretty printing")
+    try expectEqual(try CodingRoundTripTestModel(fromJSON: legacyJSON), model)
 
     // Exercise dictionary conversion because app settings and legacy stores commonly use dictionary-shaped Codable payloads.
     guard let dictionary = model.asDictionary() else {
@@ -178,6 +184,8 @@ private func testDictionaryCodingStrategies() throws {
 @MainActor
 internal let codingTests: [TestCase] = [
     TestCase("Coding round trips", testCodingRoundTrips),
+    // The synchronous body also runs in the legacy executable without actor/runtime requirements.
+    TestCase("Backported JSON formatting") { try testBackportOutputFormatting() },
     TestCase("Dictionary coding strategies", testDictionaryCodingStrategies),
 ]
 #endif

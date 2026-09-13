@@ -97,7 +97,10 @@ public extension URL {
         // `/Users/Shared` only exists on macOS and is unavailable to sandboxed iOS,
         // iPadOS, tvOS, watchOS, visionOS, and Swift Playgrounds applications.
         let fixtureName = "CompatibilityURLTests-\(UUID().uuidString)"
-        let fileUrl = FileManager.default.temporaryDirectory.appendingPathComponent(fixtureName, isDirectory: true)
+        // NSTemporaryDirectory predates FileManager.default.temporaryDirectory (iOS 10/macOS 10.12)
+        // and preserves the same per-process, sandbox-aware location on older targets.
+        // It is not deprecated, so this test helper needs no availability branch.
+        let fileUrl = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true).appendingPathComponent(fixtureName, isDirectory: true)
 
         // Create a real directory so `isDirectory` and `fileExists` exercise file-system
         // resource lookup consistently instead of depending on a platform-specific path.

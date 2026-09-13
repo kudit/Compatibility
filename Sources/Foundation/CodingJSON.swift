@@ -1,6 +1,6 @@
 // MARK: - JSON management (simplified)
 
-#if canImport(Foundation)
+#if !hasFeature(Embedded)
 public extension Encodable {
     /**
      Use to output the encodable object as a JSON representation.
@@ -9,32 +9,51 @@ public extension Encodable {
      return self.asJSON(outputFormatting: [.prettyPrinted, .sortedKeys])
      ```
      */
-    func asJSON(outputFormatting: JSONEncoder.OutputFormatting? = nil) -> String {
+    func asJSON(outputFormatting: BackportOutputFormatting? = nil) -> String {
         // really should never error since we conform to Encodable
         // Don't need to do this check since we should conform to Encodable
         //        guard JSONSerialization.isValidJSONObject(self) else {
         //            return "WARNING: Invalid JSON object: \(self)".asErrorJSON(level: .ERROR)
         //        }
-        let encoder = JSONEncoder()
-        if let outputFormatting {
-            encoder.outputFormatting = outputFormatting
-        }
         do {
-            let data = try encoder.encode(self)
+            #if canImport(Foundation)
+            // This compile-time check selects a VALUE ENCODER, not a formatting
+            // capability. Foundation's presence does not imply sortedKeys exists.
+            // Follow BackportOutputFormatting.encode -> nativeOptions(restrictingTo:)
+            // -> nativeSupport for the runtime OS checks and formatting decision.
+            let options = outputFormatting ?? []
             /* LEGACY:
              let jsonData = try JSONSerialization.data(withJSONObject: self, options: (compact ? [] : JSONSerialization.WritingOptions.prettyPrinted))
              return String(data: jsonData, encoding: String.Encoding.utf8)
              */
-            guard let json = String(data: data, encoding: .utf8) else {
-                return "Unable to encode \(self) as JSON.".asErrorJSON(level: .ERROR)
-            }
-            return json
+            // The shared path returns native output only if every requested option
+            // is supported; otherwise it formats Foundation's encoded text portably.
+            return try options.encode(self)
+            #else
+            // Foundation-free coding retains the existing MixedTypeField encoder.
+            // There is no native JSONEncoder to consult here: encode into the
+            // portable field representation, then use its pure-Swift JSON writer.
+            let field = try MixedTypeFieldEncoder().encode(self)
+            return field.asJSON(outputFormatting: outputFormatting)
+            #endif
         } catch {
             return "JSON Encoding error: \(error)".asErrorJSON(level: .ERROR)
         }
     }
     
-    /// Outputs a nicely formatted JSON string with keys sorted.
+    #if canImport(Foundation)
+    /// Accepts explicitly typed Foundation options for existing callers.
+    /// Unqualified option literals select the backport overload instead, so they
+    /// do not acquire Foundation's deployment-target restrictions.
+    @_disfavoredOverload
+    func asJSON(outputFormatting: JSONEncoder.OutputFormatting?) -> String {
+        return asJSON(outputFormatting: outputFormatting.map {
+            BackportOutputFormatting(rawValue: Int(truncatingIfNeeded: $0.rawValue))
+        })
+    }
+    #endif
+
+    /// Outputs a nicely formatted JSON string with keys sorted on every supported OS.
     var prettyJSON: String {
         return self.asJSON(outputFormatting: [.prettyPrinted, .sortedKeys])
     }
@@ -42,54 +61,18 @@ public extension Encodable {
 
 public extension Decodable {
     init(fromJSON jsonString: String) throws {
+        #if canImport(Foundation)
         let jsonData = Data(jsonString.utf8)
         self = try JSONDecoder().decode(Self.self, from: jsonData)
-    }
-}
-#elseif !hasFeature(Embedded)
-// MARK: Legacy support for where Foundation isn't available
-public struct JSONFormattingOptions: OptionSet {
-    public let rawValue: Int
-
-    public static let prettyPrinted = JSONFormattingOptions(rawValue: 1 << 0)
-    public static let sortedKeys = JSONFormattingOptions(rawValue: 1 << 1)
-
-    public init(rawValue: Int) {
-        self.rawValue = rawValue
-    }
-}
-
-public extension Encodable {
-    /**
-     Use to output the encodable object as a JSON representation.
-     ex:
-     ```swift
-     return self.asJSON(outputFormatting: [.prettyPrinted, .sortedKeys])
-     ```
-     */
-    func asJSON(outputFormatting: JSONFormattingOptions? = nil) -> String {
-        let encoder = MixedTypeFieldEncoder()
-        do {
-            let mixedTypeField = try encoder.encode(self)
-            
-            return mixedTypeField.asJSON(outputFormatting: outputFormatting)
-        } catch {
-            return "JSON Encoding error: \(error)".asErrorJSON(level: .ERROR)
-        }
-    }
-    
-    /// Outputs a nicely formatted JSON string with keys sorted.
-    var prettyJSON: String {
-        return self.asJSON(outputFormatting: [.prettyPrinted, .sortedKeys])
-    }
-}
-
-public extension Decodable {
-    init(fromJSON jsonString: String) throws {
+        #else
         let field = try MixedTypeField(fromJSON: jsonString)
         self = try Self(fromMixedTypeField: field)
+        #endif
     }
 }
+#endif
+
+#if !canImport(Foundation) && !hasFeature(Embedded)
 //
 //  MixedTypeField+JSON.swift
 //
@@ -381,23 +364,22 @@ fileprivate struct _JSONWriter {
 
     private mutating func writeString(_ s: String) {
         output.append("\"")
-        for c in s {
+        // JSON accepts UTF-8 directly; only control scalars need Unicode escapes.
+        // The former four-digit padding could become negative for emoji scalars.
+        for c in s.unicodeScalars {
             switch c {
             case "\"": output.append("\\\"")
             case "\\": output.append("\\\\")
+            case "/": output.append(options.contains(.withoutEscapingSlashes) ? "/" : "\\/")
             case "\n": output.append("\\n")
             case "\r": output.append("\\r")
             case "\t": output.append("\\t")
             default:
-                if c.unicodeScalars.allSatisfy({ $0.isASCII && $0.value >= 0x20 }) {
-                    output.append(c)
+                if c.value < 0x20 {
+                    let hex = String(c.value, radix: 16, uppercase: true)
+                    output.append("\\u" + String(repeating: "0", count: 4 - hex.count) + hex)
                 } else {
-                    for scalar in c.unicodeScalars {
-                        let hex = String(scalar.value, radix: 16, uppercase: true)
-                        output.append("\\u")
-                        output.append(String(repeating: "0", count: 4 - hex.count))
-                        output.append(hex)
-                    }
+                    output.unicodeScalars.append(c)
                 }
             }
         }
@@ -427,7 +409,7 @@ fileprivate struct _JSONWriter {
     private mutating func writeObject(_ dict: MixedTypeDictionary, indentLevel: Int) {
         let keys: [String]
         if options.contains(.sortedKeys) {
-            keys = dict.keys.sorted()
+            keys = dict.keys.sorted { $0.utf8.lexicographicallyPrecedes($1.utf8) }
         } else {
             keys = Array(dict.keys)
         }

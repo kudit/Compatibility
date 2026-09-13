@@ -523,6 +523,10 @@ public extension TestCase {
 #if canImport(Foundation)
         tests["Bundle Tests"] = Bundle.tests
         tests["File Manager Tests"] = FileManager.tests
+        #if os(macOS)
+        // Run the POSIX fallback directly even on hosts that normally use Process.run().
+        tests["Legacy Shell Tests"] = legacyShellTests
+        #endif
         tests["Pasteboard Tests"] = Pasteboard.tests
 #if canImport(SwiftUI) && canImport(Combine) && compiler(>=5.9) && canImport(Foundation)
         tests["CloudStorageSync Tests"] = CloudStorageSync.tests

@@ -40,6 +40,7 @@
 		B52C8E082C386F2D008EBD2D /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Package.swift; path = ../Package.swift; sourceTree = "<group>"; };
 		B52C8E0C2C3886E6008EBD2D /* Compatibility.swiftpm */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = Compatibility.swiftpm; path = ..; sourceTree = "<group>"; };
 		B58B5C3F2C38F98800689837 /* CompatibilityTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CompatibilityTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B5B1A8C63055AB78009BDF35 /* CONTRIBUTING.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; name = CONTRIBUTING.md; path = ../CONTRIBUTING.md; sourceTree = SOURCE_ROOT; };
 		B5DC66AB30310F3900FAFC9E /* CompatibilityTest.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = CompatibilityTest.xctestplan; sourceTree = "<group>"; };
 		B5E5FC3A2C3860EC004F2009 /* MyApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyApp.swift; sourceTree = "<group>"; };
 		B5E5FC3E2C3860EC004F2009 /* CHANGELOG.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; name = CHANGELOG.md; path = ../CHANGELOG.md; sourceTree = "<group>"; };
@@ -93,6 +94,7 @@
 			children = (
 				B5DC66AB30310F3900FAFC9E /* CompatibilityTest.xctestplan */,
 				B5E5FC3E2C3860EC004F2009 /* CHANGELOG.md */,
+				B5B1A8C63055AB78009BDF35 /* CONTRIBUTING.md */,
 				B5E5FC452C3860EC004F2009 /* README.md */,
 				B52C8E082C386F2D008EBD2D /* Package.swift */,
 				B5E5FC3B2C3860EC004F2009 /* Development */,
@@ -417,7 +419,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
-				MARKETING_VERSION = 1.19.9;
+				MARKETING_VERSION = 1.19.10;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -488,7 +490,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
-				MARKETING_VERSION = 1.19.9;
+				MARKETING_VERSION = 1.19.10;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				OTHER_SWIFT_FLAGS = "";

@@ -1459,6 +1459,18 @@ public extension String {
             try expect(!letter.isEmoji, "Letter should not be recognized as emoji")
             try expect(Character("😀").isEmoji)
             try expect("hello 😀".containsEmoji)
+            // Exercise the offline Emoji 3.0 fallback on every host, including property
+            // gaps that a broad pictograph-range approximation would incorrectly include.
+            for scalar in "😀❤🇺1#".unicodeScalars {
+                try expect(LegacyEmoji.contains(scalar))
+            }
+            for scalar in "a中\u{2606}\u{1F322}\u{1FAE0}".unicodeScalars {
+                try expect(!LegacyEmoji.contains(scalar))
+            }
+            // Preserve the existing distinction between single digits and keycap sequences.
+            try expect(!Character("1").isEmoji)
+            try expect(Character("1\u{FE0F}\u{20E3}").isEmoji)
+            try expect(Character("🇺🇸").isEmoji)
             try expectEqual("<tag>Dave & Buster's".htmlEncoded, "&lt;tag&gt;Dave &amp; Buster's")
 #if !hasFeature(Embedded)
             try expect("123".isNumeric)
@@ -1600,15 +1612,31 @@ v1.0.8 8/10/2022 Manually created initializers for SwiftUI views to prevent inte
     #endif
 }
 
+private extension Unicode.Scalar {
+    /// Native emoji classification, with a fixed Emoji 3.0 table before the property API existed.
+    var emojiPropertyBackport: Bool {
+        if #available(iOS 10.2, macOS 10.12.2, tvOS 10.1, watchOS 3.1.1, *) {
+            return properties.isEmoji
+        }
+        return LegacyEmoji.contains(self)
+    }
+}
+
 public extension Character {
     /// A simple emoji is one scalar and presented to the user as an Emoji
+    /// Older systems use Emoji 3.0 data; newer systems use the OS Unicode database.
     var isSimpleEmoji: Bool {
         let firstScalar = unicodeScalars.first! // apparently can't exist without at least one scalar so we don't need to worry about force unwrapping.
-        return firstScalar.properties.isEmoji && firstScalar.value > 0x238C
+        // The former firstScalar.properties.isEmoji query required iOS 10.2/macOS 10.12.2.
+        // Retain the original scalar cutoff while backporting just the unavailable property.
+        return firstScalar.emojiPropertyBackport && firstScalar.value > 0x238C
     }
     
     /// Checks if the scalars will be merged into an emoji
-    var isCombinedIntoEmoji: Bool { unicodeScalars.count > 1 && unicodeScalars.first?.properties.isEmoji ?? false }
+    var isCombinedIntoEmoji: Bool {
+        // Use the same property fallback for keycaps, flags, and other multi-scalar characters.
+        return unicodeScalars.count > 1 && (unicodeScalars.first?.emojiPropertyBackport ?? false)
+    }
     
     var isEmoji: Bool { isSimpleEmoji || isCombinedIntoEmoji }
 

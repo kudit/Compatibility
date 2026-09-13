@@ -204,7 +204,8 @@ public struct Build {
         case playground = "Playground"
         case preview = "Preview"
         case realDevice = "Real Device"
-        case designedForiPad = "Designed for iPad" // @MainActor
+        /// An iOS app running in compatibility mode on Mac or visionOS; see ``Build/isDesignedForiPad`` for detection limits.
+        case designedForiPad = "Designed for iPad"
         case macCatalyst = "Mac Catalyst"
 
         public var id: Self {
@@ -215,7 +216,7 @@ public struct Build {
         ///
         /// This is public so package clients can show the same environment state that
         /// Compatibility uses internally without duplicating the platform checks.
-        @MainActor
+        /// Each check reads process metadata, so callers do not need a main-actor hop.
         public var test: Bool {
             switch self {
             case .debug: return Build.isDebug
@@ -226,7 +227,7 @@ public struct Build {
             case .playground: return Build.isPlayground
             case .preview: return Build.isPreview
             case .realDevice: return Build.isRealDevice
-            case .designedForiPad: return Build.isDesignedForiPad // MainActor
+            case .designedForiPad: return Build.isDesignedForiPad
             case .macCatalyst: return Build.isMacCatalyst
             }
         }
@@ -287,7 +288,9 @@ public struct Build {
     }
 
     /// Returns a set of Build.Environment objects where the test is true for this build.
-    @MainActor
+    ///
+    /// Evaluates synchronous process metadata on the caller's executor. No UIKit state or
+    /// mutable module-registration state is read, so this does not require the main actor.
     public static func environments() -> [Build.Environment] {
         return Build.Environment.allCases.filter(\.test)
     }
@@ -357,13 +360,25 @@ public struct Build {
     }
 
     /// Returns `true` if Built for iPad mode not a native mode (for macOS and visionOS).
-    @MainActor
+    ///
+    /// Uses Foundation process metadata rather than UIKit device state, allowing synchronous
+    /// calls from any executor. Catalyst and native iPad apps do not count as compatibility mode.
+    /// Apple's process flags also include compatible iPhone apps despite this property's historical name.
+    ///
+    /// - Important: Compatible apps on visionOS before 26.1 return `false` because the public
+    ///   `isiOSAppOnVision` process flag is unavailable. Treat `false` as "not detected", not proof
+    ///   that the host is an iPad. UIKit's `.pad` idiom cannot distinguish these environments.
+    ///   Prefer checking the specific capability your app needs. For controlled older-visionOS
+    ///   deployments, the caller can supply a known host classification in its own presentation
+    ///   logic; there is no automatic legacy detection fallback in this API.
     public static var isDesignedForiPad: Bool {
 #if targetEnvironment(macCatalyst) || os(watchOS) || os(tvOS) || arch(wasm32) || os(Linux)
         // Catalyst is a native Mac target rather than Apple's iPad-compatible app
         // runtime, so keep it separate from "Designed for iPad" reporting.
         return false
-#elseif canImport(Combine)
+#elseif canImport(Foundation) && canImport(ObjectiveC)
+        // These queries need Foundation and Objective-C KVC, not Combine or UIKit. Gate the
+        // actual capabilities so older Apple SDKs and non-Apple Foundation builds stay portable.
         // Check for iPad mode on visionOS. Access the new Foundation property through
         // Objective-C key-value coding so older SDKs, including the SDK bundled with
         // Swift Playgrounds 4.7, do not have to resolve `isiOSAppOnVision` at compile time.
@@ -377,14 +392,10 @@ public struct Build {
         if #available(iOS 14, watchOS 7, macOS 11, tvOS 14, *) { // not available on watchOS 6
             return ProcessInfo.processInfo.isiOSAppOnMac
         }
-#if canImport(UIKit)
-        // visionOS can run compatible iPad apps where the process is not an iOS app
-        // on Mac, so use UIKit's interface idiom as a second signal for designed-for-iPad mode.
-        return UIDevice.current.userInterfaceIdiom == .pad
-#else
-        // Fallback on earlier versions & unsupported platforms
+        // The former UIDevice.current.userInterfaceIdiom == .pad fallback identified ordinary
+        // pre-iOS-14 iPads and was bypassed on visionOS by the preceding return. An idiom is
+        // not a host-platform signal, so report an undetected environment without accessing UIKit.
         return false
-#endif
 #else
         // Fallback on earlier versions & unsupported platforms
         return false

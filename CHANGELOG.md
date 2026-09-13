@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.19.10 2026-09-12
+Deprecated `Pasteboard.system.copyToPasteboard(_:)` and `Pasteboard.system.readFromPasteboard()` since the `copy(_:)` and `read()` forms make more sense and those were unnecessary and only added in Compatibility v1.16.
+Expanded naked `safeShell()` to include context.
+Updated and cleaned up `CONTRIBUTING.md` instructions.
+Removed the UIKit fallback and unnecessary main-actor isolation from build environment queries, with a shared synchronous-call regression test.
+Documented the pre-26.1 visionOS detection limitation and caller-side workarounds.
+Added older-OS fallbacks for JSON pretty printing, ordinal formatting, Unicode emoji properties, temporary-directory tests, and throwing shell launches on Intel macOS.
+Lowered the library iOS deployment declaration to iOS 8 while retaining the Swift tools and Swift Playgrounds requirements.
+Added portable `BackportOutputFormatting` options with native delegation, lossless recursive key sorting, slash escaping, and synchronous legacy-target regression checks.
+Added Foundation-present legacy routing and native/fallback comparison checks; reject unknown JSON formatting option bits instead of silently dropping them.
+
 ## v1.19.9 2026-08-31
 Added the main-actor-isolated `Module.testEntries()` convenience, recursively flattening each module's reusable tests and dependencies in dependency-first order without mutating registration state.
 
