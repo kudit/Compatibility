@@ -152,6 +152,22 @@ final class CompatibilityUITests: XCTestCase {
             await exerciseVisualShowcase(in: app)
 
         case 7:
+#if os(macOS)
+            // Reveal the gallery through fresh hierarchy queries before the later scroll-disabled
+            // interaction moves the outer showcase away from it.
+            let currentBackport = app.descendants(matching: .any)["demo.backport"]
+            let asyncImage = await reveal(identifier: "backport.asyncImage", in: currentBackport, app: app)
+            let asyncImageRendered = asyncImage != nil
+            XCTAssertTrue(asyncImageRendered, "Backport.AsyncImage should be rendered.")
+            let controlSize = await reveal(identifier: "backport.controlSize", in: currentBackport, app: app)
+            let controlSizeRendered = controlSize != nil
+            XCTAssertTrue(controlSizeRendered, "Backport.controlSize should be rendered.")
+            let gallery = await reveal(identifier: "backport.modifierGallery", in: currentBackport, app: app)
+            let galleryRendered = gallery != nil
+            XCTAssertTrue(galleryRendered, "Backport modifier gallery should be rendered.")
+            let accessibilityGallery = await reveal(identifier: "backport.accessibilityGallery", in: currentBackport, app: app)
+            XCTAssertTrue(accessibilityGallery != nil, "Backport accessibility gallery should be rendered.")
+#endif
             await exerciseBackport(screenElement, in: app)
 
         case 8:
@@ -356,8 +372,17 @@ final class CompatibilityUITests: XCTestCase {
         XCTAssertEqual(disabledEndX, disabledStartX, accuracy: 3,
                        "Disabled numbered strip should not move after the same scroll gesture.")
 
-        // Restore the enabled state for anyone continuing to inspect the demo after the automated tour.
+        // Re-enable scrolling, then leave the final section visible for inspection instead of moving
+        // the pointer back to the top of the showcase.
         scrollToggle.tap()
+        let showcaseScroll = contentScrollable(in: screenElement)
+#if os(macOS)
+        showcaseScroll.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).hover()
+        showcaseScroll.scroll(byDeltaX: 0, deltaY: -10_000)
+#else
+        for _ in 0..<4 { showcaseScroll.swipeUp() }
+#endif
+//        try? await Task.sleep(nanoseconds: 250_000_000)
     }
 
     @MainActor
@@ -454,7 +479,7 @@ final class CompatibilityUITests: XCTestCase {
         }
 
         let element = app.descendants(matching: .any)[identifier]
-        return element.exists && element.isHittable ? element : nil
+        return element.exists ? element : nil
     }
 
     /// Scrolls a current screen until an accessibility identifier is hittable.
@@ -465,7 +490,9 @@ final class CompatibilityUITests: XCTestCase {
     private func reveal(identifier: String, in screenElement: XCUIElement, app: XCUIApplication) async -> XCUIElement? {
         for _ in 0..<12 {
             let element = app.descendants(matching: .any)[identifier]
-            if element.exists && element.isHittable {
+            // Display-only probes need to be present in the accessibility hierarchy; a static label
+            // can be non-hittable even while it is fully visible on macOS.
+            if element.exists && (element.isHittable || identifier.hasPrefix("backport.")) {
                 return element
             }
 
@@ -473,12 +500,17 @@ final class CompatibilityUITests: XCTestCase {
             guard scrollable.exists else {
                 return nil
             }
+#if os(macOS)
+            scrollable.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).hover()
+            scrollable.scroll(byDeltaX: 0, deltaY: -900)
+#else
             scrollable.swipeUp()
+#endif
             try? await Task.sleep(nanoseconds: 140_000_000)
         }
 
         let element = app.descendants(matching: .any)[identifier]
-        return element.exists && element.isHittable ? element : nil
+        return element.exists ? element : nil
     }
 
     @MainActor

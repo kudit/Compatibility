@@ -357,6 +357,39 @@ struct BackportShowcaseView: View {
                     }
                     .padding()
                 }
+                
+                // This gallery intentionally displays several modifiers together. The UI test only
+                // needs to render the screen to execute these compatibility branches on macOS.
+                Backport.GroupBox("Backport modifier gallery") {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("AsyncImage fallback probe")
+                            .backport.accessibilityIdentifier("backport.asyncImage")
+                        Backport.AsyncImage(url: nil)
+                            .frame(width: 24, height: 24)
+                            .backport.accessibilityIdentifier("backport.asyncImage.view")
+                        Text("Control size changes the button's platform-defined padding and font metrics:")
+                            .font(.caption)
+                        HStack {
+                            Button("Mini") { }.backport.controlSize(.mini)
+                            Button("Small") { }.backport.controlSize(.small)
+                            Button("Large") { }.backport.controlSize(.large)
+                        }
+                        .backport.accessibilityIdentifier("backport.controlSize")
+                        Text("Other displayed modifier branches")
+                            .backport.imageScale(.small)
+                            .backport.foregroundStyle(.secondary)
+                            .backport.background(Color.yellow.opacity(0.2))
+                            .backport.overlay { Text("overlay").font(.caption2) }
+                            .backport.accessibilityIdentifier("backport.modifierGallery")
+                        Text("Accessibility and selection probes")
+                            .backport.accessibilityLabel("Backport accessibility probe")
+                            .backport.backgroundStyle(.background)
+                            .backport.textSelection(.enabled)
+                            .backport.accessibilityIdentifier("backport.accessibilityGallery")
+                    }
+                    .padding()
+                }
+
             }
             .padding()
         }

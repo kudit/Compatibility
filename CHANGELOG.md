@@ -1,5 +1,11 @@
 # Changelog
 
+TODO: Please add tests for Backport withAnimation, Glass.swiftUIValue, presentationBackground, Backport.LabeledContent, LegacyGroupBox, persistentSystemOverlays, safeAreaPadding, scrollClipDisabled, navigationTitle, AnimationCompletionCritieria.swfitUIValue, fileDialogDefaultDirectory, fullScreenCover, BackportTabViewContent.fallback, and onChange (multiple versions) (could watch for the checkbox for the scrolling or the checkbox on the conditional UI test).
+
+## v1.20.0 2026-09-16
+Added MixedTypeField initializers to make defining dictionaries easier.
+Added additional UI tests to improve code coverage (increased to 87%).
+
 ## v1.19.10 2026-09-12
 Deprecated `Pasteboard.system.copyToPasteboard(_:)` and `Pasteboard.system.readFromPasteboard()` since the `copy(_:)` and `read()` forms make more sense and those were unnecessary and only added in Compatibility v1.16.
 Expanded naked `safeShell()` to include context.

@@ -24,6 +24,8 @@ public extension MixedTypeDictionary {
     }
 }
 #endif
+
+
 #if canImport(Foundation)
 // Foundation supplies the complete Codable machinery on full-runtime WebAssembly builds too.
 extension MixedTypeField: Codable {}
@@ -65,7 +67,7 @@ public enum MixedTypeField: Equatable, Sendable, Hashable {
         }
     }
 #endif
-    
+
 #if !hasFeature(Embedded)
     public init?(encoding value: Any?) { // dynamic typecasting isn't available in embedded Swift :(
         guard let value else {
@@ -97,7 +99,7 @@ public enum MixedTypeField: Equatable, Sendable, Hashable {
         }
     }
 #endif
-    
+
 #if canImport(Foundation)
     public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
@@ -194,6 +196,63 @@ public enum MixedTypeField: Equatable, Sendable, Hashable {
     }
 }
 
+// literal initializations to make dictionary assignments easier
+extension MixedTypeField: ExpressibleByStringLiteral {
+    /// Stores a string literal unchanged, including Unicode and multiline text.
+    public init(stringLiteral value: String) {
+        self = .string(value)
+    }
+}
+extension MixedTypeField: ExpressibleByBooleanLiteral {
+    /// Stores a Boolean literal without converting it to an integer or string.
+    public init(booleanLiteral value: Bool) {
+        self = .bool(value)
+    }
+}
+extension MixedTypeField: ExpressibleByIntegerLiteral {
+    /// Stores an integer literal within the platform's `Int` range.
+    public init(integerLiteral value: Int) {
+        self = .int(value)
+    }
+}
+extension MixedTypeField: ExpressibleByFloatLiteral {
+    /// Stores the literal at the same precision as the underlying `Double` case.
+    public init(floatLiteral value: Double) {
+        // Rounding through Float first would permanently lose precision (and overflow large literals).
+        self = .double(value)
+    }
+}
+extension MixedTypeField: ExpressibleByNilLiteral {
+    /// Creates an explicit null field. In an optional context, bare `nil` still means `Optional.none`.
+    public init(nilLiteral: ()) {
+        self = .null
+    }
+}
+extension MixedTypeField: ExpressibleByArrayLiteral {
+    /// Builds a recursive array; a `nil` literal here becomes an explicit `.null` element.
+    public init(arrayLiteral elements: MixedTypeField...) {
+        self = .array(elements)
+    }
+}
+extension MixedTypeField: ExpressibleByDictionaryLiteral {
+    /// Dictionary literals use string keys, matching JSON object keys.
+    public typealias Key = String
+
+    /// Nonoptional literal values allow nested literals and preserve explicit null fields.
+    public typealias Value = MixedTypeField
+
+    /// Builds a recursive dictionary. Repeated keys keep the last value, including `.null`.
+    public init(dictionaryLiteral elements: (Key, Value)...) {
+        // map just in case there is an issue (unsure why
+        // Assign each pair deliberately: unlike uniqueKeysWithValues, duplicate keys do not trap.
+        var dictionary: MixedTypeDictionary = [:]
+        for (key, value) in elements {
+            dictionary[key] = value
+        }
+        self = .dictionary(dictionary)
+    }
+}
+
 #if compiler(>=5.9)
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension MixedTypeField {
@@ -212,6 +271,19 @@ public extension MixedTypeField {
             let null = MixedTypeField.null
             let array = MixedTypeField.array([.string("one"), .int(2), nil, .array([.bool(true), .bool(false)])])
             let dictionary = MixedTypeField.dictionary(["answer": .int(42)])
+            let literals: MixedTypeField = [
+                "string": "hi",
+                "bool": true,
+                "int": 24,
+                "double": 1.75,
+                "null": nil,
+                "array": [1, "string", false],
+            ]
+            // Assert the actual recursive value so this literal example verifies more than compilation.
+            try expect(literals == .dictionary([
+                "string": .string("hi"), "bool": .bool(true), "int": .int(24),
+                "double": .double(1.75), "null": .null, "array": .array([.int(1), .string("string"), .bool(false)]),
+            ]))
 
             try expect(string.description == "hello")
             try expect(boolTrue.description == "true")
@@ -418,7 +490,7 @@ public extension MixedTypeField {
 #if hasFeature(Embedded)
         mixedTypeValueTests
 #else
-        mixedTypeValueTests + mixedTypeCodingCoverageTests
+        mixedTypeValueTests + mixedTypeCodingCoverageTests + mixedTypeContainerTests
 #endif
     }()
 }
@@ -873,5 +945,30 @@ fileprivate final class _FieldDecoder: Decoder {
                                       debugDescription: "Type mismatch — expected \(type)"))
         }
     }
+}
+#endif
+
+// Additional coverage remains beside the implementation so the shared module catalog is discoverable.
+#if compiler(>=5.9) && !hasFeature(Embedded)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+extension MixedTypeField {
+    @MainActor
+    static let mixedTypeContainerTests: [TestCase] = [
+        TestCase("Recursive literal precision and null semantics") {
+            let precise: MixedTypeField = 1.23456789012345
+            try expect(precise == .double(1.23456789012345))
+            let nested: MixedTypeField = ["array": [nil, true, -42, ["unicode": "é🧪"]], "empty": [:]]
+            try expect(nested == .dictionary(["array": .array([.null, .bool(true), .int(-42), .dictionary(["unicode": .string("é🧪")])]), "empty": .dictionary([:])]))
+        },
+        TestCase("Primitive decoding overloads") {
+            func integer<T: FixedWidthInteger & Decodable>(_ type: T.Type) throws {
+                try expect(try T(fromMixedTypeField: .int(7)) == 7)
+            }
+            try integer(Int.self); try integer(Int8.self); try integer(Int16.self); try integer(Int32.self); try integer(Int64.self)
+            try integer(UInt.self); try integer(UInt8.self); try integer(UInt16.self); try integer(UInt32.self); try integer(UInt64.self)
+            try expect(try Double(fromMixedTypeField: .int(5)) == 5)
+            try expect(try Float(fromMixedTypeField: .double(5.25)) == 5.25)
+        },
+    ]
 }
 #endif
