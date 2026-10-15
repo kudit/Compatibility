@@ -112,6 +112,7 @@ public extension PostData {
         }
 //        debug("RESULTS: \(results)", level: .DEBUG)
         try expect(results.contains("[name] => Jack & \"Jill\""), results)
+        try expect(results.contains("[SCRIPT_NAME] =&gt; /pd.php"), results)
     }
     @MainActor
     internal static let testFetchPOSTCheck: TestClosure = {
@@ -121,6 +122,7 @@ public extension PostData {
         }
 //        debug("RESULTS: \(results)", level: .DEBUG)
         try expect(results.contains("'name' => 'Jack & \\\"Jill\\\"',"), results)
+        try expect(results.contains("[SCRIPT_NAME] =&gt; /pd.php"), results)
     }
     @MainActor
     internal static let testNetworkErrors: TestClosure = {

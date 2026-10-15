@@ -531,7 +531,7 @@ public extension TestCase {
 #if canImport(SwiftUI) && canImport(Combine) && compiler(>=5.9) && canImport(Foundation)
         tests["CloudStorageSync Tests"] = CloudStorageSync.tests
         tests["CloudStorage Tests"] = CloudStorageTests.tests
-        tests["Backport Tests"] = Glass.tests
+        tests["Backport Tests"] = Glass.tests + Backport<Any>.tests
         tests["Backport Button Style Tests"] = BackportButtonStyle.tests
         tests["Environment View Tests"] = EnvironmentsView.tests
 #endif

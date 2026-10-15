@@ -330,4 +330,38 @@ Special thanks to this project for the CloudStorage base (cleaned up for broader
 
 # Contributing
 
+Compatibility prioritizes portability, backwards compatibility, clear public documentation, and reviewable changes. Contributors and coding agents should follow these repository-specific rules.
+
 Contributor and coding-agent rules now live in [CONTRIBUTING.md](CONTRIBUTING.md), including version boundaries, prompt logging, documentation expectations, compatibility practices, and shared-test guidance.
+
+## Optional prompt templates
+
+The templates in this section apply only when explicitly requested or when the current task is creating or modernizing a package according to these templates. Otherwise, skip this section and follow the general and interactive coding rules below.
+
+PROMPT prefix for Codex when the local CONTRIBUTING file may be different from the committed version:
+```
+Please refer to local ~/Documents/Kudit/Kudits/Library/Compatibility.swiftpm/CONTRIBUTING.md for rules and guidance.
+[REQUEST]
+```
+
+PROMPT prefix for Xcode or another context without memory for projects using Compatibility:
+```
+Follow the rules in github.com/kudit/Compatibility/CONTRIBUTING.md, preserve existing edits, then complete this request:
+[REQUEST]
+```
+
+PROMPT for updating Module packages:
+```
+Review this Swift package for adoption of the Module APIs introduced in github.com/kudit/Compatibility v1.16.0 or later. Inspect the package’s existing architecture and preserve its public behavior and platform compatibility. Add or update its Compatibility dependency if necessary. Apply an appropriate Module conformance, including its version, direct Compatibility dependency, module dependencies, immediately available moduleInfo, ordered TestCase sections, and opt-in open-source repository metadata when applicable. Register the package from its highest-level module or document how an application should register it through Application.track(including:). Add complete inline DocC comments to the relevant public APIs so generated documentation can discover them. Do not create a .docc catalog, separate documentation articles, or another documentation folder. Put reusable tests in the module's TestCase collections so they run both in the in-app test UI and through the Swift Testing bridge; retain target-specific tests only where infrastructure requires them. Follow this package’s existing CONTRIBUTING.md, changelog, versioning, formatting, availability, and compatibility conventions.
+```
+
+PROMPT For new apps:
+```
+Use github.com/kudit/Compatibility as a dependency. Adopt the coding, documentation, testing, and changelog rules in that project's CONTRIBUTING.md. Generate a README.md following the Compatibility App Store Styleguide in that same file. Reconstruct the implementation history represented in this conversation into changelog entries using the guidelines.  Swift apps should prefer Compatibility APIs where relevant, including debug() instead of print(), Application.track(), Backports, and Compatibility JSON/string/date helpers.
+```
+
+PROMPT for updating projects:
+```
+Use github.com/kudit/Compatibility where appropriate. Adopt the coding, documentation, testing, and changelog rules in Compatibility/CONTRIBUTING.md. Preserve existing behavior and edits, inspect the project before changing architecture, and complete the requested implementation with real tests.
+```
+

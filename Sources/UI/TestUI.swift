@@ -158,6 +158,7 @@ private struct ModuleTestSectionsView: View {
         // Enumerated offsets avoid relying on metatype key paths while Build guarantees unique module identifiers.
         ForEach(Array(modules.enumerated()), id: \.offset) { _, module in
             Section {
+                DetailedModuleInfoRows(module: module)
                 if module.tests.isEmpty {
                     Text("No tests provided")
                         .foregroundStyle(.secondary)
@@ -173,6 +174,30 @@ private struct ModuleTestSectionsView: View {
             } header: {
                 Text("\(module.moduleName) v\(module.version)")
             }
+        }
+    }
+}
+
+/// Loads and displays a module's complete diagnostic fields before its reusable tests.
+@available(iOS 15, macOS 12, tvOS 17, watchOS 8, *)
+private struct DetailedModuleInfoRows: View {
+    let module: Module.Type
+    @State private var fields: [Field]?
+
+    var body: some View {
+        Group {
+            if let fields {
+                ForEach(fields.indices, id: \.self) { index in
+                    FieldView(fields[index])
+                }
+            } else {
+                ProgressView("Loading module information…")
+                    .font(.caption)
+            }
+        }
+        .task {
+            guard fields == nil else { return }
+            fields = await module.loadDetailedModuleInfo()
         }
     }
 }

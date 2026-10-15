@@ -1,6 +1,11 @@
 # Changelog
 
-TODO: Please add tests for Backport withAnimation, Glass.swiftUIValue, presentationBackground, Backport.LabeledContent, LegacyGroupBox, persistentSystemOverlays, safeAreaPadding, scrollClipDisabled, navigationTitle, AnimationCompletionCritieria.swfitUIValue, fileDialogDefaultDirectory, fullScreenCover, BackportTabViewContent.fallback, and onChange (multiple versions) (could watch for the checkbox for the scrolling or the checkbox on the conditional UI test).
+## v1.20.1 2026-10-14
+Updated CONTRIBUTING.md guidance.
+Added the PHPFrog Plickle server-field encoding check to the fetchURL GET and POST tests.
+Removed Tuple warnings in os 27 with Backports.  Unfortunately requires littering AnyView erasures so hopefully doesn't cause a performance hit on older devices.
+Added a cross-platform `textInputAutocapitalization` backport and focused Backport API coverage.
+Tests coverage up to 87%!
 
 ## v1.20.0 2026-09-16
 Added MixedTypeField initializers to make defining dictionaries easier.

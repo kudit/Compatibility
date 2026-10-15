@@ -360,6 +360,13 @@ final class CompatibilityUITests: XCTestCase {
         scrollToggle.tap()
         try? await Task.sleep(nanoseconds: 150_000_000)
 
+        let noArgumentChange = app.staticTexts["Backport onChange action: scrolling disabled"]
+        let noArgumentChangeRendered = await waitForElement(noArgumentChange, timeout: 2)
+        XCTAssertTrue(noArgumentChangeRendered, "The no-argument Backport.onChange overload should run when scrolling is disabled.")
+        let oldAndNewChange = app.staticTexts["Backport onChange values: false → true"]
+        let oldAndNewChangeRendered = await waitForElement(oldAndNewChange, timeout: 2)
+        XCTAssertTrue(oldAndNewChangeRendered, "The old/new Backport.onChange overload should report the state transition.")
+
         let disabledStartX = firstItem.frame.minX
 #if os(macOS)
         strip.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).hover()

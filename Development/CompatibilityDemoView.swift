@@ -257,6 +257,9 @@ struct BackportShowcaseView: View {
     @State private var symbolName: String? = "cloud.rainbow.crop"
     @State private var backportSelection = 0
     @State private var backportScrollDisabled = false
+    // Keep callback results visible so UI tests can verify both Backport.onChange closure variants.
+    @State private var onChangeActionStatus = "waiting"
+    @State private var onChangeTransitionStatus = "waiting"
     private let colors: [Color] = [.red, .orange, .yellow, .green, .blue, .purple]
 
     var body: some View {
@@ -315,6 +318,9 @@ struct BackportShowcaseView: View {
                             .foregroundStyle(Color.gray)
 
                         ClearableTextField(label: "SF Symbol name", text: $symbolName)
+                            .backport.textInputAutocapitalization(.never)
+                            .autocorrectionDisabled(true)
+                            .disableSmartQuotes()
                             .backport.accessibilityIdentifier("backport.symbol.field")
 
                         HStack {
@@ -337,7 +343,17 @@ struct BackportShowcaseView: View {
                             .foregroundStyle(Color.gray)
 
                         Toggle("Disable numbered-strip scrolling", isOn: $backportScrollDisabled)
+                            .backport.onChange(of: backportScrollDisabled) {
+                                onChangeActionStatus = backportScrollDisabled ? "scrolling disabled" : "scrolling enabled"
+                            }
+                            .backport.onChange(of: backportScrollDisabled) { oldValue, newValue in
+                                onChangeTransitionStatus = "\(oldValue) → \(newValue)"
+                            }
                             .backport.accessibilityIdentifier("backport.scroll.toggle")
+                        Text("Backport onChange action: \(onChangeActionStatus)")
+                            .backport.accessibilityIdentifier("backport.onChange.action")
+                        Text("Backport onChange values: \(onChangeTransitionStatus)")
+                            .backport.accessibilityIdentifier("backport.onChange.values")
 
                         ScrollView(.horizontal) {
                             HStack {
@@ -491,3 +507,4 @@ struct CompatibilityDemoView: View {
     CompatibilityDemoView()
 }
 #endif
+

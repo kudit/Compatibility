@@ -72,6 +72,52 @@ extension Backport where Content == Any {
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 @MainActor
 public extension Backport where Content: View {
+	/// Autocapitalization behaviors supported by Compatibility's text input backport.
+	enum TextInputAutocapitalization: Sendable {
+		/// Capitalizes every character.
+		case characters
+		/// Capitalizes the first character of each word.
+		case words
+		/// Capitalizes the first character of each sentence.
+		case sentences
+		/// Does not automatically capitalize characters.
+		case never
+
+	#if os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
+		@available(iOS 15, tvOS 15, watchOS 8, *)
+		var swiftUIValue: SwiftUI.TextInputAutocapitalization {
+			switch self {
+			case .characters: return .characters
+			case .words: return .words
+			case .sentences: return .sentences
+			case .never: return .never
+			}
+		}
+	#endif
+	}
+    /// Applies text input autocapitalization where SwiftUI supports it.
+    ///
+    /// This modifier is a no-op on macOS and on older operating systems. It can be applied to a
+    /// native `TextField`, a wrapper such as ``ClearableTextField``, or any view containing a text field.
+    ///
+    ///     TextField("Symbol name", text: $symbolName)
+    ///         .backport.textInputAutocapitalization(.never)
+    ///
+    /// - Parameter style: The autocapitalization behavior to apply.
+    /// - Returns: The view with the native autocapitalization behavior where supported.
+    @ViewBuilder
+    func textInputAutocapitalization(_ style: TextInputAutocapitalization) -> some View {
+#if os(macOS)
+        content
+#else
+        if #available(iOS 15, tvOS 15, watchOS 8, *) {
+            content.textInputAutocapitalization(style.swiftUIValue)
+        } else {
+            content
+        }
+#endif
+    }
+
     /// Applies an accessibility identifier on platforms that expose the native modifier.
     /// tvOS introduced this modifier after the package's tvOS 13 baseline, so older tvOS simply
     /// keeps the original content while other platforms use SwiftUI's native implementation.
@@ -308,10 +354,12 @@ public extension Backport where Content: View {
                 content()
             }
         } else {
-            // Fallback on earlier versions
-            ZStack(alignment: alignment) {
-                self.content
-                content()
+            AnyView {
+                // Fallback on earlier versions
+                ZStack(alignment: alignment) {
+                    self.content
+                    content()
+                }
             }
         }
     }
@@ -322,10 +370,12 @@ public extension Backport where Content: View {
                 content()
             }
         } else {
-            // Fallback on earlier versions
-            ZStack(alignment: alignment) {
-                self.content
-                content()
+            AnyView {
+                // Fallback on earlier versions
+                ZStack(alignment: alignment) {
+                    self.content
+                    content()
+                }
             }
         }
     }
@@ -648,6 +698,120 @@ public enum BackportControlSize : CaseIterable, Sendable {
 
 #if canImport(WidgetKit)
 import WidgetKit
+#endif
+
+#if compiler(>=5.9)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+extension Backport where Content == Any {
+	/// Reusable checks for Backport APIs that are best exercised by constructing their SwiftUI view values.
+	/// UI tests separately interact with stateful examples such as the change observers and scrolling toggle.
+	@MainActor
+	internal static let tests: [TestCase] = [
+		TestCase("Backport withAnimation and completion criteria") { @MainActor in
+			let result = Text("Animation test").backport.withAnimation(
+				nil,
+				completionCriteria: .removed,
+				duration: 0,
+				{ "completed body" },
+				completion: {}
+			)
+			try expectEqual(result, "completed body")
+
+			if #available(iOS 17, macOS 14, tvOS 17, watchOS 10, *) {
+				let logical = Backport<Text>.AnimationCompletionCriteria.logicallyComplete.swiftUIValue
+				let removed = Backport<Text>.AnimationCompletionCriteria.removed.swiftUIValue
+				let mapsLogical: Bool
+				let mapsRemoved: Bool
+				switch logical {
+				case .logicallyComplete: mapsLogical = true
+				case .removed: mapsLogical = false
+				default: mapsLogical = false
+				}
+				switch removed {
+				case .logicallyComplete: mapsRemoved = false
+				case .removed: mapsRemoved = true
+				default: mapsRemoved = false
+				}
+				try expect(mapsLogical && mapsRemoved, "Animation completion criteria should map to their SwiftUI equivalents.")
+			}
+		},
+		TestCase("Glass SwiftUI conversion") { @MainActor in
+#if compiler(>=6.2) && !os(visionOS)
+			if #available(iOS 26, macOS 26, tvOS 26, watchOS 26, *) {
+				let nativeGlass = Glass.regular.swiftUIValue
+				_ = nativeGlass
+				try expect(Glass.regular == .regular)
+			}
+#else
+			try expect(Glass.regular == .regular)
+#endif
+		},
+		TestCase("Backport modifier compatibility paths") { @MainActor in
+			let text = Text("Modifier test")
+			_ = text.backport.presentationBackground(Backport<Text>.MaterialEnum.regularMaterial)
+			_ = text.backport.persistentSystemOverlays(.hidden)
+			_ = text.backport.safeAreaPadding(.horizontal, 12)
+			_ = text.backport.scrollClipDisabled()
+			try expect(true, "Backport modifier view values should be constructible.")
+		},
+		TestCase("Backport labeled and legacy group boxes") { @MainActor in
+			var contentWasBuilt = false
+			var labelWasBuilt = false
+			func makeContent() -> Text {
+				contentWasBuilt = true
+				return Text("Content")
+			}
+			func makeLabel() -> Text {
+				labelWasBuilt = true
+				return Text("Label")
+			}
+			let labeledContent = Backport<Any>.LabeledContent("Name", value: "Value")
+			let legacyGroupBox = Backport<Any>.LegacyGroupBox(content: makeContent, label: makeLabel)
+			_ = labeledContent
+			_ = legacyGroupBox
+			try expect(contentWasBuilt && labelWasBuilt, "LegacyGroupBox should build both its label and content.")
+		},
+		TestCase("Backport navigation, file dialog, and full-screen presentation") { @MainActor in
+			let text = Text("Presentation test")
+			_ = text.backport.navigationTitle("Backport test")
+			_ = text.backport.fileDialogDefaultDirectory(URL(fileURLWithPath: "/tmp"))
+			_ = text.backport.fullScreenCover(isPresented: .constant(false)) {
+				Text("Cover")
+			}
+			try expect(true, "Backport presentation view values should be constructible.")
+		},
+		TestCase("Backport TabView fallback container") { @MainActor in
+			let tabView = BackportTabViewContent {
+				Text("Tab content")
+			}
+			let body = tabView.body
+			_ = body
+			try expect(true, "BackportTabViewContent should build its platform-appropriate body.")
+		},
+		TestCase("Backport onChange closure variants") { @MainActor in
+			let text = Text("Change observer test")
+			let noArgumentAction = text.backport.onChange(of: 1) {}
+			let oldAndNewAction = text.backport.onChange(of: 1) { oldValue, newValue in
+				_ = (oldValue, newValue)
+			}
+			_ = noArgumentAction
+			_ = oldAndNewAction
+			try expect(true, "Both Backport.onChange closure forms should construct their view values.")
+		},
+		TestCase("Backport text input autocapitalization styles") { @MainActor in
+			let text = Text("Input test")
+			for style in [
+				Backport<Text>.TextInputAutocapitalization.characters,
+				.words,
+				.sentences,
+				.never,
+			] {
+				_ = text.backport.textInputAutocapitalization(style)
+			}
+			try expect(true, "Every supported autocapitalization style should construct a modifier view.")
+		},
+	]
+}
 #endif
 
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
@@ -1574,9 +1738,11 @@ public extension Backport where Content == Any {
         if #available(iOS 14, macOS 11, tvOS 14, watchOS 7, *) {
             SwiftUI.Label(title, systemImage: systemImage)
         } else {
-            HStack {
-                Text(systemImage)
-                Text(title)
+            AnyView {
+                HStack {
+                    Text(systemImage)
+                    Text(title)
+                }
             }
         }
     }

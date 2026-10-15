@@ -1,62 +1,36 @@
 # Contributing to Compatibility (and best practices for Open Source packages)
 
-Compatibility prioritizes portability, backwards compatibility, clear public documentation, and reviewable changes. Contributors and coding agents should follow these repository-specific rules.
-
-## Optional prompt templates
-
-The templates in this section apply only when explicitly requested or when the current task is creating or modernizing a package according to these templates. Otherwise, skip this section and follow the general and interactive coding rules below.
-
-PROMPT prefix for Xcode or another context without memory for projects using Compatibility:
-```
-Follow the rules in github.com/kudit/Compatibility/CONTRIBUTING.md, preserve existing edits, then complete this request:
-[REQUEST]
-```
-
-PROMPT for updating Module packages:
-```
-Review this Swift package for adoption of the Module APIs introduced in github.com/kudit/Compatibility v1.16.0 or later. Inspect the package’s existing architecture and preserve its public behavior and platform compatibility. Add or update its Compatibility dependency if necessary. Apply an appropriate Module conformance, including its version, direct Compatibility dependency, module dependencies, immediately available moduleInfo, ordered TestCase sections, and opt-in open-source repository metadata when applicable. Register the package from its highest-level module or document how an application should register it through Application.track(including:). Add complete inline DocC comments to the relevant public APIs so generated documentation can discover them. Do not create a .docc catalog, separate documentation articles, or another documentation folder. Put reusable tests in the module's TestCase collections so they run both in the in-app test UI and through the Swift Testing bridge; retain target-specific tests only where infrastructure requires them. Follow this package’s existing CONTRIBUTING.md, changelog, versioning, formatting, availability, and compatibility conventions.
-```
-
-PROMPT For new apps:
-```
-Use github.com/kudit/Compatibility as a dependency. Adopt the coding, documentation, testing, and changelog rules in that project's CONTRIBUTING.md. Generate a README.md following the Compatibility App Store Styleguide in that same file. Reconstruct the implementation history represented in this conversation into changelog entries using the guidelines.  Swift apps should prefer Compatibility APIs where relevant, including debug() instead of print(), Application.track(), Backports, and Compatibility JSON/string/date helpers.
-```
-
-PROMPT for updating projects:
-```
-Use github.com/kudit/Compatibility where appropriate. Adopt the coding, documentation, testing, and changelog rules in Compatibility/CONTRIBUTING.md. Preserve existing behavior and edits, inspect the project before changing architecture, and complete the requested implementation with real tests.
-```
-
-
 ## Interactive Coding Preferences
-When working interactively with a maintainer, generally (this shouldn't be meant to override thread instructions but are here as a default):
-- If there is ever any conflict between instructions in a prompt, pause and clarify before continuing.
+When working interactively with a maintainer, use these defaults unless the thread gives a more specific instruction:
+- If instructions conflict in a way that affects the work, identify the conflict and ask one concise clarification question before taking the affected action. Continue any independent, authorized work.
 - Work in small, reviewable stages rather than delivering a large implementation all at once (unless specifically requested).
-- Present one immediate decision or action at a time and pause for maintainer feedback unless instructed to do a batch.
+- Batch related questions and actions when practical. Pause only when an unresolved answer or material decision blocks the next step; do not ask for confirmation when the request is clear.
 - Explain design choices briefly and answer questions before continuing implementation.
 - Preserve and review the maintainer's local edits before adding further changes.
 - When working in a shared local filesystem, let the maintainer build, edit, commit, and push between stages when practical. Do not commit or push coding-agent changes when you have access to the local filesystem.  When working purely via github access, then adding commits is okay as long as you include the proper CHANGELOG updates and version bumps.  Commit summaries should be the new version number and the description should be complete and clear and concise.
-- For API changes, command-line interfaces, compatibility behavior, file formats, migrations, handling, or other boundary decisions, explain the recommendation and ask for maintainer confirmation before implementation unless the maintainer has already specified the desired behavior.  This is not necessary for non-impactful or obvious decisions to avoid overloading with unnecessary questions, however, style choices or various equivalent implementation decisions should be left to the maintainer.
-- Coding-agent changes remain local for maintainer review: do not commit or push unless the maintainer explicitly requests that exact action. A prompt may be recorded in a local-only changelog note, but prompt text must never be committed or pushed to the server.
+- For API changes, command-line interfaces, compatibility behavior, file formats, migrations, handling, or other boundary decisions, explain the recommendation and ask for maintainer confirmation before implementation unless the maintainer has already specified the desired behavior. Batch related questions and ask only when the answer could materially change the implementation; use judgment for obvious or low-impact choices.
+- Coding-agent changes remain local for maintainer review: do not commit or push unless the maintainer explicitly requests that exact action.
 - After each pushed maintainer change, review the latest commit before proposing or applying the next change.
 - Keep pull requests in draft until the implementation is compiled, exercised by real tests, and fully reviewed.
 - Avoid unrelated cleanup, broad reformatting, and speculative changes that make the diff harder to reason about unless specifically asked for.
 - Do not delete, rewrite, condense, or "clean up" maintainer-authored comments unless the Comment preservation rules explicitly permit it. Treat comments and TODOs as source material that must survive refactoring unless their underlying information is genuinely obsolete.
 - Don't offer verbose explanations in the chat interface.  Long explanations should not be necessary if code is well documented inline and should be included there to read inline with code changes during diff review.  The chat interface should be for clarifying questions and high level discussion, answering questions, and providing high-level feedback.  When working on code projects, extra text and explanation in the chat is not a good way to preserve information.  Put next steps into an appropriate section of a markdown file like the CHANGELOG, put potential future ideas there, and architecture plans and roadmaps rather than in the chat itself.
-
+- For confirmation questions, briefly paraphrase the claim in your own words for context, then answer directly before giving caveats. Do not repeat the answer in later messages unless asked or new evidence changes it; check whether a status, explanation, or artifact has already been provided before repeating it.
+- Continue through work the maintainer has explicitly authorized; pause only when a material decision or missing information blocks progress.
+- Batch related commands, questions, and decisions when practical, while keeping the response concise. Raise a decision when its answer could materially change later work; otherwise use sound judgment and continue authorized work without a generic request to say “continue.”
+- Put material warnings or caveats before code or commands they affect.
 
 ## Version and changelog rules
 - Keep changelog entries in `## vX.X.X YYYY-MM-DD` format, with short line-separated notes under the current version without any bullets like `- ` prepending the lines.
 - Keep entries in strict reverse chronological order: newest version first. If two entries share a date, the higher version must appear first.
-- Before editing the active changelog entry, compare its version with the latest committed Git version. If those versions match, create a bumped patch-version entry to edit and update version surfaces.
-- Before changing a version, inspect the latest committed Git version and the active working-tree changelog. Never rewrite or reuse a committed historical entry. If the active working-tree version is ahead of Git, create a new version only when the maintainer requests it or when the active version has already been committed.
-- Do not bump or create a version entry for uncommitted work when the active changelog version already matches the latest committed Git version; leave the working tree on that committed version until the maintainer commits or explicitly requests a release/version update.
-- If an uncommitted manual version entry already differs from Git, use it and synchronize every version surface rather than choosing another version.  Swift code should update Xcode `MARKETING_VERSION`, `Package.swift`, and the Module`.version` (if it's a module).  Check the package manifest, Xcode project, public source constant, test fixture or suite heading, README or documentation display, and other hard-coded version surfaces.
+- Before editing the active changelog entry, compare its version with the latest committed Git version. If they match, create a bumped patch-version entry unless the maintainer directs otherwise. If the active working-tree version is already ahead of Git, reuse it and synchronize applicable version surfaces; do not create another version unless the maintainer directs otherwise. Never edit committed historical entries unless specifically instructed to.
+- Swift code should update Xcode `MARKETING_VERSION`, `Package.swift`, the Module`.version` (if it's a module), manifests, and other hard-coded version surfaces when synchronizing a version.
+- Never rewrite or reuse a committed historical entry.
 - Manual-change notes belong under the existing active version unless the version rules above require a new version entry.
 - Treat a heading such as `## vX.Y.Z TODO` as an intentional version stub: synchronize all version surfaces and replace `TODO` with the current date.
 - If continuing work under an active uncommitted version entry on a later date, update only that active entry’s date; never change dates on historical entries.
 - Changelog entries should contain concise summaries of changes.  They should be complete enough to communicate the changes but concise enough to be easily understandable at a high level and not get into too much detail unless it's particularly relevant like a changed API boundary.
-- If a project has no `CHANGELOG.md` file (or `README.md` with a `# Changelog` section), offer to create one using this repository's format pulling from any available comments/history/prompts to generate an appropriate changelog with best guess estimates.  Do not invent dates unless there is evidence to support it.  You could however simplify dates to just a year, or just a year and a month if that information is present or put UNAVAILABLE if you need a date placeholder.  You can invent versions only when creating an initial `CHANGELOG.md` proposal and unless other information is available, you can start at v0.0.1 for the initial creation entry, v0.0.2 for the second entry, and so on. Each entry should include a succinct summary of decisions, instructions, and changes. 
+- If a project has no `CHANGELOG.md` file (or `README.md` with a `# Changelog` section), offer to create one using this repository's format and available comments/history. Do not copy full user prompts into it. Do not invent dates without evidence; use a year or year and month only when supported by history, or `UNAVAILABLE` as a placeholder. When proposing a new changelog from scratch, versions may start at `v0.0.1` and increment for each evidenced entry. Keep entries to succinct summaries of decisions and changes.
 - Modules should have separate `README.md` and `CHANGELOG.md` files. Final apps may keep a Changelog section in their README.
 - When existing maintainer-authored uncommitted changes are present, preserve them and add concise note(s) to the current working changelog describing the changes that are visibly present. Do not invent implementation details, rationale, authorship, dates, or version history, and never modify committed historical entries.
 - When modernizing an existing changelog, preserve historical content exactly and add new entries separately. Do not treat modernization itself as permission to rewrite, merge, or reinterpret existing entries.
@@ -71,15 +45,11 @@ historical entries. Only change the surrounding format as required, and keep the
 
 After every prompt-driven change, contributors and coding agents must:
 
-1. Compare the active working-tree changelog version with the latest committed Git changelog/version before choosing a version.
-2. If the active version matches Git, create the normal patch entry unless the user requested another version.
-3. If an uncommitted active entry is already ahead of Git, keep that version and synchronize every version surface to it.
-4. Check `Package.swift`, the public `Compatibility.version` value, every Xcode `MARKETING_VERSION`, README/version displays, manifests, and every other hard-coded version surface.
-5. Refresh the active unpushed changelog date when work continues on a later date.
-6. Keep the complete prompt local-only; do not add it to tracked files or push it.
-7. Review both the normal diff and an ignore-whitespace diff, remove unrelated or whitespace-only changes, run `git diff --check`, and run the repository's real build and tests.
-8. For multi-file edits, patch each repository or external file separately. After every patch, verify the tool result, inspect the exact diff, run syntax checks, and search for the removed symbol or dependency. Never report the overall change as complete when any hunk failed or remains unverified. Always list changed files and show all deltas using a diff editor (if in Codex).
-9. Treat local source changes, local tests, uploaded files, activated server configuration, DNS resolution, certificate coverage, cache behavior, and live responses as separate verification layers. Report which layers were actually verified; local tests alone do not establish deployment or production success.
+1. Follow the Version and changelog rules above before editing an active entry or choosing a version; synchronize all applicable version surfaces and refresh an active unpushed entry's date when work continues on a later date.
+2. Do not copy complete user requests into tracked files or push them; record concise, user-facing change summaries in the changelog.
+3. Review both the normal diff and an ignore-whitespace diff, remove unrelated or whitespace-only changes, run `git diff --check`, and run the repository's real build and tests.
+4. For multi-file edits, patch each repository or external file separately. After every patch, verify the tool result, inspect the exact diff, run syntax checks, and search for the removed symbol or dependency. Never report the overall change as complete when any hunk failed or remains unverified. Always list changed files and show all deltas using a diff editor (if in Codex).
+5. Treat local source changes, local tests, uploaded files, activated server configuration, DNS resolution, certificate coverage, cache behavior, and live responses as separate verification layers. Report which layers were actually verified; local tests alone do not establish deployment or production success.
 
 ## File editing safety
 
@@ -92,10 +62,12 @@ Whole-file replacement is an acceptable and often appropriate way to edit a repo
 - Immediately inspect the resulting Git diff after every whole-file replacement. Unexpected large deletions, missing comments, missing declarations, or unrelated formatting changes are evidence of a bad replacement and must be corrected before continuing.
 - Compare deleted lines as carefully as added lines. Whole-file editing must preserve comments, TODOs, disabled reference code, whitespace conventions, and unrelated source exactly unless the requested change intentionally modifies them.
 - When a tool supports true patches, patches may be preferred for small localized changes, but do not avoid a necessary whole-file replacement merely because the file is large. The safety requirement is complete-current-input plus verified-output, not a particular editing mechanism.
-- Instead of deleting configuration, mappings, comments, code, commented/unused reference code, or reference data, preserve the original information by commenting out the old code out rather than deleting so that the changes can be easily tracked inline without needing to reference a file diff or history to see what was changed.  An additional comment at the end of the commented code line should be added describing the version that the code was commented out (disabled) and briefly why.
-- Do not permanently delete configuration, mappings, comments, code, or reference data without explicit approval. For small code or configuration changes, prefer commenting out the old line with a dated explanation. For larger or non-commentable material, preserve it in an appropriate archive, inventory, or reference file by default.
-- Never redact or remove keys or passwords in code or comments unless specifically instructed to.  You can warn about security concerns, but there are times when the author may choose to have sensitive information included in a private repository.  If there is a flag that can be added to indicate the author understands and accepts those risks, that should be available to prevent continual security warnings for acceptable uses. This rule applies only where the maintainer has intentionally accepted the repository’s access controls. Never copy credentials into public releases, shared bug reports, generated output, public pull requests, public comments, logs, or deployment artifacts.
+- Create temporary, backup, dump, or staging files only when needed. Clean up temporary files after use and do not leave untracked files or other filesystem clutter behind.
+- For code, configuration, mappings, and reference data removed during a change, preserve the old material inline as commented-out text with a short explanation and the version/date when it was disabled, so the maintainer can review and remove it from the staged diff. Do not move ordinary removed material to a separate archive. If the material cannot be commented out, preserve it in an appropriate reference form. This preference applies to removals in the current change; it does not require retaining obsolete comments when their associated code or behavior is gone. Inspect every removal in the diff and explain intentional removals.
+- In private repositories, do not proactively redact or remove keys, passwords, or other credentials from existing code or comments. If a credential looks unsafe, preserve the existing material and flag it with a concise warning such as `// FIXME: potentially unsafe cleartext credential!`; do not copy credentials into public releases, shared reports, generated output, public pull requests, public comments, logs, or deployment artifacts.
 
+## Changelog outline
+Changelogs can be included in a CHANGELOG.md (usual) or as sections in a README.md (for Apps).
 
 A full changelog outline may include:
 
@@ -118,6 +90,7 @@ Planned features grouped by future version.
 
 ## Code style
 
+- Use tabs for indentation in newly written or modified code and configuration. Preserve existing indentation in unrelated lines to avoid whitespace-only churn.
 - Preserve public identifiers, established behavior, compatibility paths, and user-visible syntax unless a breaking change is explicitly requested.
 - Keep changes tightly scoped and avoid unrelated reformatting or whitespace-only edits.
 - Please make clear when code is not best practice or the obvious way of doing things particularly when you're making stylistic or judgement choices.
@@ -130,7 +103,7 @@ Planned features grouped by future version.
 
 Comments are part of the source and should be treated as maintainer-authored documentation, requirements, historical context, and design rationale rather than as optional clutter.
 
-- Add complete DocC comments to public APIs and to non-obvious internal APIs.
+- For Swift APIs, add complete DocC comments to public APIs and non-obvious internal APIs. In other languages, use the language's native documentation style.
 - Use concise comments for obvious behavior and more detail around compatibility, migration, concurrency, and platform-specific decisions.
 - Add clear inline comments explaining all new or modified code and why the change was made.
 - Preserve existing comments by default, including explanatory comments, TODOs, reference URLs, migration notes, historical rationale, disabled example code, and maintainer-authored reminders.  If a comment is missing, unclear, or inaccurate, please flag and confirm with the maintainer.
@@ -186,9 +159,9 @@ Included for reference and utility and as a best practices model.  Feel free to 
 
 # Changelog
 Maintain a reverse-chronological changelog, newest version first using the rules above.
-Each entry should follow the same format indicated above, except if this release is targeted for the App Store, the simple user-facing App Store changes to use as the public "what changed in this version" release notes for that version should be first, followed by **App Store Updates above** on its own line as a separator, followed by any internal developer focused changes.  If there is a new version that isn't submitted to the App Store in between, the App Store Updates section should be moved up to the top until those changes are pushed to the app store with that version.
+For an App Store release, place the simple user-facing release notes first under the current changelog heading, followed by `**App Store Updates above**` on its own line and then internal developer notes. If a newer version is created before those notes are submitted, move the notes and separator to the top of that newer version's entry. Continue carrying them forward to the newest version until one is submitted with those changes; then leave the notes under the submitted version's entry.
 Example:
-v0.0.1 2026-07-06
+## v0.0.1 2026-07-06
 User-facing note
 **App Store Updates above**
 Internal developer note
