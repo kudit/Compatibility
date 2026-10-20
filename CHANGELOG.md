@@ -1,5 +1,40 @@
 # Changelog
 
+## v1.21.0 2026-10-19
+Standardized @avaiable checks so that they are only on SwiftUI code and set the minimums to iOS 13, macOS 10.15, tvOS 13, watchOS 6 to improve availability constraints to be more backwards compatible.
+Added a `Backport.HierarchicalShapeStyle` name and native style conversion, content-masked gradient rendering on legacy systems.
+Split Backport.swift into multiple files when there is a top level structure.
+Backported ClearableTextField to the package's minimum SwiftUI deployment targets, keeping FocusState and submit handling on newer systems.
+Kept ClearableTextField's clear-button accessibility label compatible with macOS 10.15.
+Added `Backport.ProgressView()` with a native SwiftUI indicator where available and an animated fallback for the package's minimum deployment targets.
+Added hierarchical and gradient foreground-style backports with shared opacity values for fixed Color framework colors.
+Added a documented `Backport.Link` with native and legacy platform URL-opening paths.
+Added `StringLikeProtocol` for reusable SwiftUI labels, clarified AsyncImage's `SwiftUI.Image` type references, and added an SF Symbol view fallback for macOS 10.15.
+Made AllTestsListView available on iOS 13 using state-owned observable storage and a private observing subview; consolidated Link, GroupBox, and navigation-title rendering with `StringLikeProtocol`, removed the redundant concrete-image initializer, and kept gradient styling beside the other Backport view modifiers.
+Isolated SF Symbol fallback maps to `@MainActor` so that they can be editable, added runtime `available()`/`safe` resolution for system and bundle assets, and retained only `Backport.Section` title initializers that adapt the OS availability difference.
+Added `Backport.task(priority:_:)` with inherited actor context, and a legacy modifier isolated to SwiftUI's supported OS minimums with view-lifetime task cancellation.
+Added an optional `AttributedStringText(markdown:)` text view that renders Markdown and links where native attributed text is available and returns `nil` on older systems.
+Added `Backport.Menu` with native menus where supported and a scrollable navigation fallback on older systems and watchOS.
+Added `Backport.toolbar(content:)` with unchanged native `ToolbarContent` forwarding, plus a view-based overlaid action bar for older systems and tvOS. Added ShapeStyle-based background and masked foreground fallbacks for gradients, including conic gradients.
+Shared one legacy progress indicator between `Backport.ProgressView` and `Backport.AsyncImage` so their legacy loading appearances match on modern preview platforms.
+Use UIKit and AppKit native activity indicators for the legacy spinner fallback to match each platform's current system appearance.
+Added Backport test cases for gradient styling, presentation/product styles, navigation, and view factories identified as unvisited in coverage reports.
+Added a focused Swift Testing adapter for the new Backport coverage cases so they can be run without invoking network-dependent tests.
+Made the macOS navigation stack size fallback safe when no AppKit application window exists, allowing headless view construction.
+Added deterministic coverage for network tests, toolbar/link/task native and legacy paths, and SF Symbol fallback resolution.
+Confirmed shared coverage for Backport animation, Glass conversion, presentation and layout modifiers, labeled/group boxes, navigation and file presentation, TabView fallback, and both onChange closure forms; UI coverage toggles scrolling to exercise the change handlers.
+Used focusable Button activation for legacy tvOS menu opening, including tvOS 13 where SwiftUI tap and long-press gestures are unavailable.
+Added a `Backport.Menu` `onOpen` callback that runs before legacy navigation and from native menu-label activation.
+Used `navigationDestination(isPresented:)` for the visionOS legacy menu route to avoid the deprecated `NavigationLink(isActive:)` initializer.
+Excluded watchOS from the UIKit progress indicator branch so its legacy spinner uses the SwiftUI fallback.
+Use UIKit symbol and asset lookup on Mac Catalyst, where the AppKit image initializers are unavailable.
+Added deterministic URLSession tests for native and legacy request/download paths, transport errors, and invalid HTTP responses.
+Exercised String, Substring, and LocalizedStringKey text conversion and Link initializers, and covered all hierarchical opacity tiers.
+Covered legacy AsyncImage's loading and loaded rendering states, plus task cancellation and replacement behavior.
+Added CloudStorage wrapper coverage for primitive, optional, raw-value, date, binding, and backing-store paths.
+Added bundle metadata fallback tests using a temporary bundle fixture.
+Improved Code Coverage to 88%.
+
 ## v1.20.1 2026-10-14
 Updated CONTRIBUTING.md guidance.
 Added the PHPFrog Plickle server-field encoding check to the fetchURL GET and POST tests.

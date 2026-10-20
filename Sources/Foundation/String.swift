@@ -1447,11 +1447,13 @@ public extension String {
             try expectEqual("h\"i".addSlashes(), "h\\\"i")
             try expectEqual("Hello, world!".replacingOccurrences(of: "world", with: "Swift"), "Hello, Swift!")
             try expectEqual(UInt64("C", radix: 16), 12)
-            try expectEqual("star.fill".fallbackForSymbol, "star")
-            try expectEqual( "calendar".emojiForSymbol, "📅")
-            try expectEqual("multiply.circle.fill".emojiForSymbol, nil)
-            try expectEqual("multiply.circle.fill".unicodeForSymbol, "×")
-            try expectEqual("unknown.symbol".unicodeForSymbol, nil)
+            try await MainActor.run {
+                try expectEqual("star.fill".fallbackForSymbol, "star")
+                try expectEqual("calendar".emojiForSymbol, "📅")
+                try expectEqual("multiply.circle.fill".emojiForSymbol, nil)
+                try expectEqual("multiply.circle.fill".unicodeForSymbol, "×")
+                try expectEqual("unknown.symbol".unicodeForSymbol, nil)
+            }
             // MARK: - Character.isEmoji
             let smiley: Character = "😀"
             try expect(smiley.isEmoji, "Emoji character should be recognized")

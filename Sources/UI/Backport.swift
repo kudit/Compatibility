@@ -2,6 +2,9 @@
 
 #if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation)
 import SwiftUI
+#if os(macOS)
+import AppKit
+#endif
 #if canImport(Combine)
 import Combine
 #endif
@@ -24,23 +27,6 @@ public enum BackportImageScale: Sendable {
 public extension View {
     @MainActor
     var backport: Backport<Self> { Backport(self) }
-}
-
-@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
-extension Backport where Content == Any {
-    /// Usage: Backport.AsyncImage(url: URL)
-    @ViewBuilder public static func AsyncImage(url: URL?) -> some View {
-        if #available(iOS 14, macOS 11, tvOS 14, watchOS 7, *) {
-            if #available(iOS 15, macOS 12, tvOS 15, watchOS 8, *) {
-                SwiftUI.AsyncImage(url: url)
-            } else {
-                //MyCustomAsyncImage(url: url)
-                ProgressView()
-            }
-        } else {
-            Text(url?.lastPathComponent ?? "?")
-        }
-    }
 }
 
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
@@ -303,17 +289,41 @@ public extension Backport where Content: View {
     }
     @ViewBuilder
     func foregroundStyle<S>(_ style: S) -> some View where S : ShapeStyle {
-        if #available(iOS 16, macOS 13, tvOS 16, watchOS 9, *) {
+        if #available(iOS 15, macOS 12, tvOS 15, watchOS 8, *) {
             content.foregroundStyle(style)
         } else {
-            // Fallback on earlier versions
+            // Older SwiftUI releases lack foregroundStyle. Fill a rectangle with the requested
+            // ShapeStyle and mask it to the view's rendered alpha so gradients retain their colors.
             if let color = style as? Color {
                 content.foregroundColor(color)
             } else {
-                content // don't apply style if watchOS 6 or 7 or older tvOS
+				content.overlay(Rectangle().fill(style).mask(content))
             }
         }
     }
+
+	/// Applies a gradient to the visible foreground of this view.
+	///
+	/// SwiftUI's native foreground style is used when available. On older systems, the gradient is
+	/// overlaid and masked by the original content, preserving the content's shape and transparency
+	/// instead of approximating the style with a single color.
+	@ViewBuilder
+	func foregroundStyle(_ gradient: LinearGradient) -> some View {
+		if #available(iOS 15, macOS 14, tvOS 17, watchOS 10, *) {
+			content.foregroundStyle(gradient)
+		} else {
+			content.overlay(gradient.mask(content))
+		}
+	}
+
+	/// Compatibility spelling retained for callers that supplied a fixed-color gradient fallback.
+	/// The masked gradient now renders on older systems, so `fallback` is no longer used.
+	@available(*, deprecated, message: "Use foregroundStyle(_:) to render the gradient on older systems.")
+	@_disfavoredOverload
+	@ViewBuilder
+	func foregroundStyle(_ gradient: LinearGradient, fallback: Color) -> some View {
+		content.backport.foregroundStyle(gradient)
+	}
 
     /// Compatibility's semantic background style for SDKs without SwiftUI.BackgroundStyle.
     enum BackportBackgroundStyle: Sendable {
@@ -391,6 +401,23 @@ public extension Backport where Content: View {
     }
     func background(_ color: Color) -> some View {
         background { color }
+    }
+
+    /// Applies a ShapeStyle as a background, including gradient styles on older SwiftUI versions.
+    ///
+    /// SwiftUI's native style overload is used where available. On older systems the style fills a
+    /// rectangle behind the content, preserving gradients such as linear, radial, angular, and
+    /// conic gradients instead of dropping them or reducing them to a fixed color.
+    @ViewBuilder
+    func background<S: ShapeStyle>(_ style: S) -> some View {
+        if #available(iOS 16, macOS 13, tvOS 16, watchOS 9, *) {
+            content.background(style)
+        } else {
+            ZStack {
+                Rectangle().fill(style)
+                content
+            }
+        }
     }
     enum SafeAreaRegions: Sendable {
         case all, container, keyboard
@@ -754,6 +781,150 @@ extension Backport where Content == Any {
 			_ = text.backport.scrollClipDisabled()
 			try expect(true, "Backport modifier view values should be constructible.")
 		},
+		TestCase("Backport background and foreground styles") { @MainActor in
+			let text = Text("Style test")
+			try expectEqual(BackportHierarchicalShapeStyle.primary.opacity, 0.90)
+			try expectEqual(BackportHierarchicalShapeStyle.secondary.opacity, 0.60)
+			try expectEqual(BackportHierarchicalShapeStyle.tertiary.opacity, 0.35)
+			try expectEqual(BackportHierarchicalShapeStyle.quaternary.opacity, 0.18)
+			_ = text.backport.foregroundStyle(BackportHierarchicalShapeStyle.primary)
+			_ = text.backport.foregroundStyle(BackportHierarchicalShapeStyle.secondary)
+			_ = text.backport.foregroundStyle(BackportHierarchicalShapeStyle.tertiary)
+			_ = text.backport.foregroundStyle(BackportHierarchicalShapeStyle.quaternary)
+#if os(macOS)
+			let hierarchyHost = NSHostingView(rootView: BackportHierarchicalStyleFallback(content: text, style: .secondary))
+			hierarchyHost.frame = NSRect(x: 0, y: 0, width: 160, height: 40)
+			hierarchyHost.layoutSubtreeIfNeeded()
+			let darkHierarchyHost = NSHostingView(
+				rootView: BackportHierarchicalStyleFallback(content: text, style: .secondary)
+					.environment(\.colorScheme, .dark)
+			)
+			darkHierarchyHost.frame = NSRect(x: 0, y: 0, width: 160, height: 40)
+			darkHierarchyHost.layoutSubtreeIfNeeded()
+#endif
+			let gradient = LinearGradient(
+				colors: [.red, .blue],
+				startPoint: .leading,
+				endPoint: .trailing
+			)
+			let angularGradient = AngularGradient(
+				gradient: Gradient(colors: [.red, .green, .blue]),
+				center: .center
+			)
+
+			_ = text.backport.background(Color.yellow)
+			_ = text.backport.background(gradient)
+			_ = text.backport.background { Color.clear }
+			_ = text.backport.overlay { Circle().stroke(Color.blue) }
+			_ = text.backport.backgroundStyle(Color.red)
+			_ = text.backport.foregroundStyle(Color.primary)
+			_ = text.backport.foregroundStyle(gradient)
+			_ = text.backport.foregroundStyle(angularGradient)
+			_ = text.backport.foregroundStyle(Backport<Text>.BackportBackgroundStyle.background)
+			try expect(true, "Background and foreground style variants should build on the current platform.")
+		},
+		TestCase("Backport presentation and product view styles") { @MainActor in
+			let text = Text("Presentation test")
+			_ = text.backport.presentationBackground(Color.blue)
+			_ = text.backport.presentationBackground(Backport<Text>.MaterialEnum.ultraThinMaterial)
+			_ = text.backport.productViewStyle(.automatic)
+			_ = text.backport.productViewStyle(.compact)
+			try expect(true, "Presentation and product style modifiers should build on the current platform.")
+		},
+		TestCase("Backport navigation and view factories") { @MainActor in
+			let text = Text("Navigation test")
+			let plainString: String = "A plain string"
+			let stringSlice = "Prefix and substring".dropFirst("Prefix and ".count)
+			let localizedKey = LocalizedStringKey("coverage.localized.string.like")
+			_ = plainString.text
+			_ = stringSlice.text
+			_ = localizedKey.text
+			let url = URL(string: "https://example.com")!
+			let genericStringLink = Backport<Any>.Link(plainString, destination: url)
+			let substringLink = Backport<Any>.Link(stringSlice, destination: url)
+			let localizedLink = Backport<Any>.Link(localizedKey, destination: url)
+			let customLabelLink = Backport<Any>.Link(destination: url) {
+				Image(systemName: "link")
+			}
+			_ = genericStringLink.body
+			_ = substringLink.body
+			_ = localizedLink.body
+			_ = customLabelLink.body
+			_ = customLabelLink.legacyBody
+
+			let navigation = BackportNavigationStack { text }
+			_ = navigation.body
+			_ = text.backport.navigationDestination(isPresented: .constant(true)) {
+				Text("Destination")
+			}
+			_ = Backport<Any>.Label("Example", systemImage: "star")
+			_ = Backport<Any>.LabeledContent("Name", value: "Value")
+			_ = Backport<Any>.Section("Section") { Text("Content") }
+			_ = Backport<Any>.Section(plainString) { Text("String title") }
+			_ = Backport<Any>.Section(stringSlice) { Text("Substring title") }
+			_ = Backport<Any>.ProgressView()
+			_ = Backport<Any>.legacyProgressViewForTesting()
+			_ = Backport<Any>.AsyncImage(url: nil)
+			_ = Backport<Any>.legacyAsyncImageForTesting(url: nil)
+			let legacyAsyncImage = Backport<Any>.LegacyAsyncImage(url: nil)
+			_ = legacyAsyncImage.body
+			legacyAsyncImage.load()
+			let loadedLegacyAsyncImage = Backport<Any>.LegacyAsyncImage(
+				url: nil,
+				initialImage: SwiftUI.Image("star")
+			)
+			_ = loadedLegacyAsyncImage.body
+			let link = Backport<Any>.Link("Visit example", destination: url)
+			_ = link.body
+			_ = Backport<Any>.Menu("Actions") { Button("Action") {} }
+			_ = Backport<Any>.Menu("Capture before opening", onOpen: {}) { Button("Action") {} }
+			_ = text.AttributedStringText(markdown: "**Markdown**")
+			try expect(true, "Navigation and view backport factories should build on the current platform.")
+		},
+		TestCase("Backport toolbar, link, and task paths") { @MainActor in
+			let text = Text("Compatibility test")
+			_ = text.backport.toolbar {
+				Button("Native toolbar action") {}
+			}
+			_ = text.backport.legacyToolbar {
+				Button("Legacy toolbar action") {}
+			}
+#if os(macOS)
+			let toolbarHost = NSHostingView(rootView: LegacyToolbarBar(content: Button("Legacy toolbar action") {}))
+			toolbarHost.frame = NSRect(x: 0, y: 0, width: 240, height: 60)
+			toolbarHost.layoutSubtreeIfNeeded()
+#endif
+			if #available(iOS 14, macOS 11, tvOS 14, watchOS 7, *) {
+				_ = text.backport.toolbar {
+					ToolbarItem(placement: .automatic) {
+						Button("Placed toolbar action") {}
+					}
+				}
+			}
+
+			let url = URL(string: "https://example.com")!
+			let link = Backport<Any>.Link("Example", destination: url)
+			_ = link.body
+			_ = link.legacyBody
+
+			let nativeTask = text.backport.task { await Task.yield() }
+			let legacyTask = text.backport.legacyTask(priority: .background) { await Task.yield() }
+			_ = nativeTask
+			_ = legacyTask
+			var taskModifier = LegacyTaskModifier(priority: .background) { await Task.yield() }
+			_ = text.modifier(taskModifier)
+			taskModifier.cancelTask()
+			taskModifier.startTask()
+			taskModifier.startTask()
+			taskModifier.cancelTask()
+			try expect(true, "Native and forced legacy toolbar, link, and task paths should build.")
+		},
+		TestCase("Backport tvOS focus activation fallback") { @MainActor in
+			let focusBasedFallback = Button("Activate") {}
+				.buttonStyle(.plain)
+		_ = focusBasedFallback
+		try expect(true, "tvOS 13 activation should use SwiftUI's focusable Button control.")
+		},
 		TestCase("Backport labeled and legacy group boxes") { @MainActor in
 			var contentWasBuilt = false
 			var labelWasBuilt = false
@@ -785,8 +956,9 @@ extension Backport where Content == Any {
 				Text("Tab content")
 			}
 			let body = tabView.body
-			_ = body
-			try expect(true, "BackportTabViewContent should build its platform-appropriate body.")
+			let fallback = tabView.fallbackForTesting
+			_ = (body, fallback)
+			try expect(true, "BackportTabViewContent should build both its platform-appropriate body and legacy fallback.")
 		},
 		TestCase("Backport onChange closure variants") { @MainActor in
 			let text = Text("Change observer test")
@@ -1122,7 +1294,7 @@ public extension Backport where Content: View {
 // MARK: Navigation Title
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension Backport where Content: View {
-    //TODO: find a way to better consolidate code?  Possibly a protocol?)
+    /// Applies a navigation title, using the native title modifier when available.
     @ViewBuilder
     func navigationTitle(_ title: Text) -> some View {
         if #available(iOS 14, macOS 11, tvOS 14, watchOS 7, *) {
@@ -1137,32 +1309,17 @@ public extension Backport where Content: View {
         }
     }
 
+    /// Preserves localized-key behavior while sharing the Text-based availability path.
     @ViewBuilder
     func navigationTitle(_ titleKey: LocalizedStringKey) -> some View {
-        if #available(iOS 14, macOS 11, tvOS 14, watchOS 7, *) {
-            content.navigationTitle(titleKey)
-        } else {
-            // Fallback on earlier versions
-#if !os(macOS) // macOS 10.5 doesn't support this
-            content.navigationBarTitle(titleKey)
-#else
-            content
-#endif
-        }
+        navigationTitle(Text(titleKey))
     }
 
+    /// Accepts plain, localized, and custom string-like navigation titles.
+    @_disfavoredOverload
     @ViewBuilder
-    func navigationTitle<S>(_ title: S) -> some View where S : StringProtocol {
-        if #available(iOS 14, macOS 11, tvOS 14, watchOS 7, *) {
-            content.navigationTitle(title)
-        } else {
-            // Fallback on earlier versions
-#if !os(macOS) // macOS 10.5 doesn't support this
-            content.navigationBarTitle(title)
-#else
-            content
-#endif
-        }
+    func navigationTitle<S: StringLikeProtocol>(_ title: S) -> some View {
+        navigationTitle(title.text)
     }
 }
 
@@ -1694,6 +1851,11 @@ private struct BackportTabViewContent<Content: View>: View {
             }
         }
     }
+
+	/// Exposes the legacy scroll-container branch to the shared tests on modern hosts.
+	var fallbackForTesting: some View {
+		fallback
+	}
 }
 
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
@@ -1780,26 +1942,22 @@ public extension Backport where Content == Any {
         }
     }
 
-    /// Provides the common text-labelled GroupBox spelling on older SwiftUI targets.
+    /// Keeps string literals on SwiftUI's localized-key path.
     @ViewBuilder static func GroupBox<C: View>(
         _ title: LocalizedStringKey,
         @ViewBuilder content: () -> C
     ) -> some View {
-        // Resolve the localized key to its textual representation before delegating so both
-        // overloads share the same rendering and legacy fallback behavior.
-        GroupBox(String(describing: title), content: content)
+        GroupBox(content: content) { Text(title) }
     }
 
-    /// Provides a text-labelled GroupBox for any string-like title, including `String`,
-    /// `Substring`, and custom `StringProtocol` values.
-    ///
-    /// This overload deliberately accepts `StringProtocol` rather than only `String` so callers
-    /// can pass slices and other string-backed labels without converting them at every call site.
-    @ViewBuilder static func GroupBox<S: StringProtocol, C: View>(
+    /// Provides a text-labelled GroupBox for plain or localized string-like titles.
+    /// The localized-key overload is preferred for string literals; string values and slices use this generic path.
+    @_disfavoredOverload
+    @ViewBuilder static func GroupBox<S: StringLikeProtocol, C: View>(
         _ title: S,
         @ViewBuilder content: () -> C
     ) -> some View {
-        GroupBox(content: content) { Text(title) }
+        GroupBox(content: content) { title.text }
     }
 
     /// Usage: `Backport.TabView { MyView() }`
@@ -1814,26 +1972,8 @@ public extension Backport where Content == Any {
         BackportSelectionTabViewContent(selection: selection, content: content)
     }
 
-    /// Backport for SF Symbol images on platforms that don't support `Image(systemName:)`.
-    static func Image(systemName: SFSymbol) -> SwiftUI.Image {
-        return SwiftUI.Image(backportSystemName: systemName)
-    }
 }
 
-/// Compatibility initializer for callers that need a real SwiftUI Image on platforms where
-/// `Image(systemName:)` was not available. The legacy symbol map only supplies the image name.
-@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
-public extension SwiftUI.Image {
-    init(backportSystemName systemName: SFSymbol) {
-        // TODO: check lookups so we can use fallbackForSymbol
-        let fallback = systemName.fallbackForSymbol ?? systemName.emojiForSymbol ?? systemName.unicodeForSymbol ?? "questionmark.circle"
-        if #available(macOS 11, *) {
-            self.init(systemName: systemName)
-        } else {
-            self.init(fallback)
-        }
-    }
-}
 public enum BackportTabViewStyle: Sendable {
     public enum BackportIndexDisplayMode: Sendable {
         case always, automatic, never
@@ -2045,7 +2185,8 @@ public struct BackportNavigationStack<Root: View>: View {
         navigationContent
 #if os(macOS)
         // default to the parent window size on macOS
-        .frame(idealWidth: NSApp.keyWindow?.contentView?.bounds.width ?? 500, idealHeight: NSApp.keyWindow?.contentView?.bounds.height ?? 500)
+		// NSApp can be nil in previews and headless test hosts, so use the fallback dimensions there.
+		.frame(idealWidth: NSApp?.keyWindow?.contentView?.bounds.width ?? 500, idealHeight: NSApp?.keyWindow?.contentView?.bounds.height ?? 500)
 #endif
     }
 

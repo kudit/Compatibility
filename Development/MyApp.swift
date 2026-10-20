@@ -4,7 +4,7 @@ import SwiftUI
 import Compatibility
 #endif
 
-@available(iOS 15, macOS 12, tvOS 17, watchOS 8, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 @main
 struct MyApp: App {
     init() {
@@ -68,7 +68,7 @@ struct MyApp: App {
 }
 
 #if compiler(>=5.9)
-@available(iOS 15, macOS 12, tvOS 17, watchOS 8, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 #Preview {
     CompatibilityDemoView()
 }

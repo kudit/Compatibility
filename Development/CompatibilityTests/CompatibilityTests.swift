@@ -431,6 +431,46 @@ struct CompatibilityTargetTests {
 
 @Suite
 struct CompatibilityTests {
+    /// Executes the newly expanded Backport coverage cases without running network-dependent module checks.
+    @Test("Backport view modifiers and factories")
+    @MainActor
+    @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+    func backportViewCoverage() async throws {
+        let titles = [
+            "Backport withAnimation and completion criteria",
+            "Glass SwiftUI conversion",
+            "Backport modifier compatibility paths",
+            "Backport background and foreground styles",
+            "Backport presentation and product view styles",
+            "Backport navigation and view factories",
+            "Backport toolbar, link, and task paths",
+            "Backport tvOS focus activation fallback",
+            "Backport labeled and legacy group boxes",
+            "Backport navigation, file dialog, and full-screen presentation",
+            "Backport TabView fallback container",
+            "Backport onChange closure variants",
+        ]
+        let backportTests = Compatibility.tests["Backport Tests"] ?? []
+
+        for title in titles {
+            guard let test = backportTests.first(where: { $0.title == title }) else {
+                Issue.record("Missing Backport coverage case: \(title)")
+                continue
+            }
+            try await test.execute()
+        }
+    }
+
+    /// Runs deterministic network checks by default and the live endpoint checks only with INTEGRATION_TESTING enabled.
+    @Test("Network test catalog")
+    @MainActor
+    @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+    func networkTestCatalog() async throws {
+        for test in Compatibility.tests["Network Tests"] ?? [] {
+            try await test.execute()
+        }
+    }
+
     /// Runs infrastructure-dependent target tests as ordered section arguments.
     @Test(
         "Compatibility Target Tests",

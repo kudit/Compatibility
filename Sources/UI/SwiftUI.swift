@@ -71,10 +71,10 @@ public extension View {
     }
 }
 
-@available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public typealias ClosureTestView = RadialTestView
 
-@available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public struct RadialTestView: View {
     @State var symbol = "calendar"
     
@@ -85,54 +85,36 @@ public struct RadialTestView: View {
             .joined(separator: ", ")
         VStack {
             let moduleMarkdown = "Included modules: \(registeredModules)"
-            if let attributedModuleText = try? AttributedString(markdown: moduleMarkdown) {
-                // Rendering Markdown as an AttributedString preserves link attributes so each module
-                // repository is clickable instead of displaying the Markdown syntax literally.
-                Text(attributedModuleText)
-                    .font(.caption)
-            } else {
-                // Keep the diagnostic visible if a platform's Markdown parser cannot decode a URL.
-                Text(moduleMarkdown)
-                    .font(.caption)
-            }
+			AttributedStringText(markdown: moduleMarkdown)
+				.font(.caption)
             Spacer()
-            if #available(tvOS 17, *) {
-                MenuTest(symbol: $symbol, accessibilityIdentifier: "radial.inline.symbols.menu")
-            } else {
-                // Fallback on earlier versions
-                // toolbars are not shown in tvOS?
-            }
+			MenuTest(symbol: $symbol, accessibilityIdentifier: "radial.inline.symbols.menu")
             Text("Selected symbol: \(symbol)")
                 .font(.caption)
-                .accessibilityIdentifier("radial.symbol.status")
+				.backport.accessibilityIdentifier("radial.symbol.status")
             
             RadialLayout {
                 ForEach(0..<24, id: \.self) { item in
                     Circle()
                         .fill([Color].rainbow[nth: item])
                         .frame(width: 64)
-                        .overlay(Image(systemName: symbol)
+						.overlay(Backport.Image(systemName: symbol)
                             .foregroundColor(.white)
                         )
                 }
             }
             .aspectRatio(contentMode: .fit)
         }
-        .toolbar {
-            if #available(tvOS 17, *) {
-                MenuTest(symbol: $symbol, accessibilityIdentifier: "radial.toolbar.symbols.menu")
-                    .padding()
-                    .accessibilityIdentifier("radial.toolbar.symbols.menu")
-            } else {
-                // Fallback on earlier versions
-                // toolbars are not shown in tvOS?
-            }
+		.backport.toolbar {
+			MenuTest(symbol: $symbol, accessibilityIdentifier: "radial.toolbar.symbols.menu")
+				.padding()
+				.backport.accessibilityIdentifier("radial.toolbar.symbols.menu")
         }
         .backport.navigationTitle("RadialLayout/Menu Tests")
         .navigationWrapper()
     }
 }
-@available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 #Preview("RadialLayout TestCase") {
     RadialTestView()
 }
@@ -162,7 +144,7 @@ public extension Binding {
     }
 }
 
-@available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public struct ConvertTestView: View {
     public init() {}
     @State private var count: Int = 3
@@ -173,7 +155,7 @@ public struct ConvertTestView: View {
                     Text("\(n)")
                         .font(.title).bold().foregroundColor(.white)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(.blue)
+						.backport.background(.blue)
                 }
             }
             .frame(maxHeight: 64)
@@ -196,7 +178,7 @@ public struct ConvertTestView: View {
         .padding()
     }
 }
-@available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 #Preview("Convert TestCase") {
     ConvertTestView()
 }
@@ -247,7 +229,7 @@ public extension InsettableShape {
     }
 }
 // TODO: Use the top syntax but the bottom compatibility
-@available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
+ @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 #Preview("Fill & Stroke") {
     VStack {
         Circle()
@@ -284,7 +266,7 @@ public struct FillAndStrokeTest: View {
     }
 }
 
-@available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 #Preview("Fill & Stroke") {
     FillAndStrokeTest()
 }
@@ -310,7 +292,7 @@ public extension View {
     }
 }
 
-@available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public struct MaterialTestView: View {
     @State private var showNavigationDetail = false
     @State private var conditionalEnabled = true
@@ -327,27 +309,27 @@ public struct MaterialTestView: View {
                             .backgroundMaterial()
                             // Keep the identifier on the rendered label as well as the Button because
                             // older SwiftUI accessibility bridges sometimes expose only the label node.
-                            .accessibilityIdentifier("material.navigation.trigger")
+							.backport.accessibilityIdentifier("material.navigation.trigger")
                     }
                     // Use a real Button so SwiftUI publishes one unambiguous actionable accessibility element;
                     // the previous tappable Text could collide with the Material tab label in UI tests.
-                    .accessibilityIdentifier("material.navigation.trigger")
-                    .accessibilityLabel("Material Navigation")
+					.backport.accessibilityIdentifier("material.navigation.trigger")
+					.backport.accessibilityLabel("Material Navigation")
                 Button {
                     showSheet = true
                 } label: {
                     Text("Glass")
                         .padding()
                 }
-                .accessibilityIdentifier("material.glass.button")
-                .accessibilityLabel("Glass")
+				.backport.accessibilityIdentifier("material.glass.button")
+				.backport.accessibilityLabel("Glass")
                 .backport.glassEffect(.regular.interactive())
             }
             // Recreate the Material controls after navigation dismisses so the sheet trigger is not left
             // in a stale accessibility subtree retained by the navigation backport.
             .id(showNavigationDetail ? "material-navigation" : "material-root")
         }
-        .background(.conicGradient(colors: [.red, .green, .blue], center: .center))
+		.backport.background(.conicGradient(colors: [.red, .green, .blue], center: .center))
         .sheet(isPresented: $showSheet) {
             ZStack {
                 //                    Color.blue
@@ -357,11 +339,9 @@ public struct MaterialTestView: View {
 //                }.padding()
                 AdaptiveLayoutsShowcaseView()
             }
-            .toolbar {
-                ToolbarItem(placement: .bottomBackport) {
-                    Button("Close") {
-                        showSheet = false
-                    }
+			.backport.toolbar {
+				Button("Close") {
+					showSheet = false
                 }
             }
             .navigationWrapper()
@@ -381,7 +361,7 @@ public struct MaterialTestView: View {
                         VStack(spacing: 12) {
                             Text("RadialStack arranges its children around a circle using the same compact utility that can be embedded in other views.")
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+								.backport.foregroundStyle(.secondary)
 
                             RadialStack {
                                 Circle().fill(.red)
@@ -394,14 +374,14 @@ public struct MaterialTestView: View {
                             .frame(width: 180, height: 180)
 
                             Toggle("Apply conditional modifier", isOn: $conditionalEnabled)
-                                .accessibilityIdentifier("material.conditional.toggle")
+								.backport.accessibilityIdentifier("material.conditional.toggle")
 
                             Text(conditionalEnabled ? "Conditional modifier applied" : "Conditional modifier not applied")
                                 .if(conditionalEnabled) { view in
                                     view
                                         .padding(size: 6)
-                                        .background(.yellow.opacity(0.25))
-                                        .overlay {
+										.backport.background(.yellow.opacity(0.25))
+										.backport.overlay {
                                             RoundedRectangle(cornerRadius: 6)
                                                 .stroke(.orange, lineWidth: 2)
                                         }
@@ -413,23 +393,23 @@ public struct MaterialTestView: View {
                                         content.bold().foregroundStyle(.blue)
                                     } else {
                                         // Fallback on earlier versions
-                                        content.foregroundStyle(.red)
+                                        content.backport.foregroundStyle(.red)
                                     }
                                 }
-                                .accessibilityIdentifier("material.conditional.result")
+								.backport.accessibilityIdentifier("material.conditional.result")
                         }
                         .padding()
                     }
                 }
                 .padding()
             }
-            .accessibilityIdentifier("material.navigation.destination")
+			.backport.accessibilityIdentifier("material.navigation.destination")
         }
         .navigationWrapper()
     }
 }
 
-@available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 #Preview("Material TestCase") {
     MaterialTestView()
 }

@@ -8,11 +8,11 @@
 #if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation)
 import SwiftUI
 
-@available(iOS 14, macOS 12, tvOS 15, watchOS 8, *)
 /// A SwiftUI representation of a structured ``Field`` value.
 ///
 /// Boolean fields use the existing check-state presentation, symbol-bearing fields include their SF
 /// Symbol, and other values use the Compatibility labeled-content backport for consistent presentation.
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public struct FieldView: View {
     /// The structured field displayed by this view.
     public var field: Field
@@ -38,7 +38,7 @@ public struct FieldView: View {
                 HStack {
                     Text(colonLabel)
                     Spacer()
-                    Image(systemName: symbol)
+					Backport.Image(systemName: symbol)
                         .backport.foregroundStyle(.gray)
                         .multilineTextAlignment(.trailing)
                     Text("\(valueString)")
@@ -52,7 +52,7 @@ public struct FieldView: View {
     }
 }
 
-@available(iOS 14, macOS 11, tvOS 14, watchOS 7, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public struct TestCheck: View {
     var label: String
     var state: Bool
@@ -65,7 +65,7 @@ public struct TestCheck: View {
     }
 }
 
-@available(iOS 14, macOS 11, tvOS 14, watchOS 7, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 #Preview("TestCase Checks") {
     List {
         TestCheck("True", true)
@@ -75,11 +75,11 @@ public struct TestCheck: View {
     }
 }
 
-@available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
 /// Displays ordered groups of structured fields as SwiftUI sections.
 ///
 /// Section order follows the supplied ``OrderedDictionary`` so support and diagnostic screens can
 /// maintain a predictable human-readable presentation.
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public struct FieldSections: View {
     /// The ordered section titles and fields displayed by the view.
     public var sections: OrderedDictionary<String,[Field]>
@@ -94,7 +94,7 @@ public struct FieldSections: View {
     public var body: some View {
         ForEach(sections.keys.elements, id: \.self) { key in
             let data = sections[key] ?? []
-            Section(key) {
+			Backport.Section(key) {
                 // Use collection indices so identical fields still receive distinct, stable identities within this section.
                 ForEach(data.indices, id: \.self) { index in
                     FieldView(data[index])
@@ -104,7 +104,7 @@ public struct FieldSections: View {
     }
 }
 
-@available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 #Preview {
     FieldSections(
         [
@@ -122,7 +122,7 @@ public struct FieldSections: View {
     )
 }
 
-@available(iOS 15, macOS 12, tvOS 15, watchOS 9, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 #Preview {
     CompatibilityEnvironmentTestView()
 }

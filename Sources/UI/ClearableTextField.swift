@@ -12,13 +12,13 @@ import Combine
 // https://fatbobman.com/en/posts/textfield-event-focus-keyboard/
 
 // TODO: Allow selection when tapping? https://stackoverflow.com/questions/67502138/select-all-text-in-textfield-upon-click-swiftui
-@available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public struct ClearableTextField: View {
     @State var label: String
     @Binding var text: String?
     @State private var fieldText: String// = "initial" - including an initial value causes this not to work?  Perhaps using synthesized initializer instead?
     // https://fatbobman.medium.com/advanced-swiftui-textfield-events-focus-keyboard-c99bc9f57c91
-    @FocusState var isFocused:Bool
+    @State private var focusRequest = 0
     public init(label: String, text: Binding<String?>) {
         self.label = label
         _text = text
@@ -37,34 +37,51 @@ public struct ClearableTextField: View {
             text = newValue
         }
     }
-    
-    public var body: some View {
-        HStack {
-            TextField(label, text: Binding(get: {
-                fieldText
-            }, set: {
-                fieldText = $0
-                #if os(watchOS)
-                // since watchOS doesn't seem to use onEditingChanged or focused:
-                    persistChanges()
-                #endif
-            }), onEditingChanged: {
-                focused in
+
+    private var fieldBinding: Binding<String> {
+        Binding(get: {
+            fieldText
+        }, set: {
+            fieldText = $0
+            #if os(watchOS)
+            // since watchOS doesn't seem to use onEditingChanged or focused:
+            persistChanges()
+            #endif
+        })
+    }
+
+    @ViewBuilder
+    private var textField: some View {
+        if #available(iOS 15, macOS 12, tvOS 15, watchOS 8, *) {
+            FocusableClearableTextField(
+                label: label,
+                text: fieldBinding,
+                focusRequest: $focusRequest,
+                onEditingChanged: { focused in
+                    // only set change when focus is lost and the value is changed, not while editing to prevent lots of noisy spam.  If we need to know as people are typing, we should install a hook here...
+                    if !focused {
+                        persistChanges()
+                    }
+                },
+                onSubmit: persistChanges
+            )
+        } else {
+            TextField(label, text: fieldBinding, onEditingChanged: { focused in
                 // only set change when focus is lost and the value is changed, not while editing to prevent lots of noisy spam.  If we need to know as people are typing, we should install a hook here...
                 if !focused {
                     persistChanges()
                 }
             })
-            .focused($isFocused)
-            // Return/Done is also an intentional commit point. This keeps the field quiet while typing
-            // but lets keyboard-driven users explicitly persist a value without first clicking elsewhere.
-            .onSubmit {
-                persistChanges()
-            }
+        }
+    }
+
+    public var body: some View {
+        HStack {
+            textField
             if fieldText != "" {
                 Button {
                     fieldText = ""
-                    isFocused = true
+                    focusRequest += 1
                 } label: {
                     Group {
                         if #available(iOS 14, macOS 11, tvOS 14, watchOS 7, *) {
@@ -81,7 +98,7 @@ public struct ClearableTextField: View {
                 }
                 // Give UI tests and VoiceOver a stable semantic name rather than exposing the
                 // implementation detail of whichever symbol/text fallback draws the clear control.
-                .accessibilityLabel("Clear \(label)")
+				.backport.accessibilityLabel("Clear \(label)")
                 .buttonStyle(.plain)                        // ensures the clear button isn't automatically invoked when tapping on row.
             }
         }
@@ -91,6 +108,28 @@ public struct ClearableTextField: View {
                 fieldText = newValue
             }
         }
+    }
+}
+
+/// Keeps focus management isolated to systems that provide SwiftUI's `FocusState`.
+@available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
+private struct FocusableClearableTextField: View {
+    let label: String
+    @Binding var text: String
+    @Binding var focusRequest: Int
+    let onEditingChanged: (Bool) -> Void
+    let onSubmit: () -> Void
+    @FocusState private var isFocused: Bool
+
+    var body: some View {
+        TextField(label, text: $text, onEditingChanged: onEditingChanged)
+            .focused($isFocused)
+            // Return/Done is also an intentional commit point. This keeps the field quiet while typing
+            // but lets keyboard-driven users explicitly persist a value without first clicking elsewhere.
+            .onSubmit(onSubmit)
+			.backport.onChange(of: focusRequest) {
+                isFocused = true
+            }
     }
 }
 

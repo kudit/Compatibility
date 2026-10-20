@@ -168,6 +168,10 @@ final class CompatibilityUITests: XCTestCase {
             let accessibilityGallery = await reveal(identifier: "backport.accessibilityGallery", in: currentBackport, app: app)
             XCTAssertTrue(accessibilityGallery != nil, "Backport accessibility gallery should be rendered.")
 #endif
+            let legacyProgress = await reveal(identifier: "backport.legacyProgress.view", in: screenElement, app: app)
+            XCTAssertNotNil(legacyProgress, "The forced legacy progress indicator should be rendered for comparison.")
+            let legacyAsyncImage = await reveal(identifier: "backport.legacyAsyncImage.view", in: screenElement, app: app)
+            XCTAssertNotNil(legacyAsyncImage, "The forced legacy async image view should be rendered for comparison.")
             await exerciseBackport(screenElement, in: app)
 
         case 8:

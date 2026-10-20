@@ -8,7 +8,7 @@
 #if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation)
 import SwiftUI
 import Foundation
-import Compatibility
+@_spi(BackportTesting) import Compatibility
 
 final class DemoFailureCounter: @unchecked Sendable {
     static let shared = DemoFailureCounter()
@@ -251,7 +251,7 @@ struct VisualShowcaseView: View {
 /// Interactive examples for APIs implemented in `Backport.swift`. Keeping these examples in their own
 /// tab makes the compatibility behavior easier to understand and lets UI tests exercise the controls
 /// without first traversing the much taller visual-layout showcase.
-@available(iOS 15, macOS 12, tvOS 17, watchOS 8, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 @MainActor
 struct BackportShowcaseView: View {
     @State private var symbolName: String? = "cloud.rainbow.crop"
@@ -269,7 +269,7 @@ struct BackportShowcaseView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("This example uses Compatibility's Backport.TabView without a selection binding. On current platforms it displays the native SwiftUI TabView; the backport also supplies a usable fallback on older systems such as watchOS 6.")
                             .font(.caption)
-                            .foregroundStyle(Color.gray)
+							.backport.foregroundStyle(Color.gray)
 
                         Backport.TabView {
                             Text("First unbound tab")
@@ -286,7 +286,7 @@ struct BackportShowcaseView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("This version supplies a Binding. The button changes the selected tag programmatically so you can see that the same backported container participates in SwiftUI selection state.")
                             .font(.caption)
-                            .foregroundStyle(Color.gray)
+							.backport.foregroundStyle(Color.gray)
 
                         Backport.TabView(selection: $backportSelection) {
                             Text("Bound tab zero")
@@ -315,7 +315,7 @@ struct BackportShowcaseView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Enter an SF Symbol name. Backport.Image uses the native symbol image where available and a text fallback on older macOS versions. The field is also a live ClearableTextField example.")
                             .font(.caption)
-                            .foregroundStyle(Color.gray)
+							.backport.foregroundStyle(Color.gray)
 
                         ClearableTextField(label: "SF Symbol name", text: $symbolName)
                             .backport.textInputAutocapitalization(.never)
@@ -324,10 +324,9 @@ struct BackportShowcaseView: View {
                             .backport.accessibilityIdentifier("backport.symbol.field")
 
                         HStack {
-                            SwiftUI.Image(backportSystemName: symbolName ?? "questionmark")
-                                .renderingMode(.original)
+                            Backport.Image(systemName: symbolName ?? "questionmark")
                                 .font(.largeTitle)
-                                .foregroundStyle(.blue)
+								.backport.foregroundStyle(.blue)
                                 .backport.accessibilityIdentifier("backport.symbol.preview")
                             Text("Current symbol: \(symbolName ?? "<empty>")")
                                 .backport.accessibilityIdentifier("backport.symbol.status")
@@ -340,7 +339,7 @@ struct BackportShowcaseView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("The numbered items are simply a horizontal scrolling strip. Toggle scrolling off and on to exercise Compatibility's scrollDisabled backport while confirming the content itself is unchanged.")
                             .font(.caption)
-                            .foregroundStyle(Color.gray)
+							.backport.foregroundStyle(Color.gray)
 
                         Toggle("Disable numbered-strip scrolling", isOn: $backportScrollDisabled)
                             .backport.onChange(of: backportScrollDisabled) {
@@ -383,6 +382,18 @@ struct BackportShowcaseView: View {
                         Backport.AsyncImage(url: nil)
                             .frame(width: 24, height: 24)
                             .backport.accessibilityIdentifier("backport.asyncImage.view")
+                        Text("Legacy ProgressView appearance")
+                            .font(.caption)
+                        Backport<Any>.legacyProgressViewForTesting()
+                            .frame(width: 24, height: 24)
+                            .accessibilityLabel("Legacy progress preview")
+                            .backport.accessibilityIdentifier("backport.legacyProgress.view")
+                        Text("Legacy AsyncImage appearance")
+                            .font(.caption)
+                        Backport<Any>.legacyAsyncImageForTesting(url: nil)
+                            .frame(width: 40, height: 40)
+                            .accessibilityLabel("Legacy async image preview")
+                            .backport.accessibilityIdentifier("backport.legacyAsyncImage.view")
                         Text("Control size changes the button's platform-defined padding and font metrics:")
                             .font(.caption)
                         HStack {
@@ -412,7 +423,7 @@ struct BackportShowcaseView: View {
     }
 }
 
-@available(iOS 15, macOS 12, tvOS 17, watchOS 8, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 @MainActor
 struct CompatibilityDemoView: View {
     static let additionalTests: OrderedDictionary<String, [TestCase]> = [
@@ -447,12 +458,14 @@ struct CompatibilityDemoView: View {
                         Backport.Image(systemName: "gearshape")
                         Text("Compatibility")
                     }
-                DataStoreTestView()
-                    .backport.accessibilityIdentifier("demo.datastore")
-                    .tabItem {
-                        Backport.Image(systemName: "externaldrive")
-                        Text("DataStore")
-                    }
+				if #available(iOS 15, macOS 12, tvOS 15, *) {
+					DataStoreTestView()
+						.backport.accessibilityIdentifier("demo.datastore")
+						.tabItem {
+							Backport.Image(systemName: "externaldrive")
+							Text("DataStore")
+						}
+				}
             }
             // Application tracking has already registered the complete ordered module graph consumed here.
             AllTestsListView(additionalTests: Self.additionalTests)
@@ -502,7 +515,7 @@ struct CompatibilityDemoView: View {
     }
 }
 
-@available(iOS 15, macOS 12, tvOS 17, watchOS 8, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 #Preview {
     CompatibilityDemoView()
 }

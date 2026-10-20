@@ -96,6 +96,7 @@ public extension PostData {
     }
     @MainActor
     internal static let testFetchGwinnettCheck: TestClosure = {
+        guard Build.runsIntegrationTests else { return }
         var results = "NONE"
         try await debugSuppress {
             results = try await fetchURL(urlString: "https://www.GwinnettCounty.com")
@@ -105,6 +106,7 @@ public extension PostData {
     }
     @MainActor
     internal static let testFetchGETCheck: TestClosure = {
+        guard Build.runsIntegrationTests else { return }
         let query = TEST_DATA.queryString ?? "ERROR"
         var results = "NONE"
         try await debugSuppress {
@@ -116,6 +118,7 @@ public extension PostData {
     }
     @MainActor
     internal static let testFetchPOSTCheck: TestClosure = {
+        guard Build.runsIntegrationTests else { return }
         var results = "NONE"
         try await debugSuppress {
             results = try await fetchURL(urlString: "https://plickle.com/pd.php", postData:TEST_DATA)
@@ -149,6 +152,74 @@ public extension PostData {
                 // Expected deterministic error path.
             }
         },
+        TestCase("Network deterministic response paths") {
+            let configuration = URLSessionConfiguration.ephemeral
+            configuration.protocolClasses = [NetworkTestURLProtocol.self]
+            let session = URLSession(configuration: configuration)
+            defer { session.invalidateAndCancel() }
+
+            let source = SourceContext(file: #file, function: #function, line: #line, column: #column)
+            let successRequest = URLRequest(url: URL(string: "https://compatibility.test/success")!)
+            let data = try await Compatibility.fetchURLData(
+                request: successRequest,
+                session: session,
+                useNativeAsyncAPI: true,
+                source: source
+            )
+            try expectEqual(String(data: data, encoding: .utf8), "network test response")
+
+            let legacyData = try await URLRequest(url: successRequest.url!).legacyData(for: session).0
+            try expectEqual(String(data: legacyData, encoding: .utf8), "network test response")
+
+            var postRequest = URLRequest(url: URL(string: "https://compatibility.test/request-check")!)
+            postRequest.httpMethod = "POST"
+            postRequest.httpBody = Data("value=1".utf8)
+            let postResponse = try await postRequest.legacyData(for: session).0
+            try expectEqual(String(data: postResponse, encoding: .utf8), "POST:value=1")
+
+            do {
+                _ = try await Compatibility.fetchURLData(
+                    request: URLRequest(url: URL(string: "https://compatibility.test/not-found")!),
+                    session: session,
+                    useNativeAsyncAPI: false,
+                    source: source
+                )
+                try expect(false, "Non-200 responses should fail")
+            } catch NetworkError.invalidResponse(let code) {
+                try expectEqual(code, 404)
+            }
+
+            do {
+                _ = try await Compatibility.fetchURLData(
+                    request: URLRequest(url: URL(string: "https://compatibility.test/non-http")!),
+                    session: session,
+                    useNativeAsyncAPI: false,
+                    source: source
+                )
+                try expect(false, "Non-HTTP responses should fail")
+            } catch NetworkError.invalidResponse(let code) {
+                try expectEqual(code, nil)
+            }
+
+            do {
+                _ = try await URLRequest(url: URL(string: "https://compatibility.test/transport-error")!).legacyData(for: session)
+                try expect(false, "Transport errors should propagate")
+            } catch let error as URLError {
+                try expectEqual(error.code, .cannotConnectToHost)
+            }
+        },
+        TestCase("URL download native and legacy session paths") {
+            let configuration = URLSessionConfiguration.ephemeral
+            configuration.protocolClasses = [NetworkTestURLProtocol.self]
+            let session = URLSession(configuration: configuration)
+            defer { session.invalidateAndCancel() }
+
+            let url = URL(string: "https://compatibility.test/download")!
+            let nativeData = try await url.download(using: session, useNativeDownload: true)
+            let legacyData = try await url.download(using: session, useNativeDownload: false)
+            try expectEqual(String(data: nativeData, encoding: .utf8), "network test response")
+            try expectEqual(String(data: legacyData, encoding: .utf8), "network test response")
+        },
         TestCase("fetchURL Gwinnett check", testFetchGwinnettCheck),
         TestCase("fetchURL GET check", testFetchGETCheck),
         TestCase("fetchURL POST check", testFetchPOSTCheck),
@@ -156,14 +227,82 @@ public extension PostData {
     ]
 }
 
+/// Supplies deterministic HTTP responses to network tests without external services.
+private final class NetworkTestURLProtocol: URLProtocol {
+    override class func canInit(with request: URLRequest) -> Bool {
+        request.url?.host == "compatibility.test"
+    }
+
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+
+    override func startLoading() {
+        guard let url = request.url else {
+            client?.urlProtocol(self, didFailWithError: URLError(.badURL))
+            return
+        }
+        if url.path == "/transport-error" {
+            client?.urlProtocol(self, didFailWithError: URLError(.cannotConnectToHost))
+            return
+        }
+
+        let body: Data
+        if url.path == "/request-check" {
+            body = Data("\(request.httpMethod ?? "GET"):".utf8) + Self.requestBody(for: request)
+        } else {
+            body = Data("network test response".utf8)
+        }
+        let response: URLResponse
+        if url.path == "/non-http" {
+            response = URLResponse(
+                url: url,
+                mimeType: "text/plain",
+                expectedContentLength: body.count,
+                textEncodingName: "utf-8"
+            )
+        } else {
+            let statusCode = url.path == "/not-found" ? 404 : 200
+            response = HTTPURLResponse(
+                url: url,
+                statusCode: statusCode,
+                httpVersion: "HTTP/1.1",
+                headerFields: ["Content-Type": "text/plain"]
+            )!
+        }
+
+        client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+        client?.urlProtocol(self, didLoad: body)
+        client?.urlProtocolDidFinishLoading(self)
+    }
+
+    private static func requestBody(for request: URLRequest) -> Data {
+        if let body = request.httpBody {
+            return body
+        }
+        guard let stream = request.httpBodyStream else { return Data() }
+
+        stream.open()
+        defer { stream.close() }
+        var body = Data()
+        var buffer = [UInt8](repeating: 0, count: 1024)
+        while stream.hasBytesAvailable {
+            let count = stream.read(&buffer, maxLength: buffer.count)
+            guard count > 0 else { break }
+            body.append(contentsOf: buffer.prefix(count))
+        }
+        return body
+    }
+
+    override func stopLoading() {}
+}
+
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 extension URLRequest {
     func legacyData(for session: URLSession) async throws -> (Data, URLResponse) {
         try await withCheckedThrowingContinuation { continuation in
-            guard let url = self.url else {
+            guard self.url != nil else {
                 return continuation.resume(throwing: URLError(.badURL))
             }
-            let task = session.dataTask(with: url) { data, response, error in
+            let task = session.dataTask(with: self) { data, response, error in
                 guard let data = data, let response = response else {
                     let error = error ?? URLError(.badServerResponse)
                     return continuation.resume(throwing: error)
@@ -221,15 +360,36 @@ extension Compatibility {
             request.httpMethod = "GET" //set http method as GET
         }
         
-        var data: Data
-        var response: URLResponse
-        // create dataTask using the session object to send data to the server
+        let useNativeAsyncAPI: Bool
+        if #available(iOS 15, macOS 12, watchOS 8, tvOS 15, *) {
+            useNativeAsyncAPI = true
+        } else {
+            useNativeAsyncAPI = false
+        }
+        return try await fetchURLData(
+            request: request,
+            session: .shared,
+            useNativeAsyncAPI: useNativeAsyncAPI,
+            source: source
+        )
+    }
+
+    /// Executes a prepared request using either URLSession's async API or the legacy callback bridge.
+    @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+    internal static func fetchURLData(
+        request: URLRequest,
+        session: URLSession,
+        useNativeAsyncAPI: Bool,
+        source: SourceContext
+    ) async throws -> Data {
+        let data: Data
+        let response: URLResponse
         do {
-            if #available(iOS 15, macOS 12, watchOS 8, tvOS 15, *) {
-                (data, response) = try await URLSession.shared.data(for: request)
+            if useNativeAsyncAPI,
+               #available(iOS 15, macOS 12, watchOS 8, tvOS 15, *) {
+                (data, response) = try await session.data(for: request)
             } else {
-                // Fallback on earlier versions
-                (data, response) = try await request.legacyData(for: URLSession.shared)
+                (data, response) = try await request.legacyData(for: session)
             }
         } catch {
             if let error = error as? URLError, error.code.rawValue == -1003 {
@@ -305,9 +465,21 @@ public func fetchURL(urlString: String, postData: PostData? = nil, file: String 
 public extension URL {
     /// download data asynchronously and return the data or nil if there is a failure
     func download() async throws -> Data {
+        let useNativeDownload: Bool
+        if #available(iOS 15, macOS 12, tvOS 15, watchOS 8, *) {
+            useNativeDownload = true
+        } else {
+            useNativeDownload = false
+        }
+        return try await download(using: .shared, useNativeDownload: useNativeDownload)
+    }
+
+    /// Performs a download with an injectable session and API choice for deterministic compatibility tests.
+    internal func download(using session: URLSession, useNativeDownload: Bool) async throws -> Data {
         do {
-            if #available(macOS 12, tvOS 15, watchOS 8, *) {
-                let (fileURL, response) = try await URLSession.shared.download(from: self)
+            if useNativeDownload,
+               #available(iOS 15, macOS 12, tvOS 15, watchOS 8, *) {
+                let (fileURL, response) = try await session.download(from: self)
                 debug("URL Download response: \(response)", level: .DEBUG)
                 
                 // load data from local file URL
@@ -316,7 +488,7 @@ public extension URL {
             } else {
                 // Fallback on earlier versions
                 let request = URLRequest(url: self)
-                let (data, _) = try await request.legacyData(for: URLSession.shared)
+                let (data, _) = try await request.legacyData(for: session)
                 return data
             }
         } catch let error as URLError {

@@ -26,7 +26,7 @@ The primary goals are to be easily maintainable by multiple individuals, employ 
 - iOS 8+ for synchronous APIs (iOS 13+ for SwiftUI and Swift concurrency; 15.2+ minimum required for Swift Playgrounds support)
 - macOS 10.10+ for synchronous Foundation and command-line APIs; SwiftUI and Swift concurrency require macOS 10.15+, and development app/tests have their own higher deployment targets.
 - macCatalyst 13.0+ (first version available)
-- tvOS 11.0+ (UI only supported on tvOS 15+, 17+ required for most SwiftUI features)
+- tvOS 11.0+ (UI only supported on tvOS 15+, 17+ required for most modern SwiftUI features)
 - watchOS 4.0+ (UI only supported on watchOS 8+)
 - visionOS 1.0+
 - Theoretically should work with Linux, Windows, and Vapor, but haven't fully tested.  If you would like to help, please let us know.
@@ -188,7 +188,7 @@ public protocol CustomProtocol {
     init(string: String)
     var stringValue: String { get }
 }
-@available(iOS 13, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 extension CloudStorage where Value: CustomProtocol {
     public init(wrappedValue: Value, _ key: String) {
         self.init(

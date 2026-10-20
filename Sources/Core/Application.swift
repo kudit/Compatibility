@@ -22,7 +22,7 @@ import UIKit
 #endif
 
 // MARK: - Application
-@available(macOS 10.15, iOS 13, tvOS 13, watchOS 6, *) // required since CloudStorage requires this and this is a property.  This is okay since the Build settings have been pulled out and this manages App specific behavior which isn't usually necessarily for a command line tool or non-app like a service.
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *) // required since CloudStorage requires this and this is a property.  This is okay since the Build settings have been pulled out and this manages App specific behavior which isn't usually necessarily for a command line tool or non-app like a service or platforms that do not support SwiftUI.
 @MainActor // Application owns observable, cloud-backed, and persisted app state, so one actor boundary keeps that shared state coherent.
 public class Application: ObservableObject { // The private initializer preserves singleton construction without unnecessarily forbidding future in-module subclassing.
     public static var baseDomain = "com.kudit"

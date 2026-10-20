@@ -534,6 +534,7 @@ public extension TestCase {
         tests["Backport Tests"] = Glass.tests + Backport<Any>.tests
         tests["Backport Button Style Tests"] = BackportButtonStyle.tests
         tests["Environment View Tests"] = EnvironmentsView.tests
+        tests["Symbol Tests"] = SymbolCompatibilityTests.tests
 #endif
         tests["CharacterSet Tests"] = CharacterSet.tests
         tests["URL Tests"] = URL.tests

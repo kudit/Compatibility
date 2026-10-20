@@ -8,7 +8,7 @@
 
 public enum Compatibility: Module {
     /// The version of the Compatibility Library since cannot get directly from Package.swift.
-public static let version: Version = "1.20.1"
+public static let version: Version = "1.20.2"
 
     /// Public source repository for Compatibility so support reports can direct developers to its source and issue history.
     ///
@@ -28,7 +28,7 @@ public static let version: Version = "1.20.1"
     }
 
     /// Loads complete module information, including application details where that state is supported.
-    @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+	@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
     public static func loadDetailedModuleInfo() async -> [Field] {
 #if canImport(Foundation)
         // Application is main-actor isolated, so gather only its live values there instead of
@@ -88,32 +88,34 @@ public static let version: Version = "1.20.1"
  For module checks to conditionally compile for versions:
 
  canImport(StoreKit)
-     iOS 3.0+
-     iPadOS 3.0+
-     macOS 10.7+
-     Mac Catalyst 13.0+
-     tvOS 9.0+
-     watchOS 6.2+
-     visionOS 1.0+
+	iOS 3.0+
+	iPadOS 3.0+
+	macOS 10.7+
+	Mac Catalyst 13.0+
+	tvOS 9.0+
+	watchOS 6.2+
+	visionOS 1+
  
  2014 (Swift announced, for OperatingSystemVersion)
- canImport(HealthKit) || canImport(Metal)
-     iOS 8.0+ // Health, Metal
-     iPadOS 8.0+ // Health, Metal
-     macOS 10.10+
-     Mac Catalyst 13.0+ // Metal
-     tvOS 9.0+ // Metal
-     watchOS 2.0+ // Health
-     visionOS 1.0+ // Health, Metal
+ canImport(HealthKit) || canImport(Metal) (iOS/iPadOS/Catalyst only)
+	iOS 8
+	macOS 10.10
+	Mac Catalyst 13
+	watchOS 1 (not supported)
+ @available(iOS 8, macOS 10.1, *)
 
  2015 (initial relase of tvOS)
     iOS 9
     macOS 10.11
- 
+	tvOS 9 // Metal
+	watchOS 2 // Health
+
  2016
     iOS 10
     macOS 10.12
- 
+	tvOS 10
+	watchOS 3
+
  2017
  canImport(CoreML)
     iOS 11
@@ -125,66 +127,63 @@ public static let version: Version = "1.20.1"
     iOS 12
     macOS 10.14
     tvOS 12
-    watchOS 5
+	watchOS 5
  
  2019 (first year macCatalyst and SwiftUI available)
  canImport(SwiftUI) || canImport(Combine)
-     iOS 13+
-     iPadOS 13.0+
-     macOS 10.15+
-     Mac Catalyst 13.0+
-     tvOS 13+
-     watchOS 6+
-     visionOS 1.0+
-     SF Symbols 1.0
+	iOS 13+
+	iPadOS 13.0+
+	macOS 10.15+
+	Mac Catalyst 13.0+
+	tvOS 13+
+	watchOS 6+
+	SF Symbols 1.0
+ @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 
  2020 @StateObject
  canImport(AppleArchive)
-     iOS 14+
-     iPadOS 14.0+
-     macOS 11+
-     Mac Catalyst 14.0+
-     tvOS 14+
-     watchOS 7+
-     visionOS 1.0+
-     SF Symbols 2.0
+	iOS 14+
+	iPadOS 14.0+
+	macOS 11+
+	Mac Catalyst 14.0+
+	tvOS 14+
+	watchOS 7+
+	SF Symbols 2.0
 
  2021
  canImport(GroupActivities)
-     iOS 15+ (last supported by iPhone 7)
-     iPadOS 15.0+
-     macOS 12+ (last supported by Touchbook)
-     Mac Catalyst 15.0+
-     tvOS 15+
-    NOTE: NO WATCH OS SUPPORT (watchOS 8 is the last supported by Series 3)
-     visionOS 1.0+
-     SF Symbols 3.0
+	iOS 15+ (last supported by iPhone 7)
+	iPadOS 15.0+
+	macOS 12+ (last supported by Touchbook)
+	Mac Catalyst 15.0+
+	tvOS 15+
+	NOTE: NO WATCH OS SUPPORT (watchOS 8 is the last supported by Series 3)
+	SF Symbols 3.0
 
  2022 Swift 5.7 (September)
  canImport(Charts) canImport(AppIntents) canImport(CoreTransferable)
-     iOS 16+
-     iPadOS 16.0+
-     macOS 13+
-     Mac Catalyst 16.0+
-     tvOS 16+
-     watchOS 9+ (minimum for WidgetKit on watchOS - supported in iOS 14 and macOS 11)
-     visionOS 1.0+
-     SF Symbols 4.0
+	iOS 16+
+	iPadOS 16.0+
+	macOS 13+
+	Mac Catalyst 16.0+
+	tvOS 16+
+	watchOS 9+ (minimum for WidgetKit on watchOS - supported in iOS 14 and macOS 11) (minimum for NSUbiquitousKeyValueStore in watchOS)
+	SF Symbols 4.0
 
  2023 Swift 5.8 (March), Swift 5.9 (September) (added #Preview syntax, @availability syntax, and macros)
-     canImport(SwiftData)
-     iOS 17+
-     iPadOS 17.0+
-     macOS 14+ Sonoma
-     Mac Catalyst 17.0+
-     tvOS 17+
-     watchOS 10+ (practical minimum for WidgetKit (due to requirement of WidgetConfigurationIntent which is only available on iOS 17, macOS 14, and watchOS 10)
-     visionOS 1.0+
-     SF Symbols 5.0
-     Xcode 15
+	canImport(SwiftData)
+	iOS 17+
+	iPadOS 17.0+
+	macOS 14+ Sonoma
+	Mac Catalyst 17.0+
+	tvOS 17+
+	watchOS 10+ (practical minimum for WidgetKit (due to requirement of WidgetConfigurationIntent which is only available on iOS 17, macOS 14, and watchOS 10)
+	visionOS 1.0+
+	SF Symbols 5.0
+	Xcode 15
 
 2024 Swift 5.10 (March), Swift 6 (September)
-    canImport(Testing) // earliest Embedded Swift versions
+	canImport(Testing) // earliest Embedded Swift versions
     iOS 18+
     iPadOS 18+
     macOS 15+ Sequoia
@@ -297,7 +296,7 @@ public extension Compatibility { // for brief period where Application and Build
 #if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation)
 import SwiftUI
 
-@available(iOS 15, macOS 12, tvOS 15, watchOS 9, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public struct CompatibilityEnvironmentTestView: View {
 #if compiler(>=5.9) && canImport(Combine)
     @CloudStorage(.compatibilityVersionsRunKey) var previouslyRunCompatibilityVersions = Compatibility.version.rawValue
@@ -356,7 +355,7 @@ public struct CompatibilityEnvironmentTestView: View {
                     Field("iCloud status", Application.iCloudStatus),
                 ],
             ])
-            Section("Module Info") {
+			Backport.Section("Module Info") {
                 // Show the portable baseline immediately, then replace it with the complete loaded result.
                 // This is example code.  Really this only needs to include moduleInfo since the detailed info is already included in other sections.
                 let displayedModuleInfo = loadedModuleInfo ?? Compatibility.moduleInfo
@@ -364,10 +363,10 @@ public struct CompatibilityEnvironmentTestView: View {
                     FieldView(displayedModuleInfo[index])
                 }
                 if loadedModuleInfo == nil {
-                    ProgressView("Loading module details…")
+					Backport.ProgressView("Loading module details…")
                 }
             }
-            Section("Environment") {
+			Backport.Section("Environment") {
                 FieldView(Field("Swift Version", Build.swiftVersion, symbol: "swift"))
                 FieldView(Field("Compiler Version", Build.compilerVersion))
                 EnvironmentsView(Build.environments())
@@ -385,18 +384,18 @@ public struct CompatibilityEnvironmentTestView: View {
                 ],
             ])
         }
-        .accessibilityIdentifier("compatibility.environment.list")
-        .task {
+		.backport.accessibilityIdentifier("compatibility.environment.list")
+		.backport.task {
             // Await potentially slow details without delaying the portable module fields above.
             loadedModuleInfo = await Compatibility.loadDetailedModuleInfo()
         }
     }
 }
 
-@available(iOS 15, macOS 12, tvOS 15, watchOS 9, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 #Preview {
     CompatibilityEnvironmentTestView()
         .backport.scrollContentBackground(.hidden)
-        .background(.red)
+		.backport.background(.red)
 }
 #endif

@@ -135,6 +135,48 @@ public extension Bundle {
             }
             try expect(!String.appIconName.isEmpty, "Expected app icon name but got: \(String.appIconName)")
         }),
+        TestCase("Bundle metadata fallbacks") {
+            let manager = FileManager.default
+            let bundleURL = manager.temporaryDirectory
+                .appendingPathComponent("CompatibilityBundleTests-\(UUID().uuidString).bundle", isDirectory: true)
+#if os(macOS)
+            let contentsURL = bundleURL.appendingPathComponent("Contents", isDirectory: true)
+#else
+            let contentsURL = bundleURL
+#endif
+            let infoURL = contentsURL.appendingPathComponent("Info.plist")
+            try manager.createDirectory(at: contentsURL, withIntermediateDirectories: true)
+            defer { try? manager.removeItem(at: bundleURL) }
+
+            // Leave optional display metadata absent to exercise the documented fallback values.
+            let info: [String: Any] = [
+                "CFBundleIdentifier": "com.kudit.CompatibilityBundleTests",
+                "CFBundlePackageType": "BNDL",
+                "CFBundleName": "Coverage Fixture",
+                "NSHumanReadableCopyright": "Copyright\\\\nFixture",
+            ]
+            let data = try PropertyListSerialization.data(fromPropertyList: info, format: .xml, options: 0)
+            try data.write(to: infoURL)
+            guard let bundle = Bundle(url: bundleURL) else {
+                throw TestFailure("Could not load temporary Bundle fixture at \(bundleURL.path)")
+            }
+
+            try expectEqual(bundle.name, "Coverage Fixture")
+            try expectEqual(bundle.displayName, "⚠️")
+            try expectEqual(bundle.appName, "⚠️")
+            try expectEqual(bundle.language, "en")
+            try expectEqual(bundle.identifier, "com.kudit.CompatibilityBundleTests")
+            try expectEqual(bundle.copyright, "Copyright\nFixture")
+            try expectEqual(bundle.build, "⚠️")
+            try expectEqual(bundle.version, .zero)
+#if os(macOS)
+            try expect(bundle.buildDate == nil)
+            try expectEqual(bundle.buildNumber, -1)
+#else
+            try expect(bundle.buildDate != nil)
+            try expect(bundle.buildNumber > 0)
+#endif
+        },
     ]
 #endif
 }

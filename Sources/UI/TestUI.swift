@@ -20,7 +20,7 @@ public struct TestRow: View {
                 Button {
                     test.run()
                 } label: {
-                    Image(backportSystemName: "play.fill")
+                    Backport.Image(systemName: "play.fill")
                         .font(.system(size: 12, weight: .semibold))
                         .frame(width: 28, height: 28)
                 }
@@ -53,12 +53,12 @@ struct TestsRowsView: View {
     }
 }
 
-@available(iOS 15, macOS 12, tvOS 17, watchOS 8, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 @MainActor
 final class AllTestsListModel: ObservableObject {
     /// An explicit module list is stable; otherwise the registry is intentionally resolved lazily on appearance.
     private let explicitModules: [Module.Type]?
-    // Publish the refreshed registry so a StateObject-backed list redraws after startup registration
+    // Publish the refreshed registry so the observing list redraws after startup registration
     // completes; without this, the model contains module tests but the view remains on its initial
     // injected-tests-only snapshot.
     @Published private(set) var modules: [Module.Type]
@@ -66,7 +66,7 @@ final class AllTestsListModel: ObservableObject {
     private var didStartTests = false
 
     init(modules: [Module.Type]? = nil, additionalTests: OrderedDictionary<String, [TestCase]> = [:]) {
-        // Do not snapshot Build.allModules here: SwiftUI may construct StateObject-backed views before the
+        // Do not snapshot Build.allModules here: SwiftUI may construct state-backed views before the
         // hosting application's App initializer has registered its top-level modules. The registry is read
         // by refreshRegisteredModules() immediately before the view starts displaying and running tests.
         self.explicitModules = modules
@@ -138,20 +138,20 @@ public struct ModuleTestsListView: View {
         }
         // test replacing background
         .backport.scrollContentBackground(.hidden)
-        .background(.linearGradient(colors: [.red, .yellow, .green, .blue], startPoint: .topLeading, endPoint: .bottomTrailing))
+        .background(LinearGradient(colors: [.red, .yellow, .green, .blue], startPoint: .topLeading, endPoint: .bottomTrailing))
         .onAppear { model.startAllTestsOnce() }
     }
 }
 
 /// Renders registered modules without owning execution, allowing both public list views to share presentation.
-@available(iOS 15, macOS 12, tvOS 17, watchOS 8, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 private struct ModuleTestSectionsView: View {
     let modules: [Module.Type]
     let additionalTests: OrderedDictionary<String, [TestCase]>
 
     var body: some View {
         ForEach(additionalTests.keys.elements, id: \.self) { sectionName in
-            Section(sectionName) {
+			Backport.Section(sectionName) {
                 TestsRowsView(tests: additionalTests[sectionName] ?? [])
             }
         }
@@ -161,7 +161,7 @@ private struct ModuleTestSectionsView: View {
                 DetailedModuleInfoRows(module: module)
                 if module.tests.isEmpty {
                     Text("No tests provided")
-                        .foregroundStyle(.secondary)
+                        .foregroundColor(.secondary)
                 } else {
                     ForEach(module.tests.keys.elements, id: \.self) { sectionName in
                         VStack(alignment: .leading) {
@@ -179,10 +179,11 @@ private struct ModuleTestSectionsView: View {
 }
 
 /// Loads and displays a module's complete diagnostic fields before its reusable tests.
-@available(iOS 15, macOS 12, tvOS 17, watchOS 8, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 private struct DetailedModuleInfoRows: View {
     let module: Module.Type
     @State private var fields: [Field]?
+    @State private var isLoading = false
 
     var body: some View {
         Group {
@@ -191,13 +192,20 @@ private struct DetailedModuleInfoRows: View {
                     FieldView(fields[index])
                 }
             } else {
-                ProgressView("Loading module information…")
-                    .font(.caption)
+                HStack {
+                    Backport<Any>.ProgressView()
+                    Text("Loading module information…")
+                        .font(.caption)
+                }
             }
         }
-        .task {
-            guard fields == nil else { return }
-            fields = await module.loadDetailedModuleInfo()
+        .onAppear {
+            guard fields == nil, !isLoading else { return }
+            isLoading = true
+            Task { @MainActor in
+                fields = await module.loadDetailedModuleInfo()
+                isLoading = false
+            }
         }
     }
 }
@@ -207,37 +215,49 @@ private struct DetailedModuleInfoRows: View {
 /// ``Build/register(_:)`` recursively discovers dependencies and deduplicates them by stable module identifier.
 /// This view reverses that existing dependency-first registration order so application-specific modules appear
 /// first and foundational modules appear last. Use ``ModuleTestsListView`` for a focused single-module screen.
-@available(iOS 15, macOS 12, tvOS 17, watchOS 8, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 @MainActor
 public struct AllTestsListView: View {
-    @StateObject private var model: AllTestsListModel
+    /// Retains the observable model on iOS 13; its private content view observes updates directly.
+    @State private var model: AllTestsListModel
 
     /// Creates Compatibility's complete test screen, optionally prefixed by application tests.
     public init(additionalTests: OrderedDictionary<String, [TestCase]> = [:]) {
-        _model = StateObject(wrappedValue: AllTestsListModel(additionalTests: additionalTests))
+        _model = State(initialValue: AllTestsListModel(additionalTests: additionalTests))
     }
 
     @available(*, deprecated, renamed: "init(additionalTests:)")
     public init(additionalNamedTests: OrderedDictionary<String, [TestCase]>) {
-        _model = StateObject(wrappedValue: AllTestsListModel(additionalTests: additionalNamedTests))
+        _model = State(initialValue: AllTestsListModel(additionalTests: additionalNamedTests))
     }
 
     public var body: some View {
+        AllTestsListContent(model: model)
+    }
+}
+
+/// Observes the state-owned model and draws the shared list on iOS 13 and later.
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+@MainActor
+private struct AllTestsListContent: View {
+    @ObservedObject var model: AllTestsListModel
+
+    var body: some View {
         List {
             ModuleTestSectionsView(modules: model.modules, additionalTests: model.additionalTests)
             // A stable bottom marker lets UI automation stop as soon as the end is actually visible instead
             // of issuing a fixed number of expensive swipe gestures after the list is already at the bottom.
             Color.clear
                 .frame(height: 1)
-                .accessibilityIdentifier("allTests.bottom")
+				.backport.accessibilityIdentifier("allTests.bottom")
         }
         .backport.scrollContentBackground(.hidden)
-        .background(.linearGradient(colors: [.red, .yellow, .green, .blue], startPoint: .topLeading, endPoint: .bottomTrailing))
+        .background(LinearGradient(colors: [.red, .yellow, .green, .blue], startPoint: .topLeading, endPoint: .bottomTrailing))
         .onAppear { model.startAllTestsOnce() }
     }
 }
 
-@available(iOS 15, macOS 12, tvOS 17, watchOS 8, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 #Preview("Tests") {
     AllTestsListView()
 }
