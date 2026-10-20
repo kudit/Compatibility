@@ -61,7 +61,7 @@ You can try these examples in a Swift Playground by adding package: `https://git
 Or you can manually enter the following in the Package.swift file:
 ```swift
 dependencies: [
-    .package(url: "https://github.com/kudit/Compatibility.git", from: "1.0.0"),
+    .package(url: "https://github.com/kudit/Compatibility.git", from: "1.21.1"),
 ]
 ```
 Make sure the target includes the library:

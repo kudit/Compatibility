@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.21.1 2026-10-19
+Fixed versions that weren't in sync in last upload.
+
 ## v1.21.0 2026-10-19
 Standardized @avaiable checks so that they are only on SwiftUI code and set the minimums to iOS 13, macOS 10.15, tvOS 13, watchOS 6 to improve availability constraints to be more backwards compatible.
 Added a `Backport.HierarchicalShapeStyle` name and native style conversion, content-masked gradient rendering on legacy systems.
