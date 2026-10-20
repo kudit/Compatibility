@@ -461,7 +461,7 @@ public func fetchURL(urlString: String, postData: PostData? = nil, file: String 
     )
 }
 
-@available(iOS 15, macOS 10.15, tvOS 13, watchOS 6, *)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension URL {
     /// download data asynchronously and return the data or nil if there is a failure
     func download() async throws -> Data {

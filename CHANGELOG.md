@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.21.2 2026-10-19
+Fixed incorrect availability gate in networking code.
+
 ## v1.21.1 2026-10-19
 Fixed versions that weren't in sync in last upload.
 
