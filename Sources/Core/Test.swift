@@ -521,7 +521,12 @@ public extension TestCase {
         ]) { current, _ in current }
 #endif
 #if canImport(Foundation)
+        tests["Angle Tests"] = Angle.tests
         tests["Bundle Tests"] = Bundle.tests
+        tests["DataStore Tests"] = DataStoreType.tests
+#if canImport(CoreML)
+		tests["DataStore Tests", default: []] += NSUbiquitousKeyValueStore.dataStoreTests
+#endif
         tests["File Manager Tests"] = FileManager.tests
         #if os(macOS)
         // Run the POSIX fallback directly even on hosts that normally use Process.run().
@@ -531,20 +536,21 @@ public extension TestCase {
 #if canImport(SwiftUI) && canImport(Combine) && compiler(>=5.9) && canImport(Foundation)
         tests["CloudStorageSync Tests"] = CloudStorageSync.tests
         tests["CloudStorage Tests"] = CloudStorageTests.tests
-        tests["Backport Tests"] = Glass.tests + Backport<Any>.tests
+        tests["DataStore Model Tests"] = DataStoreTestModel.tests
+        tests["Backport Tests"] = Glass.tests + Backport<Any>.tests + Backport<Any>.disclosureGroupTests
         tests["Backport Button Style Tests"] = BackportButtonStyle.tests
         tests["Environment View Tests"] = EnvironmentsView.tests
-        tests["Symbol Tests"] = SymbolCompatibilityTests.tests
 #endif
+        tests["Symbol Tests"] = SymbolCompatibilityTests.tests
         tests["CharacterSet Tests"] = CharacterSet.tests
         tests["URL Tests"] = URL.tests
         tests["Date Tests"] = Date.tests
-        tests["Threading Tests"] = Compatibility.threadingTests
 #if canImport(Combine) || canImport(FoundationNetworking)
         // FoundationNetworking supplies URLSession through libcurl on Linux.
         tests["Network Tests"] = PostData.tests
 #endif
 #endif
+        tests["Threading Tests"] = Compatibility.threadingTests
         return tests
     }()
 }

@@ -107,7 +107,6 @@ public struct RadialTestView: View {
         }
 		.backport.toolbar {
 			MenuTest(symbol: $symbol, accessibilityIdentifier: "radial.toolbar.symbols.menu")
-				.padding()
 				.backport.accessibilityIdentifier("radial.toolbar.symbols.menu")
         }
         .backport.navigationTitle("RadialLayout/Menu Tests")

@@ -41,12 +41,9 @@ struct MyApp: App {
     }
     var body: some Scene {
         WindowGroup {
-#if compiler(>=5.9)
             CompatibilityDemoView()
-#else
-            Text("Please upgrade to Swift 5.9 for demo app.")
-#endif
         }
+        .backport.defaultSize(width: 1100, height: 760)
 
         #if os(macOS)
         Settings { // For settings/preferences screen within the app

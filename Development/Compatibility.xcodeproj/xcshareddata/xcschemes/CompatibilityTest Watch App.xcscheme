@@ -46,7 +46,6 @@
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "B58B5C3E2C38F98800689837"
             BuildableName = "CompatibilityTest.app"
-            BlueprintName = "CompatibilityTest Watch App"
             ReferencedContainer = "container:Compatibility.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -63,7 +62,6 @@
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "B58B5C3E2C38F98800689837"
             BuildableName = "CompatibilityTest.app"
-            BlueprintName = "CompatibilityTest Watch App"
             ReferencedContainer = "container:Compatibility.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>

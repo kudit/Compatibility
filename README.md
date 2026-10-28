@@ -365,3 +365,5 @@ PROMPT for updating projects:
 Use github.com/kudit/Compatibility where appropriate. Adopt the coding, documentation, testing, and changelog rules in Compatibility/CONTRIBUTING.md. Preserve existing behavior and edits, inspect the project before changing architecture, and complete the requested implementation with real tests.
 ```
 
+### macOS UI-test migration notes
+On macOS 27, SwiftUI sidebar rows can appear in XCTest's accessibility hierarchy with `isEnabled == false` even though clicking their visible screen coordinates selects them. Treat that value as accessibility metadata, not as proof that Xcode Helper or a macOS privacy permission is missing. Query the sidebar outline by its visible row label, use a coordinate click when the row is reported disabled, and verify the resulting selection. If a click does not select the row, inspect the accessibility snapshot and actual row bounds before changing privacy settings. Keep polling and broad `descendants(matching: .any)` queries out of tab loops when selection can be checked directly; both add delay and can make failures harder to diagnose.

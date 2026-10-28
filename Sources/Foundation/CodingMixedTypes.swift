@@ -969,6 +969,27 @@ extension MixedTypeField {
             try expect(try Double(fromMixedTypeField: .int(5)) == 5)
             try expect(try Float(fromMixedTypeField: .double(5.25)) == 5.25)
         },
+        TestCase("Nested Containers") {
+            struct NestedPayload: Codable, Equatable {
+                struct Detail: Codable, Equatable {
+                    var name: String
+                    var flags: [Bool]
+                }
+                var detail: Detail
+                var records: [[String: Int]]
+            }
+
+            let value = NestedPayload(
+                detail: .init(name: "inner", flags: [true, false]),
+                records: [["first": 1], ["second": 2]]
+            )
+            let encoded = try value.asMixedTypeField()
+            let detail = encoded.dictionaryValue?["detail"] ?? nil
+            let records = encoded.dictionaryValue?["records"] ?? nil
+            try expect(detail?.dictionaryValue?["name"] == .string("inner"))
+            try expect(records?.arrayValue?.count == 2)
+            try expect(try NestedPayload(fromMixedTypeField: encoded) == value)
+        },
     ]
 }
 #endif

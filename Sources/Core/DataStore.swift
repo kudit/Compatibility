@@ -1,6 +1,7 @@
 // TODO: Do we want to restrict DataStore to the main thread?
 
 #if compiler(>=5.9) && canImport(Foundation)
+import Foundation
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public enum DataStoreType: Sendable {
     case local
@@ -23,6 +24,110 @@ public enum DataStoreType: Sendable {
         return UserDefaults.standard
     }
 }
+
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+extension DataStoreType {
+    /// Exercises the local DataStore adapters without touching the user's standard defaults.
+    @MainActor
+    internal static let tests: [TestCase] = [
+        TestCase("UserDefaults DataStore value adapters") { @MainActor in
+            let suiteName = "Compatibility.DataStoreTests.\(UUID().uuidString)"
+            guard let defaults = UserDefaults(suiteName: suiteName) else {
+                try expect(false, "An isolated UserDefaults suite should be available.")
+                return
+            }
+            defer { defaults.removePersistentDomain(forName: suiteName) }
+
+            let store: DataStore = defaults
+            let url = URL(string: "https://compatibility.test/datastore")!
+            let data = Data([1, 2, 3])
+            store.set("stored string", forKey: "string")
+            store.set(42, forKey: "integer")
+            store.set(Int64.max, forKey: "longLong")
+            store.set(3.25, forKey: "double")
+            store.set(true, forKey: "bool")
+            store.set(url, forKey: "url")
+            store.set(data, forKey: "data")
+            store.set(["first", "second"], forKey: "stringArray")
+            store.set(["nested": "value"], forKey: "dictionary")
+            store.set(["one", 2] as [Any], forKey: "array")
+
+            try expect(store.isLocal)
+            try expectEqual(store.type, .local)
+            try expectEqual(store.description, "Local")
+            try expectEqual(store.string(forKey: "string"), "stored string")
+            try expectEqual(store.object(forKey: "integer") as? Int, 42)
+            try expectEqual(store.integer(forKey: "integer"), 42)
+            try expectEqual(store.longLong(forKey: "longLong"), Int64.max)
+            try expectEqual(store.double(forKey: "double"), 3.25)
+            try expect(store.bool(forKey: "bool"))
+            try expectEqual(store.url(forKey: "url"), url)
+            try expectEqual(store.data(forKey: "data"), data)
+            try expectEqual(store.stringArray(forKey: "stringArray"), ["first", "second"])
+            try expectEqual(store.dictionary(forKey: "dictionary")?["nested"] as? String, "value")
+            try expectEqual(store.array(forKey: "array")?.count, 2)
+            try expect(store.dictionaryRepresentation()["string"] as? String == "stored string")
+            try expectEqual(UserDefaults.notificationName, UserDefaults.didChangeNotification)
+            _ = store.synchronize()
+
+            store.set(nil, forKey: "string")
+            try expect(store.object(forKey: "string") == nil)
+            store.removeObject(forKey: "integer")
+            try expect(store.object(forKey: "integer") == nil)
+        },
+        TestCase("DataStore routing and shared compatibility") { @MainActor in
+            let local = DataStoreType.local.shared
+            try expect(local.isLocal)
+            try expectEqual(UserDefaults.shared(for: .local).type, .local)
+
+            // The chosen iCloud adapter depends on runtime entitlements and playground/preview state.
+            // Read its type without writing so this test remains safe in both entitled and sandboxed hosts.
+            let cloudPreference = DataStoreType.iCloud.shared
+            try expect(cloudPreference.type == .local || cloudPreference.type == .iCloud)
+        },
+    ]
+}
+
+#if canImport(CoreML)
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 9, *)
+extension NSUbiquitousKeyValueStore {
+    /// These checks are gated to entitled hosts; KVS writes may be asynchronously visible.
+    @MainActor
+    internal static let dataStoreTests: [TestCase] = [
+        TestCase("Ubiquitous DataStore adapters") { @MainActor in
+            guard Application.iCloudIsEnabled else { return }
+            let store = NSUbiquitousKeyValueStore.default
+            let prefix = "Compatibility.DataStoreTests.\(UUID().uuidString)"
+            let stringKey = "\(prefix).string"
+            let integerKey = "\(prefix).integer"
+            let urlKey = "\(prefix).url"
+            let arrayKey = "\(prefix).array"
+            defer {
+                [stringKey, integerKey, urlKey, arrayKey].forEach(store.removeObject(forKey:))
+                _ = store.synchronize()
+            }
+
+            store.set("cloud value", forKey: stringKey)
+            store.set(42, forKey: integerKey)
+            store.set(URL(string: "https://compatibility.test/cloud"), forKey: urlKey)
+            store.set(["one", "two"] as [Any], forKey: arrayKey)
+
+            if let value = store.string(forKey: stringKey) {
+                try expectEqual(value, "cloud value")
+            }
+            _ = store.object(forKey: integerKey)
+            _ = store.integer(forKey: integerKey)
+            _ = store.url(forKey: urlKey)
+            _ = store.stringArray(forKey: arrayKey)
+            _ = store.stringArray(forKey: "\(prefix).missing")
+            _ = store.dictionaryRepresentation()
+            _ = store.type
+            _ = store.isLocal
+            _ = store.synchronize()
+        },
+    ]
+}
+#endif
 //@available(watchOS 9, *)
 public protocol DataStore {
     static var notificationName: NSNotification.Name { get }
@@ -565,6 +670,47 @@ class DataStoreTestModel: ObservableObject {
         DataStoreType.local.shared.reset()
         DataStoreType.iCloud.shared.reset()
     }*/
+}
+
+@available(iOS 15, macOS 12, tvOS 15, watchOS 9, *)
+extension DataStoreTestModel {
+    @MainActor
+    internal static let tests: [TestCase] = [
+        TestCase("DataStore module version and timestamp properties") { @MainActor in
+            guard DataStoreType.iCloud.shared.isLocal else { return }
+
+            let defaults = UserDefaults.standard
+            let keys = [
+                String.string1Key,
+                String.compatibilityVersionsRunKey,
+                "doubleTest",
+                String.lastSavedKey,
+            ]
+            let savedValues = keys.map { ($0, defaults.object(forKey: $0)) }
+            defer {
+                for (key, value) in savedValues {
+                    if let value {
+                        defaults.set(value, forKey: key)
+                    } else {
+                        defaults.removeObject(forKey: key)
+                    }
+                }
+            }
+
+            let model = DataStoreTestModel()
+            model.moduleVersionsRunStorage = nil
+            let versions = model.moduleVersionsRun
+            try expect(versions.contains(Compatibility.version))
+            try await Task.sleep(nanoseconds: 30_000_000)
+
+            model.moduleVersionsRun = [Compatibility.version]
+            try expectEqual(model.moduleVersionsRunStorage, Compatibility.version.rawValue)
+
+            let savedDate = Date(timeIntervalSinceReferenceDate: 1234)
+            model.lastSaved = savedDate
+            try expectEqual(model.lastSaved, savedDate)
+        },
+    ]
 }
 
 enum CustomDoubleType: Double, RawRepresentable, Sendable {

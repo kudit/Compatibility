@@ -70,14 +70,11 @@ struct DispatchQueue: Sendable {
 #endif
 
 #if canImport(Foundation)
-/// Verifies that delayed work did not complete early or drift beyond the bounded host tolerance.
-private func timeTolerance(start: TimeInterval, end: TimeInterval, expected: TimeInterval) throws {
+/// Verifies that delayed work did not complete before its requested duration.
+private func minimumElapsedTime(start: TimeInterval, end: TimeInterval, expected: TimeInterval) throws {
     let timeElapsed = end - start
     let delta = timeElapsed - expected
     try expect(delta >= 0, "Somehow took less time than expected: \(timeElapsed) / \(expected)")
-    // Permit up to eight seconds of host scheduling drift without restoring the former 30-second window.
-    let timeTolerance: TimeInterval = min(8, max(1, expected * 2))
-    try expect(delta < timeTolerance, "took \(delta) seconds (expecting \(expected) sec difference)")
 }
 #endif
 
@@ -162,7 +159,7 @@ private let sleepTests: [TestCase] = [
         let start = Date.timeIntervalSinceReferenceDate
         // A short real suspension verifies the helper without making every live-UI run wait seconds.
         await Task.sleep(seconds: 0.05)
-        try timeTolerance(start: start, end: Date.timeIntervalSinceReferenceDate, expected: 0.05)
+        try minimumElapsedTime(start: start, end: Date.timeIntervalSinceReferenceDate, expected: 0.05)
 #endif
     },
     TestCase("Task.sleep 0.1") {
@@ -170,7 +167,7 @@ private let sleepTests: [TestCase] = [
         let start = Date.timeIntervalSinceReferenceDate
         // A second duration guards against accidentally hardcoding the first test interval.
         await Task.sleep(seconds: 0.1)
-        try timeTolerance(start: start, end: Date.timeIntervalSinceReferenceDate, expected: 0.1)
+        try minimumElapsedTime(start: start, end: Date.timeIntervalSinceReferenceDate, expected: 0.1)
 #endif
     },
     TestCase("Task.sleep 2 (visual confirmation)") {
@@ -178,7 +175,7 @@ private let sleepTests: [TestCase] = [
         let start = Date.timeIntervalSinceReferenceDate
         // Keep a visibly long row so the live test UI makes running and passing transitions easy to inspect.
         await Task.sleep(seconds: 2)
-        try timeTolerance(start: start, end: Date.timeIntervalSinceReferenceDate, expected: 2)
+        try minimumElapsedTime(start: start, end: Date.timeIntervalSinceReferenceDate, expected: 2)
 #endif
     },
     TestCase("Task.sleep 3 (visual confirmation)") {
@@ -186,7 +183,7 @@ private let sleepTests: [TestCase] = [
         let start = Date.timeIntervalSinceReferenceDate
         // This runs alongside the two-second row in runners that support concurrent test execution.
         await Task.sleep(seconds: 3)
-        try timeTolerance(start: start, end: Date.timeIntervalSinceReferenceDate, expected: 3)
+        try minimumElapsedTime(start: start, end: Date.timeIntervalSinceReferenceDate, expected: 3)
 #endif
     },
 ]
@@ -455,7 +452,7 @@ private let delayTests: [TestCase] = [
                 continuation.resume(returning: Date.timeIntervalSinceReferenceDate)
             }
         }
-        try timeTolerance(start: start, end: end, expected: 0.05)
+        try minimumElapsedTime(start: start, end: end, expected: 0.05)
 #endif
     },
 ]

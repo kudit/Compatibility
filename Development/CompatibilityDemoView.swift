@@ -318,21 +318,30 @@ struct BackportShowcaseView: View {
 							.backport.foregroundStyle(Color.gray)
 
                         ClearableTextField(label: "SF Symbol name", text: $symbolName)
+                            .frame(maxWidth: 720, alignment: .leading)
                             .backport.textInputAutocapitalization(.never)
                             .autocorrectionDisabled(true)
                             .disableSmartQuotes()
                             .backport.accessibilityIdentifier("backport.symbol.field")
 
                         HStack {
+                            /// Preserve SF Symbol palette colors where multicolor rendering is available.
                             Backport.Image(systemName: symbolName ?? "questionmark")
+                                .closure { view in
+                                    if #available(iOS 15, macOS 12, tvOS 15, watchOS 8, *) {
+                                        view.symbolRenderingMode(.multicolor)
+                                    } else {
+                                        view.foregroundColor(.blue)
+                                    }
+                                }
                                 .font(.largeTitle)
-								.backport.foregroundStyle(.blue)
                                 .backport.accessibilityIdentifier("backport.symbol.preview")
                             Text("Current symbol: \(symbolName ?? "<empty>")")
                                 .backport.accessibilityIdentifier("backport.symbol.status")
                         }
                     }
                     .padding()
+                    .backport.background(.tertiary)
                 }
 
                 Backport.GroupBox("Backported scrollDisabled") {
@@ -377,23 +386,57 @@ struct BackportShowcaseView: View {
                 // needs to render the screen to execute these compatibility branches on macOS.
                 Backport.GroupBox("Backport modifier gallery") {
                     VStack(alignment: .leading, spacing: 10) {
+                        HStack(alignment: .top, spacing: 20) {
+                            VStack(alignment: .leading) {
+                                Text("Native / Backport")
+                                    .font(.caption)
+                                Backport<Any>.LabeledContent("Environment", value: "Testing")
+                            }
+                            VStack(alignment: .leading) {
+                                Text("Forced legacy")
+                                    .font(.caption)
+                                Backport<Any>.legacyLabeledContentForTesting("Environment", value: "Testing")
+                            }
+                        }
+                        .accessibilityElement(children: .contain)
+                        .backport.accessibilityIdentifier("backport.labeledContent.gallery")
+                        HStack(alignment: .top, spacing: 20) {
+                            Backport.GroupBox("Native GroupBox") {
+                                Text("The platform's native group container.")
+                            }
+                            Backport<Any>.LegacyGroupBox(
+                                content: { Text("The extracted compatibility fallback.") },
+                                label: { Text("Legacy GroupBox") }
+                            )
+                        }
+                        .accessibilityElement(children: .contain)
+                        .backport.accessibilityIdentifier("backport.groupBox.gallery")
                         Text("AsyncImage fallback probe")
                             .backport.accessibilityIdentifier("backport.asyncImage")
-                        Backport.AsyncImage(url: nil)
-                            .frame(width: 24, height: 24)
-                            .backport.accessibilityIdentifier("backport.asyncImage.view")
-                        Text("Legacy ProgressView appearance")
-                            .font(.caption)
-                        Backport<Any>.legacyProgressViewForTesting()
-                            .frame(width: 24, height: 24)
-                            .accessibilityLabel("Legacy progress preview")
-                            .backport.accessibilityIdentifier("backport.legacyProgress.view")
-                        Text("Legacy AsyncImage appearance")
-                            .font(.caption)
-                        Backport<Any>.legacyAsyncImageForTesting(url: nil)
-                            .frame(width: 40, height: 40)
-                            .accessibilityLabel("Legacy async image preview")
-                            .backport.accessibilityIdentifier("backport.legacyAsyncImage.view")
+                        HStack(alignment: .top, spacing: 20) {
+                            VStack {
+                                Text("Native / Backport")
+                                    .font(.caption)
+                                Backport.AsyncImage(url: nil)
+                                    .frame(width: 40, height: 40)
+                                    .backport.accessibilityIdentifier("backport.asyncImage.view")
+                                ProgressView()
+                                    .frame(width: 24, height: 24)
+                                    .backport.accessibilityIdentifier("backport.nativeProgress.view")
+                            }
+                            VStack {
+                                Text("Forced legacy")
+                                    .font(.caption)
+                                Backport<Any>.legacyAsyncImageForTesting(url: nil)
+                                    .frame(width: 40, height: 40)
+                                    .backport.accessibilityIdentifier("backport.legacyAsyncImage.view")
+                                Backport<Any>.legacyProgressViewForTesting()
+                                    .frame(width: 24, height: 24)
+                                    .backport.accessibilityIdentifier("backport.legacyProgress.view")
+                            }
+                        }
+                        .accessibilityElement(children: .contain)
+                        .backport.accessibilityIdentifier("backport.nativeLegacy.gallery")
                         Text("Control size changes the button's platform-defined padding and font metrics:")
                             .font(.caption)
                         HStack {
@@ -409,7 +452,6 @@ struct BackportShowcaseView: View {
                             .backport.overlay { Text("overlay").font(.caption2) }
                             .backport.accessibilityIdentifier("backport.modifierGallery")
                         Text("Accessibility and selection probes")
-                            .backport.accessibilityLabel("Backport accessibility probe")
                             .backport.backgroundStyle(.background)
                             .backport.textSelection(.enabled)
                             .backport.accessibilityIdentifier("backport.accessibilityGallery")
@@ -451,22 +493,20 @@ struct CompatibilityDemoView: View {
 
     var body: some View {
         TabView {
-            if #available(watchOS 9, *) {
-                CompatibilityEnvironmentTestView()
-                    .backport.accessibilityIdentifier("demo.compatibility")
-                    .tabItem {
-                        Backport.Image(systemName: "gearshape")
-                        Text("Compatibility")
-                    }
-				if #available(iOS 15, macOS 12, tvOS 15, *) {
-					DataStoreTestView()
-						.backport.accessibilityIdentifier("demo.datastore")
-						.tabItem {
-							Backport.Image(systemName: "externaldrive")
-							Text("DataStore")
-						}
+			CompatibilityEnvironmentTestView()
+				.backport.accessibilityIdentifier("demo.compatibility")
+				.tabItem {
+					Backport.Image(systemName: "gearshape")
+					Text("Compatibility")
 				}
-            }
+			if #available(iOS 15, macOS 12, tvOS 15, watchOS 9, *) {
+				DataStoreTestView()
+					.backport.accessibilityIdentifier("demo.datastore")
+					.tabItem {
+						Backport.Image(systemName: "externaldrive")
+						Text("DataStore")
+					}
+			}
             // Application tracking has already registered the complete ordered module graph consumed here.
             AllTestsListView(additionalTests: Self.additionalTests)
                 .backport.accessibilityIdentifier("demo.allTests")

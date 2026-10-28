@@ -136,20 +136,18 @@ struct CompatibilityTargetTests {
                     return
                 }
 #if canImport(Combine) && canImport(Foundation)
-                // NSUbiquitousKeyValueStore is unavailable before watchOS 9 even though other tests support watchOS 6.
-                if #available(watchOS 9, *) {
-                    let store = NSUbiquitousKeyValueStore.default
-                    guard store.synchronize() else {
-                        return
-                    }
-                    let key = "Compatibility.IntegrationTests.\(UUID().uuidString)"
-                    defer {
-                        store.removeObject(forKey: key)
-                        store.synchronize()
-                    }
-                    store.set("value", forKey: key)
-                    try expectEqual(store.string(forKey: key), "value")
+                // This catalog itself is gated to watchOS 9+, the first supported KVS release.
+                let store = NSUbiquitousKeyValueStore.default
+                guard store.synchronize() else {
+                    return
                 }
+                let key = "Compatibility.IntegrationTests.\(UUID().uuidString)"
+                defer {
+                    store.removeObject(forKey: key)
+                    store.synchronize()
+                }
+                store.set("value", forKey: key)
+                try expectEqual(store.string(forKey: key), "value")
 #endif
             },
             TestCase("Additional tests") { @MainActor in
@@ -446,6 +444,7 @@ struct CompatibilityTests {
             "Backport toolbar, link, and task paths",
             "Backport tvOS focus activation fallback",
             "Backport labeled and legacy group boxes",
+            "Backport DisclosureGroup fallback state",
             "Backport navigation, file dialog, and full-screen presentation",
             "Backport TabView fallback container",
             "Backport onChange closure variants",

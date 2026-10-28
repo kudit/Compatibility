@@ -55,9 +55,10 @@ struct LegacyProgressIndicator: View {
 			.stroke(Color.primary.opacity(0.75), style: StrokeStyle(lineWidth: 2, lineCap: .round))
 			.frame(width: 20, height: 20)
 			.rotationEffect(.degrees(isAnimating ? 360 : 0))
-			.animation(Animation.linear(duration: 1).repeatForever(autoreverses: false))
 			.onAppear {
-				isAnimating = true
+				withAnimation(Animation.linear(duration: 1).repeatForever(autoreverses: false)) {
+					isAnimating = true
+				}
 			}
 		#endif
 		}

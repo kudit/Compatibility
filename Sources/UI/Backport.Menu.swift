@@ -136,6 +136,31 @@ private struct LegacyMenuView<MenuContent: View, LabelView: View>: View {
 		.navigationDestination(isPresented: $isPresented) {
 			content().scrollWrapper()
 		}
+#elseif os(watchOS)
+		if #available(watchOS 9, *) {
+			Button {
+				// Fire before changing the navigation binding so clients can capture the current screen.
+				onOpen?()
+				isPresented = true
+			} label: {
+				label()
+			}
+		.buttonStyle(.plain)
+		.navigationDestination(isPresented: $isPresented) {
+			content().scrollWrapper()
+		}
+		} else {
+			Button {
+				onOpen?()
+				isPresented = true
+			} label: {
+				label()
+			}
+		.buttonStyle(.plain)
+		.sheet(isPresented: $isPresented) {
+			content().scrollWrapper()
+		}
+		}
 #else
 		ZStack {
 			NavigationLink(destination: content().scrollWrapper(), isActive: $isPresented) {
@@ -154,6 +179,7 @@ private struct LegacyMenuView<MenuContent: View, LabelView: View>: View {
 #endif
 	}
 }
+
 
 // Keep the original unqualified menu type available on watchOS and tvOS for source compatibility.
 #if os(watchOS) || os(tvOS)
@@ -244,13 +270,23 @@ public struct MenuTest: View {
                     debug("The menu is closed! (via Text")
                 }
             
-            // Picker supplies the platform-native checkmark and keeps the selected symbol in sync
-            // for both the inline menu and the toolbar menu that reuse this view.
-            Picker("Symbol", selection: $symbol) {
-                ForEach(["suit.diamond", "star", "suit.spade.fill", "suit.heart", "suit.club", "star.fill"], id: \.self) { symbol in
-                    Backport.Label(symbol, systemImage: symbol)
-                        .tag(symbol)
+            // Keep choices as direct menu actions. A Picker nests its options in a submenu on macOS,
+            // whose accessibility elements have zero-sized frames in macOS 27 and cannot be activated
+            // reliably by UI automation. The explicit checkmark retains the Picker's selection cue.
+            ForEach(["suit.diamond", "star", "suit.spade.fill", "suit.heart", "suit.club", "star.fill"], id: \.self) { selection in
+                Button {
+                    symbol = selection
+                } label: {
+                    HStack {
+                        Backport.Label(selection, systemImage: selection)
+                        Spacer()
+                        if symbol == selection {
+                            Backport.Image(systemName: "checkmark")
+                        }
+                    }
                 }
+                .accessibilityLabel(selection)
+                .backport.accessibilityIdentifier("radial.symbol.\(selection)")
             }
         }
         .onAppear {

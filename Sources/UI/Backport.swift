@@ -2,6 +2,23 @@
 
 #if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation)
 import SwiftUI
+
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+private struct LegacyLabeledContent: View {
+    let title: String
+    let value: String
+
+    var body: some View {
+        AStack { orientation in
+            Text(title)
+            if orientation == .horizontal { Spacer() }
+            Text(value)
+                .if(orientation == .horizontal) { view in
+                    view.multilineTextAlignment(.trailing)
+                }
+        }
+    }
+}
 #if os(macOS)
 import AppKit
 #endif
@@ -30,27 +47,40 @@ public extension View {
 }
 
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+public extension Scene {
+    @MainActor var backport: Backport<Self> { Backport(self) }
+}
+
+public extension Backport where Content: Scene {
+#if os(macOS)
+    /// Sets the initial scene size on macOS 13 and later.
+    @available(macOS 13.0, *)
+    func defaultSize(width: CGFloat, height: CGFloat) -> some Scene {
+        content.defaultSize(width: width, height: height)
+    }
+#else
+    /// Leaves scenes unchanged on platforms without macOS window sizing behavior.
+    func defaultSize(width: CGFloat, height: CGFloat) -> Content { content }
+#endif
+}
+
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 extension Backport where Content == Any {
     @ViewBuilder public static func LabeledContent(_ titleKey: String, value: some StringProtocol) -> some View {
         if titleKey.count > 35 {
             Text(titleKey)
             Text(value)
-                .backport.foregroundStyle(.gray)
         } else if #available(iOS 16, macOS 13, tvOS 16, watchOS 9, *) {
             SwiftUI.LabeledContent(LocalizedStringKey(titleKey), value: value)
         } else {
-            AStack { orientation in
-                Text(titleKey)
-                if orientation == .horizontal {
-                Spacer()
-                }
-                Text(value)
-                    .backport.foregroundStyle(.gray)
-                    .if(orientation == .horizontal) { view in
-                        view.multilineTextAlignment(.trailing)
-                    }
-            }
+            LegacyLabeledContent(title: titleKey, value: String(value))
         }
+    }
+
+    /// Builds the pre-iOS 16/macOS 13 labeled layout directly for side-by-side compatibility previews.
+    @_spi(BackportTesting)
+    public static func legacyLabeledContentForTesting(_ title: String, value: String) -> some View {
+        LegacyLabeledContent(title: title, value: value)
     }
 }
 
@@ -126,6 +156,16 @@ public extension Backport where Content: View {
     func accessibilityLabel<S>(_ label: S) -> some View where S : StringProtocol {
         if #available(iOS 14, macOS 11, tvOS 14, watchOS 7, *) {
             content.accessibilityLabel(label)
+        } else {
+            content
+        }
+    }
+
+    /// Adds a concise accessibility value where SwiftUI supports the native modifier.
+    @ViewBuilder
+    func accessibilityValue<S>(_ value: S) -> some View where S : StringProtocol {
+        if #available(iOS 14, macOS 11, tvOS 14, watchOS 7, *) {
+            content.accessibilityValue(value)
         } else {
             content
         }
@@ -316,15 +356,6 @@ public extension Backport where Content: View {
 		}
 	}
 
-	/// Compatibility spelling retained for callers that supplied a fixed-color gradient fallback.
-	/// The masked gradient now renders on older systems, so `fallback` is no longer used.
-	@available(*, deprecated, message: "Use foregroundStyle(_:) to render the gradient on older systems.")
-	@_disfavoredOverload
-	@ViewBuilder
-	func foregroundStyle(_ gradient: LinearGradient, fallback: Color) -> some View {
-		content.backport.foregroundStyle(gradient)
-	}
-
     /// Compatibility's semantic background style for SDKs without SwiftUI.BackgroundStyle.
     enum BackportBackgroundStyle: Sendable {
         case background
@@ -413,10 +444,9 @@ public extension Backport where Content: View {
         if #available(iOS 16, macOS 13, tvOS 16, watchOS 9, *) {
             content.background(style)
         } else {
-            ZStack {
-                Rectangle().fill(style)
-                content
-            }
+            // Overlay avoids a multi-child ViewBuilder tuple whose View conformance is
+            // unavailable on older watchOS SDK targets.
+            content.background(Rectangle().fill(style))
         }
     }
     enum SafeAreaRegions: Sendable {
@@ -781,6 +811,72 @@ extension Backport where Content == Any {
 			_ = text.backport.scrollClipDisabled()
 			try expect(true, "Backport modifier view values should be constructible.")
 		},
+		TestCase("Backport labels, gestures, and control variants") { @MainActor in
+			let text = Text("Interaction test")
+			_ = Backport<Any>.LabeledContent(String(repeating: "Long label ", count: 4), value: "Value")
+			_ = text.backport.onTapGesture {}
+			_ = text.backport.widgetAccentable()
+			_ = text.backport.widgetAccentable(false)
+#if !os(tvOS)
+			if #available(iOS 15, macOS 10.15, watchOS 9, *) {
+				for size in BackportControlSize.allCases {
+					_ = text.backport.controlSize(size)
+				}
+			}
+#endif
+			try expect(true, "Long labels, gesture modifiers, accent groups, and supported control sizes should construct.")
+		},
+		TestCase("Backport accessibility, safe area, and scrolling modifiers") { @MainActor in
+			let text = Text("Layout and accessibility test")
+			_ = text.backport.accessibilityIdentifier("backport.coverage")
+			_ = text.backport.accessibilityLabel("Coverage label")
+			_ = text.backport.accessibilityValue("Coverage value")
+			_ = text.backport.imageScale(.small)
+			_ = text.backport.imageScale(.medium)
+			_ = text.backport.imageScale(.large)
+			_ = text.backport.ignoresSafeArea(.all, edges: .horizontal)
+			_ = text.backport.ignoresSafeArea(.container, edges: .top)
+			_ = text.backport.ignoresSafeArea(.keyboard, edges: .bottom)
+			_ = text.backport.scrollContentBackground(.hidden)
+			_ = text.backport.scrollContentBackground(.visible)
+			_ = text.backport.focusable()
+			_ = text.backport.focusable(false)
+			_ = text.backport.textSelection(.enabled)
+			_ = text.backport.textSelection(.disabled)
+			_ = text.backport.scrollDisabled()
+			_ = text.backport.scrollDisabled(false)
+			_ = text.backport.statusBarHidden()
+			_ = text.backport.statusBarHidden(false)
+			try expect(true, "Accessibility, safe area, scrolling, and focus modifiers should construct for each supported value.")
+		},
+		TestCase("Backport material and presentation detent variants") { @MainActor in
+			let text = Text("Material test")
+			_ = text.backport.glassEffect(.regular, in: Circle())
+			_ = text.backport.presentationDetents(Set([
+				Backport<Text>.BackportPresentationDetent.large,
+				.medium,
+				.fraction(0.45),
+			]))
+			_ = text.backport.presentationBackground(Color.blue)
+			if #available(iOS 15, macOS 12, tvOS 15, watchOS 10, *) {
+				for material in [
+					Backport<Text>.MaterialEnum.regular,
+					.thick,
+					.thin,
+					.ultraThin,
+					.ultraThick,
+					.regularMaterial,
+					.thickMaterial,
+					.thinMaterial,
+					.ultraThinMaterial,
+					.ultraThickMaterial,
+				] {
+					_ = material.swiftUIValue
+					_ = text.backport.presentationBackground(material)
+				}
+			}
+			try expect(true, "Material mappings, glass fallback, and detent values should build on the current platform.")
+		},
 		TestCase("Backport background and foreground styles") { @MainActor in
 			let text = Text("Style test")
 			try expectEqual(BackportHierarchicalShapeStyle.primary.opacity, 0.90)
@@ -859,6 +955,7 @@ extension Backport where Content == Any {
 			}
 			_ = Backport<Any>.Label("Example", systemImage: "star")
 			_ = Backport<Any>.LabeledContent("Name", value: "Value")
+			_ = Backport<Any>.legacyLabeledContentForTesting("Legacy name", value: "Legacy value")
 			_ = Backport<Any>.Section("Section") { Text("Content") }
 			_ = Backport<Any>.Section(plainString) { Text("String title") }
 			_ = Backport<Any>.Section(stringSlice) { Text("Substring title") }
@@ -1208,11 +1305,11 @@ public extension Backport where Content: View {
         if #available(iOS 16, macOS 13, tvOS 16, watchOS 9, *) {
             content.navigationDestination(isPresented: isPresented, destination: destination)
         } else {
-            // Fallback on earlier versions (bury in the background)
-            ZStack {
+            // Keep the hidden link behind the visible content without forming a multi-child tuple.
+            content.background(
                 NavigationLink(isActive: isPresented, destination: destination) { EmptyView() }
-                content
-            }
+                    .hidden()
+            )
         }
     }
 }
@@ -1932,13 +2029,22 @@ public extension Backport where Content == Any {
         @ViewBuilder content: () -> C,
         @ViewBuilder label: () -> Label
     ) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            label().font(.headline)
+        VStack(alignment: .leading, spacing: 4) {
+            // Match SwiftUI.GroupBox's compact heading and inset content instead of giving the
+            // fallback a heavier title and a solid secondary-color rectangle.
+            label()
+                .font(.subheadline)
             content()
-        }
-        .padding()
-        .backport.overlay {
-            RoundedRectangle(cornerRadius: 8).stroke(Color.secondary)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 4)
+                .backport.background {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(Color.primary.opacity(0.055))
+                }
+                .backport.overlay {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(Color.primary.opacity(0.08), lineWidth: 0.5)
+                }
         }
     }
 
@@ -2194,6 +2300,18 @@ public struct BackportNavigationStack<Root: View>: View {
     /// layout-transparent wrapper solely to host availability branches.
     @ViewBuilder
     private var navigationContent: some View {
+#if os(watchOS)
+        if #available(watchOS 9, *) {
+            NavigationStack {
+                root()
+            }
+        } else {
+            // NavigationView covers watchOS 6-8, where NavigationStack is unavailable.
+            NavigationView {
+                root()
+            }
+        }
+#else
         if #available(iOS 16, macOS 13, tvOS 16, watchOS 9, *) {
             NavigationStack { // SwiftUI.NavigationStack
                 root()
@@ -2209,6 +2327,7 @@ public struct BackportNavigationStack<Root: View>: View {
         } else {
             root() // forget about wrapping...
         }
+#endif
     }
 }
 

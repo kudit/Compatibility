@@ -27,6 +27,15 @@ public extension PostData {
     }
 }
 
+// watchOS URLSession does not route test-only custom URLProtocol classes through its networking stack.
+// Keep the request/response path tests active on supported platforms; watchOS still runs pure parsing,
+// encoding, and error-mapping cases without issuing requests to the synthetic test host.
+#if os(watchOS)
+private let supportsNetworkURLProtocolSessionTests = false
+#else
+private let supportsNetworkURLProtocolSessionTests = true
+#endif
+
 public enum NetworkError: Error, Sendable {
     // Throw when unable to parse a URL
     case urlParsing(urlString: String)
@@ -153,6 +162,7 @@ public extension PostData {
             }
         },
         TestCase("Network deterministic response paths") {
+            guard supportsNetworkURLProtocolSessionTests else { return }
             let configuration = URLSessionConfiguration.ephemeral
             configuration.protocolClasses = [NetworkTestURLProtocol.self]
             let session = URLSession(configuration: configuration)
@@ -176,6 +186,12 @@ public extension PostData {
             postRequest.httpBody = Data("value=1".utf8)
             let postResponse = try await postRequest.legacyData(for: session).0
             try expectEqual(String(data: postResponse, encoding: .utf8), "POST:value=1")
+
+            var streamedRequest = URLRequest(url: URL(string: "https://compatibility.test/request-check")!)
+            streamedRequest.httpMethod = "POST"
+            streamedRequest.httpBodyStream = InputStream(data: Data("stream=1".utf8))
+            let streamedResponse = try await streamedRequest.legacyData(for: session).0
+            try expectEqual(String(data: streamedResponse, encoding: .utf8), "POST:stream=1")
 
             do {
                 _ = try await Compatibility.fetchURLData(
@@ -208,7 +224,167 @@ public extension PostData {
                 try expectEqual(error.code, .cannotConnectToHost)
             }
         },
+        TestCase("URL string fetch GET and POST paths") {
+            guard supportsNetworkURLProtocolSessionTests else { return }
+            let configuration = URLSessionConfiguration.ephemeral
+            configuration.protocolClasses = [NetworkTestURLProtocol.self]
+            let session = URLSession(configuration: configuration)
+            defer { session.invalidateAndCancel() }
+            let source = SourceContext(file: #file, function: #function, line: #line, column: #column)
+
+            let getData = try await Compatibility.fetchURLData(
+                urlString: "https://compatibility.test/success",
+                session: session,
+                useNativeAsyncAPI: true,
+                source: source
+            )
+            try expectEqual(String(data: getData, encoding: .utf8), "network test response")
+            let getText = try await Compatibility.fetchURL(
+                urlString: "https://compatibility.test/success",
+                session: session,
+                useNativeAsyncAPI: false,
+                source: source
+            )
+            try expectEqual(getText, "network test response")
+
+            let postData: PostData = ["value": "two words"]
+            let postText = try await Compatibility.fetchURL(
+                urlString: "https://compatibility.test/request-check",
+                postData: postData,
+                session: session,
+                useNativeAsyncAPI: true,
+                source: source
+            )
+            try expectEqual(postText, "POST:value=two%20words")
+        },
+        TestCase("Network protocol request matching") {
+            let supported = URLRequest(url: URL(string: "https://compatibility.test/success")!)
+            let unsupported = URLRequest(url: URL(string: "https://example.com/")!)
+            try expect(NetworkTestURLProtocol.canInit(with: supported))
+            try expect(!NetworkTestURLProtocol.canInit(with: unsupported))
+            try expectEqual(NetworkTestURLProtocol.canonicalRequest(for: supported), supported)
+        },
+        TestCase("Public URL APIs with a registered protocol") {
+            guard supportsNetworkURLProtocolSessionTests else { return }
+            guard URLProtocol.registerClass(NetworkTestURLProtocol.self) else {
+                try expect(false, "The deterministic test URL protocol should register")
+                return
+            }
+            defer { URLProtocol.unregisterClass(NetworkTestURLProtocol.self) }
+
+            let source = SourceContext(file: #file, function: #function, line: #line, column: #column)
+            let data = try await Compatibility.fetchURLData(
+                urlString: "https://compatibility.test/success",
+                source: source
+            )
+            try expectEqual(String(data: data, encoding: .utf8), "network test response")
+
+            let text = try await Compatibility.fetchURL(
+                urlString: "https://compatibility.test/success",
+                source: source
+            )
+            try expectEqual(text, "network test response")
+
+            let globalData = try await fetchURLData(urlString: "https://compatibility.test/success")
+            try expectEqual(String(data: globalData, encoding: .utf8), "network test response")
+
+            let globalText = try await fetchURL(urlString: "https://compatibility.test/success")
+            try expectEqual(globalText, "network test response")
+
+            let compatibilityFileData = try await Compatibility.fetchURLData(
+                urlString: "https://compatibility.test/success",
+                file: #file,
+                function: #function,
+                line: #line,
+                column: #column
+            )
+            try expectEqual(String(data: compatibilityFileData, encoding: .utf8), "network test response")
+
+            let compatibilityFileText = try await Compatibility.fetchURL(
+                urlString: "https://compatibility.test/success",
+                encoding: .utf8,
+                file: #file,
+                function: #function,
+                line: #line,
+                column: #column
+            )
+            try expectEqual(compatibilityFileText, "network test response")
+
+            let download = try await URL(string: "https://compatibility.test/download")!.download()
+            try expectEqual(String(data: download, encoding: .utf8), "network test response")
+        },
+        TestCase("URL string fetch errors and decoding") {
+            guard supportsNetworkURLProtocolSessionTests else { return }
+            let configuration = URLSessionConfiguration.ephemeral
+            configuration.protocolClasses = [NetworkTestURLProtocol.self]
+            let session = URLSession(configuration: configuration)
+            defer { session.invalidateAndCancel() }
+            let source = SourceContext(file: #file, function: #function, line: #line, column: #column)
+
+            do {
+                _ = try await Compatibility.fetchURLData(
+                    urlString: "http://[",
+                    session: session,
+                    useNativeAsyncAPI: false,
+                    source: source
+                )
+                try expect(false, "Malformed URLs should fail before starting a request")
+            } catch NetworkError.urlParsing(let urlString) {
+                try expectEqual(urlString, "http://[")
+            }
+
+            do {
+                _ = try await Compatibility.fetchURLData(
+                    urlString: "https://compatibility.test/missing-entitlement",
+                    session: session,
+                    useNativeAsyncAPI: true,
+                    source: source
+                )
+                try expect(false, "DNS failures should map to the missing entitlement diagnostic")
+            } catch NetworkError.missingEntitlement {
+                // Expected deterministic URLSession error mapping.
+            }
+
+            do {
+                _ = try await Compatibility.fetchURLData(
+                    request: URLRequest(url: URL(string: "https://compatibility.test/server-error")!),
+                    session: session,
+                    useNativeAsyncAPI: false,
+                    source: source
+                )
+                try expect(false, "Server failures should preserve their HTTP status")
+            } catch NetworkError.invalidResponse(let code) {
+                try expectEqual(code, 503)
+            }
+
+            for useNativeAsyncAPI in [false, true] {
+                do {
+                    _ = try await Compatibility.fetchURLData(
+                        request: URLRequest(url: URL(string: "https://compatibility.test/transport-error")!),
+                        session: session,
+                        useNativeAsyncAPI: useNativeAsyncAPI,
+                        source: source
+                    )
+                    try expect(false, "Transport errors should propagate unchanged")
+                } catch let error as URLError {
+                    try expectEqual(error.code, .cannotConnectToHost)
+                }
+            }
+
+            do {
+                _ = try await Compatibility.fetchURL(
+                    urlString: "https://compatibility.test/invalid-utf8",
+                    session: session,
+                    useNativeAsyncAPI: false,
+                    source: source
+                )
+                try expect(false, "Invalid UTF-8 should fail string conversion")
+            } catch NetworkError.dataError {
+                // Expected deterministic decoding error.
+            }
+        },
         TestCase("URL download native and legacy session paths") {
+            guard supportsNetworkURLProtocolSessionTests else { return }
             let configuration = URLSessionConfiguration.ephemeral
             configuration.protocolClasses = [NetworkTestURLProtocol.self]
             let session = URLSession(configuration: configuration)
@@ -219,6 +395,16 @@ public extension PostData {
             let legacyData = try await url.download(using: session, useNativeDownload: false)
             try expectEqual(String(data: nativeData, encoding: .utf8), "network test response")
             try expectEqual(String(data: legacyData, encoding: .utf8), "network test response")
+
+            for useNativeDownload in [false, true] {
+                do {
+                    _ = try await URL(string: "https://compatibility.test/transport-error")!
+                        .download(using: session, useNativeDownload: useNativeDownload)
+                    try expect(false, "Download transport errors should propagate")
+                } catch let error as URLError {
+                    try expectEqual(error.code, .cannotConnectToHost)
+                }
+            }
         },
         TestCase("fetchURL Gwinnett check", testFetchGwinnettCheck),
         TestCase("fetchURL GET check", testFetchGETCheck),
@@ -244,9 +430,15 @@ private final class NetworkTestURLProtocol: URLProtocol {
             client?.urlProtocol(self, didFailWithError: URLError(.cannotConnectToHost))
             return
         }
+        if url.path == "/missing-entitlement" {
+            client?.urlProtocol(self, didFailWithError: URLError(.cannotFindHost))
+            return
+        }
 
         let body: Data
-        if url.path == "/request-check" {
+        if url.path == "/invalid-utf8" {
+            body = Data([0xFF, 0xFE])
+        } else if url.path == "/request-check" {
             body = Data("\(request.httpMethod ?? "GET"):".utf8) + Self.requestBody(for: request)
         } else {
             body = Data("network test response".utf8)
@@ -260,7 +452,12 @@ private final class NetworkTestURLProtocol: URLProtocol {
                 textEncodingName: "utf-8"
             )
         } else {
-            let statusCode = url.path == "/not-found" ? 404 : 200
+            let statusCode: Int
+            switch url.path {
+            case "/not-found": statusCode = 404
+            case "/server-error": statusCode = 503
+            default: statusCode = 200
+            }
             response = HTTPURLResponse(
                 url: url,
                 statusCode: statusCode,
@@ -330,6 +527,30 @@ extension Compatibility {
     /// Source-forwarding form for APIs that have already captured their caller's location.
     @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *) // for concurrency
     public static func fetchURLData(urlString: String, postData: PostData? = nil, source: SourceContext) async throws -> Data {
+        let useNativeAsyncAPI: Bool
+        if #available(iOS 15, macOS 12, watchOS 8, tvOS 15, *) {
+            useNativeAsyncAPI = true
+        } else {
+            useNativeAsyncAPI = false
+        }
+        return try await fetchURLData(
+            urlString: urlString,
+            postData: postData,
+            session: .shared,
+            useNativeAsyncAPI: useNativeAsyncAPI,
+            source: source
+        )
+    }
+
+    /// Injectable URL-string path used to exercise request construction and response handling deterministically.
+    @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+    internal static func fetchURLData(
+        urlString: String,
+        postData: PostData? = nil,
+        session: URLSession,
+        useNativeAsyncAPI: Bool,
+        source: SourceContext
+    ) async throws -> Data {
         Compatibility.debug("Fetching URL [\(urlString)]...", level: .NOTICE, source: source)
         // create the url with URL
         // Foundation can construct a non-nil URL for malformed strings such as `http://[`;
@@ -360,15 +581,9 @@ extension Compatibility {
             request.httpMethod = "GET" //set http method as GET
         }
         
-        let useNativeAsyncAPI: Bool
-        if #available(iOS 15, macOS 12, watchOS 8, tvOS 15, *) {
-            useNativeAsyncAPI = true
-        } else {
-            useNativeAsyncAPI = false
-        }
         return try await fetchURLData(
             request: request,
-            session: .shared,
+            session: session,
             useNativeAsyncAPI: useNativeAsyncAPI,
             source: source
         )
@@ -428,7 +643,39 @@ extension Compatibility {
     /// Source-forwarding form for APIs that have already captured their caller's location.
     @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *) // for concurrency
     public static func fetchURL(urlString: String, postData: PostData? = nil, encoding: String.Encoding = .utf8, source: SourceContext) async throws -> String {
-        let data = try await fetchURLData(urlString: urlString, postData: postData, source: source)
+        let useNativeAsyncAPI: Bool
+        if #available(iOS 15, macOS 12, watchOS 8, tvOS 15, *) {
+            useNativeAsyncAPI = true
+        } else {
+            useNativeAsyncAPI = false
+        }
+        return try await fetchURL(
+            urlString: urlString,
+            postData: postData,
+            encoding: encoding,
+            session: .shared,
+            useNativeAsyncAPI: useNativeAsyncAPI,
+            source: source
+        )
+    }
+
+    /// Injectable string-fetch path used to verify decoding failures without external network access.
+    @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+    internal static func fetchURL(
+        urlString: String,
+        postData: PostData? = nil,
+        encoding: String.Encoding = .utf8,
+        session: URLSession,
+        useNativeAsyncAPI: Bool,
+        source: SourceContext
+    ) async throws -> String {
+        let data = try await fetchURLData(
+            urlString: urlString,
+            postData: postData,
+            session: session,
+            useNativeAsyncAPI: useNativeAsyncAPI,
+            source: source
+        )
 
         // convert result data to string
         guard let responseString = String(data: data, encoding: encoding) else {

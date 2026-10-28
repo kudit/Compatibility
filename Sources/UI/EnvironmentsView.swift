@@ -8,98 +8,164 @@
 #if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation)
 import SwiftUI
 
+private struct EnvironmentExpansionProgressKey: EnvironmentKey {
+	static let defaultValue: CGFloat = 0
+}
+
+private extension EnvironmentValues {
+	var environmentExpansionProgress: CGFloat {
+		get { self[EnvironmentExpansionProgressKey.self] }
+		set { self[EnvironmentExpansionProgressKey.self] = newValue }
+	}
+}
+
+/// Supplies the interpolated animation value to layout as well as to visual effects.
+private struct EnvironmentExpansionProgressModifier: AnimatableModifier {
+	var progress: CGFloat
+
+	var animatableData: CGFloat {
+		get { progress }
+		set { progress = newValue }
+	}
+
+	func body(content: Content) -> some View {
+		content.environment(\.environmentExpansionProgress, progress)
+	}
+}
+
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+@MainActor
+private struct EnvironmentExpansionRows: View {
+	@Environment(\.environmentExpansionProgress) private var progress
+	let environmentSet: [Build.Environment]
+
+	private let rowHeight: CGFloat = 32
+	private let compactHeight: CGFloat = 36
+	private let compactIconPitch: CGFloat = 24
+
+	var body: some View {
+		GeometryReader { geometry in
+			let environments = Build.Environment.allCases
+			let count = max(environments.count, 1)
+			let compactPitch = min(compactIconPitch, geometry.size.width / CGFloat(count))
+			let compactStart = (geometry.size.width - compactPitch * CGFloat(count)) / 2 + compactPitch / 2
+			let contentHeight = compactHeight + (CGFloat(count) * rowHeight - compactHeight) * progress
+
+			ZStack(alignment: .topLeading) {
+				ForEach(environments.indices, id: \.self) { index in
+					let environment = environments[index]
+					let enabled = environmentSet.contains(environment)
+					let collapsedX = compactStart + CGFloat(index) * compactPitch
+					let iconX = collapsedX + (13 - collapsedX) * progress
+					let rowY = CGFloat(index) * rowHeight + rowHeight / 2
+					let iconY = compactHeight / 2 + (rowY - compactHeight / 2) * progress
+
+					Backport.Image(systemName: environment.symbolName)
+						.font(.system(size: 12 + 4 * progress))
+						// Keep wide symbols from pushing the labels out of alignment.
+						.frame(width: 18 + 8 * progress, alignment: .center)
+						.opacity(enabled ? 1.0 : 0.2)
+						.foregroundColor(enabled ? environment.color : .gray)
+						.help("\(environment.label) environment: \(enabled ? "active" : "inactive") in this build")
+						// Scaling provides the visual handoff without matched-geometry sources,
+						// which produced duplicate-source diagnostics in list rows.
+						.scaleEffect(0.92 + 0.08 * progress)
+						.frame(width: 18 + 8 * progress, height: 18 + 8 * progress)
+						.position(x: iconX, y: iconY)
+						.accessibilityHidden(true)
+
+					Text(environment.label)
+						.font(.body)
+						.fontWeight(enabled ? .semibold : .regular)
+						.foregroundColor(enabled ? environment.color : .gray)
+						.lineLimit(1)
+						.frame(width: max(0, geometry.size.width - 46), alignment: .leading)
+						.position(x: 46 + max(0, geometry.size.width - 46) / 2, y: iconY)
+						.opacity(progress)
+						.offset(x: -8 * (1 - progress))
+						.accessibilityElement(children: .ignore)
+						.backport.accessibilityLabel((enabled ? "Is" : "Not") + " " + environment.label)
+						.backport.accessibilityIdentifier("environment.\(environment.caseName)")
+						.accessibilityHidden(progress < 0.5)
+#if os(tvOS)
+						.backport.focusable(true) // Keep expanded labels focusable for tvOS scrolling.
+#endif
+				}
+			}
+			.frame(width: geometry.size.width, height: contentHeight)
+			.contentShape(Rectangle())
+		}
+		.frame(height: EnvironmentsView.rowHeight(for: progress))
+		// Keep the complete row rectangle as the pointer hit target in both states.
+		.background(Color.primary.opacity(0.001))
+		.contentShape(Rectangle())
+	}
+}
+
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 @MainActor
 public struct EnvironmentsView: View {
     public var environmentSet: [Build.Environment]
-    @State private var isExpanded = false
+    @State private var localExpansionProgress: CGFloat = 0
+    private let expansionProgressBinding: Binding<CGFloat>?
 
     public init(_ environmentSet: [Build.Environment]) {
         self.environmentSet = environmentSet
+        self.expansionProgressBinding = nil
     }
 
+    init(_ environmentSet: [Build.Environment], expansionProgress: Binding<CGFloat>) {
+        self.environmentSet = environmentSet
+        self.expansionProgressBinding = expansionProgress
+    }
+
+    static let expansionAnimation = Animation.spring(response: 0.55, dampingFraction: 0.82)
+
+    static func rowHeight(for progress: CGFloat) -> CGFloat {
+        let compactHeight: CGFloat = 36
+        let rowHeight: CGFloat = 32
+        return compactHeight + (CGFloat(Build.Environment.allCases.count) * rowHeight - compactHeight) * progress
+    }
+
+    private var expansionProgress: CGFloat {
+        expansionProgressBinding?.wrappedValue ?? localExpansionProgress
+    }
+
+    private var isExpanded: Bool { expansionProgress >= 0.5 }
+
+	private var environmentAccessibilitySummary: String {
+		Build.Environment.allCases.map { environment in
+			(environmentSet.contains(environment) ? "Is " : "Not ") + environment.label
+		}.joined(separator: ", ")
+	}
+
     private func toggleExpanded() {
-        // Animate the compact icon row into the expanded labeled list so the icon
-        // reveal instead of using matched geometry, which emits duplicate-source
-        // diagnostics in SwiftUI list rows when both branches are inserted together.
-        withAnimation(.easeInOut(duration: 0.25)) {
-            isExpanded.toggle()
+        // One animating value drives row height, icon position/scale, and label reveal together.
+        withAnimation(Self.expansionAnimation) {
+            let nextProgress: CGFloat = isExpanded ? 0 : 1
+            if let expansionProgressBinding {
+                expansionProgressBinding.wrappedValue = nextProgress
+            } else {
+                localExpansionProgress = nextProgress
+            }
         }
     }
 
     public var body: some View {
         Button(action: toggleExpanded) {
-            Group {
-                if isExpanded {
-                    VStack(alignment: .leading, spacing: 8) {
-                        ForEach(Build.Environment.allCases, id: \.self) { environment in
-                            let enabled = environmentSet.contains(environment)
-                            environmentItem(environment: environment, enabled: enabled)
-                        }
-                    }
-                    .backport.accessibilityIdentifier("environment.debug")
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                } else {
-                    HStack(spacing: 6) {
-                        ForEach(Build.Environment.allCases, id: \.self) { environment in
-                            let enabled = environmentSet.contains(environment)
-                            environmentIcon(environment: environment, enabled: enabled)
-                        }
-                    }
-                    .frame(maxWidth: .infinity, alignment: .center)
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            // Make the complete row rectangle the button's hit target, including empty space beside
-            // the symbols and labels in both compact and expanded states.
-            .contentShape(Rectangle())
+            EnvironmentExpansionRows(environmentSet: environmentSet)
+                .modifier(EnvironmentExpansionProgressModifier(progress: expansionProgress))
         }
+#if os(macOS)
+        .buttonStyle(.borderless)
+#else
         .buttonStyle(.plain)
-        .backport.accessibilityLabel("Expand environments")
-        // Stable identifiers let the UI tour exercise both the compact and expanded branches
-        // without depending on whichever environment labels happen to be active on this runtime.
-        // Change the identifier with the state so the UI test can wait for the expanded body to finish
-        // rendering before it taps the same full-row button to collapse the view.
-        .backport.accessibilityIdentifier(isExpanded ? "environment.expanded" : "environments.toggle")
+#endif
+        .backport.accessibilityLabel(isExpanded ? "Collapse environments" : "Expand environments")
+        .backport.accessibilityValue(isExpanded ? environmentAccessibilitySummary : "Collapsed")
+        .backport.accessibilityIdentifier("environments.toggle")
     }
 
-    private func environmentIcon(environment: Build.Environment, enabled: Bool) -> some View {
-        Backport.Image(systemName: environment.symbolName)
-            .font(isExpanded ? .body : .caption)
-            // Fixed width keeps wide symbols, such as the Mac Catalyst icon, from pushing
-            // labels farther right than narrower status icons in the expanded list.
-            .frame(width: isExpanded ? 26 : 18, alignment: .center)
-            .opacity(enabled ? 1.0 : 0.2)
-            .foregroundColor(enabled ? environment.color : .gray)
-            // Scaling gives the state change a small visual handoff without relying on
-            // matched geometry, whose duplicate-source diagnostics were breaking layout.
-            .scaleEffect(isExpanded ? 1.0 : 0.92)
-    }
-
-    private func environmentItem(environment: Build.Environment, enabled: Bool) -> some View {
-        HStack(spacing: 6) {
-            environmentIcon(environment: environment, enabled: enabled)
-            if isExpanded {
-                Text(environment.label)
-                    .font(.body)
-                    .fontWeight(enabled ? .semibold : .regular)
-                    // Match the text color to the icon color so disabled entries read as
-                    // disabled instead of borrowing the active environment tint.
-                    .foregroundColor(enabled ? environment.color : .gray)
-                    .lineLimit(1)
-                    .offset(x: isExpanded ? 0 : -8)
-                    .transition(.asymmetric(
-                        insertion: .opacity.combined(with: .move(edge: .leading)),
-                        removal: .opacity.combined(with: .move(edge: .leading))
-                    ))
-                    .backport.focusable(true) // to allow scrolling in tvOS
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityElement(children: .ignore)
-        .backport.accessibilityLabel((enabled ? "Is" : "Not") + " " + environment.label)
-        .backport.accessibilityIdentifier("environment.\(environment.caseName)")
-    }
 }
 
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)

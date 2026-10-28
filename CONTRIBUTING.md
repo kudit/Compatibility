@@ -36,15 +36,20 @@ When working interactively with a maintainer, use these defaults unless the thre
 - When modernizing an existing changelog, preserve historical content exactly and add new entries separately. Do not treat modernization itself as permission to rewrite, merge, or reinterpret existing entries.
 - If there are pieces that aren't implemented in this pass and require future action, a short concise continuation prompt should be added to a beginning #TODO section just before the changelog (if it's things that need to happen before we commit this version) or added to the ## Known Issues, ## Roadmap, or ## Proposals section if there are longer term proposals or ideas or outstanding issues that will be addressed in a future version.
 ### Changelog preservation:
-When converting or modernizing a changelog, preserve every existing entry’s
-date, version, comments, wording, capitalization, punctuation,
-and ordering exactly. Do not summarize, rewrite, merge, delete, or reclassify
-historical entries. Only change the surrounding format as required, and keep the original text byte-for-byte wherever possible. Add new entries separately.
+When converting or modernizing a changelog, preserve every existing entry’s date, version, comments, wording, capitalization, punctuation, and ordering exactly. Do not summarize, rewrite, merge, delete, or reclassify historical entries. Only change the surrounding format as required, and keep the original text byte-for-byte wherever possible. Add new entries separately.
+
+## Interactive Troubleshooting and Workflow Sequencing
+### Sequential Workflows
+- Provide only the next actionable step when later steps depend on its results.
+- Complete all prerequisites before presenting dependent actions.
+- Do not draft final communications until required diagnostics, logs, attachments, and findings have been collected.
+- Never provide a multi-step procedure and then introduce an earlier prerequisite that invalidates or delays those steps.
+- Wait for results or confirmation before proceeding.
+- Explain risks before potentially destructive operations.
+- Prefer read-only diagnostics and preserve existing data.
 
 ## Post-prompt checklist
-
 After every prompt-driven change, contributors and coding agents must:
-
 1. Follow the Version and changelog rules above before editing an active entry or choosing a version; synchronize all applicable version surfaces and refresh an active unpushed entry's date when work continues on a later date.
 2. Do not copy complete user requests into tracked files or push them; record concise, user-facing change summaries in the changelog.
 3. Review both the normal diff and an ignore-whitespace diff, remove unrelated or whitespace-only changes, run `git diff --check`, and run the repository's real build and tests.
@@ -52,9 +57,7 @@ After every prompt-driven change, contributors and coding agents must:
 5. Treat local source changes, local tests, uploaded files, activated server configuration, DNS resolution, certificate coverage, cache behavior, and live responses as separate verification layers. Report which layers were actually verified; local tests alone do not establish deployment or production success.
 
 ## File editing safety
-
 Whole-file replacement is an acceptable and often appropriate way to edit a repository file when the editing tool requires it. File size alone is not a reason to avoid the correct edit.
-
 - Before any whole-file replacement, fetch the complete current file from the exact branch or commit being edited. Never construct a replacement file from a search result, partial snippet, truncated response, stale copy, or remembered version.
 - Apply changes to that complete current content and upload the complete resulting file. A replacement containing only the changed region is a destructive truncation, not a patch.
 - If the complete file cannot safely fit in one tool response or working context, read it in explicit contiguous ranges and verify that those ranges cover the entire file before constructing the replacement. Splitting the read is encouraged; omitting unread ranges is never acceptable.
@@ -70,7 +73,6 @@ Whole-file replacement is an acceptable and often appropriate way to edit a repo
 Changelogs can be included in a CHANGELOG.md (usual) or as sections in a README.md (for Apps).
 
 A full changelog outline may include:
-
 ```markdown
 # Changelog
 
@@ -87,9 +89,7 @@ Planned features grouped by future version.
 - [ ] Longer-term ideas, experiments, and possible improvements.
 ```
 
-
 ## Code style
-
 - Use tabs for indentation in newly written or modified code and configuration. Preserve existing indentation in unrelated lines to avoid whitespace-only churn.
 - Preserve public identifiers, established behavior, compatibility paths, and user-visible syntax unless a breaking change is explicitly requested.
 - Keep changes tightly scoped and avoid unrelated reformatting or whitespace-only edits.
@@ -98,11 +98,8 @@ Planned features grouped by future version.
 - Prefer matching existing code style and leverage existing helper functions when possible rather than writing your own.
 - Please check that all deprecations (that can) have appropriate renamed clauses for easy fixits.
 
-
 ## Comment preservation rules
-
 Comments are part of the source and should be treated as maintainer-authored documentation, requirements, historical context, and design rationale rather than as optional clutter.
-
 - For Swift APIs, add complete DocC comments to public APIs and non-obvious internal APIs. In other languages, use the language's native documentation style.
 - Use concise comments for obvious behavior and more detail around compatibility, migration, concurrency, and platform-specific decisions.
 - Add clear inline comments explaining all new or modified code and why the change was made.
@@ -115,9 +112,7 @@ Comments are part of the source and should be treated as maintainer-authored doc
 - During final diff review, specifically inspect every deleted comment line. Any intentional comment deletion must be justified in the completion summary. Accidental or unjustified comment deletions must be restored before the change is considered complete.
 - Unless explicitly requested, comment cleanup is not an acceptable form of unrelated cleanup.
 
-
 ## Swift rules
-
 - Include `github.com/kudit/Compatibility` as a dependency in Swift projects and reuse its APIs where appropriate.
 - Use Compatibility's `debug()` function instead of `print()` for logging.
 - Prefer availability checks and platform fallbacks over removing older behavior.
@@ -126,7 +121,6 @@ Comments are part of the source and should be treated as maintainer-authored doc
 - Put reusable framework tests beside their implementation and collect them in each module's ordered `TestCase` sections so the same checks appear in the in-app runner and the Swift Testing bridge. Keep only infrastructure-specific tests in the Xcode/SwiftPM test target.
 
 ### Portability and conditional compilation
-
 - Treat `hasFeature(Embedded)` as a compiler-mode capability check, not as a platform check. Ordinary Swift Package Index Apple, Linux, Android, and full-runtime WASM/WASI builds do not enable Embedded Swift merely because of their target platform.
 - Use `arch(wasm32)` for limitations common to every WebAssembly host, and use `os(WASI)` only when behavior is specifically tied to the WASI operating-system interface. Swift 6.2 and newer recognize `os(WASM)`, but the condition is false for standard WASI SDK targets and therefore is not a general WebAssembly check. If a distinct WASM operating-system target genuinely needs a branch, protect the condition from older compilers by nesting `#if os(WASM)` inside `#if compiler(>=6.2)`; do not place both conditions in one expression because older compilers still parse it. Do not assume `os(WASI)` implies Embedded Swift, and do not assume `hasFeature(Embedded)` implies WebAssembly.
 - Keep `@MainActor` and other actor-isolation annotations present in full-runtime WASM. Current Swift 6.3 Embedded WebAssembly SDK builds do not expose `MainActor` or `Task`, so Embedded support must gate the complete concurrency-dependent API surface rather than merely changing an operating-system condition.
@@ -138,15 +132,15 @@ Comments are part of the source and should be treated as maintainer-authored doc
 - Swift does not expose a general-purpose `hasFeature(Concurrency)` condition that proves a target has a scheduler, threads, Dispatch, or suspending timers. Use `canImport(Dispatch)` for Dispatch-backed implementations, availability checks for deployed Apple concurrency runtimes, `hasFeature(Embedded)` only for known Embedded restrictions, and narrowly documented platform checks for host facilities such as WebAssembly timers.
 - Do not gate `Equatable`, `Encodable`, or `Decodable` merely because a build targets Linux, Android, WASM, or WASI. Those protocols are part of full Swift runtimes. Before changing a conformance gate, also check whether the concrete type is locally owned, is a typealias to a Foundation type, already conforms on that Foundation implementation, or requires Swift 6's `@retroactive` ownership annotation.
 
+### “Build all” shorthand
+When the maintainer asks to “build all,” compile the Xcode app-target scheme (not the Swift package product app scheme) for iOS, macOS, tvOS, visionOS, and Mac Catalyst destinations.  If there is a dedicated Watch App scheme for watchOS, build it as well. Run every destination even if another fails. Report every warning and error from every build/test command, grouped by destination; do not truncate the diagnostic list to the first actionable item. If everything passes, build and run all package tests (don't include UI tests so it doesn't interrupt the user).  `swift test` should be runnable in the background for the project.  Do not claim tests passed if the package test target fails during compilation.
 
 ## Design goals
-
 - Backwards compatibility where practical.
 - Consistent APIs across platforms.
 - Well-documented public interfaces.
 - Minimal breaking changes.
 - Swift Playgrounds compatibility whenever possible.
-
 
 # App Store Styleguide
 Included for reference and utility and as a best practices model.  Feel free to substitute your own style guide or suggest improvements.

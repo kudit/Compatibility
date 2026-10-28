@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.21.3 2026-10-27
+Added Angle type available before/without SwiftUI.
+Added instructions and fixes for Xcode 27.
+Replaced the Compatibility screen's native List with a reusable LegacyList and reused Backport.Section for its section content.
+Drove EnvironmentView icon geometry and row sizing from the same interpolated animation progress to avoid the initial position jump.
+Added Angle conversion/ordering/Codable tests and Backport.DisclosureGroup fallback binding tests.
+Avoided multi-child ViewBuilder tuples in availability fallbacks and modernized legacy watchOS progress and menu paths.
+Expanded deterministic Network coverage for URL-string GET and POST requests, entitlement errors, response decoding, and download failures.
+Removed unnecessary deprecated `foregroundStyle`.
+Added `build all` shorthand.
+
 ## v1.21.2 2026-10-19
 Fixed incorrect availability gate in networking code.
 

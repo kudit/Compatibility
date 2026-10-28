@@ -8,7 +8,7 @@
 
 public enum Compatibility: Module {
     /// The version of the Compatibility Library since cannot get directly from Package.swift.
-public static let version: Version = "1.21.2"
+public static let version: Version = "1.21.3"
 
     /// Public source repository for Compatibility so support reports can direct developers to its source and issue history.
     ///
@@ -198,13 +198,7 @@ public static let version: Version = "1.21.2"
  
  2025 Swift 6.1 (March), Swift 6.2 (September)
     Apple platform version numbers synchronized!
-    iOS 26+
-    iPadOS 26+
-    macOS 26+ Tahoe
-    Mac Catalyst 26+
-    tvOS 26+
-    watchOS 26+
-    visionOS 26+
+    xOS 26+ Tahoe
     SF Symbols 7.0
     Xcode 26
 
@@ -303,6 +297,7 @@ public struct CompatibilityEnvironmentTestView: View {
 #endif
     /// Complete deferred module information; `nil` keeps the loading state distinct from the portable baseline.
     @State private var loadedModuleInfo: [Field]?
+    @State private var environmentExpansionProgress: CGFloat = 0
 
     /// Creates an environment view whose module metadata is loaded after the UI first appears.
     public init() {}
@@ -345,8 +340,21 @@ public struct CompatibilityEnvironmentTestView: View {
     }
 
     public var body: some View {
-        List {
-            FieldSections([
+        LegacyList {
+            LegacyListSection("Environment") {
+                LegacyListRow {
+                    FieldView(Field("Swift Version", Build.swiftVersion, symbol: "swift"))
+                }
+                LegacyListRow {
+                    FieldView(Field("Compiler Version", Build.compilerVersion))
+                }
+                LegacyListRow {
+                    EnvironmentsView(Build.environments(), expansionProgress: $environmentExpansionProgress)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
+                }
+            }
+            LegacyListFieldSections(sections: [
                 "Application": applicationInfo,
                 Compatibility.moduleName: compatibilityInfo,
                 "iCloud": [
@@ -355,25 +363,22 @@ public struct CompatibilityEnvironmentTestView: View {
                     Field("iCloud status", Application.iCloudStatus),
                 ],
             ])
-			Backport.Section("Module Info") {
+            LegacyListSection("Module Info") {
                 // Show the portable baseline immediately, then replace it with the complete loaded result.
                 // This is example code.  Really this only needs to include moduleInfo since the detailed info is already included in other sections.
                 let displayedModuleInfo = loadedModuleInfo ?? Compatibility.moduleInfo
                 ForEach(displayedModuleInfo.indices, id: \.self) { index in
-                    FieldView(displayedModuleInfo[index])
+                    LegacyListRow {
+                        FieldView(displayedModuleInfo[index])
+                    }
                 }
                 if loadedModuleInfo == nil {
-					Backport.ProgressView("Loading module details…")
+                    LegacyListRow {
+                        Backport.ProgressView("Loading module details…")
+                    }
                 }
             }
-			Backport.Section("Environment") {
-                FieldView(Field("Swift Version", Build.swiftVersion, symbol: "swift"))
-                FieldView(Field("Compiler Version", Build.compilerVersion))
-                EnvironmentsView(Build.environments())
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .contentShape(Rectangle())
-            }
-            FieldSections([
+            LegacyListFieldSections(sections: [
                 "Dates": [
                     Field("Now Backport", Date.nowBackport.pretty),
                     Field("Now MySQL", Date.nowBackport.mysqlDateTime),
@@ -384,12 +389,13 @@ public struct CompatibilityEnvironmentTestView: View {
                 ],
             ])
         }
-		.backport.accessibilityIdentifier("compatibility.environment.list")
-		.backport.task {
+        .backport.accessibilityIdentifier("compatibility.environment.list")
+        .backport.task {
             // Await potentially slow details without delaying the portable module fields above.
             loadedModuleInfo = await Compatibility.loadDetailedModuleInfo()
         }
     }
+
 }
 
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
