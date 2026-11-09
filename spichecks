@@ -648,8 +648,8 @@ for version in "${versions[@]}"; do
 		printf '\n--- %s build (%s, %s) ---\n' "$platform" "$build_compiler_label" "${xcode:-cross-compile SDK}"
 		(
 			cd "$package_dir" || exit 2
-			if [[ "$platform" == Linux ]]; then
-				# Match SPI's manifest environment so the Static Linux SDK build omits the Glibc-only terminal demo.
+			if [[ "$platform" == WASI || "$platform" == Android ]]; then
+				# Match SPI's manifest environment so cross-SDK builds omit the terminal demo where POSIX libc is unavailable.
 				export SPI_BUILD=1
 			fi
 			DEVELOPER_DIR="${xcode:-$(xcode-select -p)}" ANDROID_NDK_HOME="$root/android-ndk-r30" CLANG_MODULE_CACHE_PATH="$work_dir/clang" SWIFTPM_MODULECACHE_OVERRIDE="$work_dir/clang" "$build_swift" build "${args[@]}" --swift-sdks-path "$swift_sdks_path" --scratch-path "$work_dir/build-$version-$platform"

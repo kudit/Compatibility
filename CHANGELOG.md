@@ -2,6 +2,9 @@
 
 TODO: Add test coverage for SafeArea and Pasteboard.
 
+## v1.21.6 2026-11-09
+Set SPI_BUILD for WASI and Android checker builds, while leaving Linux enabled to validate packages' Linux-only products.
+
 ## v1.21.5 2026-11-09
 Set SPI_BUILD for local Static Linux SDK checks so the Glibc-only terminal demo is excluded like it is in Swift Package Index builds.
 
