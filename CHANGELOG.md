@@ -2,6 +2,9 @@
 
 TODO: Add test coverage for SafeArea and Pasteboard.
 
+## v1.21.5 2026-11-09
+Set SPI_BUILD for local Static Linux SDK checks so the Glibc-only terminal demo is excluded like it is in Swift Package Index builds.
+
 ## v1.21.4 2026-11-09
 Added a reusable Swift Package Index compatibility check command (designed for my personal environment but could be adapted to be more generic with a configuration if someone else wants to use it - it's purely optional so tracked here to help pre-check to have more confidence that SPI checks will pass since they often take days now).
 Fixed SPI errors for older devices with older build targets.
