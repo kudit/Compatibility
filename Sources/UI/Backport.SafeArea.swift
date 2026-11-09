@@ -1,24 +1,38 @@
 #if canImport(SwiftUI) && compiler(>=5.9)
 import SwiftUI
 
+/// A vertical edge for `Backport.safeAreaInset`, available before SwiftUI's `VerticalEdge`.
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+public enum BackportVerticalEdge: Equatable, Sendable {
+	case top
+	case bottom
+}
+
+/// A horizontal edge for `Backport.safeAreaInset`, available before SwiftUI's `HorizontalEdge`.
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+public enum BackportHorizontalEdge: Equatable, Sendable {
+	case leading
+	case trailing
+}
+
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 public extension Backport where Content: View {
 	/// Native safe-area reservation on modern systems. On original SwiftUI, a stack
 	/// reserves the inset's actual layout size within the hosting view's safe area.
 	/// The fallback cannot alter ScrollView indicator insets or expose newer fold regions.
 	@ViewBuilder
-	func safeAreaInset<V: View>(edge: VerticalEdge, alignment: HorizontalAlignment = .center, spacing: CGFloat? = nil, @ViewBuilder content inset: () -> V) -> some View {
+	func safeAreaInset<V: View>(edge: BackportVerticalEdge, alignment: HorizontalAlignment = .center, spacing: CGFloat? = nil, @ViewBuilder content inset: () -> V) -> some View {
 		if #available(iOS 15, macOS 12, tvOS 15, watchOS 8, *) {
-			content.safeAreaInset(edge: edge, alignment: alignment, spacing: spacing, content: inset)
+			content.safeAreaInset(edge: edge == .top ? .top : .bottom, alignment: alignment, spacing: spacing, content: inset)
 		} else {
 			LegacyVerticalSafeAreaInset(base: content, edge: edge, alignment: alignment, spacing: spacing ?? 0, inset: inset())
 		}
 	}
 	/// Horizontal counterpart; original SwiftUI continues to respect host safe areas.
 	@ViewBuilder
-	func safeAreaInset<V: View>(edge: HorizontalEdge, alignment: VerticalAlignment = .center, spacing: CGFloat? = nil, @ViewBuilder content inset: () -> V) -> some View {
+	func safeAreaInset<V: View>(edge: BackportHorizontalEdge, alignment: VerticalAlignment = .center, spacing: CGFloat? = nil, @ViewBuilder content inset: () -> V) -> some View {
 		if #available(iOS 15, macOS 12, tvOS 15, watchOS 8, *) {
-			content.safeAreaInset(edge: edge, alignment: alignment, spacing: spacing, content: inset)
+			content.safeAreaInset(edge: edge == .leading ? .leading : .trailing, alignment: alignment, spacing: spacing, content: inset)
 		} else {
 			LegacyHorizontalSafeAreaInset(base: content, edge: edge, alignment: alignment, spacing: spacing ?? 0, inset: inset())
 		}
@@ -43,7 +57,7 @@ private struct SafeAreaMeasurements: PreferenceKey {
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 private struct LegacyVerticalSafeAreaInset<Base: View, Inset: View>: View {
 	let base: Base
-	let edge: VerticalEdge
+	let edge: BackportVerticalEdge
 	let alignment: HorizontalAlignment
 	let spacing: CGFloat
 	let inset: Inset
@@ -61,7 +75,7 @@ private struct LegacyVerticalSafeAreaInset<Base: View, Inset: View>: View {
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 private struct LegacyHorizontalSafeAreaInset<Base: View, Inset: View>: View {
 	let base: Base
-	let edge: HorizontalEdge
+	let edge: BackportHorizontalEdge
 	let alignment: VerticalAlignment
 	let spacing: CGFloat
 	let inset: Inset

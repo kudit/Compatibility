@@ -36,13 +36,15 @@ private extension XCUIElement {
 /// This deliberately avoids numeric selection tags so inserting or rearranging demo tabs does not require
 /// keeping a second set of tab indices synchronized. Navigation follows the native platform presentation:
 /// sidebar selection on macOS, page gestures on touch platforms, and remote navigation on tvOS.
+/// A temporary skip list below lets the Backport tab be reached directly while its UI test is repaired.
 final class CompatibilityUITests: XCTestCase {
     private struct DemoScreen {
         let name: String
         let identifier: String
     }
 
-    private let allScreens = [
+    // Keep the full order as the source of truth for restoring complete demo coverage.
+    private static let allScreens = [
         DemoScreen(name: "Compatibility", identifier: "demo.compatibility"),
         DemoScreen(name: "DataStore", identifier: "demo.datastore"),
         DemoScreen(name: "All Tests", identifier: "demo.allTests"),
@@ -54,12 +56,30 @@ final class CompatibilityUITests: XCTestCase {
         DemoScreen(name: "Material", identifier: "demo.material"),
     ]
 
+    // TEMPORARY: Skip the stable tabs before Backport while investigating its UI test.
+    // Clear this array to restore the full pass; the per-tab test cases below remain intact.
+    private static let screensToSkipForNow: [String] = [
+//        "Compatibility",
+//        "DataStore",
+//        "All Tests",
+//        "Radial Layout",
+//        "Random Bytes",
+//        "Convert",
+//        "Visual Showcase",
+//        "Backport",
+//        "Material",
+    ]
     override func setUpWithError() throws {
         continueAfterFailure = false
     }
 
-    @MainActor
     func testEveryDemoScreenAndRepresentativeInteractions() async {
+        await Self.runDemoScreenInteractions()
+    }
+
+    @MainActor
+    private static func runDemoScreenInteractions() async {
+        var selectedScreenIndex = 0
         let app = XCUIApplication()
         app.launchArguments += ["-ApplePersistenceIgnoreState", "YES"]
         app.launchEnvironment["TESTING"] = "1"
@@ -67,8 +87,10 @@ final class CompatibilityUITests: XCTestCase {
 
         for index in allScreens.indices {
             let screen = allScreens[index]
+            guard !screensToSkipForNow.contains(screen.name) else { continue }
             if index > 0 {
-                await navigate(to: screen, in: app)
+                await navigate(to: screen, in: app, currentIndex: selectedScreenIndex)
+                selectedScreenIndex = index
             }
             let screenElement = app.descendants(matching: .any)[screen.identifier]
             let rendered = await waitForElement(screenElement, timeout: 5)
@@ -95,7 +117,7 @@ final class CompatibilityUITests: XCTestCase {
     }
 
     @MainActor
-    private func exerciseCompatibilityEnvironment(in app: XCUIApplication) async {
+    private static func exerciseCompatibilityEnvironment(in app: XCUIApplication) async {
         let row = app.buttons["environments.toggle"]
         let found = await waitForElement(row, timeout: 3)
         XCTAssertTrue(found, "The Environment summary should expose its toggle button.")
@@ -120,7 +142,7 @@ final class CompatibilityUITests: XCTestCase {
     }
 
     @MainActor
-    private func exerciseRadialLayout(in app: XCUIApplication) async {
+    private static func exerciseRadialLayout(in app: XCUIApplication) async {
         // Resolve the explicitly identified Menu instead of relying on macOS to classify it
         // consistently as a popup button across the supported Xcode versions.
         let inlineMenu = app.menuButtons["demo.radialLayout"]
@@ -147,7 +169,7 @@ final class CompatibilityUITests: XCTestCase {
     }
 
     @MainActor
-    private func exerciseConvert(in app: XCUIApplication) {
+    private static func exerciseConvert(in app: XCUIApplication) {
         let slider = app.sliders.firstMatch
         guard slider.exists else {
             XCTFail("Convert should expose its input slider.")
@@ -163,7 +185,7 @@ final class CompatibilityUITests: XCTestCase {
     }
 
     @MainActor
-    private func exerciseVisualShowcase(in app: XCUIApplication) async {
+    private static func exerciseVisualShowcase(in app: XCUIApplication) async {
         let destinations = [
             ("showcase.triangles.link", "showcase.triangles.destination"),
             ("showcase.placards.link", "showcase.placards.destination"),
@@ -208,15 +230,27 @@ final class CompatibilityUITests: XCTestCase {
     }
 
     @MainActor
-    private func exerciseBackport(_ screen: XCUIElement) async {
+    private static func exerciseBackport(_ screen: XCUIElement) async {
+        // Test the selection-bound TabView control at the top of the page before scrolling.
         let selection = screen.buttons["backport.selection.toggle"]
-        guard await reveal(selection, in: screen) else {
-            XCTFail("Backport.TabView selection control should be reachable.")
+        let selectionVisible = await waitForElement(selection, timeout: 2)
+            && selection.frame.width > 0
+            && selection.frame.height > 0
+            && selection.isHittable
+        XCTAssertTrue(
+            selectionVisible,
+            "The selection-bound Backport.TabView control should be visible and hittable before scrolling (button: \(selection), frame: \(selection.frame))."
+        )
+        guard selectionVisible else {
             return
         }
-        clickCenter(selection)
-        let selected = await waitForText(screen.staticTexts["backport.selection.status"], containing: "Bound selection: 1", timeout: 2)
-        XCTAssertTrue(selected, "Backport.TabView should update its bound selection.")
+        selection.click()
+        let selected = await waitForLabel(selection, equalTo: "Select zero", timeout: 2)
+        let selectionStatus = screen.staticTexts["backport.selection.status"]
+        XCTAssertTrue(
+            selected,
+            "Backport.TabView should update its selection when the visible control is activated (label: \(selection.label), value: \(String(describing: selection.value)), status: \(String(describing: selectionStatus.value)))."
+        )
 
 #if os(macOS) || os(iOS)
         let field = screen.textFields["SF Symbol name"]
@@ -254,59 +288,6 @@ final class CompatibilityUITests: XCTestCase {
         }
 #endif
 
-#if os(macOS)
-        // Do not query the nested strip's hittability before scrolling the page. On macOS 27
-        // that offscreen accessibility query can block for 10–16 seconds before returning.
-        screen.coordinate(withNormalizedOffset: CGVector(dx: 0.72, dy: 0.55)).hover()
-        screen.scroll(byDeltaX: 0, deltaY: -10_000)
-#endif
-        let strip = screen.scrollViews["backport.scroll.strip"]
-        guard strip.exists else {
-            XCTFail("Backport should reveal its numbered scrolling strip.")
-            return
-        }
-        guard strip.isHittable else {
-            XCTFail("Backport's numbered scrolling strip should be reachable after scrolling the page.")
-            return
-        }
-        let firstItem = screen.staticTexts["backport.scroll.item.0"]
-        let initialX = firstItem.frame.minX
-#if os(macOS)
-        strip.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).hover()
-        strip.scroll(byDeltaX: -900, deltaY: 0)
-#else
-        strip.swipeLeft()
-#endif
-        try? await Task.sleep(nanoseconds: 150_000_000)
-        XCTAssertLessThan(firstItem.frame.minX, initialX - 5, "Enabled Backport scrolling should move the numbered strip.")
-
-#if os(macOS)
-        let toggle = screen.checkBoxes["backport.scroll.toggle"]
-#else
-        let toggle = screen.switches["backport.scroll.toggle"]
-#endif
-        guard await reveal(toggle, in: screen) else {
-            XCTFail("Backport should reveal its scrollDisabled toggle.")
-            return
-        }
-        clickCenter(toggle)
-        let actionChanged = await waitForText(screen.staticTexts["backport.onChange.action"], containing: "scrolling disabled", timeout: 2)
-        XCTAssertTrue(actionChanged, "The backported onChange action should receive the toggle update.")
-        let transitionChanged = await waitForText(screen.staticTexts["backport.onChange.values"], containing: "false → true", timeout: 2)
-        XCTAssertTrue(transitionChanged, "The old/new Backport.onChange overload should report the toggle transition.")
-
-        let disabledStartX = firstItem.frame.minX
-#if os(macOS)
-        strip.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).hover()
-        strip.scroll(byDeltaX: -900, deltaY: 0)
-#else
-        strip.swipeLeft()
-#endif
-        try? await Task.sleep(nanoseconds: 150_000_000)
-        XCTAssertEqual(firstItem.frame.minX, disabledStartX, accuracy: 3,
-                       "The disabled numbered strip should not move after the same scroll gesture.")
-        clickCenter(toggle)
-
         let galleryHeading = screen.staticTexts["backport.asyncImage"]
         guard await reveal(galleryHeading, in: screen) else {
             XCTFail("Backport should reveal the native and forced-legacy preview gallery.")
@@ -320,16 +301,73 @@ final class CompatibilityUITests: XCTestCase {
         XCTAssertTrue(screen.descendants(matching: .any).matching(identifier: "backport.legacyAsyncImage.view").firstMatch.exists,
                       "The content-only legacy AsyncImage fallback should render for coverage.")
 
+        let strip = screen.scrollViews["backport.scroll.strip"]
 #if os(macOS)
-        screen.coordinate(withNormalizedOffset: CGVector(dx: 0.72, dy: 0.55)).hover()
-        screen.scroll(byDeltaX: 0, deltaY: -10_000)
+		let toggle = screen.checkBoxes["backport.scroll.toggle"]
 #else
-        for _ in 0..<4 { screen.swipeUp(velocity: .fast) }
+		let toggle = screen.switches["backport.scroll.toggle"]
 #endif
+#if os(macOS)
+		// A large wheel event reaches the bottom in one motion. Repeat only if the toggle is
+		// still offscreen; this avoids several identical pointer and scroll events on each run.
+		screen.scroll(byDeltaX: 0, deltaY: -15_000)
+		if !toggle.exists || !toggle.isHittable {
+			screen.scroll(byDeltaX: 0, deltaY: -5_000)
+		}
+		// Disabled 2026-11-08: the repeated fixed scrolls caused needless pointer activity.
+		// for _ in 0..<3 {
+		// 	screen.scroll(byDeltaX: 0, deltaY: -5_000)
+		// }
+#else
+        for _ in 0..<3 {
+            screen.swipeUp(velocity: .fast)
+        }
+#endif
+
+        guard strip.exists else {
+            XCTFail("Backport should reveal its numbered scrolling strip.")
+            return
+        }
+        guard strip.isHittable else {
+            XCTFail("Backport's numbered scrolling strip should be reachable after scrolling the page.")
+            return
+        }
+        let firstItem = screen.staticTexts["backport.scroll.item.0"]
+        let initialX = firstItem.frame.minX
+#if os(macOS)
+        strip.scroll(byDeltaX: -900, deltaY: 0)
+#else
+        strip.swipeLeft()
+#endif
+        try? await Task.sleep(nanoseconds: 150_000_000)
+        XCTAssertLessThan(firstItem.frame.minX, initialX - 5, "Enabled Backport scrolling should move the numbered strip.")
+
+        guard toggle.exists && toggle.isHittable else {
+            XCTFail("Backport should expose its scrollDisabled toggle at the bottom of the page.")
+            return
+        }
+        clickCenter(toggle)
+        let actionChanged = await waitForText(screen.staticTexts["backport.onChange.action"], containing: "scrolling disabled", timeout: 2)
+        XCTAssertTrue(actionChanged, "The backported onChange action should receive the toggle update.")
+        let transitionChanged = await waitForText(screen.staticTexts["backport.onChange.values"], containing: "false → true", timeout: 2)
+        XCTAssertTrue(transitionChanged, "The old/new Backport.onChange overload should report the toggle transition.")
+
+        let disabledStartX = firstItem.frame.minX
+#if os(macOS)
+        strip.scroll(byDeltaX: -900, deltaY: 0)
+#else
+        strip.swipeLeft()
+#endif
+        try? await Task.sleep(nanoseconds: 150_000_000)
+        XCTAssertEqual(firstItem.frame.minX, disabledStartX, accuracy: 3,
+                       "The disabled numbered strip should not move after the same scroll gesture.")
+		// The app is test-owned and immediately leaves this screen, so restoring the toggle
+		// would add an extra cursor trip without affecting later checks.
+		// Disabled 2026-11-08: clickCenter(toggle)
     }
 
     @MainActor
-    private func exerciseMaterial(in app: XCUIApplication) async {
+    private static func exerciseMaterial(in app: XCUIApplication) async {
         // On macOS the button's label is more stable than its nested identifier in XCTest.
         let navigation = app.buttons["Material Navigation"]
         let navigationFound = await waitForElement(navigation, timeout: 3)
@@ -385,7 +423,7 @@ final class CompatibilityUITests: XCTestCase {
     }
 
     @MainActor
-    private func revealShowcaseLink(_ identifier: String, in scroll: XCUIElement, app: XCUIApplication) async -> XCUIElement? {
+    private static func revealShowcaseLink(_ identifier: String, in scroll: XCUIElement, app: XCUIApplication) async -> XCUIElement? {
         let link = app.descendants(matching: .any).matching(identifier: identifier).firstMatch
         for _ in 0..<6 {
             if link.exists && link.isHittable { return link }
@@ -401,12 +439,12 @@ final class CompatibilityUITests: XCTestCase {
     }
 
     @MainActor
-    private func reveal(_ element: XCUIElement, in scroll: XCUIElement) async -> Bool {
-        for _ in 0..<5 {
+    private static func reveal(_ element: XCUIElement, in scroll: XCUIElement) async -> Bool {
+        for _ in 0..<6 {
             if element.exists && element.isHittable { return true }
 #if os(macOS)
-            scroll.coordinate(withNormalizedOffset: CGVector(dx: 0.72, dy: 0.55)).hover()
-            scroll.scroll(byDeltaX: 0, deltaY: -700)
+            let direction: CGFloat = element.frame.minY < scroll.frame.minY ? 700 : -700
+            scroll.scroll(byDeltaX: 0, deltaY: direction)
 #else
             scroll.swipeUp(velocity: .fast)
 #endif
@@ -416,7 +454,7 @@ final class CompatibilityUITests: XCTestCase {
     }
 
     @MainActor
-    private func clickCenter(_ element: XCUIElement) {
+    private static func clickCenter(_ element: XCUIElement) {
 #if os(macOS)
         element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).click()
 #else
@@ -425,7 +463,7 @@ final class CompatibilityUITests: XCTestCase {
     }
 
     @MainActor
-    private func navigationBackButton(in app: XCUIApplication) -> XCUIElement {
+    private static func navigationBackButton(in app: XCUIApplication) -> XCUIElement {
         let namedBack = app.buttons["Back"]
         if namedBack.exists { return namedBack }
         let navigationBarBack = app.navigationBars.buttons.firstMatch
@@ -434,7 +472,7 @@ final class CompatibilityUITests: XCTestCase {
     }
 
     @MainActor
-    private func navigate(to screen: DemoScreen, in app: XCUIApplication) async {
+    private static func navigate(to screen: DemoScreen, in app: XCUIApplication, currentIndex: Int) async {
 #if os(macOS)
         // Match the visible outline row by its label. macOS 27 can mark SwiftUI sidebar rows disabled
         // in accessibility metadata even while their visible coordinates still select the destination.
@@ -495,7 +533,12 @@ final class CompatibilityUITests: XCTestCase {
             "Clicking the \(screen.name) sidebar row should select that visible row (enabled: \(row.isEnabled), row: \(rowFrame), window: \(windowFrame)). Snapshot: \(app.debugDescription)"
         )
 #elseif os(tvOS)
-        XCUIRemote.shared.press(.right)
+		let targetIndex = allScreens.firstIndex(where: { $0.name == screen.name }) ?? currentIndex + 1
+		if targetIndex > currentIndex {
+			for _ in currentIndex..<targetIndex {
+				XCUIRemote.shared.press(.right)
+			}
+		}
 #else
         // Prefer the named tab control when the platform publishes one; a blind page swipe can leave the
         // selection unchanged when the demo is hosted in a regular TabView rather than a page TabView.
@@ -509,7 +552,7 @@ final class CompatibilityUITests: XCTestCase {
     }
 
     @MainActor
-    private func waitForElement(_ element: XCUIElement, timeout: TimeInterval) async -> Bool {
+    private static func waitForElement(_ element: XCUIElement, timeout: TimeInterval) async -> Bool {
         let deadline = Date().addingTimeInterval(timeout)
         repeat {
             if element.exists {
@@ -525,7 +568,7 @@ final class CompatibilityUITests: XCTestCase {
     }
 
     @MainActor
-    private func waitForSelection(of element: XCUIElement, timeout: TimeInterval) async -> Bool {
+    private static func waitForSelection(of element: XCUIElement, timeout: TimeInterval) async -> Bool {
         let deadline = Date().addingTimeInterval(timeout)
         repeat {
             if element.isSelected { return true }
@@ -535,7 +578,7 @@ final class CompatibilityUITests: XCTestCase {
     }
 
     @MainActor
-    private func waitForLabel(_ element: XCUIElement, equalTo expected: String, timeout: TimeInterval) async -> Bool {
+    private static func waitForLabel(_ element: XCUIElement, equalTo expected: String, timeout: TimeInterval) async -> Bool {
         let deadline = Date().addingTimeInterval(timeout)
         repeat {
             if element.exists && element.label == expected { return true }
@@ -545,7 +588,7 @@ final class CompatibilityUITests: XCTestCase {
     }
 
     @MainActor
-    private func waitForText(_ element: XCUIElement, containing expected: String, timeout: TimeInterval) async -> Bool {
+    private static func waitForText(_ element: XCUIElement, containing expected: String, timeout: TimeInterval) async -> Bool {
         let deadline = Date().addingTimeInterval(timeout)
         repeat {
             let label = element.label
@@ -559,7 +602,7 @@ final class CompatibilityUITests: XCTestCase {
     }
 
     @MainActor
-    private func waitForText(_ element: XCUIElement, containing expected: String, excluding excluded: String, timeout: TimeInterval) async -> Bool {
+    private static func waitForText(_ element: XCUIElement, containing expected: String, excluding excluded: String, timeout: TimeInterval) async -> Bool {
         let deadline = Date().addingTimeInterval(timeout)
         repeat {
             let text = element.label + " " + String(describing: element.value)
@@ -572,7 +615,7 @@ final class CompatibilityUITests: XCTestCase {
     }
 
     @MainActor
-    private func waitForHeight(_ element: XCUIElement, greaterThan threshold: CGFloat, timeout: TimeInterval) async -> Bool {
+    private static func waitForHeight(_ element: XCUIElement, greaterThan threshold: CGFloat, timeout: TimeInterval) async -> Bool {
         let deadline = Date().addingTimeInterval(timeout)
         repeat {
             if element.exists && element.frame.height > threshold { return true }
@@ -582,7 +625,7 @@ final class CompatibilityUITests: XCTestCase {
     }
 
     @MainActor
-    private func waitForHeight(_ element: XCUIElement, lessThan threshold: CGFloat, timeout: TimeInterval) async -> Bool {
+    private static func waitForHeight(_ element: XCUIElement, lessThan threshold: CGFloat, timeout: TimeInterval) async -> Bool {
         let deadline = Date().addingTimeInterval(timeout)
         repeat {
             if element.exists && element.frame.height < threshold { return true }
@@ -592,7 +635,7 @@ final class CompatibilityUITests: XCTestCase {
     }
 
     @MainActor
-    private func scrollThroughAllTests(_ screenElement: XCUIElement, in app: XCUIApplication) {
+    private static func scrollThroughAllTests(_ screenElement: XCUIElement, in app: XCUIApplication) {
 #if os(macOS)
         // Move through the stable window geometry before querying the identified outline as a scroller.
         app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.72, dy: 0.55)).hover()
@@ -606,7 +649,7 @@ final class CompatibilityUITests: XCTestCase {
     }
 
     @MainActor
-    private func contentScrollable(in screenElement: XCUIElement) -> XCUIElement {
+    private static func contentScrollable(in screenElement: XCUIElement) -> XCUIElement {
         if screenElement.elementType == .scrollView || screenElement.elementType == .table {
             return screenElement
         }

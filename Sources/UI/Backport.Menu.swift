@@ -285,7 +285,7 @@ public struct MenuTest: View {
                         }
                     }
                 }
-                .accessibilityLabel(selection)
+				.backport.accessibilityLabel(selection)
                 .backport.accessibilityIdentifier("radial.symbol.\(selection)")
             }
         }

@@ -1,0 +1,202 @@
+#!/usr/bin/env bash
+
+# Install reusable Swift Package Index preflight toolchains and SDKs.
+# Everything is placed below /Applications/SPI; no Apple ID or service token is used.
+
+set -euo pipefail
+
+root="${SPI_INSTALL_ROOT:-/Applications/SPI}"
+source_dir="$(cd "$(dirname "$0")" && pwd)"
+oldest="${SPI_SWIFT_OLDEST:-6.1.3}"
+current="${SPI_SWIFT_CURRENT:-6.4.2}"
+original_home="$HOME"
+swiftly_source="$(command -v swiftly || true)"
+if [[ -z "$swiftly_source" && -x "$root/swiftly/bin/swiftly" ]]; then
+	swiftly_source="$root/swiftly/bin/swiftly"
+fi
+if [[ -z "$swiftly_source" ]]; then
+	printf 'Install Swiftly first: https://www.swift.org/install/macos/swiftly/\n' >&2
+	exit 2
+fi
+
+available_kb="$(df -Pk "$(dirname "$root")" | awk 'NR==2 {print $4}')"
+required_kb=$((15 * 1024 * 1024))
+if (( available_kb < required_kb )); then
+	printf 'Install stopped before creating %s: this volume has %.1f GiB of non-purgeable free space; keep at least 15 GiB free for toolchains, SDKs, and temporary downloads. Finder may report a larger available amount because it includes purgeable space.\n' "$root" "$(awk -v k="$available_kb" 'BEGIN {print k/1048576}')" >&2
+	exit 2
+fi
+
+if [[ ! -d "$root" ]]; then
+	if ! mkdir -p "$root" 2>/dev/null; then
+		sudo mkdir -p "$root"
+		sudo chown "$(id -u):$(id -g)" "$root"
+	fi
+elif [[ ! -w "$root" ]]; then
+	sudo chown "$(id -u):$(id -g)" "$root"
+fi
+if [[ ! -w "$root" ]]; then
+	printf 'Cannot write to %s. Run once with an administrator account.\n' "$root" >&2
+	exit 2
+fi
+
+runtime="$root/runtime"
+swiftly_home="$root/swiftly"
+swiftly_bin="$swiftly_home/bin"
+toolchains="$runtime/Library/Developer/Toolchains"
+mkdir -p "$runtime" "$swiftly_home" "$root/downloads" "$root/toolchains" "$toolchains"
+# Swiftly's default is ~/Library/Developer/Toolchains. Move prior installs into
+# the shared SPI folder so uninstalling /Applications/SPI removes the whole setup.
+legacy_toolchains="$original_home/Library/Developer/Toolchains"
+if [[ "$legacy_toolchains" != "$toolchains" && -d "$legacy_toolchains" ]]; then
+	for version in "$oldest" "$current"; do
+		legacy="$legacy_toolchains/swift-${version}-RELEASE.xctoolchain"
+		if [[ -d "$legacy" && ! -e "$toolchains/$(basename "$legacy")" ]]; then
+			mv "$legacy" "$toolchains/"
+		fi
+	done
+fi
+export HOME="$runtime" CFFIXED_USER_HOME="$runtime" SWIFTLY_HOME_DIR="$swiftly_home" SWIFTLY_BIN_DIR="$swiftly_bin"
+export SWIFTLY_TOOLCHAINS_DIR="$toolchains"
+export TMPDIR="$root/downloads"
+mkdir -p "$TMPDIR"
+
+if [[ ! -x "$swiftly_bin/swiftly" ]]; then
+	"$swiftly_source" init --no-modify-profile --skip-install --assume-yes
+fi
+swiftly="$swiftly_bin/swiftly"
+"$swiftly" install "$oldest" --assume-yes
+"$swiftly" install "$current" --assume-yes
+
+swift_for() {
+	local minor="$1" path
+	path="$(find "$runtime/Library/Developer/Toolchains" -path "*/swift-${minor}*-RELEASE.xctoolchain/usr/bin/swift" -print -quit 2>/dev/null)"
+	[[ -x "$path" ]] || { printf 'Missing Swift %s toolchain after installation.\n' "$minor" >&2; return 1; }
+	printf '%s\n' "$path"
+}
+
+install_swiftorg_sdk() {
+	local compiler="$1" platform="$2" metadata sdk_version checksum tag lower_tag kind sdk_name url
+	local swift sdk_id
+	swift="$(swift_for "$compiler")"
+	local sdk_home="$root/sdk/$compiler"
+	mkdir -p "$sdk_home"
+	metadata="$(python3 - "$compiler" "$platform" <<'PY'
+import json, sys, urllib.request
+version, platform = sys.argv[1:]
+with urllib.request.urlopen('https://www.swift.org/api/v1/install/releases.json') as response:
+    releases = json.load(response)
+tag = f'swift-{version}-RELEASE'
+release = next(item for item in releases if item.get('tag') == tag)
+sdk = next(item for item in release['platforms'] if item.get('platform') == platform)
+print(sdk.get('version') or '-', sdk['checksum'])
+PY
+ )"
+	read -r sdk_version checksum <<< "$metadata"
+	tag="swift-${compiler}-RELEASE"
+	lower_tag="$(printf '%s' "$tag" | tr '[:upper:]' '[:lower:]')"
+	case "$platform" in
+		static-sdk) kind=static-sdk; sdk_name="static-linux-${sdk_version}" ;;
+		wasm-sdk) kind=wasm-sdk; sdk_name=wasm ;;
+		android-sdk) kind=android-sdk; sdk_name=android ;;
+	esac
+	url="https://download.swift.org/${lower_tag}/${kind}/${tag}/${tag}_${sdk_name}.artifactbundle.tar.gz"
+	sdk_id="$(basename "$url" .artifactbundle.tar.gz | tr '[:upper:]' '[:lower:]')"
+	if ! HOME="$sdk_home" CFFIXED_USER_HOME="$sdk_home" "$swift" sdk list 2>/dev/null | grep -Eiq "^${sdk_id}$"; then
+		HOME="$sdk_home" CFFIXED_USER_HOME="$sdk_home" "$swift" sdk install "$url" --checksum "$checksum"
+	else
+		printf 'SDK already installed for Swift %s: %s\n' "$compiler" "$sdk_id"
+	fi
+}
+
+for compiler in "$current" "$oldest"; do
+	install_swiftorg_sdk "$compiler" static-sdk
+done
+oldest_minor="${oldest%.*}"
+
+# The current compiler receives the official WASI and Android SDK bundles.
+for platform in wasm-sdk android-sdk; do
+	install_swiftorg_sdk "$current" "$platform"
+done
+if [[ "$oldest_minor" != "6.1" ]]; then
+	for platform in wasm-sdk android-sdk; do
+		install_swiftorg_sdk "$oldest" "$platform"
+	done
+fi
+
+# Swift 6.1 WASI uses the upstream SwiftWasm SDK-only distribution.
+swift="$(swift_for "$oldest")"
+if [[ "$oldest_minor" == "6.1" ]]; then
+wasm_meta="$(python3 - "$swift" <<'PY'
+import json, re, subprocess, sys, urllib.request
+line = subprocess.check_output([sys.argv[1], '--version'], text=True).splitlines()[0]
+version = re.search(r'\b6\.1(?:\.\d+)?\b', line).group(0)
+release = '.'.join(version.split('.')[:2])
+base = 'https://raw.githubusercontent.com/swiftwasm/swift-sdk-index/main/v1/'
+with urllib.request.urlopen(base + 'tag-by-version.json') as response:
+    tags = json.load(response)
+tag = next((values[-1] for key, values in tags.items() if f'swift-{release}-RELEASE' in key and values), None)
+if not tag:
+    raise SystemExit('No SwiftWasm SDK is indexed for ' + line)
+with urllib.request.urlopen(base + 'builds/' + tag + '.json') as response:
+    sdk = json.load(response)['swift-sdks']['wasm32-unknown-wasi']
+print(sdk['id'], sdk['url'], sdk['checksum'])
+PY
+ )"
+read -r wasm_id wasm_url wasm_checksum <<< "$wasm_meta"
+sdk_home="$root/sdk/$oldest"
+mkdir -p "$sdk_home"
+if ! HOME="$sdk_home" CFFIXED_USER_HOME="$sdk_home" "$swift" sdk list 2>/dev/null | grep -Eiq "^${wasm_id}$"; then
+	HOME="$sdk_home" CFFIXED_USER_HOME="$sdk_home" "$swift" sdk install "$wasm_url" --checksum "$wasm_checksum"
+else
+	printf 'SDK already installed for Swift %s: %s\n' "$oldest" "$wasm_id"
+fi
+fi
+
+# Swift 6.1 Android uses the public SkipTools compatibility SDK release.
+android_file="$root/downloads/swift-6.1-android.artifactbundle.tar.gz"
+if [[ "$oldest_minor" == "6.1" ]]; then
+python3 - "$android_file" <<'PY'
+import json, sys, urllib.request
+api = 'https://api.github.com/repos/skiptools/swift-android-toolchain/releases/tags/6.1'
+request = urllib.request.Request(api, headers={'Accept':'application/vnd.github+json','User-Agent':'spichecks'})
+with urllib.request.urlopen(request) as response:
+    release = json.load(response)
+asset = next((a for a in release.get('assets', []) if 'swift-6.1-RELEASE-android-24-0.1.artifactbundle.tar.gz' in a['name']), None)
+if not asset:
+    raise SystemExit('The public Swift 6.1 Android SDK release asset was not found.')
+request = urllib.request.Request(asset['browser_download_url'], headers={'User-Agent':'spichecks'})
+with urllib.request.urlopen(request) as response, open(sys.argv[1], 'wb') as output:
+    output.write(response.read())
+PY
+swift="$(swift_for "$oldest")"
+sdk_home="$root/sdk/$oldest"
+mkdir -p "$sdk_home"
+HOME="$sdk_home" CFFIXED_USER_HOME="$sdk_home" "$swift" sdk install "$android_file"
+rm -f "$android_file"
+fi
+
+# Android 6.4's official SDK requires NDK 30.
+ndk="$root/android-ndk-r30"
+if [[ ! -d "$ndk" ]]; then
+	archive="$root/downloads/android-ndk-r30-darwin.zip"
+	curl -fL --retry 3 "https://dl.google.com/android/repository/android-ndk-r30-darwin.zip" -o "$archive"
+	mkdir -p "$root/ndk-extract"
+	ditto -x -k "$archive" "$root/ndk-extract"
+	mv "$root/ndk-extract/android-ndk-r30" "$ndk"
+	rm -rf "$root/ndk-extract" "$archive"
+fi
+
+for toolchain in "$runtime"/Library/Developer/Toolchains/*.xctoolchain; do
+	[[ -d "$toolchain" ]] || continue
+	ln -sfn "$toolchain" "$root/toolchains/$(basename "$toolchain")"
+done
+mkdir -p "$root/bin"
+cp "$source_dir/spichecks" "$source_dir/spichecks-install" "$root/bin/"
+chmod +x "$root/bin/spichecks" "$root/bin/spichecks-install"
+printf '\nInstalled Swift toolchains and cross-platform SDKs under %s\n' "$root"
+printf 'Compiler versions: %s and %s\n' "$oldest" "$current"
+printf 'Android NDK path: %s\n' "$ndk"
+printf 'Swiftly command: %s\n' "$swiftly"
+printf 'Update Swiftly with: %s self-update\n' "$swiftly"
+printf 'Add Swiftly to this shell with: export PATH=%s:$PATH\n' "$swiftly_bin"
+printf 'No Apple ID, GitHub token, Docker, or Linux VM was used.\n'

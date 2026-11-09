@@ -59,7 +59,7 @@ private struct BackportDisclosureGroupView<Label: View, GroupContent: View>: Vie
 					label()
 					Backport.Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
 						.font(.caption.weight(.semibold))
-						.accessibilityHidden(true)
+						.backport.accessibilityHidden(true)
 				}
 				.contentShape(Rectangle())
 			}

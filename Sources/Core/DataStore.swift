@@ -676,7 +676,7 @@ class DataStoreTestModel: ObservableObject {
 extension DataStoreTestModel {
     @MainActor
     internal static let tests: [TestCase] = [
-        TestCase("DataStore module version and timestamp properties") { @MainActor in
+		TestCase("DataStore module version and timestamp properties", executionMode: .parallel) { @MainActor in
             guard DataStoreType.iCloud.shared.isLocal else { return }
 
             let defaults = UserDefaults.standard

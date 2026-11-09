@@ -1,5 +1,21 @@
 # Changelog
 
+TODO: Add test coverage for SafeArea and Pasteboard.
+
+## v1.21.4 2026-11-09
+Added a reusable Swift Package Index compatibility check command (designed for my personal environment but could be adapted to be more generic with a configuration if someone else wants to use it - it's purely optional so tracked here to help pre-check to have more confidence that SPI checks will pass since they often take days now).
+Fixed SPI errors for older devices with older build targets.
+Added additional `accessibilityHidden` and `help` modifier fallbacks for older SwiftUI targets.
+Made more tests run in parallel.
+Guard SwiftUI-only test registration and make the unused Glibc import optional for Static Linux SDKs.
+Avoid duplicate OperatingSystemVersion conformances already supplied by Android Foundation.
+Backport safe-area inset edge types so the API remains available before macOS 12, and preserve leading/trailing safe-area support for foldable layouts.
+Gate Scene helpers at their native introduction versions.
+Use existing Backport view modifiers in legacy list, disclosure, and menu layouts so their minimum deployment targets remain buildable.
+Reduce Backport test scrolling to one motion with a conditional correction, and skip an unnecessary final toggle reset.
+Add a dependent-package wrapper that runs the SPI checker matching the resolved Compatibility version.
+Guard iCloud test registration and navigation fallbacks at their watchOS availability floors.
+
 ## v1.21.3 2026-10-27
 Added Angle type available before/without SwiftUI.
 Added instructions and fixes for Xcode 27.

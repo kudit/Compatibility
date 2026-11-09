@@ -31,8 +31,11 @@ The primary goals are to be easily maintainable by multiple individuals, employ 
 - visionOS 1.0+
 - Theoretically should work with Linux, Windows, and Vapor, but haven't fully tested.  If you would like to help, please let us know.
 
-Older systems use English ordinals and Emoji 3.0 classification where the native APIs are unavailable. `BackportOutputFormatting` provides recursive sorted keys, pretty printing, and unescaped slashes on older systems and without Foundation; `asJSON` uses native formatting when available. For older Intel Macs, build an `x86_64` executable with the desired deployment target and bundle the required Swift runtime libraries; the target Mac does not need the compiler used to build it.
+## Local SPI Build Checks
 
+Run `./spichecks` from this repository to build the local Swift Package Index platform/toolchain matrix. To use the same checker from a dependent package, copy `spichecks-wrapper` to that package's root and run `./spichecks-wrapper`. It reads the resolved Compatibility version from `Package.resolved` and downloads the matching checker scripts from the corresponding `vX.Y.Z` tag. If the package does not have a resolved Compatibility pin, set `SPI_COMPATIBILITY_VERSION=X.Y.Z`. Toolchains and SDKs are shared under `/Applications/SPI`.
+
+Older systems use English ordinals and Emoji 3.0 classification where the native APIs are unavailable. `BackportOutputFormatting` provides recursive sorted keys, pretty printing, and unescaped slashes on older systems and without Foundation; `asJSON` uses native formatting when available. For older Intel Macs, build an `x86_64` executable with the desired deployment target and bundle the required Swift runtime libraries; the target Mac does not need the compiler used to build it.
 
 Run `Development/LegacyTests/run.sh` on a development Mac to build and execute the synchronous JSON regression checks targeting Intel macOS 10.10. The same checks run in the module test catalog. To verify deployment, run the resulting executable on the older Mac with its required Swift runtime libraries. Set `COMPATIBILITY_LEGACY_OUTPUT` to choose where to keep the executable.
 

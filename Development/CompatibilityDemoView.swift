@@ -263,29 +263,20 @@ struct BackportShowcaseView: View {
     private let colors: [Color] = [.red, .orange, .yellow, .green, .blue, .purple]
 
     var body: some View {
+        GeometryReader { geometry in
+            backportContent(width: geometry.size.width)
+        }
+    }
+
+    @ViewBuilder
+    private func backportContent(width: CGFloat) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                Backport.GroupBox("Backport.TabView") {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("This example uses Compatibility's Backport.TabView without a selection binding. On current platforms it displays the native SwiftUI TabView; the backport also supplies a usable fallback on older systems such as watchOS 6.")
-                            .font(.caption)
-							.backport.foregroundStyle(Color.gray)
-
-                        Backport.TabView {
-                            Text("First unbound tab")
-                                .tabItem { Text("First") }
-                            Text("Second unbound tab")
-                                .tabItem { Text("Second") }
-                        }
-                        .frame(height: 72)
-                    }
-                    .padding()
-                }
-
                 Backport.GroupBox("Selection-bound Backport.TabView") {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("This version supplies a Binding. The button changes the selected tag programmatically so you can see that the same backported container participates in SwiftUI selection state.")
                             .font(.caption)
+                            .fixedSize(horizontal: false, vertical: true)
 							.backport.foregroundStyle(Color.gray)
 
                         Backport.TabView(selection: $backportSelection) {
@@ -301,12 +292,29 @@ struct BackportShowcaseView: View {
                         HStack {
                             Text("Bound selection: \(backportSelection)")
                                 .backport.accessibilityIdentifier("backport.selection.status")
-                            Spacer()
                             Button("Select \(backportSelection == 0 ? "one" : "zero")") {
                                 backportSelection = backportSelection == 0 ? 1 : 0
                             }
                             .backport.accessibilityIdentifier("backport.selection.toggle")
                         }
+                    }
+                    .padding()
+                }
+
+                Backport.GroupBox("Backport.TabView") {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("This example uses Compatibility's Backport.TabView without a selection binding. On current platforms it displays the native SwiftUI TabView; the backport also supplies a usable fallback on older systems such as watchOS 6.")
+                            .font(.caption)
+                            .fixedSize(horizontal: false, vertical: true)
+							.backport.foregroundStyle(Color.gray)
+
+                        Backport.TabView {
+                            Text("First unbound tab")
+                                .tabItem { Text("First") }
+                            Text("Second unbound tab")
+                                .tabItem { Text("Second") }
+                        }
+                        .frame(height: 72)
                     }
                     .padding()
                 }
@@ -343,50 +351,12 @@ struct BackportShowcaseView: View {
                     .padding()
                     .backport.background(.tertiary)
                 }
-
-                Backport.GroupBox("Backported scrollDisabled") {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("The numbered items are simply a horizontal scrolling strip. Toggle scrolling off and on to exercise Compatibility's scrollDisabled backport while confirming the content itself is unchanged.")
-                            .font(.caption)
-							.backport.foregroundStyle(Color.gray)
-
-                        Toggle("Disable numbered-strip scrolling", isOn: $backportScrollDisabled)
-                            .backport.onChange(of: backportScrollDisabled) {
-                                onChangeActionStatus = backportScrollDisabled ? "scrolling disabled" : "scrolling enabled"
-                            }
-                            .backport.onChange(of: backportScrollDisabled) { oldValue, newValue in
-                                onChangeTransitionStatus = "\(oldValue) → \(newValue)"
-                            }
-                            .backport.accessibilityIdentifier("backport.scroll.toggle")
-                        Text("Backport onChange action: \(onChangeActionStatus)")
-                            .backport.accessibilityIdentifier("backport.onChange.action")
-                        Text("Backport onChange values: \(onChangeTransitionStatus)")
-                            .backport.accessibilityIdentifier("backport.onChange.values")
-
-                        ScrollView(.horizontal) {
-                            HStack {
-                                ForEach(0..<12) { index in
-                                    Text("\(index)")
-                                        .frame(size: 32)
-                                        .background(colors[nth: index].opacity(0.25))
-                                        .backport.accessibilityIdentifier("backport.scroll.item.\(index)")
-                                }
-                            }
-                        }
-                        .backport.accessibilityIdentifier("backport.scroll.strip")
-                        // Keep the viewport deliberately narrower than the numbered content so enabled
-                        // and disabled scrolling are both visually obvious and mechanically testable.
-                        .frame(width: 220, height: 40, alignment: .leading)
-                        .backport.scrollDisabled(backportScrollDisabled)
-                    }
-                    .padding()
-                }
                 
                 // This gallery intentionally displays several modifiers together. The UI test only
                 // needs to render the screen to execute these compatibility branches on macOS.
                 Backport.GroupBox("Backport modifier gallery") {
                     VStack(alignment: .leading, spacing: 10) {
-                        HStack(alignment: .top, spacing: 20) {
+                        AStack(alignment: .topOrLeading, spacing: 20) {
                             VStack(alignment: .leading) {
                                 Text("Native / Backport")
                                     .font(.caption)
@@ -400,7 +370,7 @@ struct BackportShowcaseView: View {
                         }
                         .accessibilityElement(children: .contain)
                         .backport.accessibilityIdentifier("backport.labeledContent.gallery")
-                        HStack(alignment: .top, spacing: 20) {
+                        AStack(alignment: .topOrLeading, spacing: 20) {
                             Backport.GroupBox("Native GroupBox") {
                                 Text("The platform's native group container.")
                             }
@@ -413,7 +383,7 @@ struct BackportShowcaseView: View {
                         .backport.accessibilityIdentifier("backport.groupBox.gallery")
                         Text("AsyncImage fallback probe")
                             .backport.accessibilityIdentifier("backport.asyncImage")
-                        HStack(alignment: .top, spacing: 20) {
+                        AStack(alignment: .topOrLeading, spacing: 20) {
                             VStack {
                                 Text("Native / Backport")
                                     .font(.caption)
@@ -459,8 +429,47 @@ struct BackportShowcaseView: View {
                     .padding()
                 }
 
+                Backport.GroupBox("Backported scrollDisabled") {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("The numbered items are simply a horizontal scrolling strip. Toggle scrolling off and on to exercise Compatibility's scrollDisabled backport while confirming the content itself is unchanged.")
+                            .font(.caption)
+                            .backport.foregroundStyle(Color.gray)
+
+                        Toggle("Disable numbered-strip scrolling", isOn: $backportScrollDisabled)
+                            .backport.onChange(of: backportScrollDisabled) {
+                                onChangeActionStatus = backportScrollDisabled ? "scrolling disabled" : "scrolling enabled"
+                            }
+                            .backport.onChange(of: backportScrollDisabled) { oldValue, newValue in
+                                onChangeTransitionStatus = "\(oldValue) → \(newValue)"
+                            }
+                            .backport.accessibilityIdentifier("backport.scroll.toggle")
+                        Text("Backport onChange action: \(onChangeActionStatus)")
+                            .backport.accessibilityIdentifier("backport.onChange.action")
+                        Text("Backport onChange values: \(onChangeTransitionStatus)")
+                            .backport.accessibilityIdentifier("backport.onChange.values")
+
+                        ScrollView(.horizontal) {
+                            HStack {
+                                ForEach(0..<12) { index in
+                                    Text("\(index)")
+                                        .frame(size: 32)
+                                        .background(colors[nth: index].opacity(0.25))
+                                        .backport.accessibilityIdentifier("backport.scroll.item.\(index)")
+                                }
+                            }
+                        }
+                        .backport.accessibilityIdentifier("backport.scroll.strip")
+                        // Keep the viewport deliberately narrower than the numbered content so enabled
+                        // and disabled scrolling are both visually obvious and mechanically testable.
+                        .frame(width: 220, height: 40, alignment: .leading)
+                        .backport.scrollDisabled(backportScrollDisabled)
+                    }
+                    .padding()
+                }
+
             }
             .padding()
+            .frame(width: width, alignment: .leading)
         }
     }
 }

@@ -17,7 +17,7 @@
 import Darwin
 #elseif canImport(Android)
 import Android
-#elseif os(Linux)
+#elseif os(Linux) && canImport(Glibc)
 import Glibc
 #endif
 

@@ -1,0 +1,695 @@
+#!/usr/bin/env bash
+
+# Run local Swift Package Index style build checks from a package root.
+# SwiftPM build logs stay in the system temporary directory and are removed on exit.
+# Examples:
+#   ./spichecks --utm
+#   SPI_SWIFT_VERSIONS=6.1.3 SPI_PLATFORMS=watchOS ./spichecks --utm
+#   ./spichecks --utm /path/to/package
+# The second example runs only Swift 6.1.3's watchOS build in UTM; --utm skips host builds.
+
+# Run `./spichecks` from the repository root to build only, using Swift 6.1 and 6.4, across macOS, iOS, tvOS, watchOS, visionOS, Linux, WASI, and Android. The first run provisions reusable toolchains and SDKs under `/Applications/SPI`; use `./spichecks --install` to install or repair them directly, `./spichecks --list` to inspect them, and `./spichecks --uninstall` to remove that folder. The installer requires at least 15 GiB of filesystem-reported free space for SDKs and temporary downloads; Finder may show more available space because it includes purgeable caches and snapshots. Apple builds use the matching Xcode release (Xcode 16.3 for Swift 6.1 and Xcode 27.2 for Swift 6.4); download missing Xcode versions from `https://developer.apple.com/download/all`, then set `SPI_XCODE_6_1` or `SPI_XCODE_6_4` to a nonstandard Xcode Developer directory. Apple matrix cells are skipped when their matching Xcode is unavailable. Linux uses the Static Linux SDK (musl) and targets the host architecture (aarch64 on Apple Silicon); this is a cross-compile approximation rather than SPI's native Linux/glibc build. Set `SPI_LINUX_TRIPLE` to override the target triple. The installer needs an administrator password only to create or take ownership of `/Applications/SPI`; public toolchain and SDK downloads do not require Apple or GitHub credentials. Build output is captured in temporary files that are removed when the command exits; progress, failures, warnings, errors, and notes from this package are reported in the terminal. PASS is green, FAIL and errors red, warnings yellow, and notes/notices blue. Colors are automatic for terminals and can be set with `SPI_COLOR=always|never`; `NO_COLOR=1` disables them. Missing matrix cells are reported and make the command exit unsuccessfully. For another package, run `/Applications/SPI/bin/spichecks /path/to/package` after provisioning. Copy `spichecks-wrapper` into a dependent package to fetch the runner matching its resolved Compatibility version; use `SPI_COMPATIBILITY_VERSION` when there is no checked-out Compatibility pin.
+#
+# Plain `./spichecks` runs the native Swift 6.4.2 matrix first, then Swift 6.1.3 Linux/WASI/Android cross-builds, then Swift 6.1.3 Apple builds in the Sequoia UTM VM. A failed build stops the sequence; warnings and notes are reported but do not stop it. The VM defaults to `/Users/ben/Temp/Virtual Machines/macOS 15.8.2 Torrent Config.utm`; for this VM the script connects as `media@VirtualUTM.local` when Bonjour resolves the guest, then falls back to an IP reported by `utmctl` if DNS is unavailable. It uses `~/.ssh/spichecks_utm` automatically when present. Set `SPI_UTM_BUNDLE`, `SPI_UTM_VM`, `SPI_UTM_USER`, `SPI_UTM_HOSTNAME`, `SPI_UTM_IP`, or `SPI_UTM_SSH_TARGET` to override these defaults. Use `SPI_SKIP_UTM=1` to run only the native stages or `SPI_RUN_LOCAL_ONLY=1 SPI_SWIFT_VERSIONS=6.4.2 ./spichecks` for one local matrix.
+#
+# Before the first VM check, enable Remote Login in Sequoia and add a host SSH public key to the `media` account. A manual SSH login that asks for a password confirms network access, but `spichecks` uses noninteractive SSH and requires the key to be authorized and available to `ssh-agent`/Keychain. `utmctl start --hide` hides UTM's main window; a VM with a Display device still opens a guest window and is not truly headless. For headless operation, shut down the VM and remove its Display device and any Built-in Terminal serial device in UTM settings. UTM itself must remain open to control the guest. The host syncs the selected toolchain and a temporary source copy over SSH/rsync, streams the actual build output and diagnostics to the terminal, and removes the source copy after a normal run. Swift 6.1.3 currently uses about 5.2 GiB under `~/SPI` in the guest, plus 3 GiB of free space for build scratch. The VM remains running for quicker repeat checks.
+#
+# For a dedicated host key, run `ssh-keygen -t ed25519 -f ~/.ssh/spichecks_utm -C spichecks-utm`, then add this host entry to `~/.ssh/config`:
+#
+# ```sshconfig
+# Host VirtualUTM.local
+#     User media
+#     IdentityFile ~/.ssh/spichecks_utm
+#     IdentitiesOnly yes
+#     AddKeysToAgent yes
+#     UseKeychain yes
+# ```
+#
+# Then install the public key in the guest and verify passwordless SSH:
+#
+# ```sh
+# chmod 600 ~/.ssh/config
+# ssh-add --apple-use-keychain ~/.ssh/spichecks_utm
+# cat ~/.ssh/spichecks_utm.pub | ssh -o ConnectTimeout=8 -i ~/.ssh/spichecks_utm media@VirtualUTM.local 'mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys && chmod 700 ~/.ssh && chmod 600 ~/.ssh/authorized_keys'
+# ssh -o ConnectTimeout=8 -i ~/.ssh/spichecks_utm media@VirtualUTM.local true
+# ```
+#
+# The key install asks for the `media` account password once. To make the VM headless, shut it down, select it in UTM, open its settings, remove the device under **Display**, and save. With no Display device, UTM runs the guest without a VM display window while it remains reachable over SSH.
+
+
+set -uo pipefail
+
+root="${SPI_INSTALL_ROOT:-/Applications/SPI}"
+color_enabled=0
+if [[ -z "${NO_COLOR:-}" ]]; then
+	case "${SPI_COLOR:-auto}" in
+		always) color_enabled=1 ;;
+		auto) [[ -t 1 && "${TERM:-dumb}" != dumb ]] && color_enabled=1 ;;
+		never) color_enabled=0 ;;
+		*) printf 'Invalid SPI_COLOR value: %s (use auto, always, or never).\n' "$SPI_COLOR" >&2; exit 2 ;;
+	esac
+fi
+if (( color_enabled )); then
+	red=$'\033[31m'
+	yellow=$'\033[33m'
+	blue=$'\033[34m'
+	green=$'\033[32m'
+	reset=$'\033[0m'
+else
+	red=''
+	yellow=''
+	blue=''
+	green=''
+	reset=''
+fi
+
+colorize_stream() {
+	local line lowered color
+	while IFS= read -r line; do
+		lowered="$(printf '%s' "$line" | tr '[:upper:]' '[:lower:]')"
+		color=''
+		case "$lowered" in
+			*error*|*fail*|*permission\ denied*|*operation\ not\ available*|*timed\ out*) color="$red" ;;
+			*warning*) color="$yellow" ;;
+			*note*|*notice*|*info*) color="$blue" ;;
+			*pass*) color="$green" ;;
+		esac
+		printf '%s%s%s\n' "$color" "$line" "$reset"
+	done
+}
+
+print_note() {
+	printf '%s%s%s\n' "$blue" "$*" "$reset"
+}
+
+run_with_heartbeat() {
+	local label="$1" pid elapsed status
+	shift
+	"$@" &
+	pid=$!
+	elapsed=0
+	while kill -0 "$pid" 2>/dev/null; do
+		sleep 2
+		if kill -0 "$pid" 2>/dev/null; then
+			elapsed=$((elapsed + 2))
+			if (( elapsed >= 30 )); then
+				print_note "$label still running ($elapsed seconds elapsed)."
+				elapsed=0
+			fi
+		fi
+	done
+	wait "$pid"
+	status=$?
+	if (( status == 0 )); then
+		printf '%sCompleted%s %s.\n' "$green" "$reset" "$label"
+	else
+		printf '%sFailed%s %s (exit %d).\n' "$red" "$reset" "$label" "$status" >&2
+	fi
+	return "$status"
+}
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+	cat <<'EOF'
+Usage: ./spichecks [--utm] [package-directory]
+       ./spichecks [--install|--uninstall|--list|--help]
+
+Examples:
+  ./spichecks --utm
+  SPI_SWIFT_VERSIONS=6.1.3 SPI_PLATFORMS=watchOS ./spichecks --utm
+  ./spichecks --utm /path/to/package
+
+Usage: ./spichecks [package-directory]
+No package path: use the directory containing this script. Otherwise target that package.
+No argument: run native Swift 6.4.2 builds, then native Swift 6.1.3 cross-SDK
+builds, then Swift 6.1.3 Apple builds in the configured headless UTM VM.
+Builds only; no package tests. Warnings and notes do not stop the matrix.
+--utm        Run only the configured UTM VM's selected Swift/platform builds.
+--install    Install or repair shared toolchains and SDKs under /Applications/SPI.
+--uninstall  Prompt before removing /Applications/SPI.
+--list       Show provisioned compiler and SDK contents.
+SPI_COLOR=auto|always|never controls ANSI colors; NO_COLOR disables them.
+SPI_UTMCTL_TIMEOUT=seconds sets the per-command UTM CLI timeout (default 30).
+SPI_UTM_READY_WAIT_SECONDS sets the wait for UTM's scripting interface (default 60).
+SPI_UTM_SSH_WAIT_SECONDS sets how long to wait for guest SSH (default 180; 90 after a utmctl timeout).
+
+The default VM is the Sequoia UTM bundle configured by SPI_UTM_BUNDLE. The
+guest is reached as media@VirtualUTM.local by default. Set SPI_UTM_VM,
+SPI_UTM_USER, or SPI_UTM_SSH_TARGET to override those defaults.
+EOF
+	exit 0
+fi
+
+run_utm() {
+	local package_dir="$1" utm_bundle="${SPI_UTM_BUNDLE:-/Users/ben/Temp/Virtual Machines/macOS 15.8.2 Torrent Config.utm}"
+	local vm_name="${SPI_UTM_VM:-}" ssh_target="${SPI_UTM_SSH_TARGET:-}"
+	local utmctl="${SPI_UTMCTL:-}" ssh_key="${SPI_UTM_SSH_KEY:-}" ssh_port="${SPI_UTM_SSH_PORT:-22}" guest_home guest_root remote_dir display_devices ready_output ready_status ready_deadline ip_retry_at=0 ip_output ssh_host_fallback=0
+	local versions platforms ip="" guest_mac lease_record lease_epoch attempt rsync_ssh toolchain_kb guest_free_kb guest_df toolchain_cached required_kb default_user sync_label ssh_wait_seconds ssh_deadline
+	local vm_status start_output start_status last_ssh_error ssh_status utm_status start_diagnostic=""
+	local -a ssh_args
+	utmctl_call() {
+		local timeout="${SPI_UTMCTL_TIMEOUT:-30}"
+		if [[ "${1:-}" == "--timeout" ]]; then
+			timeout="$2"
+			shift 2
+		fi
+		python3 - "$utmctl" "$timeout" "$@" <<'PY'
+import subprocess
+import sys
+
+command = [sys.argv[1], *sys.argv[3:]]
+try:
+    result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                            text=True, timeout=float(sys.argv[2]))
+    sys.stdout.write(result.stdout)
+    raise SystemExit(result.returncode)
+except subprocess.TimeoutExpired as error:
+    output = error.stdout or ""
+    if isinstance(output, bytes):
+        output = output.decode(errors="replace")
+    sys.stdout.write(output)
+    print(f"error: utmctl {' '.join(command[1:])} did not respond within {sys.argv[2]} seconds")
+    raise SystemExit(124)
+except OSError as error:
+    print(f"error: could not run utmctl: {error}")
+    raise SystemExit(127)
+PY
+	}
+	if [[ -z "$vm_name" ]]; then
+		if [[ -f "$utm_bundle/config.plist" ]]; then
+			vm_name="$(plutil -extract Information.UUID raw -o - "$utm_bundle/config.plist" 2>/dev/null || true)"
+		fi
+		if [[ -z "$vm_name" ]]; then
+			printf 'Cannot identify the UTM VM. Check SPI_UTM_BUNDLE or set SPI_UTM_VM to its registered UUID.\n' >&2
+			return 2
+		fi
+	fi
+	display_devices="$(plutil -extract Display json -o - "$utm_bundle/config.plist" 2>/dev/null || true)"
+	if [[ -n "$display_devices" && "$display_devices" != '[]' ]]; then
+		print_note 'UTM VM has a Display device. `utmctl start --hide` hides UTM’s main window, but a VM with a Display device is not fully headless.'
+	fi
+	if [[ -z "$utmctl" ]]; then
+		if command -v utmctl >/dev/null 2>&1; then utmctl="$(command -v utmctl)"
+		elif [[ -x /Applications/UTM.app/Contents/MacOS/utmctl ]]; then utmctl=/Applications/UTM.app/Contents/MacOS/utmctl
+		fi
+	fi
+	if [[ -z "$utmctl" || ! -x "$utmctl" ]]; then
+		printf 'Cannot find utmctl. Install UTM or set SPI_UTMCTL to its command-line tool.\n' >&2
+		return 2
+	fi
+	if ! command -v ssh >/dev/null 2>&1 || ! command -v rsync >/dev/null 2>&1; then
+		printf 'UTM checks require the host ssh and rsync commands.\n' >&2
+		return 2
+	fi
+	if [[ -z "$ssh_key" && -f "$HOME/.ssh/spichecks_utm" ]]; then ssh_key="$HOME/.ssh/spichecks_utm"; fi
+	versions="${SPI_SWIFT_VERSIONS:-6.1.3}"
+	platforms="${SPI_PLATFORMS:-macOS iOS tvOS watchOS visionOS}"
+	# UTM must be running to control the guest; -g launches the app without foregrounding it.
+	if ! pgrep -x UTM >/dev/null 2>&1; then
+		open -gj -a "${SPI_UTM_APP:-/Applications/UTM.app}" || return 2
+	fi
+	# A Dock icon only confirms that macOS launched UTM. Wait until its AppleScript
+	# interface answers before asking it to start the VM, avoiding startup-race timeouts.
+	printf 'Waiting for UTM scripting interface...\n'
+	ready_deadline=$((SECONDS + ${SPI_UTM_READY_WAIT_SECONDS:-60}))
+	ready_status=1
+	ready_output=''
+	while (( SECONDS < ready_deadline )); do
+		ready_output="$(utmctl_call --timeout 5 list 2>&1)"
+		ready_status=$?
+		if (( ready_status == 0 )); then break; fi
+		sleep 2
+	done
+	if (( ready_status != 0 )); then
+		printf '%sUTM did not become ready to receive scripting commands within %s seconds.%s\n' "$red" "${SPI_UTM_READY_WAIT_SECONDS:-60}" "$reset" >&2
+		[[ -n "$ready_output" ]] && printf '%s\n' "$ready_output" | colorize_stream >&2
+		printf 'Confirm UTM has finished launching and macOS allows this terminal to control UTM in Privacy & Security > Automation, then retry.\n' >&2
+		return 2
+	fi
+	vm_status="$(utmctl_call status "$vm_name" 2>&1)"
+	utm_status=$?
+	if printf '%s\n' "$vm_status" | grep -Eiq '(^|[[:space:]])started([[:space:]]|$)'; then
+		print_note "UTM VM $vm_name is already running."
+	else
+		if (( utm_status == 124 )); then
+			print_note 'UTM did not answer its status request; attempting a hidden start and checking guest SSH directly.'
+		fi
+		printf 'Starting UTM VM %s...\n' "$vm_name"
+		start_output="$(utmctl_call start --hide "$vm_name" 2>&1)"
+		start_status=$?
+		if printf '%s\n' "$start_output" | grep -Eiq 'OSStatus error -10004|privilege violation'; then
+			start_diagnostic="$start_output"
+			printf '%sUTM returned AppleEvent privilege error (-10004) while starting the VM. Checking guest SSH in case it started anyway.%s\n' "$red" "$reset" >&2
+			printf '%s\n' "$start_output" | colorize_stream >&2
+			printf 'Allow the calling terminal to control UTM under System Settings > Privacy & Security > Automation.\n' >&2
+		elif (( start_status == 0 )); then
+			[[ -n "$start_output" ]] && printf '%s\n' "$start_output" | colorize_stream
+			print_note "UTM accepted the hidden start request for $vm_name; waiting for guest SSH."
+		elif printf '%s\n' "$start_output" | grep -Eiq 'OSStatus error -1712|timed out|did not respond'; then
+			start_diagnostic="$start_output"
+			print_note 'utmctl timed out while starting the VM; checking whether the guest nevertheless became reachable over SSH.'
+		else
+			printf '%sCould not start UTM VM %s.%s\n' "$red" "$vm_name" "$reset" >&2
+			[[ -n "$start_output" ]] && printf '%s\n' "$start_output" | colorize_stream >&2
+			return "$start_status"
+		fi
+	fi
+
+	ssh_args=(-o BatchMode=yes -o ConnectTimeout=3 -p "$ssh_port")
+	if [[ -n "$ssh_key" ]]; then ssh_args+=(-i "$ssh_key"); fi
+	default_user="${SPI_UTM_USER:-media}"
+	if [[ -z "$ssh_target" ]]; then
+		# Apple Virtualization can publish a reachable .local name while utmctl
+		# and the host DHCP lease file expose no guest IPv4 address.
+		if [[ -n "${SPI_UTM_HOSTNAME:-}" ]]; then
+			ssh_target="$default_user@${SPI_UTM_HOSTNAME}"
+		elif [[ -n "${SPI_UTM_IP:-}" ]]; then
+			ssh_target="$default_user@${SPI_UTM_IP}"
+		elif [[ "${utm_bundle##*/}" == "macOS 15.8.2 Torrent Config.utm" ]]; then
+			ssh_target="$default_user@VirtualUTM.local"
+			ssh_host_fallback=1
+		fi
+	fi
+	if [[ -z "$ssh_target" ]]; then
+		guest_mac="$(plutil -extract Network.0.MacAddress raw -o - "$utm_bundle/config.plist" 2>/dev/null || true)"
+		for ((attempt = 0; attempt < 180; attempt++)); do
+			ip=""
+			if [[ -n "$guest_mac" && -r /var/db/dhcpd_leases ]]; then
+				lease_record="$(awk -v mac="$guest_mac" 'BEGIN { RS="}" } index($0, "hw_address=1," mac) { print; exit }' /var/db/dhcpd_leases)"
+				if [[ "$lease_record" =~ ip_address=([0-9.]+) ]]; then ip="${BASH_REMATCH[1]}"; fi
+				if [[ "$lease_record" =~ lease=0x([[:xdigit:]]+) ]]; then
+					lease_epoch=$((16#${BASH_REMATCH[1]}))
+					if (( lease_epoch <= $(date +%s) )); then ip=""; fi
+				else
+					ip=""
+				fi
+			fi
+			if [[ -z "$ip" ]]; then
+				ip="$(utmctl_call ip-address "$vm_name" 2>/dev/null | awk 'match($0, /([0-9]{1,3}[.]){3}[0-9]{1,3}/) { ip=substr($0, RSTART, RLENGTH); if (ip !~ /^127[.]/ && ip !~ /^169[.]254[.]/) { print ip; exit } }')"
+			fi
+			[[ -n "$ip" ]] && break
+			sleep 2
+		done
+		if [[ -n "$ip" ]]; then ssh_target="$default_user@$ip"; fi
+	fi
+	if [[ -z "$ssh_target" ]]; then
+		printf 'UTM reports the VM started but no active guest IP was found. Check macOS Local Network permission for this terminal app and the VM network settings; SPI_UTM_SSH_TARGET can override the address.\n' >&2
+		return 2
+	fi
+	printf 'Waiting for passwordless SSH at %s...\n' "$ssh_target"
+	ssh_wait_seconds="${SPI_UTM_SSH_WAIT_SECONDS:-180}"
+	if [[ -n "$start_diagnostic" && -z "${SPI_UTM_SSH_WAIT_SECONDS:-}" ]]; then ssh_wait_seconds=90; fi
+	ssh_deadline=$((SECONDS + ssh_wait_seconds))
+	ssh_status=1
+	last_ssh_error=''
+	while (( SECONDS < ssh_deadline )); do
+		last_ssh_error="$(ssh "${ssh_args[@]}" "$ssh_target" true 2>&1)"
+		ssh_status=$?
+		if (( ssh_status == 0 )); then break; fi
+		if (( ssh_host_fallback )) && printf '%s\n' "$last_ssh_error" | grep -Eiq 'could not resolve hostname|nodename nor servname'; then
+			if (( SECONDS >= ip_retry_at )); then
+				ip_retry_at=$((SECONDS + 10))
+				ip_output="$(utmctl_call --timeout 5 ip-address "$vm_name" 2>&1)"
+				ip="$(printf '%s\n' "$ip_output" | awk 'match($0, /([0-9]{1,3}[.]){3}[0-9]{1,3}/) { address=substr($0, RSTART, RLENGTH); if (address !~ /^127[.]/ && address !~ /^169[.]254[.]/) { print address; exit } }')"
+				if [[ -n "$ip" ]]; then
+					ssh_target="$default_user@$ip"
+					ssh_host_fallback=0
+					# Keep the already trusted .local host key when connecting by its current IP.
+					ssh_args+=(-o HostKeyAlias=virtualutm.local)
+					print_note "VirtualUTM.local did not resolve; retrying SSH at UTM-reported guest IP $ip."
+				fi
+			fi
+		fi
+		if printf '%s\n' "$last_ssh_error" | grep -Eiq 'permission denied|no supported authentication methods|too many authentication failures|load key|passphrase'; then
+			printf '%sSSH reached the guest, but passwordless authentication failed. Install or load the spichecks key with this command:%s\n' "$red" "$reset" >&2
+			printf '%s\n' "cat ~/.ssh/spichecks_utm.pub | ssh media@VirtualUTM.local 'mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys && chmod 700 ~/.ssh && chmod 600 ~/.ssh/authorized_keys'"
+			printf '%sThen verify: ssh -o BatchMode=yes -i ~/.ssh/spichecks_utm media@VirtualUTM.local true%s\n' "$blue" "$reset"
+			printf '%s\n' "$last_ssh_error" | colorize_stream >&2
+			return 2
+		fi
+		sleep 2
+	done
+	if (( ssh_status != 0 )); then
+		printf '%sSSH did not become available at %s.%s\n' "$red" "$ssh_target" "$reset" >&2
+		[[ -n "$start_diagnostic" ]] && printf 'UTM start diagnostic:\n%s\n' "$start_diagnostic" | colorize_stream >&2
+		[[ -n "$last_ssh_error" ]] && printf '%s\n' "$last_ssh_error" | colorize_stream >&2
+		if (( ssh_host_fallback )); then
+			printf 'VirtualUTM.local did not resolve and UTM did not report a guest IP. Check guest networking and Remote Login; set SPI_UTM_IP or SPI_UTM_SSH_TARGET if the guest has a known address.\n' >&2
+		else
+			printf 'Open UTM and confirm the VM is running and Remote Login is enabled. If UTM reported -10004, allow this terminal to control UTM in Automation settings.\n' >&2
+		fi
+		return 2
+	fi
+
+	guest_home="$(ssh "${ssh_args[@]}" "$ssh_target" 'printf %s "$HOME"')" || return 2
+	guest_root="$guest_home/SPI"
+	remote_dir="/private/tmp/spichecks-$(id -u)-$$"
+	# Restrict transfer to the selected compiler; Xcode SDKs are already in the guest.
+	if [[ -n "${SPI_INSTALL_ROOT:-}" ]]; then root="$SPI_INSTALL_ROOT"; fi
+	if [[ ! -d "$root/runtime/Library/Developer/Toolchains" ]]; then
+		printf 'No host SPI toolchains found under %s. Install Swift %s here first or provision it in the VM.\n' "$root" "$versions" >&2
+		return 2
+	fi
+	local version toolchain
+	local -a version_list
+	read -r -a version_list <<< "${versions//,/ }"
+	# Quote the ssh command for rsync; the SSH target itself must be a normal user@host value.
+	rsync_ssh="ssh -o BatchMode=yes -p $ssh_port"
+	if [[ -n "$ssh_key" ]]; then rsync_ssh+=" -i '$ssh_key'"; fi
+	printf 'Syncing package to the VM and selected Swift toolchain(s) to %s...\n' "$guest_root"
+	ssh "${ssh_args[@]}" "$ssh_target" "mkdir -p '$guest_root/runtime/Library/Developer/Toolchains'" || return 2
+	for version in "${version_list[@]}"; do
+		toolchain="$root/runtime/Library/Developer/Toolchains/swift-${version}-RELEASE.xctoolchain"
+		if [[ ! -d "$toolchain" ]]; then
+			printf 'Missing host Swift %s toolchain at %s.\n' "$version" "$toolchain" >&2
+			return 2
+		fi
+		toolchain_kb="$(du -sk "$toolchain" | awk '{print $1}')"
+		toolchain_cached=0
+		ssh "${ssh_args[@]}" "$ssh_target" "test -x '$guest_root/runtime/Library/Developer/Toolchains/swift-${version}-RELEASE.xctoolchain/usr/bin/swift'" && toolchain_cached=1
+		required_kb=$((3 * 1024 * 1024))
+		(( toolchain_cached == 1 )) || required_kb=$((required_kb + toolchain_kb))
+		if ! guest_df="$(ssh "${ssh_args[@]}" "$ssh_target" "df -Pk '$guest_root'" 2>&1)"; then
+			printf '%sUnable to inspect guest disk space for %s.%s\n' "$red" "$guest_root" "$reset" >&2
+			printf '%s\n' "$guest_df" | colorize_stream >&2
+			return 2
+		fi
+		guest_free_kb="$(printf '%s\n' "$guest_df" | awk 'NR==2 {print $4}')"
+		if [[ ! "$guest_free_kb" =~ ^[0-9]+$ ]]; then
+			printf '%sCould not read available guest disk space for %s.%s\n' "$red" "$guest_root" "$reset" >&2
+			printf '%sGuest df output:%s\n%s\n' "$blue" "$reset" "$guest_df" >&2
+			return 2
+		fi
+		if (( guest_free_kb < required_kb )); then
+			printf '%sVM disk space is insufficient for Swift %s: guest reports %.1f GiB free; this sync needs %.1f GiB.%s\n' "$red" "$version" "$(awk -v k="$guest_free_kb" 'BEGIN {print k/1048576}')" "$(awk -v k="$required_kb" 'BEGIN {print k/1048576}')" "$reset" >&2
+			printf '%sGuest df output:%s\n%s\n' "$blue" "$reset" "$guest_df" >&2
+			return 2
+		fi
+		if (( toolchain_cached )); then
+			sync_label="Swift $version toolchain verification"
+		else
+			printf 'Syncing Swift %s toolchain (%.1f GiB)...\n' "$version" "$(awk -v k="$toolchain_kb" 'BEGIN {print k/1048576}')"
+			sync_label="Swift $version toolchain first sync"
+		fi
+		run_with_heartbeat "$sync_label" rsync -a --no-owner --no-group -e "$rsync_ssh" "$toolchain" "$ssh_target:$guest_root/runtime/Library/Developer/Toolchains/" || return 2
+		ssh "${ssh_args[@]}" "$ssh_target" "mkdir -p '$guest_root/sdk/$version/Library/org.swift.swiftpm/swift-sdks'" || return 2
+	done
+	ssh "${ssh_args[@]}" "$ssh_target" "mkdir -p '$remote_dir/package'" || return 2
+	run_with_heartbeat 'Package source sync' rsync -a --no-owner --no-group --exclude='/.git' --exclude='/.build' --exclude='/DerivedData' --exclude='/.spi-logs' --exclude='/.DS_Store' \
+		-e "$rsync_ssh" "$package_dir/" "$ssh_target:$remote_dir/package/" || return 2
+	# Let the regular runner report each matrix result in real time; clean the guest scratch copy afterward.
+	local quoted_root quoted_versions quoted_platforms remote_color
+	quoted_root="$(python3 -c 'import shlex,sys; print(shlex.quote(sys.argv[1]))' "$guest_root")"
+	quoted_versions="$(python3 -c 'import shlex,sys; print(shlex.quote(sys.argv[1]))' "$versions")"
+	quoted_platforms="$(python3 -c 'import shlex,sys; print(shlex.quote(sys.argv[1]))' "$platforms")"
+	remote_color=never
+	(( color_enabled )) && remote_color=always
+	ssh "${ssh_args[@]}" "$ssh_target" "cd '$remote_dir/package' && SPI_COLOR=$remote_color SPI_MATRIX_CHILD=1 SPI_INSTALL_ROOT=$quoted_root SPI_SWIFT_VERSIONS=$quoted_versions SPI_PLATFORMS=$quoted_platforms ./spichecks; result=\$?; rm -rf '$remote_dir'; exit \$result"
+}
+
+if [[ "${1:-}" == "--utm" ]]; then
+	shift
+	package_dir="${1:-$(dirname "$0")}"
+	package_dir="$(cd "$package_dir" && pwd)" || exit 2
+	if [[ ! -f "$package_dir/Package.swift" ]]; then
+		printf 'error: no Package.swift found in %s\n' "$package_dir" >&2
+		exit 2
+	fi
+	run_utm "$package_dir"
+	exit $?
+fi
+
+# Run the newest compiler's full native matrix first, then the oldest compiler's
+# non-Apple cross-builds on this host, and finally its Apple builds in the VM.
+case "${1:-}" in
+	--install|--uninstall|--list) skip_orchestration=1 ;;
+	*) skip_orchestration=0 ;;
+esac
+if [[ "$skip_orchestration" == 0 && "${SPI_MATRIX_CHILD:-0}" != 1 && "${SPI_RUN_LOCAL_ONLY:-0}" != 1 ]]; then
+	package_dir="${1:-$(dirname "$0")}"
+	package_dir="$(cd "$package_dir" && pwd)" || exit 2
+	if [[ ! -f "$package_dir/Package.swift" ]]; then
+		printf 'error: no Package.swift found in %s\n' "$package_dir" >&2
+		exit 2
+	fi
+	run_native_stage() {
+		local label="$1" versions="$2" platforms="$3"
+		printf '\n=== Native host checks: %s (%s) ===\n' "$label" "$versions"
+		SPI_MATRIX_CHILD=1 SPI_SWIFT_VERSIONS="$versions" SPI_PLATFORMS="$platforms" "$0" "$package_dir"
+		local result=$?
+		if (( result != 0 )); then
+		printf '%sStopping SPI checks after native host stage "%s" failed.%s\n' "$red" "$label" "$reset" >&2
+			return "$result"
+		fi
+	}
+	current_version="${SPI_HOST_CURRENT_SWIFT:-6.4.2}"
+	oldest_version="${SPI_HOST_OLDEST_SWIFT:-6.1.3}"
+	all_platforms="${SPI_HOST_PLATFORMS:-macOS iOS tvOS watchOS visionOS Linux WASI Android}"
+	cross_platforms="${SPI_HOST_CROSS_PLATFORMS:-Linux WASI Android}"
+	run_native_stage 'current compiler, all local platforms' "$current_version" "$all_platforms" || exit $?
+	run_native_stage 'oldest compiler, cross-SDK platforms' "$oldest_version" "$cross_platforms" || exit $?
+	if [[ "${SPI_SKIP_UTM:-0}" != 1 ]]; then
+		printf '\n=== UTM guest checks: oldest compiler, Apple platforms ===\n'
+		SPI_SWIFT_VERSIONS="${SPI_UTM_SWIFT_VERSIONS:-$oldest_version}" \
+		SPI_PLATFORMS="${SPI_UTM_PLATFORMS:-macOS iOS tvOS watchOS visionOS}" \
+		"$0" --utm "$package_dir"
+		result=$?
+		if (( result != 0 )); then
+			printf '%sStopping SPI checks because the UTM guest stage failed.%s\n' "$red" "$reset" >&2
+			exit "$result"
+		fi
+	fi
+	if [[ "${SPI_SKIP_UTM:-0}" == 1 ]]; then
+		printf '\n%sAll requested native SPI build checks passed; UTM checks were skipped.%s\n' "$green" "$reset"
+	else
+		printf '\n%sAll native and UTM SPI build checks passed.%s\n' "$green" "$reset"
+	fi
+	exit 0
+fi
+if [[ "${1:-}" == "--list" ]]; then
+	if [[ ! -d "$root/runtime/Library/Developer/Toolchains" ]]; then
+		printf 'No SPI toolchains installed under %s\n' "$root"
+		exit 1
+	fi
+	for path in "$root"/toolchains/* "$root"/sdk/*; do [[ -e "$path" ]] && printf '%s\n' "$path"; done
+	[[ -d "$root/android-ndk-r30" ]] && printf '%s\n' "$root/android-ndk-r30"
+	exit 0
+fi
+if [[ "${1:-}" == "--uninstall" ]]; then
+	printf 'Remove all SPI toolchains and SDKs under %s? [y/N] ' "$root"
+	read -r answer
+	if [[ "$answer" == [yY] ]]; then
+		rm -rf "$root"
+		printf 'Removed %s\n' "$root"
+	fi
+	exit 0
+fi
+if [[ "${1:-}" == "--install" ]]; then
+	installer="$(dirname "$0")/spichecks-install"
+	[[ -x "$installer" ]] || installer="$root/bin/spichecks-install"
+	"$installer"
+	exit $?
+fi
+
+package_dir="${1:-$(dirname "$0")}"
+package_dir="$(cd "$package_dir" && pwd)" || exit 2
+if [[ ! -f "$package_dir/Package.swift" ]]; then
+	printf 'error: no Package.swift found in %s\n' "$package_dir" >&2
+	exit 2
+fi
+
+work_dir="$(mktemp -d "${TMPDIR:-/tmp}/spichecks.XXXXXX")" || exit 2
+trap 'rm -rf "$work_dir"' EXIT
+runtime="$root/runtime"
+if [[ ! -d "$runtime/Library/Developer/Toolchains" ]]; then
+	printf 'Installing the shared SPI build environments under %s...\n' "$root"
+	installer="$(dirname "$0")/spichecks-install"
+	[[ -x "$installer" ]] || installer="$root/bin/spichecks-install"
+	"$installer" || exit $?
+fi
+# Keep the caller's home so SwiftPM can use the project's normal credentials and
+# host configuration; toolchain, SDK, scratch, and module-cache paths are explicit.
+sdk_root="$runtime/Library/org.swift.swiftpm/swift-sdks"
+mkdir -p "$work_dir/clang"
+
+failures=0
+ran=0
+skipped=0
+versions_text="${SPI_SWIFT_VERSIONS:-6.1.3 6.4.2}"
+versions_text="${versions_text//,/ }"
+read -r -a versions <<< "$versions_text"
+platforms_text="${SPI_PLATFORMS:-macOS iOS tvOS watchOS visionOS Linux WASI Android}"
+platforms_text="${platforms_text//,/ }"
+read -r -a platforms <<< "$platforms_text"
+
+find_swift() {
+	local version="$1"
+	find "$runtime/Library/Developer/Toolchains" -path "*/swift-${version}-RELEASE.xctoolchain/usr/bin/swift" -print -quit 2>/dev/null
+}
+
+xcode_for_swift() {
+	local version="$1" expected selected candidate output
+	local -a candidates
+	selected="$(xcode-select -p 2>/dev/null || true)"
+	case "${version%.*}" in
+		6.1)
+			expected=16.3
+			candidates=("${SPI_XCODE_6_1:-}" "$selected" /Applications/Xcode-16.3.app/Contents/Developer "/Applications/Xcode 16.3.app/Contents/Developer")
+			for app in /Applications/*16.3*.app; do
+				[[ -d "$app" ]] && candidates+=("$app/Contents/Developer")
+			done
+			;;
+		6.4)
+			expected=27.2
+			candidates=("${SPI_XCODE_6_4:-}" "$selected")
+			;;
+		*) return 1 ;;
+	esac
+	for candidate in "${candidates[@]}"; do
+		[[ -n "$candidate" && -x "$candidate/usr/bin/xcodebuild" ]] || continue
+		output="$(DEVELOPER_DIR="$candidate" "$candidate/usr/bin/xcodebuild" -version 2>/dev/null || true)"
+		if [[ "$output" == *"Xcode $expected"* ]]; then
+			printf '%s\n' "$candidate"
+			return 0
+		fi
+	done
+	return 1
+}
+
+print_diagnostics() {
+	local log="$1"
+	local matches kind line
+	matches="$(awk -v package="$package_dir/" '
+		{
+			line = tolower($0)
+			if (line ~ /(warning|error|note|notice):/ && !seen[$0]++) {
+				if (line ~ /error:/) print "error\t" $0
+				else if (line ~ /warning:/) print "warning\t" $0
+				else print "note\t" $0
+			}
+		}
+	' "$log")"
+	if [[ -n "$matches" ]]; then
+		while IFS=$'\t' read -r kind line; do
+			case "$kind" in
+				error) printf '%s%s%s\n' "$red" "$line" "$reset" ;;
+				warning) printf '%s%s%s\n' "$yellow" "$line" "$reset" ;;
+				*) printf '%s%s%s\n' "$blue" "$line" "$reset" ;;
+			esac
+		done <<< "$matches"
+	else
+		printf 'No warning/error/note diagnostics detected.\n'
+	fi
+}
+
+for version in "${versions[@]}"; do
+	minor="${version%.*}"
+	swift="$(find_swift "$version")"
+	if [[ -z "$swift" ]]; then
+	printf '%sSKIP%s Swift %s: missing %s toolchain. Run ./spichecks --install.\n' "$blue" "$reset" "$version" "$version"
+		skipped=$((skipped + ${#platforms[@]}))
+		continue
+	fi
+	xcode="$(xcode_for_swift "$version" || true)"
+	swift_sdks_path="$root/sdk/$version/Library/org.swift.swiftpm/swift-sdks"
+	sdks="$("$swift" sdk list --swift-sdks-path "$swift_sdks_path" 2>/dev/null || true)"
+	printf '\n=== Swift %s (%s) ===\n' "$version" "$swift"
+	for platform in "${platforms[@]}"; do
+		args=()
+		build_swift="$swift"
+		build_compiler_label="Swift $version"
+		case "$platform" in
+			macOS) args=(--triple arm64-apple-macosx) ;;
+			iOS) args=(--triple arm64-apple-ios) ;;
+			tvOS) args=(--triple arm64-apple-tvos) ;;
+			# Swift 6.1's watchOS device runtime contains arm64_32 and armv7k, not arm64.
+			watchOS) args=(--triple arm64_32-apple-watchos) ;;
+			# Swift 6.1 names this target xros; visionos is not a recognized triple.
+			# visionOS has no legacy arclite runtime, so do not ask ld to link it.
+			visionOS)
+				vision_sdk="$(DEVELOPER_DIR="$xcode" xcrun --sdk xros --show-sdk-path 2>/dev/null || true)"
+				if [[ -z "$vision_sdk" || ! -d "$vision_sdk" ]]; then printf '%sSKIP%s Swift %s visionOS: XROS SDK is missing from %s.\n' "$blue" "$reset" "$version" "$xcode"; skipped=$((skipped + 1)); continue; fi
+				args=(--sdk "$vision_sdk" --triple arm64-apple-xros1.0 -Xswiftc -no-link-objc-runtime)
+				if [[ "$minor" == 6.1 ]]; then
+					build_swift="$xcode/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift"
+					if [[ ! -x "$build_swift" ]]; then printf '%sSKIP%s Swift %s visionOS: Xcode-matched Swift compiler is missing from %s.\n' "$blue" "$reset" "$version" "$xcode"; skipped=$((skipped + 1)); continue; fi
+					build_compiler_label="Xcode-matched Swift 6.1 (SPI floor 6.1)"
+					printf '%sNOTE%s Swift 6.1 visionOS uses the Xcode-bundled compiler because the XROS SDK requires a matching compiler build.\n' "$blue" "$reset"
+				fi
+				;;
+			Linux)
+				sdk_id="$(printf '%s\n' "$sdks" | grep -E -m1 'static-linux' || true)"
+				if [[ -z "$sdk_id" ]]; then printf '%sSKIP%s Swift %s Linux approximation: Static Linux SDK missing.\n' "$blue" "$reset" "$version"; skipped=$((skipped + 1)); continue; fi
+				# SwiftPM 6.1 may randomly choose the wrong architecture when given the
+				# Static Linux artifact ID. Selecting by target triple chooses the SDK variant.
+				linux_arch="${SPI_LINUX_ARCH:-$(uname -m)}"
+				case "$linux_arch" in
+					arm64|aarch64) linux_arch=aarch64 ;;
+					x86_64|amd64) linux_arch=x86_64 ;;
+					*) printf '%sSKIP%s Swift %s Linux approximation: unsupported host architecture %s. Set SPI_LINUX_TRIPLE to override.\n' "$blue" "$reset" "$version" "$linux_arch"; skipped=$((skipped + 1)); continue ;;
+				esac
+				linux_triple="${SPI_LINUX_TRIPLE:-$linux_arch-swift-linux-musl}"
+				args=(--swift-sdk "$linux_triple") ;;
+			WASI)
+				sdk_id="$(printf '%s\n' "$sdks" | grep -E -m1 'wasm.*wasi|RELEASE_wasm' || true)"
+				if [[ -z "$sdk_id" ]]; then printf '%sSKIP%s Swift %s WASI: SDK missing.\n' "$blue" "$reset" "$version"; skipped=$((skipped + 1)); continue; fi
+				args=(--swift-sdk "$sdk_id" -Xcc -D_WASI_EMULATED_SIGNAL -Xlinker -lwasi-emulated-signal) ;;
+			Android)
+				sdk_id="$(printf '%s\n' "$sdks" | grep -E -m1 'android' || true)"
+				if [[ -z "$sdk_id" || ! -d "$root/android-ndk-r30" ]]; then printf '%sSKIP%s Swift %s Android: SDK or NDK missing.\n' "$blue" "$reset" "$version"; skipped=$((skipped + 1)); continue; fi
+				api=24; [[ "$minor" == 6.4 ]] && api=23
+				args=(--swift-sdk "$sdk_id" --triple "aarch64-unknown-linux-android$api") ;;
+		esac
+		if [[ "$platform" == macOS || "$platform" == iOS || "$platform" == tvOS || "$platform" == watchOS || "$platform" == visionOS ]] && [[ -z "$xcode" ]]; then
+			expected=16.3; [[ "$minor" == 6.4 ]] && expected=27.2
+			printf '%sSKIP%s Swift %s %s: requires Xcode %s. Download it from https://developer.apple.com/download/all, then set SPI_XCODE_%s to its Developer directory.\n' "$blue" "$reset" "$version" "$platform" "$expected" "${minor/./_}"
+			skipped=$((skipped + 1))
+			continue
+		fi
+		log="$work_dir/swift-$version-$platform.log"
+		printf '\n--- %s build (%s, %s) ---\n' "$platform" "$build_compiler_label" "${xcode:-cross-compile SDK}"
+		(
+			cd "$package_dir" || exit 2
+			DEVELOPER_DIR="${xcode:-$(xcode-select -p)}" ANDROID_NDK_HOME="$root/android-ndk-r30" CLANG_MODULE_CACHE_PATH="$work_dir/clang" SWIFTPM_MODULECACHE_OVERRIDE="$work_dir/clang" "$build_swift" build "${args[@]}" --swift-sdks-path "$swift_sdks_path" --scratch-path "$work_dir/build-$version-$platform"
+		) >"$log" 2>&1 &
+		build_pid=$!
+		elapsed=0
+		while kill -0 "$build_pid" 2>/dev/null; do
+			sleep 2
+			if kill -0 "$build_pid" 2>/dev/null; then
+				elapsed=$((elapsed + 2))
+				if (( elapsed >= 30 )); then
+					printf 'Build still running: %s %s (%d seconds elapsed).\n' "$build_compiler_label" "$platform" "$elapsed"
+					elapsed=0
+				fi
+			fi
+		done
+		wait "$build_pid"
+		status=$?
+		ran=$((ran + 1))
+		if (( status == 0 )); then
+			printf '%sPASS%s %s %s build\n' "$green" "$reset" "$build_compiler_label" "$platform"
+		else
+			printf '%sFAIL%s %s %s build (exit %d)\n' "$red" "$reset" "$build_compiler_label" "$platform" "$status"
+			failures=$((failures + 1))
+		fi
+		print_diagnostics "$log"
+		if (( status != 0 )); then
+			printf '\n%sStopping matrix after %s %s failed.%s\n' "$red" "$build_compiler_label" "$platform" "$reset" >&2
+			exit "$status"
+		fi
+	done
+done
+
+if (( ran == 0 )); then
+	cat <<'EOF'
+
+No build environment could run. Install the provisioned toolchains and SDKs with
+./spichecks --install, then rerun the full matrix.
+EOF
+	if (( failures == 0 )); then exit 2; fi
+fi
+
+summary_color="$green"
+(( failures > 0 )) && summary_color="$red"
+(( failures == 0 && skipped > 0 )) && summary_color="$blue"
+printf '\n%sCompleted %d build(s); %d failure(s); %d matrix cell(s) skipped. Temporary logs will be removed.%s\n' "$summary_color" "$ran" "$failures" "$skipped" "$reset"
+(( failures == 0 && skipped == 0 ))

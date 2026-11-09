@@ -64,7 +64,7 @@ public struct LegacyListSection<Content: View>: View {
 			VStack(alignment: .leading, spacing: 0) {
 				title
 					.font(.headline)
-					.foregroundStyle(.secondary)
+					.backport.foregroundStyle(BackportHierarchicalShapeStyle.secondary)
 					.frame(maxWidth: .infinity, alignment: .leading)
 					.padding(.horizontal, 16)
 					.padding(.top, 16)
@@ -114,12 +114,12 @@ public struct LegacyListRow<Content: View>: View {
 		content
 			.padding(.horizontal, 16)
 			.frame(maxWidth: .infinity, minHeight: 40, alignment: .leading)
-			.overlay(alignment: .bottom) {
+			.backport.overlay(alignment: .bottom) {
 				Rectangle()
 					.fill(Color.primary.opacity(0.12))
 					.frame(height: 0.5)
 					.padding(.leading, 16)
-					.accessibilityHidden(true)
+					.backport.accessibilityHidden(true)
 			}
 	}
 }

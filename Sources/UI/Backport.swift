@@ -46,11 +46,12 @@ public extension View {
     var backport: Backport<Self> { Backport(self) }
 }
 
-@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+@available(iOS 14, macOS 11, tvOS 14, watchOS 7, *)
 public extension Scene {
     @MainActor var backport: Backport<Self> { Backport(self) }
 }
 
+@available(iOS 14, macOS 11, tvOS 14, watchOS 7, *)
 public extension Backport where Content: Scene {
 #if os(macOS)
     /// Sets the initial scene size on macOS 13 and later.
@@ -166,6 +167,28 @@ public extension Backport where Content: View {
     func accessibilityValue<S>(_ value: S) -> some View where S : StringProtocol {
         if #available(iOS 14, macOS 11, tvOS 14, watchOS 7, *) {
             content.accessibilityValue(value)
+        } else {
+            content
+        }
+    }
+
+    /// Hides decorative content from accessibility where SwiftUI supports the modifier.
+    /// Older SwiftUI versions keep the view visible because they do not provide this API.
+    @ViewBuilder
+    func accessibilityHidden(_ isHidden: Bool = true) -> some View {
+        if #available(iOS 14, macOS 11, tvOS 14, watchOS 7, *) {
+            content.accessibilityHidden(isHidden)
+        } else {
+            content
+        }
+    }
+
+    /// Adds a help tooltip on systems that support SwiftUI's native help modifier.
+    /// Older systems leave the view unchanged.
+    @ViewBuilder
+    func help<S: StringProtocol>(_ text: S) -> some View {
+        if #available(iOS 15, macOS 11, tvOS 15, watchOS 8, *) {
+            content.help(Text(verbatim: String(text)))
         } else {
             content
         }
@@ -764,7 +787,7 @@ extension Backport where Content == Any {
 	/// UI tests separately interact with stateful examples such as the change observers and scrolling toggle.
 	@MainActor
 	internal static let tests: [TestCase] = [
-		TestCase("Backport withAnimation and completion criteria") { @MainActor in
+		TestCase("Backport withAnimation and completion criteria", executionMode: .parallel) { @MainActor in
 			let result = Text("Animation test").backport.withAnimation(
 				nil,
 				completionCriteria: .removed,
@@ -1897,6 +1920,7 @@ public extension Backport where Content: View {
 // MARK: - Missing Styles
 
 // MARK: Segmented PickerStyle
+/// The purpose of this is to support watchOS 6 with a backport since .segmented is marked as unavailable on watchOS 6.
 #if os(watchOS)
 @available(watchOS 6, *)
 public extension PickerStyle where Self == DefaultPickerStyle {
@@ -2298,20 +2322,21 @@ public struct BackportNavigationStack<Root: View>: View {
 
     /// Builds the newest navigation container available without adding a
     /// layout-transparent wrapper solely to host availability branches.
-    @ViewBuilder
-    private var navigationContent: some View {
 #if os(watchOS)
+	// Swift 6.1's watchOS 6 ViewBuilder lacks buildLimitedAvailability. Use a small
+	// AnyView boundary here so the watchOS 6-8 availability fallbacks remain safe.
+	private var navigationContent: AnyView {
         if #available(watchOS 9, *) {
-            NavigationStack {
-                root()
-            }
-        } else {
-            // NavigationView covers watchOS 6-8, where NavigationStack is unavailable.
-            NavigationView {
-                root()
-            }
+            return AnyView(NavigationStack { root() })
+        } else if #available(watchOS 7, *) {
+            // NavigationView begins at watchOS 7; watchOS 6 can still show the root content.
+            return AnyView(NavigationView { root() })
         }
+        return AnyView(root())
+    }
 #else
+	@ViewBuilder
+	private var navigationContent: some View {
         if #available(iOS 16, macOS 13, tvOS 16, watchOS 9, *) {
             NavigationStack { // SwiftUI.NavigationStack
                 root()
@@ -2327,8 +2352,8 @@ public struct BackportNavigationStack<Root: View>: View {
         } else {
             root() // forget about wrapping...
         }
-#endif
     }
+#endif
 }
 
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)

@@ -67,7 +67,7 @@ extension Version: Swift.CustomStringConvertible { // @retroactive in Swift 6?
 }
 
 // MARK: - Codable conformance so stored as string rather than as a structure of values.
-#if !os(Linux)
+#if !os(Linux) && !canImport(Android)
 // Full-runtime WebAssembly supplies Swift's real coding protocols. Because its
 // OperatingSystemVersion fallback is owned here, it can use the same stable string representation
 // and legacy keyed decoder as Apple and Android instead of a synthesized keyed representation.
@@ -235,7 +235,7 @@ extension Version: Swift.Comparable { // @retroactive in Swift 6?
     }
 }
 
-#if !os(Linux) || compiler(<6.0)
+#if (!os(Linux) && !canImport(Android)) || compiler(<6.0)
 extension Version: Swift.Hashable {}
 #endif
 

@@ -8,10 +8,12 @@
 #if canImport(SwiftUI) && compiler(>=5.9) && canImport(Foundation)
 import SwiftUI
 
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 private struct EnvironmentExpansionProgressKey: EnvironmentKey {
 	static let defaultValue: CGFloat = 0
 }
 
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 private extension EnvironmentValues {
 	var environmentExpansionProgress: CGFloat {
 		get { self[EnvironmentExpansionProgressKey.self] }
@@ -20,6 +22,7 @@ private extension EnvironmentValues {
 }
 
 /// Supplies the interpolated animation value to layout as well as to visual effects.
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 private struct EnvironmentExpansionProgressModifier: AnimatableModifier {
 	var progress: CGFloat
 
@@ -66,13 +69,13 @@ private struct EnvironmentExpansionRows: View {
 						.frame(width: 18 + 8 * progress, alignment: .center)
 						.opacity(enabled ? 1.0 : 0.2)
 						.foregroundColor(enabled ? environment.color : .gray)
-						.help("\(environment.label) environment: \(enabled ? "active" : "inactive") in this build")
+						.backport.help("\(environment.label) environment: \(enabled ? "active" : "inactive") in this build")
 						// Scaling provides the visual handoff without matched-geometry sources,
 						// which produced duplicate-source diagnostics in list rows.
 						.scaleEffect(0.92 + 0.08 * progress)
 						.frame(width: 18 + 8 * progress, height: 18 + 8 * progress)
 						.position(x: iconX, y: iconY)
-						.accessibilityHidden(true)
+						.backport.accessibilityHidden(true)
 
 					Text(environment.label)
 						.font(.body)
@@ -86,7 +89,7 @@ private struct EnvironmentExpansionRows: View {
 						.accessibilityElement(children: .ignore)
 						.backport.accessibilityLabel((enabled ? "Is" : "Not") + " " + environment.label)
 						.backport.accessibilityIdentifier("environment.\(environment.caseName)")
-						.accessibilityHidden(progress < 0.5)
+						.backport.accessibilityHidden(progress < 0.5)
 #if os(tvOS)
 						.backport.focusable(true) // Keep expanded labels focusable for tvOS scrolling.
 #endif

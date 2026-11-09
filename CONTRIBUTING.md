@@ -47,6 +47,7 @@ When converting or modernizing a changelog, preserve every existing entry’s da
 - Wait for results or confirmation before proceeding.
 - Explain risks before potentially destructive operations.
 - Prefer read-only diagnostics and preserve existing data.
+- Commit points and prerequisites: Before instructing the user to perform an action, identify any required review, confirmation, or safety checkpoint. Communicate that checkpoint before the action begins. Never introduce a new prerequisite or tell the user to stop after they've already completed an action as instructed.
 
 ## Post-prompt checklist
 After every prompt-driven change, contributors and coding agents must:

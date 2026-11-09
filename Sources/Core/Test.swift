@@ -525,7 +525,10 @@ public extension TestCase {
         tests["Bundle Tests"] = Bundle.tests
         tests["DataStore Tests"] = DataStoreType.tests
 #if canImport(CoreML)
-		tests["DataStore Tests", default: []] += NSUbiquitousKeyValueStore.dataStoreTests
+		// NSUbiquitousKeyValueStore is unavailable on watchOS before watchOS 9.
+		if #available(watchOS 9, *) {
+            tests["DataStore Tests", default: []] += NSUbiquitousKeyValueStore.dataStoreTests
+		}
 #endif
         tests["File Manager Tests"] = FileManager.tests
         #if os(macOS)
@@ -536,12 +539,16 @@ public extension TestCase {
 #if canImport(SwiftUI) && canImport(Combine) && compiler(>=5.9) && canImport(Foundation)
         tests["CloudStorageSync Tests"] = CloudStorageSync.tests
         tests["CloudStorage Tests"] = CloudStorageTests.tests
-        tests["DataStore Model Tests"] = DataStoreTestModel.tests
+        if #available(iOS 15, macOS 12, tvOS 15, watchOS 9, *) {
+            tests["DataStore Model Tests"] = DataStoreTestModel.tests
+        }
         tests["Backport Tests"] = Glass.tests + Backport<Any>.tests + Backport<Any>.disclosureGroupTests
         tests["Backport Button Style Tests"] = BackportButtonStyle.tests
         tests["Environment View Tests"] = EnvironmentsView.tests
 #endif
+#if canImport(SwiftUI)
         tests["Symbol Tests"] = SymbolCompatibilityTests.tests
+#endif
         tests["CharacterSet Tests"] = CharacterSet.tests
         tests["URL Tests"] = URL.tests
         tests["Date Tests"] = Date.tests
