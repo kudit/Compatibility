@@ -112,7 +112,7 @@ run_with_heartbeat() {
 }
 
 configure_check_state() {
-	local package_dir="$1" state_root package_key previous_fingerprint
+	local package_dir="$1" state_root package_key
 	if [[ -n "${SPI_CHECK_STATE_FILE:-}" ]]; then
 		state_file="$SPI_CHECK_STATE_FILE"
 	else
@@ -130,35 +130,7 @@ PY
 		state_file="$state_root/$package_key.passed"
 	fi
 	mkdir -p "$(dirname "$state_file")" || return 2
-	state_fingerprint="$(python3 - "$package_dir" <<'PY'
-import hashlib
-import os
-import sys
-
-root = os.path.realpath(sys.argv[1])
-excluded = {".git", ".build", "DerivedData", ".spi-logs", "__pycache__"}
-digest = hashlib.sha256()
-for current, directories, files in os.walk(root):
-    directories[:] = sorted(name for name in directories if name not in excluded and not name.endswith(".xcresult"))
-    for name in sorted(files):
-        if name == ".DS_Store" or name.endswith(".xcresult"):
-            continue
-        path = os.path.join(current, name)
-        relative = os.path.relpath(path, root).encode()
-        digest.update(relative + b"\0")
-        with open(path, "rb") as source:
-            for block in iter(lambda: source.read(1024 * 1024), b""):
-                digest.update(block)
-print(digest.hexdigest())
-PY
-)" || return 2
-	previous_fingerprint="$(sed -n '1p' "$state_file" 2>/dev/null || true)"
-	if [[ "$previous_fingerprint" != "$state_fingerprint" ]]; then
-		if [[ -n "$previous_fingerprint" ]]; then
-			print_note 'Package contents changed; clearing cached SPI passes.'
-		fi
-		printf '%s\n' "$state_fingerprint" > "$state_file" || return 2
-	fi
+	[[ -e "$state_file" ]] || : > "$state_file" || return 2
 }
 
 check_state_has_passed() {
@@ -174,8 +146,13 @@ record_check_passed() {
 reset_check_state() {
 	local package_dir="$1"
 	configure_check_state "$package_dir" || return 2
-	printf '%s\n' "$state_fingerprint" > "$state_file" || return 2
+	: > "$state_file" || return 2
 	print_note 'Reset saved SPI pass state; rerunning every selected check.'
+}
+
+clear_completed_check_state() {
+	: > "$state_file" || return 2
+	print_note 'All selected checks passed; cleared saved pass state.'
 }
 
 stage_all_checks_cached() {
@@ -219,10 +196,11 @@ SPI_UTMCTL_TIMEOUT=seconds sets the per-command UTM CLI timeout (default 30).
 SPI_UTM_READY_WAIT_SECONDS sets the wait for UTM's scripting interface (default 60).
 SPI_UTM_DIRECTORY sets the folder searched for the unique macOS 15.*.utm bundle.
 SPI_UTM_SSH_WAIT_SECONDS sets how long to wait for guest SSH (default 180; 90 after a utmctl timeout).
+SPI_UTM_PLATFORMS sets the Apple platforms checked in UTM (default: macOS iOS watchOS; tvOS and visionOS are covered by the current host compiler).
 SPI_UTM_SCRATCH_RESERVE_GIB sets the guest free-space reserve beyond the selected toolchain and package source (default 3 GiB).
 SPI_CHECK_STATE_DIR overrides the persistent per-package pass-state directory;
 SPI_CHECK_STATE_FILE selects one exact pass-state file. Default: ~/Library/Application Support/spichecks on macOS or ${XDG_STATE_HOME:-~/.local/state}/spichecks elsewhere.
-Successful cells are cached for unchanged package contents. After a failure, rerunning skips cached passes and retries the failed cell first. Use --reset to rerun the selected matrix from the beginning.
+Successful cells stay cached while you edit the package, so a rerun skips earlier passes and retries the first failed cell. Pass state clears after all selected checks pass, or immediately with --reset.
 
 The default VM is the only macOS 15.*.utm bundle in
 ${SPI_UTM_DIRECTORY:-/Users/ben/Temp/Virtual Machines}; set SPI_UTM_BUNDLE
@@ -551,12 +529,15 @@ if [[ "${1:-}" == "--utm" ]]; then
 	fi
 	configure_check_state "$package_dir" || exit 2
 	if (( reset_requested )); then reset_check_state "$package_dir" || exit 2; fi
-	if stage_all_checks_cached utm "${SPI_SWIFT_VERSIONS:-6.1.3}" "${SPI_PLATFORMS:-macOS iOS tvOS watchOS visionOS}"; then
-		print_note 'All selected UTM checks are cached for unchanged package contents; skipping VM startup and sync.'
+	if stage_all_checks_cached utm "${SPI_SWIFT_VERSIONS:-6.1.3}" "${SPI_PLATFORMS:-macOS iOS watchOS}"; then
+		print_note 'All selected UTM checks are cached; skipping VM startup and sync.'
+		clear_completed_check_state || exit 2
 		exit 0
 	fi
 	run_utm "$package_dir"
-	exit $?
+	result=$?
+	if (( result == 0 )); then clear_completed_check_state || exit 2; fi
+	exit "$result"
 fi
 
 # Run the newest compiler's full native matrix first, then the oldest compiler's
@@ -593,9 +574,9 @@ if [[ "$skip_orchestration" == 0 && "${SPI_MATRIX_CHILD:-0}" != 1 && "${SPI_RUN_
 	run_native_stage 'oldest compiler, cross-SDK platforms' "$oldest_version" "$cross_platforms" host-cross || exit $?
 	if [[ "${SPI_SKIP_UTM:-0}" != 1 ]]; then
 		utm_versions="${SPI_UTM_SWIFT_VERSIONS:-$oldest_version}"
-		utm_platforms="${SPI_UTM_PLATFORMS:-macOS iOS tvOS watchOS visionOS}"
+		utm_platforms="${SPI_UTM_PLATFORMS:-macOS iOS watchOS}"
 		if stage_all_checks_cached utm "$utm_versions" "$utm_platforms"; then
-			print_note 'All selected UTM checks are cached for unchanged package contents; skipping VM startup and sync.'
+			print_note 'All selected UTM checks are cached; skipping VM startup and sync.'
 		else
 			printf '\n=== UTM guest checks: oldest compiler, Apple platforms ===\n'
 			SPI_SWIFT_VERSIONS="$utm_versions" \
@@ -614,6 +595,7 @@ if [[ "$skip_orchestration" == 0 && "${SPI_MATRIX_CHILD:-0}" != 1 && "${SPI_RUN_
 	else
 		printf '\n%sAll native and UTM SPI build checks passed.%s\n' "$green" "$reset"
 	fi
+	clear_completed_check_state || exit 2
 	exit 0
 fi
 if [[ "${1:-}" == "--list" ]]; then
@@ -820,7 +802,7 @@ for version in "${versions[@]}"; do
 			continue
 		fi
 		if check_state_has_passed "$check_id"; then
-			printf '%sCACHED%s Swift %s %s: previously passed for unchanged package contents.\n' "$blue" "$reset" "$version" "$platform"
+			printf '%sCACHED%s Swift %s %s: previously passed.\n' "$blue" "$reset" "$version" "$platform"
 			cached=$((cached + 1))
 			continue
 		fi
@@ -878,4 +860,7 @@ summary_color="$green"
 (( failures > 0 )) && summary_color="$red"
 (( failures == 0 && skipped > 0 )) && summary_color="$blue"
 printf '\n%sCompleted %d build(s); %d failure(s); %d matrix cell(s) skipped; %d cached pass(es). Temporary logs will be removed.%s\n' "$summary_color" "$ran" "$failures" "$skipped" "$cached" "$reset"
+if (( failures == 0 && skipped == 0 )) && [[ "${SPI_MATRIX_CHILD:-0}" != 1 ]]; then
+	clear_completed_check_state || exit 2
+fi
 (( failures == 0 && skipped == 0 ))

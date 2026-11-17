@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.21.9 2026-11-17
+Preserve successful SPI matrix cells across package edits for failure-focused reruns; clear cached passes after the selected matrix succeeds or with --reset.
+Limit the older-compiler UTM matrix to macOS, iOS, and watchOS; tvOS and visionOS remain covered by the current host compiler.
+
 ## v1.21.8 2026-11-17
 Cache successful SPI matrix cells per package and resume after a failed check; add --reset to rerun the selected matrix.
 Exercise Pasteboard decoding/read selection and SafeArea legacy layout and preference paths in the shared test catalog.
