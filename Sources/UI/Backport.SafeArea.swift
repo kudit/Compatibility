@@ -106,12 +106,26 @@ extension Backport where Content == Any {
 			_ = AnyView(Text("base").backport.safeAreaInset(edge: .bottom) { inset("bottom") })
 			_ = AnyView(Text("base").backport.safeAreaInset(edge: .leading) { inset("leading") })
 			_ = AnyView(Text("base").backport.safeAreaInset(edge: .trailing) { inset("trailing") })
+
+			// Evaluate the legacy layout bodies directly; constructing AnyView alone leaves SwiftUI's
+			// view body deferred, so it would not cover the compatibility fallback on a modern test host.
+			_ = LegacyVerticalSafeAreaInset(base: Text("base"), edge: .top, alignment: .center, spacing: 0, inset: Text("top")).body
+			_ = LegacyVerticalSafeAreaInset(base: Text("base"), edge: .bottom, alignment: .center, spacing: 4, inset: Text("bottom")).body
+			_ = LegacyHorizontalSafeAreaInset(base: Text("base"), edge: .leading, alignment: .center, spacing: 0, inset: Text("leading")).body
+			_ = LegacyHorizontalSafeAreaInset(base: Text("base"), edge: .trailing, alignment: .center, spacing: 4, inset: Text("trailing")).body
+
 			try expectEqual(builtEdges, ["top", "bottom", "leading", "trailing"])
 		},
 		TestCase("Safe-area padding overloads") { @MainActor in
 			_ = AnyView(Text("base").backport.safeAreaPadding(8))
 			_ = AnyView(Text("base").backport.safeAreaPadding(.horizontal, 12))
 			try expect(BackportVerticalEdge.top != BackportVerticalEdge.bottom)
+		},
+		TestCase("Safe-area preference reduces to the latest geometry") {
+			var insets = SafeAreaMeasurements.defaultValue
+			SafeAreaMeasurements.reduce(value: &insets) { EdgeInsets(top: 1, leading: 2, bottom: 3, trailing: 4) }
+			SafeAreaMeasurements.reduce(value: &insets) { EdgeInsets(top: 5, leading: 6, bottom: 7, trailing: 8) }
+			try expectEqual(insets, EdgeInsets(top: 5, leading: 6, bottom: 7, trailing: 8))
 		},
 	]
 }

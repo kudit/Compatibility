@@ -31,6 +31,7 @@ public extension LosslessStringConvertible {
 }
 
 // MARK: - Foundation-less Backports
+// trimmed and trim functions should be on StringProtocol and not String
 #if !canImport(Foundation)
 public extension StringProtocol {
     /// NON-Foundation implementation.  If Foundation is available, use `.trimmingCharacters(in: .whitespacesAndNewLines)`. Returns a new string made by removing whitespace and newline characters from both ends.

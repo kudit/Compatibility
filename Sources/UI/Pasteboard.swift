@@ -245,8 +245,24 @@ extension Pasteboard {
             let alternateText = PasteboardItem(representations: ["com.example.text": Array("fallback".utf8)])
             try expectEqual(alternateText.string, "fallback")
 
+            let mixedCaseText = PasteboardItem(representations: ["com.example.TeXt": Array("case-insensitive".utf8)])
+            try expectEqual(mixedCaseText.string, "case-insensitive")
+
             let invalidUTF8 = PasteboardItem(representations: [Pasteboard.plainTextType: [0xFF]])
             try expectEqual(invalidUTF8.string, "\u{FFFD}")
+
+            let nonText = PasteboardItem(representations: ["com.example.image": [1, 2, 3]])
+            try expectEqual(nonText.string, nil)
+        },
+        TestCase("Pasteboard reads the first text item") { @MainActor in
+            let pasteboard = Pasteboard()
+            pasteboard.copy([
+                PasteboardItem(representations: ["com.example.image": [1, 2, 3]]),
+                PasteboardItem(representations: ["com.example.data": [4, 5, 6]]),
+                PasteboardItem(representations: ["com.example.text": Array("first readable".utf8)]),
+                PasteboardItem(string: "later text"),
+            ])
+            try expectEqual(pasteboard.readString(), "first readable")
         },
     ]
 }

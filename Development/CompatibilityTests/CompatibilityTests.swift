@@ -447,6 +447,34 @@ struct CompatibilityTests {
         #expect(board.readString() == "second")
     }
 
+    @Test("Pasteboard text fallbacks and missing text")
+    @MainActor
+    @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+    func pasteboardTextFallbacks() {
+        #expect(PasteboardItem(representations: ["com.example.TeXt": Array("fallback".utf8)]).string == "fallback")
+        #expect(PasteboardItem(representations: ["com.example.image": [1, 2, 3]]).string == nil)
+        #expect(PasteboardItem(representations: [Pasteboard.plainTextType: [0xFF]]).string == "\u{FFFD}")
+
+        let board = Pasteboard()
+        board.copy([
+            PasteboardItem(representations: ["com.example.image": [1, 2, 3]]),
+            PasteboardItem(representations: ["com.example.text": Array("first readable".utf8)]),
+            PasteboardItem(string: "later text"),
+        ])
+        #expect(board.readString() == "first readable")
+        board.copy([])
+        #expect(board.readString() == nil)
+    }
+
+    @Test("Pasteboard shared test catalog")
+    @MainActor
+    @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+    func pasteboardCatalogCoverage() async throws {
+        for test in Compatibility.tests["Pasteboard Tests"] ?? [] {
+            try await test.execute()
+        }
+    }
+
     @Test("Backport SafeArea inset edges and padding overloads")
     @MainActor
     @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
@@ -467,6 +495,14 @@ struct CompatibilityTests {
         #expect(builtEdges == ["top", "bottom", "leading", "trailing"])
     }
 
+    @Test("SafeArea shared test catalog")
+    @MainActor
+    @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+    func safeAreaCatalogCoverage() async throws {
+        for test in Compatibility.tests["Safe Area Tests"] ?? [] {
+            try await test.execute()
+        }
+    }
     /// Executes the newly expanded Backport coverage cases without running network-dependent module checks.
     @Test("Backport view modifiers and factories")
     @MainActor

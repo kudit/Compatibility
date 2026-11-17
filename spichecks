@@ -4,10 +4,12 @@
 # SwiftPM build logs stay in the system temporary directory and are removed on exit.
 # Examples:
 #   ./spichecks --utm
+#   ./spichecks --reset
 #   SPI_UTM_SCRATCH_RESERVE_GIB=1.5 ./spichecks --utm
 #   SPI_SWIFT_VERSIONS=6.1.3 SPI_PLATFORMS=watchOS ./spichecks --utm
 #   ./spichecks --utm /path/to/package
 # The second example runs only Swift 6.1.3's watchOS build in UTM; --utm skips host builds.
+# Successful matrix cells persist outside the repository; use --reset to rerun every selected cell.
 
 # Run `./spichecks` from the repository root to build only, using Swift 6.1 and 6.4, across macOS, iOS, tvOS, watchOS, visionOS, Linux, WASI, and Android. The first run provisions reusable toolchains and SDKs under `/Applications/SPI`; use `./spichecks --install` to install or repair them directly, `./spichecks --list` to inspect them, and `./spichecks --uninstall` to remove that folder. The installer requires at least 15 GiB of filesystem-reported free space for SDKs and temporary downloads; Finder may show more available space because it includes purgeable caches and snapshots. Apple builds use the matching Xcode release (Xcode 16.3 for Swift 6.1 and Xcode 27.2 for Swift 6.4); download missing Xcode versions from `https://developer.apple.com/download/all`, then set `SPI_XCODE_6_1` or `SPI_XCODE_6_4` to a nonstandard Xcode Developer directory. Apple matrix cells are skipped when their matching Xcode is unavailable. Linux uses the Static Linux SDK (musl) and targets the host architecture (aarch64 on Apple Silicon); this is a cross-compile approximation rather than SPI's native Linux/glibc build. Set `SPI_LINUX_TRIPLE` to override the target triple. The installer needs an administrator password only to create or take ownership of `/Applications/SPI`; public toolchain and SDK downloads do not require Apple or GitHub credentials. Build output is captured in temporary files that are removed when the command exits; progress, failures, warnings, errors, and notes from this package are reported in the terminal. PASS is green, FAIL and errors red, warnings yellow, and notes/notices blue. Colors are automatic for terminals and can be set with `SPI_COLOR=always|never`; `NO_COLOR=1` disables them. Missing matrix cells are reported and make the command exit unsuccessfully. For another package, run `/Applications/SPI/bin/spichecks /path/to/package` after provisioning. Copy `spichecks-wrapper` into a dependent package to fetch the runner matching its resolved Compatibility version; use `SPI_COMPATIBILITY_VERSION` when there is no checked-out Compatibility pin.
 #
@@ -108,23 +110,107 @@ run_with_heartbeat() {
 	fi
 	return "$status"
 }
+
+configure_check_state() {
+	local package_dir="$1" state_root package_key previous_fingerprint
+	if [[ -n "${SPI_CHECK_STATE_FILE:-}" ]]; then
+		state_file="$SPI_CHECK_STATE_FILE"
+	else
+		if [[ "$(uname -s)" == Darwin ]]; then
+			state_root="${SPI_CHECK_STATE_DIR:-$HOME/Library/Application Support/spichecks}"
+		else
+			state_root="${SPI_CHECK_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/spichecks}"
+		fi
+		package_key="$(python3 - "$package_dir" <<'PY'
+import hashlib
+import sys
+print(hashlib.sha256(sys.argv[1].encode()).hexdigest()[:20])
+PY
+)" || return 2
+		state_file="$state_root/$package_key.passed"
+	fi
+	mkdir -p "$(dirname "$state_file")" || return 2
+	state_fingerprint="$(python3 - "$package_dir" <<'PY'
+import hashlib
+import os
+import sys
+
+root = os.path.realpath(sys.argv[1])
+excluded = {".git", ".build", "DerivedData", ".spi-logs", "__pycache__"}
+digest = hashlib.sha256()
+for current, directories, files in os.walk(root):
+    directories[:] = sorted(name for name in directories if name not in excluded and not name.endswith(".xcresult"))
+    for name in sorted(files):
+        if name == ".DS_Store" or name.endswith(".xcresult"):
+            continue
+        path = os.path.join(current, name)
+        relative = os.path.relpath(path, root).encode()
+        digest.update(relative + b"\0")
+        with open(path, "rb") as source:
+            for block in iter(lambda: source.read(1024 * 1024), b""):
+                digest.update(block)
+print(digest.hexdigest())
+PY
+)" || return 2
+	previous_fingerprint="$(sed -n '1p' "$state_file" 2>/dev/null || true)"
+	if [[ "$previous_fingerprint" != "$state_fingerprint" ]]; then
+		if [[ -n "$previous_fingerprint" ]]; then
+			print_note 'Package contents changed; clearing cached SPI passes.'
+		fi
+		printf '%s\n' "$state_fingerprint" > "$state_file" || return 2
+	fi
+}
+
+check_state_has_passed() {
+	local check_id="$1"
+	[[ -f "$state_file" ]] && grep -Fqx -- "$check_id" "$state_file"
+}
+
+record_check_passed() {
+	local check_id="$1"
+	check_state_has_passed "$check_id" || printf '%s\n' "$check_id" >> "$state_file"
+}
+
+reset_check_state() {
+	local package_dir="$1"
+	configure_check_state "$package_dir" || return 2
+	printf '%s\n' "$state_fingerprint" > "$state_file" || return 2
+	print_note 'Reset saved SPI pass state; rerunning every selected check.'
+}
+
+stage_all_checks_cached() {
+	local stage="$1" versions_text="$2" platforms_text="$3" version platform
+	local -a stage_versions stage_platforms
+	versions_text="${versions_text//,/ }"
+	platforms_text="${platforms_text//,/ }"
+	read -r -a stage_versions <<< "$versions_text"
+	read -r -a stage_platforms <<< "$platforms_text"
+	for version in "${stage_versions[@]}"; do
+		for platform in "${stage_platforms[@]}"; do
+			check_state_has_passed "$stage|$version|$platform" || return 1
+		done
+	done
+	return 0
+}
 if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
 	cat <<'EOF'
-Usage: ./spichecks [--utm] [package-directory]
+Usage: ./spichecks [--reset] [--utm] [package-directory]
        ./spichecks [--install|--uninstall|--list|--help]
 
 Examples:
   ./spichecks --utm
+  ./spichecks --reset
   SPI_UTM_SCRATCH_RESERVE_GIB=1.5 ./spichecks --utm
   SPI_SWIFT_VERSIONS=6.1.3 SPI_PLATFORMS=watchOS ./spichecks --utm
   ./spichecks --utm /path/to/package
 
-Usage: ./spichecks [package-directory]
+Usage: ./spichecks [--reset] [package-directory]
 No package path: use the directory containing this script. Otherwise target that package.
 No argument: run native Swift 6.4.2 builds, then native Swift 6.1.3 cross-SDK
 builds, then Swift 6.1.3 Apple builds in the configured headless UTM VM.
 Builds only; no package tests. Warnings and notes do not stop the matrix.
 --utm        Run only the configured UTM VM's selected Swift/platform builds.
+--reset      Clear saved passes and run every check in the selected matrix.
 --install    Install or repair shared toolchains and SDKs under /Applications/SPI.
 --uninstall  Prompt before removing /Applications/SPI.
 --list       Show provisioned compiler and SDK contents.
@@ -134,6 +220,9 @@ SPI_UTM_READY_WAIT_SECONDS sets the wait for UTM's scripting interface (default 
 SPI_UTM_DIRECTORY sets the folder searched for the unique macOS 15.*.utm bundle.
 SPI_UTM_SSH_WAIT_SECONDS sets how long to wait for guest SSH (default 180; 90 after a utmctl timeout).
 SPI_UTM_SCRATCH_RESERVE_GIB sets the guest free-space reserve beyond the selected toolchain and package source (default 3 GiB).
+SPI_CHECK_STATE_DIR overrides the persistent per-package pass-state directory;
+SPI_CHECK_STATE_FILE selects one exact pass-state file. Default: ~/Library/Application Support/spichecks on macOS or ${XDG_STATE_HOME:-~/.local/state}/spichecks elsewhere.
+Successful cells are cached for unchanged package contents. After a failure, rerunning skips cached passes and retries the failed cell first. Use --reset to rerun the selected matrix from the beginning.
 
 The default VM is the only macOS 15.*.utm bundle in
 ${SPI_UTM_DIRECTORY:-/Users/ben/Temp/Virtual Machines}; set SPI_UTM_BUNDLE
@@ -142,6 +231,15 @@ media@LegacyDev.local by default. Set SPI_UTM_VM, SPI_UTM_USER,
 SPI_UTM_HOSTNAME, SPI_UTM_IP, or SPI_UTM_SSH_TARGET to override those defaults.
 EOF
 	exit 0
+fi
+
+reset_requested=0
+if [[ "${1:-}" == "--reset" ]]; then
+	reset_requested=1
+	shift
+elif [[ "${1:-}" == "--utm" && "${2:-}" == "--reset" ]]; then
+	reset_requested=1
+	set -- "$1" "${@:3}"
 fi
 
 run_utm() {
@@ -160,7 +258,7 @@ run_utm() {
 	fi
 	local vm_name="${SPI_UTM_VM:-}" ssh_target="${SPI_UTM_SSH_TARGET:-}"
 	local utmctl="${SPI_UTMCTL:-}" ssh_key="${SPI_UTM_SSH_KEY:-}" ssh_port="${SPI_UTM_SSH_PORT:-22}" guest_home guest_root remote_dir display_devices ready_output ready_status ready_deadline ip_retry_at=0 ip_output ssh_host_fallback=0
-	local versions platforms ip="" guest_mac lease_record lease_epoch attempt rsync_ssh toolchain_kb guest_free_kb guest_df toolchain_cached required_kb scratch_kb package_source_kb toolchain_required_kb default_user sync_label ssh_wait_seconds ssh_deadline scratch_reserve_gib
+	local versions platforms ip="" guest_mac lease_record lease_epoch attempt rsync_ssh toolchain_kb guest_free_kb guest_df toolchain_cached required_kb scratch_kb package_source_kb toolchain_required_kb default_user sync_label ssh_wait_seconds ssh_deadline scratch_reserve_gib remote_state_file remote_status
 	local vm_status start_output start_status last_ssh_error ssh_status utm_status start_diagnostic=""
 	local -a ssh_args
 	utmctl_call() {
@@ -420,8 +518,10 @@ PY
 		run_with_heartbeat "$sync_label" rsync -a --no-owner --no-group -e "$rsync_ssh" "$toolchain" "$ssh_target:$guest_root/runtime/Library/Developer/Toolchains/" || return 2
 		ssh "${ssh_args[@]}" "$ssh_target" "mkdir -p '$guest_root/sdk/$version/Library/org.swift.swiftpm/swift-sdks'" || return 2
 	done
-	ssh "${ssh_args[@]}" "$ssh_target" "mkdir -p '$remote_dir/package'" || return 2
-	run_with_heartbeat 'Package source sync' rsync -a --no-owner --no-group --exclude='/.git' --exclude='/.build' --exclude='/DerivedData' --exclude='/.spi-logs' --exclude='/.DS_Store' \
+	remote_state_file="$remote_dir/state/passed"
+	ssh "${ssh_args[@]}" "$ssh_target" "mkdir -p '$remote_dir/package' '$remote_dir/state'" || return 2
+	rsync -a -e "$rsync_ssh" "$state_file" "$ssh_target:$remote_state_file" || return 2
+	run_with_heartbeat 'Package source sync' rsync -a --no-owner --no-group --exclude='/.git' --exclude='/.build' --exclude='/DerivedData' --exclude='/.spi-logs' --exclude='/.DS_Store' --exclude='__pycache__' --exclude='*.xcresult' \
 		-e "$rsync_ssh" "$package_dir/" "$ssh_target:$remote_dir/package/" || return 2
 	# Let the regular runner report each matrix result in real time; clean the guest scratch copy afterward.
 	local quoted_root quoted_versions quoted_platforms remote_color quoted_scratch_reserve
@@ -431,7 +531,14 @@ PY
 	quoted_scratch_reserve="$(python3 -c 'import shlex,sys; print(shlex.quote(sys.argv[1]))' "$scratch_reserve_gib")"
 	remote_color=never
 	(( color_enabled )) && remote_color=always
-	ssh "${ssh_args[@]}" "$ssh_target" "cd '$remote_dir/package' && SPI_COLOR=$remote_color SPI_MATRIX_CHILD=1 SPI_INSTALL_ROOT=$quoted_root SPI_UTM_SCRATCH_RESERVE_GIB=$quoted_scratch_reserve SPI_SWIFT_VERSIONS=$quoted_versions SPI_PLATFORMS=$quoted_platforms ./spichecks; result=\$?; rm -rf '$remote_dir'; exit \$result"
+	ssh "${ssh_args[@]}" "$ssh_target" "cd '$remote_dir/package' && SPI_COLOR=$remote_color SPI_MATRIX_CHILD=1 SPI_MATRIX_STAGE=utm SPI_CHECK_STATE_FILE='$remote_state_file' SPI_INSTALL_ROOT=$quoted_root SPI_UTM_SCRATCH_RESERVE_GIB=$quoted_scratch_reserve SPI_SWIFT_VERSIONS=$quoted_versions SPI_PLATFORMS=$quoted_platforms ./spichecks"
+	remote_status=$?
+	if ! rsync -a -e "$rsync_ssh" "$ssh_target:$remote_state_file" "$state_file"; then
+		printf 'Unable to retrieve updated SPI pass state from the UTM guest.\n' >&2
+		(( remote_status == 0 )) && remote_status=2
+	fi
+	ssh "${ssh_args[@]}" "$ssh_target" "rm -rf '$remote_dir'" || { (( remote_status == 0 )) && remote_status=2; }
+	return "$remote_status"
 }
 
 if [[ "${1:-}" == "--utm" ]]; then
@@ -441,6 +548,12 @@ if [[ "${1:-}" == "--utm" ]]; then
 	if [[ ! -f "$package_dir/Package.swift" ]]; then
 		printf 'error: no Package.swift found in %s\n' "$package_dir" >&2
 		exit 2
+	fi
+	configure_check_state "$package_dir" || exit 2
+	if (( reset_requested )); then reset_check_state "$package_dir" || exit 2; fi
+	if stage_all_checks_cached utm "${SPI_SWIFT_VERSIONS:-6.1.3}" "${SPI_PLATFORMS:-macOS iOS tvOS watchOS visionOS}"; then
+		print_note 'All selected UTM checks are cached for unchanged package contents; skipping VM startup and sync.'
+		exit 0
 	fi
 	run_utm "$package_dir"
 	exit $?
@@ -459,10 +572,13 @@ if [[ "$skip_orchestration" == 0 && "${SPI_MATRIX_CHILD:-0}" != 1 && "${SPI_RUN_
 		printf 'error: no Package.swift found in %s\n' "$package_dir" >&2
 		exit 2
 	fi
+	configure_check_state "$package_dir" || exit 2
+	if (( reset_requested )); then reset_check_state "$package_dir" || exit 2; fi
 	run_native_stage() {
 		local label="$1" versions="$2" platforms="$3"
+		local stage="$4"
 		printf '\n=== Native host checks: %s (%s) ===\n' "$label" "$versions"
-		SPI_MATRIX_CHILD=1 SPI_SWIFT_VERSIONS="$versions" SPI_PLATFORMS="$platforms" "$0" "$package_dir"
+		SPI_MATRIX_CHILD=1 SPI_MATRIX_STAGE="$stage" SPI_CHECK_STATE_FILE="$state_file" SPI_SWIFT_VERSIONS="$versions" SPI_PLATFORMS="$platforms" "$0" "$package_dir"
 		local result=$?
 		if (( result != 0 )); then
 		printf '%sStopping SPI checks after native host stage "%s" failed.%s\n' "$red" "$label" "$reset" >&2
@@ -473,17 +589,24 @@ if [[ "$skip_orchestration" == 0 && "${SPI_MATRIX_CHILD:-0}" != 1 && "${SPI_RUN_
 	oldest_version="${SPI_HOST_OLDEST_SWIFT:-6.1.3}"
 	all_platforms="${SPI_HOST_PLATFORMS:-macOS iOS tvOS watchOS visionOS Linux WASI Android}"
 	cross_platforms="${SPI_HOST_CROSS_PLATFORMS:-Linux WASI Android}"
-	run_native_stage 'current compiler, all local platforms' "$current_version" "$all_platforms" || exit $?
-	run_native_stage 'oldest compiler, cross-SDK platforms' "$oldest_version" "$cross_platforms" || exit $?
+	run_native_stage 'current compiler, all local platforms' "$current_version" "$all_platforms" host-current || exit $?
+	run_native_stage 'oldest compiler, cross-SDK platforms' "$oldest_version" "$cross_platforms" host-cross || exit $?
 	if [[ "${SPI_SKIP_UTM:-0}" != 1 ]]; then
-		printf '\n=== UTM guest checks: oldest compiler, Apple platforms ===\n'
-		SPI_SWIFT_VERSIONS="${SPI_UTM_SWIFT_VERSIONS:-$oldest_version}" \
-		SPI_PLATFORMS="${SPI_UTM_PLATFORMS:-macOS iOS tvOS watchOS visionOS}" \
-		"$0" --utm "$package_dir"
-		result=$?
-		if (( result != 0 )); then
-			printf '%sStopping SPI checks because the UTM guest stage failed.%s\n' "$red" "$reset" >&2
-			exit "$result"
+		utm_versions="${SPI_UTM_SWIFT_VERSIONS:-$oldest_version}"
+		utm_platforms="${SPI_UTM_PLATFORMS:-macOS iOS tvOS watchOS visionOS}"
+		if stage_all_checks_cached utm "$utm_versions" "$utm_platforms"; then
+			print_note 'All selected UTM checks are cached for unchanged package contents; skipping VM startup and sync.'
+		else
+			printf '\n=== UTM guest checks: oldest compiler, Apple platforms ===\n'
+			SPI_SWIFT_VERSIONS="$utm_versions" \
+			SPI_PLATFORMS="$utm_platforms" \
+			SPI_MATRIX_STAGE=utm SPI_CHECK_STATE_FILE="$state_file" \
+			"$0" --utm "$package_dir"
+			result=$?
+			if (( result != 0 )); then
+				printf '%sStopping SPI checks because the UTM guest stage failed.%s\n' "$red" "$reset" >&2
+				exit "$result"
+			fi
 		fi
 	fi
 	if [[ "${SPI_SKIP_UTM:-0}" == 1 ]]; then
@@ -524,6 +647,8 @@ if [[ ! -f "$package_dir/Package.swift" ]]; then
 	printf 'error: no Package.swift found in %s\n' "$package_dir" >&2
 	exit 2
 fi
+configure_check_state "$package_dir" || exit 2
+if (( reset_requested )); then reset_check_state "$package_dir" || exit 2; fi
 
 work_dir="$(mktemp -d "${TMPDIR:-/tmp}/spichecks.XXXXXX")" || exit 2
 trap 'rm -rf "$work_dir"' EXIT
@@ -542,6 +667,7 @@ mkdir -p "$work_dir/clang"
 failures=0
 ran=0
 skipped=0
+cached=0
 versions_text="${SPI_SWIFT_VERSIONS:-6.1.3 6.4.2}"
 versions_text="${versions_text//,/ }"
 read -r -a versions <<< "$versions_text"
@@ -641,6 +767,7 @@ for version in "${versions[@]}"; do
 	sdks="$("$swift" sdk list --swift-sdks-path "$swift_sdks_path" 2>/dev/null || true)"
 	printf '\n=== Swift %s (%s) ===\n' "$version" "$swift"
 	for platform in "${platforms[@]}"; do
+		check_id="${SPI_MATRIX_STAGE:-local}|$version|$platform"
 		args=()
 		build_swift="$swift"
 		build_compiler_label="Swift $version"
@@ -692,6 +819,11 @@ for version in "${versions[@]}"; do
 			skipped=$((skipped + 1))
 			continue
 		fi
+		if check_state_has_passed "$check_id"; then
+			printf '%sCACHED%s Swift %s %s: previously passed for unchanged package contents.\n' "$blue" "$reset" "$version" "$platform"
+			cached=$((cached + 1))
+			continue
+		fi
 		log="$work_dir/swift-$version-$platform.log"
 		printf '\n--- %s build (%s, %s) ---\n' "$platform" "$build_compiler_label" "${xcode:-cross-compile SDK}"
 		(
@@ -719,6 +851,7 @@ for version in "${versions[@]}"; do
 		ran=$((ran + 1))
 		if (( status == 0 )); then
 			printf '%sPASS%s %s %s build\n' "$green" "$reset" "$build_compiler_label" "$platform"
+			record_check_passed "$check_id" || { printf 'Unable to save pass state for %s.\n' "$check_id" >&2; exit 2; }
 		else
 			printf '%sFAIL%s %s %s build (exit %d)\n' "$red" "$reset" "$build_compiler_label" "$platform" "$status"
 			failures=$((failures + 1))
@@ -732,7 +865,7 @@ for version in "${versions[@]}"; do
 	done
 done
 
-if (( ran == 0 )); then
+if (( ran == 0 && cached == 0 )); then
 	cat <<'EOF'
 
 No build environment could run. Install the provisioned toolchains and SDKs with
@@ -744,5 +877,5 @@ fi
 summary_color="$green"
 (( failures > 0 )) && summary_color="$red"
 (( failures == 0 && skipped > 0 )) && summary_color="$blue"
-printf '\n%sCompleted %d build(s); %d failure(s); %d matrix cell(s) skipped. Temporary logs will be removed.%s\n' "$summary_color" "$ran" "$failures" "$skipped" "$reset"
+printf '\n%sCompleted %d build(s); %d failure(s); %d matrix cell(s) skipped; %d cached pass(es). Temporary logs will be removed.%s\n' "$summary_color" "$ran" "$failures" "$skipped" "$cached" "$reset"
 (( failures == 0 && skipped == 0 ))

@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.21.8 2026-11-17
+Cache successful SPI matrix cells per package and resume after a failed check; add --reset to rerun the selected matrix.
+Exercise Pasteboard decoding/read selection and SafeArea legacy layout and preference paths in the shared test catalog.
+
 ## v1.21.7 2026-11-16
 Changed cloud and special property field display as secondary color instead of gray for better contrast with rainbow background.
 Added SafeArea inset construction and Pasteboard representation coverage to the shared test catalog and Swift Testing suite.
