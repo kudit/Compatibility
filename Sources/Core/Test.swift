@@ -547,6 +547,7 @@ public extension TestCase {
         tests["Environment View Tests"] = EnvironmentsView.tests
 #endif
 #if canImport(SwiftUI)
+        tests["Safe Area Tests"] = Backport<Any>.safeAreaTests
         tests["Symbol Tests"] = SymbolCompatibilityTests.tests
 #endif
         tests["CharacterSet Tests"] = CharacterSet.tests

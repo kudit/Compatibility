@@ -8,7 +8,7 @@
 
 public enum Compatibility: Module {
     /// The version of the Compatibility Library since cannot get directly from Package.swift.
-public static let version: Version = "1.21.6"
+public static let version: Version = "1.21.7"
 
     /// Public source repository for Compatibility so support reports can direct developers to its source and issue history.
     ///
@@ -95,26 +95,30 @@ public static let version: Version = "1.21.6"
 	tvOS 9.0+
 	watchOS 6.2+
 	visionOS 1+
- 
+    Xcode 5
+
  2014 (Swift announced, for OperatingSystemVersion)
  canImport(HealthKit) || canImport(Metal) (iOS/iPadOS/Catalyst only)
+ @available(iOS 8, macOS 10.1, *)
 	iOS 8
 	macOS 10.10
 	Mac Catalyst 13
 	watchOS 1 (not supported)
- @available(iOS 8, macOS 10.1, *)
+    Xcode 6
 
  2015 (initial relase of tvOS)
     iOS 9
     macOS 10.11
 	tvOS 9 // Metal
 	watchOS 2 // Health
+    Xcode 7
 
  2016
     iOS 10
     macOS 10.12
 	tvOS 10
 	watchOS 3
+    Xcode 8
 
  2017
  canImport(CoreML)
@@ -122,53 +126,59 @@ public static let version: Version = "1.21.6"
     macOS 10.13 (High Sierra)
     tvOS 11
     watchOS 4
- 
+    Xcode 9
+
  2018
     iOS 12
     macOS 10.14
     tvOS 12
 	watchOS 5
- 
+    Xcode 10
+
  2019 (first year macCatalyst and SwiftUI available)
  canImport(SwiftUI) || canImport(Combine)
+ @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 	iOS 13+
 	iPadOS 13.0+
-	macOS 10.15+
+	macOS 10.15+ Catalina
 	Mac Catalyst 13.0+
 	tvOS 13+
 	watchOS 6+
 	SF Symbols 1.0
- @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+    Xcode 11
 
  2020 @StateObject
  canImport(AppleArchive)
 	iOS 14+
 	iPadOS 14.0+
-	macOS 11+
+	macOS 11+ Big Sur
 	Mac Catalyst 14.0+
 	tvOS 14+
 	watchOS 7+
 	SF Symbols 2.0
+    Xcode 12
 
  2021
  canImport(GroupActivities)
 	iOS 15+ (last supported by iPhone 7)
 	iPadOS 15.0+
-	macOS 12+ (last supported by Touchbook)
+	macOS 12+ Monterey (last supported by Touchbook)
 	Mac Catalyst 15.0+
 	tvOS 15+
 	NOTE: NO WATCH OS SUPPORT (watchOS 8 is the last supported by Series 3)
 	SF Symbols 3.0
+    Xcode 13
 
  2022 Swift 5.7 (September)
  canImport(Charts) canImport(AppIntents) canImport(CoreTransferable)
 	iOS 16+
 	iPadOS 16.0+
-	macOS 13+
+	macOS 13+ Ventura
 	Mac Catalyst 16.0+
 	tvOS 16+
 	watchOS 9+ (minimum for WidgetKit on watchOS - supported in iOS 14 and macOS 11) (minimum for NSUbiquitousKeyValueStore in watchOS)
 	SF Symbols 4.0
+    Xcode 14
 
  2023 Swift 5.8 (March), Swift 5.9 (September) (added #Preview syntax, @availability syntax, and macros)
 	canImport(SwiftData)

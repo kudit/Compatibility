@@ -4,20 +4,21 @@
 # SwiftPM build logs stay in the system temporary directory and are removed on exit.
 # Examples:
 #   ./spichecks --utm
+#   SPI_UTM_SCRATCH_RESERVE_GIB=1.5 ./spichecks --utm
 #   SPI_SWIFT_VERSIONS=6.1.3 SPI_PLATFORMS=watchOS ./spichecks --utm
 #   ./spichecks --utm /path/to/package
 # The second example runs only Swift 6.1.3's watchOS build in UTM; --utm skips host builds.
 
 # Run `./spichecks` from the repository root to build only, using Swift 6.1 and 6.4, across macOS, iOS, tvOS, watchOS, visionOS, Linux, WASI, and Android. The first run provisions reusable toolchains and SDKs under `/Applications/SPI`; use `./spichecks --install` to install or repair them directly, `./spichecks --list` to inspect them, and `./spichecks --uninstall` to remove that folder. The installer requires at least 15 GiB of filesystem-reported free space for SDKs and temporary downloads; Finder may show more available space because it includes purgeable caches and snapshots. Apple builds use the matching Xcode release (Xcode 16.3 for Swift 6.1 and Xcode 27.2 for Swift 6.4); download missing Xcode versions from `https://developer.apple.com/download/all`, then set `SPI_XCODE_6_1` or `SPI_XCODE_6_4` to a nonstandard Xcode Developer directory. Apple matrix cells are skipped when their matching Xcode is unavailable. Linux uses the Static Linux SDK (musl) and targets the host architecture (aarch64 on Apple Silicon); this is a cross-compile approximation rather than SPI's native Linux/glibc build. Set `SPI_LINUX_TRIPLE` to override the target triple. The installer needs an administrator password only to create or take ownership of `/Applications/SPI`; public toolchain and SDK downloads do not require Apple or GitHub credentials. Build output is captured in temporary files that are removed when the command exits; progress, failures, warnings, errors, and notes from this package are reported in the terminal. PASS is green, FAIL and errors red, warnings yellow, and notes/notices blue. Colors are automatic for terminals and can be set with `SPI_COLOR=always|never`; `NO_COLOR=1` disables them. Missing matrix cells are reported and make the command exit unsuccessfully. For another package, run `/Applications/SPI/bin/spichecks /path/to/package` after provisioning. Copy `spichecks-wrapper` into a dependent package to fetch the runner matching its resolved Compatibility version; use `SPI_COMPATIBILITY_VERSION` when there is no checked-out Compatibility pin.
 #
-# Plain `./spichecks` runs the native Swift 6.4.2 matrix first, then Swift 6.1.3 Linux/WASI/Android cross-builds, then Swift 6.1.3 Apple builds in the Sequoia UTM VM. A failed build stops the sequence; warnings and notes are reported but do not stop it. The VM defaults to `/Users/ben/Temp/Virtual Machines/macOS 15.8.2 Torrent Config.utm`; for this VM the script connects as `media@VirtualUTM.local` when Bonjour resolves the guest, then falls back to an IP reported by `utmctl` if DNS is unavailable. It uses `~/.ssh/spichecks_utm` automatically when present. Set `SPI_UTM_BUNDLE`, `SPI_UTM_VM`, `SPI_UTM_USER`, `SPI_UTM_HOSTNAME`, `SPI_UTM_IP`, or `SPI_UTM_SSH_TARGET` to override these defaults. Use `SPI_SKIP_UTM=1` to run only the native stages or `SPI_RUN_LOCAL_ONLY=1 SPI_SWIFT_VERSIONS=6.4.2 ./spichecks` for one local matrix.
+# Plain `./spichecks` runs the native Swift 6.4.2 matrix first, then Swift 6.1.3 Linux/WASI/Android cross-builds, then Swift 6.1.3 Apple builds in the Sequoia UTM VM. A failed build stops the sequence; warnings and notes are reported but do not stop it. The VM defaults to the only `macOS 15.*.utm` bundle in `/Users/ben/Temp/Virtual Machines`; the guest is reached as `media@LegacyDev.local` when Bonjour resolves it, then falls back to an IP reported by `utmctl` if DNS is unavailable. Set `SPI_UTM_DIRECTORY` to search another folder or `SPI_UTM_BUNDLE` to select an explicit bundle. It uses `~/.ssh/spichecks_utm` automatically when present. Set `SPI_UTM_VM`, `SPI_UTM_USER`, `SPI_UTM_HOSTNAME`, `SPI_UTM_IP`, or `SPI_UTM_SSH_TARGET` to override these defaults. Use `SPI_SKIP_UTM=1` to run only the native stages or `SPI_RUN_LOCAL_ONLY=1 SPI_SWIFT_VERSIONS=6.4.2 ./spichecks` for one local matrix.
 #
 # Before the first VM check, enable Remote Login in Sequoia and add a host SSH public key to the `media` account. A manual SSH login that asks for a password confirms network access, but `spichecks` uses noninteractive SSH and requires the key to be authorized and available to `ssh-agent`/Keychain. `utmctl start --hide` hides UTM's main window; a VM with a Display device still opens a guest window and is not truly headless. For headless operation, shut down the VM and remove its Display device and any Built-in Terminal serial device in UTM settings. UTM itself must remain open to control the guest. The host syncs the selected toolchain and a temporary source copy over SSH/rsync, streams the actual build output and diagnostics to the terminal, and removes the source copy after a normal run. Swift 6.1.3 currently uses about 5.2 GiB under `~/SPI` in the guest, plus 3 GiB of free space for build scratch. The VM remains running for quicker repeat checks.
 #
 # For a dedicated host key, run `ssh-keygen -t ed25519 -f ~/.ssh/spichecks_utm -C spichecks-utm`, then add this host entry to `~/.ssh/config`:
 #
 # ```sshconfig
-# Host VirtualUTM.local
+# Host LegacyDev.local
 #     User media
 #     IdentityFile ~/.ssh/spichecks_utm
 #     IdentitiesOnly yes
@@ -30,8 +31,8 @@
 # ```sh
 # chmod 600 ~/.ssh/config
 # ssh-add --apple-use-keychain ~/.ssh/spichecks_utm
-# cat ~/.ssh/spichecks_utm.pub | ssh -o ConnectTimeout=8 -i ~/.ssh/spichecks_utm media@VirtualUTM.local 'mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys && chmod 700 ~/.ssh && chmod 600 ~/.ssh/authorized_keys'
-# ssh -o ConnectTimeout=8 -i ~/.ssh/spichecks_utm media@VirtualUTM.local true
+# cat ~/.ssh/spichecks_utm.pub | ssh -o ConnectTimeout=8 -i ~/.ssh/spichecks_utm media@LegacyDev.local 'mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys && chmod 700 ~/.ssh && chmod 600 ~/.ssh/authorized_keys'
+# ssh -o ConnectTimeout=8 -i ~/.ssh/spichecks_utm media@LegacyDev.local true
 # ```
 #
 # The key install asks for the `media` account password once. To make the VM headless, shut it down, select it in UTM, open its settings, remove the device under **Display**, and save. With no Display device, UTM runs the guest without a VM display window while it remains reachable over SSH.
@@ -114,6 +115,7 @@ Usage: ./spichecks [--utm] [package-directory]
 
 Examples:
   ./spichecks --utm
+  SPI_UTM_SCRATCH_RESERVE_GIB=1.5 ./spichecks --utm
   SPI_SWIFT_VERSIONS=6.1.3 SPI_PLATFORMS=watchOS ./spichecks --utm
   ./spichecks --utm /path/to/package
 
@@ -129,20 +131,36 @@ Builds only; no package tests. Warnings and notes do not stop the matrix.
 SPI_COLOR=auto|always|never controls ANSI colors; NO_COLOR disables them.
 SPI_UTMCTL_TIMEOUT=seconds sets the per-command UTM CLI timeout (default 30).
 SPI_UTM_READY_WAIT_SECONDS sets the wait for UTM's scripting interface (default 60).
+SPI_UTM_DIRECTORY sets the folder searched for the unique macOS 15.*.utm bundle.
 SPI_UTM_SSH_WAIT_SECONDS sets how long to wait for guest SSH (default 180; 90 after a utmctl timeout).
+SPI_UTM_SCRATCH_RESERVE_GIB sets the guest free-space reserve beyond the selected toolchain and package source (default 3 GiB).
 
-The default VM is the Sequoia UTM bundle configured by SPI_UTM_BUNDLE. The
-guest is reached as media@VirtualUTM.local by default. Set SPI_UTM_VM,
-SPI_UTM_USER, or SPI_UTM_SSH_TARGET to override those defaults.
+The default VM is the only macOS 15.*.utm bundle in
+${SPI_UTM_DIRECTORY:-/Users/ben/Temp/Virtual Machines}; set SPI_UTM_BUNDLE
+to provide an explicit bundle path. The guest is reached as
+media@LegacyDev.local by default. Set SPI_UTM_VM, SPI_UTM_USER,
+SPI_UTM_HOSTNAME, SPI_UTM_IP, or SPI_UTM_SSH_TARGET to override those defaults.
 EOF
 	exit 0
 fi
 
 run_utm() {
-	local package_dir="$1" utm_bundle="${SPI_UTM_BUNDLE:-/Users/ben/Temp/Virtual Machines/macOS 15.8.2 Torrent Config.utm}"
+	local package_dir="$1" utm_directory="${SPI_UTM_DIRECTORY:-/Users/ben/Temp/Virtual Machines}" utm_bundle="${SPI_UTM_BUNDLE:-}"
+	local -a utm_matches
+	if [[ -z "$utm_bundle" ]]; then
+		shopt -s nullglob
+		utm_matches=( "$utm_directory"/macOS\ 15.*.utm )
+		shopt -u nullglob
+		if (( ${#utm_matches[@]} != 1 )); then
+			printf 'Expected exactly one macOS 15.*.utm bundle in %s; found %d.\n' "$utm_directory" "${#utm_matches[@]}" >&2
+			printf 'Set SPI_UTM_BUNDLE to an explicit bundle path to override discovery.\n' >&2
+			return 2
+		fi
+		utm_bundle="${utm_matches[0]}"
+	fi
 	local vm_name="${SPI_UTM_VM:-}" ssh_target="${SPI_UTM_SSH_TARGET:-}"
 	local utmctl="${SPI_UTMCTL:-}" ssh_key="${SPI_UTM_SSH_KEY:-}" ssh_port="${SPI_UTM_SSH_PORT:-22}" guest_home guest_root remote_dir display_devices ready_output ready_status ready_deadline ip_retry_at=0 ip_output ssh_host_fallback=0
-	local versions platforms ip="" guest_mac lease_record lease_epoch attempt rsync_ssh toolchain_kb guest_free_kb guest_df toolchain_cached required_kb default_user sync_label ssh_wait_seconds ssh_deadline
+	local versions platforms ip="" guest_mac lease_record lease_epoch attempt rsync_ssh toolchain_kb guest_free_kb guest_df toolchain_cached required_kb scratch_kb package_source_kb toolchain_required_kb default_user sync_label ssh_wait_seconds ssh_deadline scratch_reserve_gib
 	local vm_status start_output start_status last_ssh_error ssh_status utm_status start_diagnostic=""
 	local -a ssh_args
 	utmctl_call() {
@@ -263,8 +281,8 @@ PY
 			ssh_target="$default_user@${SPI_UTM_HOSTNAME}"
 		elif [[ -n "${SPI_UTM_IP:-}" ]]; then
 			ssh_target="$default_user@${SPI_UTM_IP}"
-		elif [[ "${utm_bundle##*/}" == "macOS 15.8.2 Torrent Config.utm" ]]; then
-			ssh_target="$default_user@VirtualUTM.local"
+		else
+			ssh_target="$default_user@LegacyDev.local"
 			ssh_host_fallback=1
 		fi
 	fi
@@ -313,15 +331,15 @@ PY
 					ssh_target="$default_user@$ip"
 					ssh_host_fallback=0
 					# Keep the already trusted .local host key when connecting by its current IP.
-					ssh_args+=(-o HostKeyAlias=virtualutm.local)
-					print_note "VirtualUTM.local did not resolve; retrying SSH at UTM-reported guest IP $ip."
+					ssh_args+=(-o HostKeyAlias=LegacyDev.local)
+					print_note "LegacyDev.local did not resolve; retrying SSH at UTM-reported guest IP $ip."
 				fi
 			fi
 		fi
 		if printf '%s\n' "$last_ssh_error" | grep -Eiq 'permission denied|no supported authentication methods|too many authentication failures|load key|passphrase'; then
 			printf '%sSSH reached the guest, but passwordless authentication failed. Install or load the spichecks key with this command:%s\n' "$red" "$reset" >&2
-			printf '%s\n' "cat ~/.ssh/spichecks_utm.pub | ssh media@VirtualUTM.local 'mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys && chmod 700 ~/.ssh && chmod 600 ~/.ssh/authorized_keys'"
-			printf '%sThen verify: ssh -o BatchMode=yes -i ~/.ssh/spichecks_utm media@VirtualUTM.local true%s\n' "$blue" "$reset"
+			printf '%s\n' "cat ~/.ssh/spichecks_utm.pub | ssh media@LegacyDev.local 'mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys && chmod 700 ~/.ssh && chmod 600 ~/.ssh/authorized_keys'"
+			printf '%sThen verify: ssh -o BatchMode=yes -i ~/.ssh/spichecks_utm media@LegacyDev.local true%s\n' "$blue" "$reset"
 			printf '%s\n' "$last_ssh_error" | colorize_stream >&2
 			return 2
 		fi
@@ -332,7 +350,7 @@ PY
 		[[ -n "$start_diagnostic" ]] && printf 'UTM start diagnostic:\n%s\n' "$start_diagnostic" | colorize_stream >&2
 		[[ -n "$last_ssh_error" ]] && printf '%s\n' "$last_ssh_error" | colorize_stream >&2
 		if (( ssh_host_fallback )); then
-			printf 'VirtualUTM.local did not resolve and UTM did not report a guest IP. Check guest networking and Remote Login; set SPI_UTM_IP or SPI_UTM_SSH_TARGET if the guest has a known address.\n' >&2
+			printf 'LegacyDev.local did not resolve and UTM did not report a guest IP. Check guest networking and Remote Login; set SPI_UTM_IP or SPI_UTM_SSH_TARGET if the guest has a known address.\n' >&2
 		else
 			printf 'Open UTM and confirm the VM is running and Remote Login is enabled. If UTM reported -10004, allow this terminal to control UTM in Automation settings.\n' >&2
 		fi
@@ -342,6 +360,15 @@ PY
 	guest_home="$(ssh "${ssh_args[@]}" "$ssh_target" 'printf %s "$HOME"')" || return 2
 	guest_root="$guest_home/SPI"
 	remote_dir="/private/tmp/spichecks-$(id -u)-$$"
+	scratch_reserve_gib="${SPI_UTM_SCRATCH_RESERVE_GIB:-3}"
+	if ! scratch_kb="$(awk -v gib="$scratch_reserve_gib" 'BEGIN { if (gib !~ /^[0-9]+([.][0-9]+)?$/ || gib <= 0) exit 1; printf "%d", gib * 1048576 }')"; then
+		printf 'SPI_UTM_SCRATCH_RESERVE_GIB must be a positive number; received %s.\n' "$scratch_reserve_gib" >&2
+		return 2
+	fi
+	package_source_kb="$(rsync -a --dry-run --stats --exclude='/.git' --exclude='/.build' --exclude='/DerivedData' --exclude='/.spi-logs' --exclude='/.DS_Store' "$package_dir/" /private/tmp/spichecks-size-probe/ | awk -F: '/Total file size:/ { gsub(/[^0-9]/, "", $2); print int(($2 + 1023) / 1024); found=1 } END { if (!found) exit 1 }')" || {
+		printf 'Unable to estimate the package source copy size with rsync.\n' >&2
+		return 2
+	}
 	# Restrict transfer to the selected compiler; Xcode SDKs are already in the guest.
 	if [[ -n "${SPI_INSTALL_ROOT:-}" ]]; then root="$SPI_INSTALL_ROOT"; fi
 	if [[ ! -d "$root/runtime/Library/Developer/Toolchains" ]]; then
@@ -354,7 +381,7 @@ PY
 	# Quote the ssh command for rsync; the SSH target itself must be a normal user@host value.
 	rsync_ssh="ssh -o BatchMode=yes -p $ssh_port"
 	if [[ -n "$ssh_key" ]]; then rsync_ssh+=" -i '$ssh_key'"; fi
-	printf 'Syncing package to the VM and selected Swift toolchain(s) to %s...\n' "$guest_root"
+	printf 'Syncing package to the VM and selected Swift toolchain(s) to %s (%.1f GiB scratch reserve)...\n' "$guest_root" "$scratch_reserve_gib"
 	ssh "${ssh_args[@]}" "$ssh_target" "mkdir -p '$guest_root/runtime/Library/Developer/Toolchains'" || return 2
 	for version in "${version_list[@]}"; do
 		toolchain="$root/runtime/Library/Developer/Toolchains/swift-${version}-RELEASE.xctoolchain"
@@ -365,8 +392,9 @@ PY
 		toolchain_kb="$(du -sk "$toolchain" | awk '{print $1}')"
 		toolchain_cached=0
 		ssh "${ssh_args[@]}" "$ssh_target" "test -x '$guest_root/runtime/Library/Developer/Toolchains/swift-${version}-RELEASE.xctoolchain/usr/bin/swift'" && toolchain_cached=1
-		required_kb=$((3 * 1024 * 1024))
-		(( toolchain_cached == 1 )) || required_kb=$((required_kb + toolchain_kb))
+		toolchain_required_kb=0
+		(( toolchain_cached == 1 )) || toolchain_required_kb=$toolchain_kb
+		required_kb=$((scratch_kb + package_source_kb + toolchain_required_kb))
 		if ! guest_df="$(ssh "${ssh_args[@]}" "$ssh_target" "df -Pk '$guest_root'" 2>&1)"; then
 			printf '%sUnable to inspect guest disk space for %s.%s\n' "$red" "$guest_root" "$reset" >&2
 			printf '%s\n' "$guest_df" | colorize_stream >&2
@@ -379,7 +407,7 @@ PY
 			return 2
 		fi
 		if (( guest_free_kb < required_kb )); then
-			printf '%sVM disk space is insufficient for Swift %s: guest reports %.1f GiB free; this sync needs %.1f GiB.%s\n' "$red" "$version" "$(awk -v k="$guest_free_kb" 'BEGIN {print k/1048576}')" "$(awk -v k="$required_kb" 'BEGIN {print k/1048576}')" "$reset" >&2
+			printf '%sVM disk space is insufficient for Swift %s: guest reports %.1f GiB free; this sync needs %.1f GiB (%.1f GiB toolchain, %.1f GiB package, %.1f GiB scratch reserve).%s\n' "$red" "$version" "$(awk -v k="$guest_free_kb" 'BEGIN {print k/1048576}')" "$(awk -v k="$required_kb" 'BEGIN {print k/1048576}')" "$(awk -v k="$toolchain_required_kb" 'BEGIN {print k/1048576}')" "$(awk -v k="$package_source_kb" 'BEGIN {print k/1048576}')" "$scratch_reserve_gib" "$reset" >&2
 			printf '%sGuest df output:%s\n%s\n' "$blue" "$reset" "$guest_df" >&2
 			return 2
 		fi
@@ -396,13 +424,14 @@ PY
 	run_with_heartbeat 'Package source sync' rsync -a --no-owner --no-group --exclude='/.git' --exclude='/.build' --exclude='/DerivedData' --exclude='/.spi-logs' --exclude='/.DS_Store' \
 		-e "$rsync_ssh" "$package_dir/" "$ssh_target:$remote_dir/package/" || return 2
 	# Let the regular runner report each matrix result in real time; clean the guest scratch copy afterward.
-	local quoted_root quoted_versions quoted_platforms remote_color
+	local quoted_root quoted_versions quoted_platforms remote_color quoted_scratch_reserve
 	quoted_root="$(python3 -c 'import shlex,sys; print(shlex.quote(sys.argv[1]))' "$guest_root")"
 	quoted_versions="$(python3 -c 'import shlex,sys; print(shlex.quote(sys.argv[1]))' "$versions")"
 	quoted_platforms="$(python3 -c 'import shlex,sys; print(shlex.quote(sys.argv[1]))' "$platforms")"
+	quoted_scratch_reserve="$(python3 -c 'import shlex,sys; print(shlex.quote(sys.argv[1]))' "$scratch_reserve_gib")"
 	remote_color=never
 	(( color_enabled )) && remote_color=always
-	ssh "${ssh_args[@]}" "$ssh_target" "cd '$remote_dir/package' && SPI_COLOR=$remote_color SPI_MATRIX_CHILD=1 SPI_INSTALL_ROOT=$quoted_root SPI_SWIFT_VERSIONS=$quoted_versions SPI_PLATFORMS=$quoted_platforms ./spichecks; result=\$?; rm -rf '$remote_dir'; exit \$result"
+	ssh "${ssh_args[@]}" "$ssh_target" "cd '$remote_dir/package' && SPI_COLOR=$remote_color SPI_MATRIX_CHILD=1 SPI_INSTALL_ROOT=$quoted_root SPI_UTM_SCRATCH_RESERVE_GIB=$quoted_scratch_reserve SPI_SWIFT_VERSIONS=$quoted_versions SPI_PLATFORMS=$quoted_platforms ./spichecks; result=\$?; rm -rf '$remote_dir'; exit \$result"
 }
 
 if [[ "${1:-}" == "--utm" ]]; then
@@ -557,9 +586,28 @@ xcode_for_swift() {
 print_diagnostics() {
 	local log="$1"
 	local matches kind line
-	matches="$(awk -v package="$package_dir/" '
+	matches="$(awk '
 		{
 			line = tolower($0)
+			# Availability warnings can be inevitable when the SDK deployment floor
+			# is newer than the package floor; they do not indicate a package error.
+			if (line ~ /unnecessary check/) {
+				suppress_enclosing_scope_note = 1
+				next
+			}
+			if (suppress_enclosing_scope_note && line ~ /note: enclosing scope here/) {
+				suppress_enclosing_scope_note = 0
+				next
+			}
+
+			# Filter only known SDK/toolchain diagnostics that do not indicate a
+			# package-specific issue; leave all other warnings and every error visible.
+			if (line ~ /ld: warning: building for macos-12\.0, but linking with dylib .*libswift.*built for newer version 13\.0/) next
+			if (line ~ /ld: warning: building for (ios|tvos)-15\.0, but linking with dylib .*libswift.*built for newer version 16\.0/) next
+			if (line ~ /clang: warning: argument unused during compilation: .*-(rdynamic|pie)/) next
+			if (line ~ /wasm-ld: warning: .*archive member .*\.autolink.* is neither wasm object file nor llvm bitcode/) next
+			if (line ~ /warning: multiple swift sdks match id `.*` and host triple .*selected one at .*/) next
+
 			if (line ~ /(warning|error|note|notice):/ && !seen[$0]++) {
 				if (line ~ /error:/) print "error\t" $0
 				else if (line ~ /warning:/) print "warning\t" $0
@@ -676,6 +724,7 @@ for version in "${versions[@]}"; do
 			failures=$((failures + 1))
 		fi
 		print_diagnostics "$log"
+		rm -rf "$work_dir/build-$version-$platform"
 		if (( status != 0 )); then
 			printf '\n%sStopping matrix after %s %s failed.%s\n' "$red" "$build_compiler_label" "$platform" "$reset" >&2
 			exit "$status"

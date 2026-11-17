@@ -43,7 +43,6 @@ struct MyApp: App {
         WindowGroup {
             CompatibilityDemoView()
         }
-        .backport.defaultSize(width: 1100, height: 760)
 
         #if os(macOS)
         Settings { // For settings/preferences screen within the app

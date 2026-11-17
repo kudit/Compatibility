@@ -27,10 +27,25 @@ public struct ModuleTestEntry: Sendable, Identifiable {
         self.testCase = testCase
     }
 
-    /// Executes the original shared test and propagates its detailed error into Swift Testing and Xcode.
+    /// Executes the shared test and reports captured assertion failures at their original source lines.
     @MainActor
     public func execute() async throws {
-        try await testCase.execute()
+        do {
+            try await testCase.execute()
+        } catch let failure as TestFailure {
+            // TestCase remains framework-independent for the in-app UI and older toolchains.
+            // Bridge its captured call site into Swift Testing without linking Testing into the
+            // Compatibility runtime library.
+            Issue.record(
+                Comment(rawValue: failure.message),
+                sourceLocation: SourceLocation(
+                    fileID: failure.source.file,
+                    filePath: failure.source.file,
+                    line: failure.source.line,
+                    column: failure.source.column
+                )
+            )
+        }
     }
 }
 

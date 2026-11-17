@@ -1,6 +1,14 @@
 # Changelog
 
-TODO: Add test coverage for SafeArea and Pasteboard.
+## v1.21.7 2026-11-16
+Changed cloud and special property field display as secondary color instead of gray for better contrast with rainbow background.
+Added SafeArea inset construction and Pasteboard representation coverage to the shared test catalog and Swift Testing suite.
+Forward shared test assertion failures to Swift Testing at their original source locations while preserving the in-app and older-platform runner.
+Updated the SPI checker for XROS SDK/compiler matching, current UTM bundle discovery, and temporary SwiftPM module caching.
+Accounted for package source size in the UTM disk check, made scratch reserve configurable, and reclaimed each platform's build scratch immediately.
+Added Xcode release references to the compatibility timeline.
+Pulled up macOS version names from Device.
+Filter compiler availability-floor and known cross-SDK toolchain diagnostics from SPI output while retaining package errors and actionable warnings.
 
 ## v1.21.6 2026-11-09
 Set SPI_BUILD for WASI and Android checker builds, while leaving Linux enabled to validate packages' Linux-only products.
@@ -727,7 +735,6 @@ Known issues and bugs that need to be addressed.
 
 ## Roadmap
 Planned features and anticipated API changes.  If you want to contribute, this is a great place to start.
-- [ ] Standardize test formats and creations.  Add #if canImport(Testing) to add as actual testable things instead of `try expect(` do `#expect(` so that we can get exactly where the tests fail.  Then see if we can sub-class into the tests.  See if we can still run in the UI as part of the app?
 - [ ] Add more tests for improved code coverage.
 - [ ] Add option to pad function to allow padding on left and use this in function for prefixing with a number of 0s.  Left padding function: https://stackoverflow.com/questions/32338137/padding-a-swift-string-for-printing
 - [ ] Update tab view to use backport version that can extend content into safe area but still respects safe area for scrolling and clearing (for Color test app).  Have content of tab view extend into safe area but the contents not completely ignore safe area.
@@ -735,7 +742,6 @@ Planned features and anticipated API changes.  If you want to contribute, this i
 - [ ] Fix pagination dots not using primary color depending on dark mode (always white).  Perhaps create custom tab view style that is pageTinted(Color).  Add to Compatibility and then update this stack: https://stackoverflow.com/questions/68143240/tabview-dot-index-color-does-not-change
 - [ ] Add some shading at the bottom so the pagination dots show and make sure they are above the Kudit LLC to avoid the safe area.
 - [ ] Add the new document view controller model for compatibility with iOS 17 and 18 (check Viewer code for reference)
-- [ ] Once Swift Testing is officially released, convert Testing functions to @Test functions and change expect function calls to #expect calls and remove custom debug statements.
 - [ ] Fix tvOS usage of controls within a page view (seems to only control pagination and not buttons inside)
 - [ ] Re-work page view on watchOS to use the vertical page view style or perhaps a navigation stack.  Color doesn't look great on watchOS.
 

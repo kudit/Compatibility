@@ -429,6 +429,44 @@ struct CompatibilityTargetTests {
 
 @Suite
 struct CompatibilityTests {
+    @Test("Pasteboard text and typed item round-trip")
+    @MainActor
+    @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+    func pasteboardTextAndTypedItems() {
+        let item = PasteboardItem(string: "Compatibility 📋")
+        #expect(item.string == "Compatibility 📋")
+        #expect(item.representations[Pasteboard.plainTextType] == Array("Compatibility 📋".utf8))
+
+        let board = Pasteboard()
+        let items = [
+            PasteboardItem(representations: ["com.example.data": [1, 2, 3]]),
+            PasteboardItem(string: "second"),
+        ]
+        board.copy(items)
+        #expect(board.read() == items)
+        #expect(board.readString() == "second")
+    }
+
+    @Test("Backport SafeArea inset edges and padding overloads")
+    @MainActor
+    @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+    func backportSafeAreaBuilders() {
+        var builtEdges = [String]()
+        func inset(_ edge: String) -> Text {
+            builtEdges.append(edge)
+            return Text(edge)
+        }
+
+        _ = AnyView(Text("base").backport.safeAreaInset(edge: .top) { inset("top") })
+        _ = AnyView(Text("base").backport.safeAreaInset(edge: .bottom) { inset("bottom") })
+        _ = AnyView(Text("base").backport.safeAreaInset(edge: .leading) { inset("leading") })
+        _ = AnyView(Text("base").backport.safeAreaInset(edge: .trailing) { inset("trailing") })
+        _ = AnyView(Text("base").backport.safeAreaPadding(8))
+        _ = AnyView(Text("base").backport.safeAreaPadding(.horizontal, 12))
+
+        #expect(builtEdges == ["top", "bottom", "leading", "trailing"])
+    }
+
     /// Executes the newly expanded Backport coverage cases without running network-dependent module checks.
     @Test("Backport view modifiers and factories")
     @MainActor

@@ -51,19 +51,24 @@ public extension Scene {
     @MainActor var backport: Backport<Self> { Backport(self) }
 }
 
-@available(iOS 14, macOS 11, tvOS 14, watchOS 7, *)
-public extension Backport where Content: Scene {
-#if os(macOS)
-    /// Sets the initial scene size on macOS 13 and later.
-    @available(macOS 13.0, *)
-    func defaultSize(width: CGFloat, height: CGFloat) -> some Scene {
-        content.defaultSize(width: width, height: height)
-    }
-#else
-    /// Leaves scenes unchanged on platforms without macOS window sizing behavior.
-    func defaultSize(width: CGFloat, height: CGFloat) -> Content { content }
-#endif
-}
+// Since this isn't a view and only works on limited versions, can't really do a safe backport so don't even bother.
+//@available(iOS 14, macOS 11, tvOS 14, watchOS 7, *)
+//public extension Backport where Content: Scene {
+//#if os(macOS)
+//    /// Sets the initial scene size on macOS 13 and later.
+//    func defaultSize(width: CGFloat, height: CGFloat) -> some Scene {
+//        if #available(macOS 13.0, *) {
+//            content.defaultSize(width: width, height: height) as! Content
+//        } else {
+//            // Fallback on earlier versions
+//            content
+//        }
+//    }
+//#else
+//    /// Leaves scenes unchanged on platforms without macOS window sizing behavior.
+//    func defaultSize(width: CGFloat, height: CGFloat) -> Content { content }
+//#endif
+//}
 
 @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
 extension Backport where Content == Any {
@@ -2328,11 +2333,14 @@ public struct BackportNavigationStack<Root: View>: View {
 	private var navigationContent: AnyView {
         if #available(watchOS 9, *) {
             return AnyView(NavigationStack { root() })
-        } else if #available(watchOS 7, *) {
-            // NavigationView begins at watchOS 7; watchOS 6 can still show the root content.
-            return AnyView(NavigationView { root() })
+        } else { // can't do else-if because availability checker sees it as an unnecessary guard.
+            if #available(watchOS 7, *) {
+                // NavigationView begins at watchOS 7; watchOS 6 can still show the root content.
+                return AnyView(NavigationView { root() })
+            } else {
+                return AnyView(root())
+            }
         }
-        return AnyView(root())
     }
 #else
 	@ViewBuilder

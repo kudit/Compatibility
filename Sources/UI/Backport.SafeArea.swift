@@ -90,4 +90,29 @@ private struct LegacyHorizontalSafeAreaInset<Base: View, Inset: View>: View {
 		.onPreferenceChange(SafeAreaMeasurements.self) { if safe != $0 { safe = $0 } }
 	}
 }
+
+@available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+extension Backport where Content == Any {
+	@MainActor
+	internal static let safeAreaTests: [TestCase] = [
+		TestCase("Safe-area inset edge builders") { @MainActor in
+			var builtEdges = [String]()
+			func inset(_ edge: String) -> Text {
+				builtEdges.append(edge)
+				return Text(edge)
+			}
+
+			_ = AnyView(Text("base").backport.safeAreaInset(edge: .top) { inset("top") })
+			_ = AnyView(Text("base").backport.safeAreaInset(edge: .bottom) { inset("bottom") })
+			_ = AnyView(Text("base").backport.safeAreaInset(edge: .leading) { inset("leading") })
+			_ = AnyView(Text("base").backport.safeAreaInset(edge: .trailing) { inset("trailing") })
+			try expectEqual(builtEdges, ["top", "bottom", "leading", "trailing"])
+		},
+		TestCase("Safe-area padding overloads") { @MainActor in
+			_ = AnyView(Text("base").backport.safeAreaPadding(8))
+			_ = AnyView(Text("base").backport.safeAreaPadding(.horizontal, 12))
+			try expect(BackportVerticalEdge.top != BackportVerticalEdge.bottom)
+		},
+	]
+}
 #endif

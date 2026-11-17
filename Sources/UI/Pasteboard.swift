@@ -241,6 +241,13 @@ extension Pasteboard {
             try expect(pasteboard.read().count == 1)
             try expect(pasteboard.readString() == "replacement")
         },
+        TestCase("Pasteboard text representation decoding") {
+            let alternateText = PasteboardItem(representations: ["com.example.text": Array("fallback".utf8)])
+            try expectEqual(alternateText.string, "fallback")
+
+            let invalidUTF8 = PasteboardItem(representations: [Pasteboard.plainTextType: [0xFF]])
+            try expectEqual(invalidUTF8.string, "\u{FFFD}")
+        },
     ]
 }
 #endif

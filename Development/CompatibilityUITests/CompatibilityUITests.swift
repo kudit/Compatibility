@@ -335,7 +335,9 @@ final class CompatibilityUITests: XCTestCase {
         let firstItem = screen.staticTexts["backport.scroll.item.0"]
         let initialX = firstItem.frame.minX
 #if os(macOS)
-        strip.scroll(byDeltaX: -900, deltaY: 0)
+		let stripCenter = strip.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+		stripCenter.hover()
+		strip.scroll(byDeltaX: -900, deltaY: 0)
 #else
         strip.swipeLeft()
 #endif
@@ -354,7 +356,8 @@ final class CompatibilityUITests: XCTestCase {
 
         let disabledStartX = firstItem.frame.minX
 #if os(macOS)
-        strip.scroll(byDeltaX: -900, deltaY: 0)
+		strip.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).hover()
+		strip.scroll(byDeltaX: -900, deltaY: 0)
 #else
         strip.swipeLeft()
 #endif

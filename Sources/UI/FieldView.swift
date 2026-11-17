@@ -31,18 +31,18 @@ public struct FieldView: View {
         Group {
             if field.label == nil {
                 Text(valueString)
-                    .font(.footnote).backport.foregroundStyle(.gray)
+                    .font(.footnote).backport.foregroundStyle(.secondary)
             } else if let boolValue = field.value.boolValue {
                 TestCheck(label, boolValue)
-            } else if let symbol = field.symbol {
+            } else if let symbol = field.symbol { // iCloud availability, swift
                 HStack {
                     Text(colonLabel)
                     Spacer()
 					Backport.Image(systemName: symbol)
-                        .backport.foregroundStyle(.gray)
+                        .backport.foregroundStyle(.secondary)
                         .multilineTextAlignment(.trailing)
                     Text("\(valueString)")
-                        .backport.foregroundStyle(.gray)
+                        .backport.foregroundStyle(.secondary)
                         .multilineTextAlignment(.trailing)
                 }
             } else {
